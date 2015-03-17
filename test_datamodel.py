@@ -1,5 +1,5 @@
 """ testing webapp"""
-from datamodel import app
+from datamodel.datamodel import app
 import unittest
 
 class FlaskrTestCase(unittest.TestCase):
