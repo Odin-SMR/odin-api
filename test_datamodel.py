@@ -13,7 +13,7 @@ class FlaskrTestCase(unittest.TestCase):
         response = self.app.get('/')
         self.assertEqual(b'Hello, World!', response.data)
 
-    def test_two_applications_reg(self):
+    def Xtest_two_applications_reg(self):
         """adding two apps"""
         response = self.app.post(
             '/applications',
@@ -26,7 +26,7 @@ class FlaskrTestCase(unittest.TestCase):
         response = self.app.get('applications')
         self.assertEqual(b'prod1\nprod2', response.data)
 
-    def test_two_applications_reg(self):
+    def test_three_applications_reg(self):
         """adding two apps"""
         response = self.app.post(
             '/applications',
@@ -44,7 +44,7 @@ class FlaskrTestCase(unittest.TestCase):
         self.assertEqual(b'prod1\nprod2\nprod3', response.data)
 
 
-    def test_one_applications_reg(self):
+    def test_no_applications_reg(self):
         """testing no appsregistered"""
         response = self.app.get('applications')
         self.assertEqual(b'No apps registered', response.data)
