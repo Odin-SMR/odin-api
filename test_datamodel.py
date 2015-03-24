@@ -1,12 +1,13 @@
 """ testing webapp"""
-from datamodel.datamodel import app
+from datamodel.datamodel import DataModel
 import unittest
 
 class FlaskrTestCase(unittest.TestCase):
     """Flask testcase"""
 
     def setUp(self):
-        self.app = app.test_client()
+        self.data = DataModel("datam")
+        self.app = self.data.test_client()
 
     def test_index(self):
         """testing index"""
