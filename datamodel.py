@@ -6,9 +6,10 @@ from flask.views import MethodView, View
 
 class IndexView(View):
 #    methods = ['GET']
-
+    number_of_views = 0
     def dispatch_request(self):
-        return 'Hello, World!'
+        IndexView.number_of_views += 1
+        return 'Hello, World! {0}'.format(IndexView.number_of_views)
 
 class ApplicationView(MethodView):
     applist = list()

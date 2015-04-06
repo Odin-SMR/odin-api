@@ -12,7 +12,7 @@ class FlaskrTestCase(unittest.TestCase):
     def test_index(self):
         """testing index"""
         response = self.app.get('/')
-        self.assertEqual(b'Hello, World!', response.data)
+        self.assertEqual(b'Hello, World! 1', response.data)
 
     def Xtest_two_applications_reg(self):
         """adding two apps"""
