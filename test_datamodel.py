@@ -6,7 +6,7 @@ class FlaskrTestCase(unittest.TestCase):
     """Flask testcase"""
 
     def setUp(self):
-        self.data = DataModel("datam")
+        self.data = DataModel(__name__)
         self.app = self.data.test_client()
 
     def test_index(self):
