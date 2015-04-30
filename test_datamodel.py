@@ -111,8 +111,7 @@ class FlaskrTestCase(unittest.TestCase):
         f.write(test_string)
         f.close
         f=open(databasepath+'/'+filename,'rb')
-        fdata=f.read()
-        response=self.app.post('/upload',data=dict(file=(io.BytesIO(fdata),filename)))
+        response=self.app.post('/upload',data={'file':(f,filename)})
         self.assertEqual(response.data,b'file uploaded')
 
 
