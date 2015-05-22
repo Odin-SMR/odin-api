@@ -3,57 +3,12 @@
 from flask import Flask, request, send_from_directory
 from flask.views import MethodView, View
 import os.path
-from sqlalchemy import *
-from datetime import datetime
 
 fullpath=os.path.realpath(__name__)
 folderpath=os.path.dirname(fullpath)
 y=str.split(folderpath,'/datamodel')
 databasepath=y[0]+'/lib/database'
 
-# Functions ==================
-# These functions should be moved to a folder somewhere
-def datestring_to_date(string):
-    year=int(string[0:4])
-    if string[4]=='0':
-        month=int(string[5])
-    else:
-        month=int(string[4:6])
-    if string[6]=='0':
-        day=int(string[7])
-    else:
-        day=int(string[6:8])
-    date=datetime(year,month,day)
-    return date
-
-def date2mjd(date1):
-    mjd1=date1-datetime(1858,11,17)
-    return mjd1.days
-
-def mjd2stw(mjd1):
-    MJD0=56416.7782534
-    stw0=6161431982
-    rate=1/16.0016444
-    stw=(mjd1-MJD0)*86400.0/rate+stw0
-    return int(stw)
-
-def stw2mjd(stw):
-    stw0=6161431982
-    MJD0=56416.7782534
-    rate=1/16.0016444
-    MJD=MJD0+(stw-stw0)*rate/86400.0
-    return MJD
-
-def stw_from_date(date1,date2):
-    mjd1 = date2mjd(date1)
-    mjd2 = date2mjd(date2)
-    stw1 = mjd2stw(mjd1)
-    stw2 = mjd2stw(mjd2)
-    return stw1, stw2
-#======================================
-
-
-# Views ===============================
 class IndexView(View):
 #    methods = ['GET']
     number_of_views = 0
@@ -124,25 +79,6 @@ class Upload(View):
         file.save(databasepath+'/'+file.filename)
         return 'file uploaded'
 
-class ListScans(View):
-    methods=['GET']
-    def dispatch_request(self):
-        start_time=request.args['start_time']
-        end_time=request.args['end_time']
-        date1=datestring_to_date(start_time)
-        date2=datestring_to_date(end_time)
-        stw1, stw2=stw_from_date(date1,date2)
-        engine=create_engine('postgresql://odinop:***REMOVED***@malachite.rss.chalmers.se:5432/odin')
-        con=engine.connect()
-        # The query to the database below is very simple and does not utilize the power of sqlalchemy. This should be changed
-        query_string='select distinct(stw) as scan_id from ac_cal_level1b where stw between {0} and {1} and freqmode=2;'.format(stw1,stw2)
-        result=con.execute(query_string)
-        id_list=list()
-        for row in result:
-            id_list.append(row['scan_id'])
-        return str(id_list)
-
-
 class DataModel(Flask):
     def __init__(self, name):
         super(DataModel, self).__init__(name)
@@ -154,7 +90,6 @@ class DataModel(Flask):
         self.add_url_rule('/get_scalar',view_func=Scalar.as_view('scalar'))
         self.add_url_rule('/get_vector',view_func=Vector.as_view('vector'))
         self.add_url_rule('/upload',view_func=Upload.as_view('uploading'))
-        self.add_url_rule('/FM/scans/',view_func=ListScans.as_view('listscans'))
 
 def main():
     app = DataModel(__name__)
