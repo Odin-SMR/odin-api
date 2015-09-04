@@ -80,7 +80,7 @@ class ViewScan(MethodView):
         if "application/json" in accept:
             return jsonify(test="ok", other=2, data=spectrum)
         else:
-            return 'test'
+            return render_template('message.html',text='Don''t know what to do.')
 
 
 
@@ -145,6 +145,11 @@ class PlotSpectrum(MethodView):
         return send_file(
             buf, attachment_filename='plot.png', mimetype='image/png')
 
+class ViewIndex(MethodView):
+    """View of all scans"""
+
+    def get(self):
+        return render_template('index.html')
 
 class ViewScaninfo(MethodView):
     """plots information"""
@@ -1038,6 +1043,10 @@ class DataModel(Flask):
             )
 
 
+        self.add_url_rule(
+            '/index.html',
+            view_func=ViewIndex.as_view('index')
+            )
 def main():
     """Default function"""
     app = DataModel(__name__)
