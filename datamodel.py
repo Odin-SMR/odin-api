@@ -237,17 +237,22 @@ class ViewScaninfoplot(MethodView):
             loginfodict_created = 1
 
             loginfo = append2dict(loginfo,scanloginfo)
-        lista = []
-        for ind in range(len(loginfo['ScanID'])):
-            row = []
-            for item in ['DateTime','FreqMode','StartLat','EndLat','SunZD','AltStart','AltEnd','ScanID']:
-                row.append(loginfo[item][ind])
-            lista.append(row)
-        fig = plot_loginfo(backend,date1,date2,loginfo)
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png')
-        buf.seek(0)
-        return send_file(
+
+        accept = request.headers['Accept']
+
+        if "application/json" in accept:
+            for item in loginfo.keys():
+                try:
+                    loginfo[item]=loginfo[item].tolist()
+                except:
+                    pass
+            return jsonify(**loginfo)
+        else:
+            fig = plot_loginfo(backend,date1,date2,loginfo)
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png')
+            buf.seek(0)
+            return send_file(
                 buf, attachment_filename='plot.png', mimetype='image/png')
 
 
@@ -257,9 +262,9 @@ class ViewScandata(MethodView):
         con=db()
     
         #export data
-        calstw=int(scanno)
-        o=Orbit_data_exporter(backend,con)
-        ok=o.get_db_data(calstw)
+        calstw = int(scanno)
+        o = Scan_data_exporter(backend,con)
+        ok = o.get_db_data(calstw)
 
         if ok==0:
             print 'data for scan {0} not found'.format(calstw) 
@@ -269,7 +274,7 @@ class ViewScandata(MethodView):
     
         if 1:
             #perform calibration step2 for target spectrum
-            c=Calibration_step2(con)        
+            c = Calibration_step2(con)        
             for ind,s in enumerate(o.specdata):
                 if o.spectra['type'][ind] == 8:
                     altitude_range = '{80000,120000}'
@@ -328,13 +333,24 @@ class ViewScandata(MethodView):
  
         #o.spectra is a dictionary containing the relevant data
 
-        fig=plot_scan(backend,calstw,o)
-        con.close()
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png')
-        buf.seek(0)
-        return send_file(
-                buf, attachment_filename='plot.png', mimetype='image/png')
+        accept = request.headers['Accept']
+
+        if "application/json" in accept:
+
+            datadict = scan2jsondict(o.spectra)
+
+            return jsonify(**datadict)
+            
+        else:
+
+            fig=plot_scan(backend,calstw,o)
+            con.close()
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png')
+            buf.seek(0)
+
+            return send_file(
+                    buf, attachment_filename='plot.png', mimetype='image/png')
 
 
 
@@ -345,14 +361,14 @@ class Test(MethodView):
         return render_template('plottest.html', scanno=int(scanno),lista=a)
 
 
-class Orbit_data_exporter():
+class Scan_data_exporter():
     def __init__(self,backend,con):
         self.backend=backend
         self.con=con
     
     def get_db_data(self,calstw):
         '''export orbit data from database tables'''
-
+        self.calstw = calstw
 
         #extract all target spectrum data for the orbit
         temp=[self.backend,calstw]
@@ -419,7 +435,9 @@ class Orbit_data_exporter():
         for ind,res in enumerate(self.specdata):
 
             spec = specdict()
-          
+
+            spec['calstw'] = self.calstw
+
             for item in ['stw','mjd','orbit','lst','intmode',
                      'channels','skyfreq','lofreq','restfreq',
                      'maxsuppression','sbpath','latitude','longitude',
@@ -516,7 +534,8 @@ class Orbit_data_exporter():
           
             spec['freqres'] = 1000000.0
             spec['pointer'] = [ind,res['channels'],1,res['stw']]
-            
+            spec['frequency'] = freq(spec['lofreq'], spec['skyfreq'], spec['ssb_fq'])            
+
             for item in spec.keys(): 
                 self.spectra[item].append(spec[item])
 
@@ -591,7 +610,69 @@ class Calibration_step2():
         return spec
 
  
- 
+
+def scan2jsondict(spectra):
+
+    datadict = {
+     'Version'         : spectra['version'],
+     'Level'           : spectra['level'],
+     'Quality'         : spectra['quality'],
+     'STW'             : spectra['stw'],
+     'MJD'             : spectra['mjd'],
+     'Orbit'           : spectra['orbit'],
+     'LST'             : spectra['lst'],
+     'Source'          : spectra['sourcemode'],
+     'Discipline'      : spectra['discipline'],
+     'Topic'           : spectra['topic'],
+     'Spectrum'        : spectra['spectrum'],
+     'ObsMode'         : spectra['obsmode'],
+     'Type'            : spectra['type'],
+     'Frontend'        : spectra['frontend'],
+     'Backend'         : spectra['backend'],
+     'SkyBeamHit'      : spectra['skybeamhit'],
+     'RA2000'          : spectra['ra2000'],
+     'Dec2000'         : spectra['dec2000'],
+     'VSource'         : spectra['vsource'],
+     'Longitude'       : spectra['longitude'],
+     'Latitude'        : spectra['latitude'],
+     'Altitude'        : spectra['altitude'],
+     'Qtarget'         : spectra['qtarget'],
+     'Qachieved'       : spectra['qachieved'],
+     'Qerror'          : spectra['qerror'],
+     'GPSpos'          : spectra['gpspos'],
+     'GPSvel'          : spectra['gpsvel'],
+     'SunPos'          : spectra['sunpos'],
+     'MoonPos'         : spectra['moonpos'],
+     'SunZD'           : spectra['sunzd'],
+     'Vgeo'            : spectra['vgeo'],
+     'Vlsr'            : spectra['vlsr'],
+     'Tcal'            : spectra['hotloada'],
+     'Tsys'            : spectra['tsys'],
+     'SBpath'          : spectra['sbpath'],
+     'LOFreq'          : spectra['lofreq'],
+     'SkyFreq'         : spectra['skyfreq'],
+     'RestFreq'        : spectra['restfreq'],
+     'MaxSuppression'  : spectra['maxsuppression'],
+     'AttitudeVersion' : spectra['soda'],
+     'FreqRes'         : spectra['freqres'],
+     'FreqCal'         : spectra['ssb_fq'],
+     'IntMode'         : spectra['intmode'],
+     'IntTime'         : spectra['inttime'],
+     'EffTime'         : spectra['efftime'],
+     'Channels'        : spectra['channels'],
+     'FreqMode'        : spectra['freqmode'],
+     'TSpill'          : spectra['tspill'],
+     'ScanID'          : spectra['calstw'],
+     'Frequency'       : spectra['frequency']*1e9,
+    }
+
+    for item in datadict.keys():
+        try:
+            datadict[item] = datadict[item].tolist()
+        except:
+            pass
+  
+    return datadict 
 
 def specdict():
     spec = dict()
@@ -607,7 +688,8 @@ def specdict():
              'lo', 'sigtype', 'version', 'quality',
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
-             'pointer', 'tspill','ssb_fq',]
+             'pointer', 'tspill','ssb_fq', 
+             'calstw','frequency']
 
     for item in lista:
         spec[item] = []
@@ -823,8 +905,8 @@ def freq(lofreq,skyfreq,LO):
 
 class db(DB):
     def __init__(self):
-        DB.__init__(self,dbname='odin',user='odinop',host='malachite.rss.chalmers.se',passwd='***REMOVED***')
-
+        #DB.__init__(self,dbname='odin',user='odinop',host='malachite.rss.chalmers.se',passwd='***REMOVED***')
+        DB.__init__(self,dbname='odin',user='odinop',host='postgresql',passwd='***REMOVED***')
 
 class Scanloginfo_exporter():
     '''A class derived for extracting loginfo from odin scan'''
@@ -1038,7 +1120,7 @@ class DataModel(Flask):
             view_func=ViewScaninfoplot.as_view('viewscaninfoplot')
             )
         self.add_url_rule(
-            '/viewscan/<backend>/<scanno>/plot.png',
+            '/viewscan/<backend>/<scanno>',
             view_func=ViewScandata.as_view('viewscandata')
             )
 
