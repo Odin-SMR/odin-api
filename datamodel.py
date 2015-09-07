@@ -154,17 +154,35 @@ class ViewIndex(MethodView):
 class ViewScaninfo(MethodView):
     """plots information"""
     def get(self, backend,date,):
-        date1 = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        con = db()
+
+        a = Scanloginfo_exporter(backend, con)
         mjd0 = datetime(1858,11,17)
-        mjd1 = datetime2mjd(date1)
-        # add 6 hours to mjd2
-        dmjd = 0.25
-        mjd2 = mjd1 + dmjd
-        date2 = date1 + relativedelta(days = +dmjd)
-        # estimate stws from mjds (make sure the stws are outside the true range)
-        # since mjd2stw is only an approximate converter
-        minstw = mjd2stw( mjd1 - 0.1)
-        maxstw = mjd2stw( mjd2 + 0.1)
+
+        try:
+
+            date1 = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            query = 'date'
+            mjd1 = datetime2mjd(date1)
+            # add 6 hours to mjd2
+            dmjd = 0.25
+            mjd2 = mjd1 + dmjd
+            date2 = date1 + relativedelta(days = +dmjd)
+            # estimate stws from mjds (make sure the stws are outside the true range)
+            # since mjd2stw is only an approximate converter
+            minstw = mjd2stw( mjd1 - 0.1)
+            maxstw = mjd2stw( mjd2 + 0.1)
+
+
+        except:
+
+            orbit = int(date)
+            query = 'orbit'
+            [minstw, maxstw, mjd1, mjd2] = a.get_orbit_stw(orbit)
+            date1 = mjd0 + relativedelta(days = +mjd1)
+            date2 = mjd0 + relativedelta(days = +mjd2)
+            minstw = minstw - 16*60*15
+            maxstw = maxstw + 16*60*15
 
         con = db()
 
@@ -201,21 +219,38 @@ class ViewScaninfo(MethodView):
 class ViewScaninfoplot(MethodView):
     """plots information"""
     def get(self, backend,date,):
-        date1 = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
-        mjd0 = datetime(1858,11,17)
-        mjd1 = datetime2mjd(date1)
-        # add 6 hours to mjd2
-        dmjd = 0.25
-        mjd2 = mjd1 + dmjd
-        date2 = date1 + relativedelta(days = +dmjd)
-        # estimate stws from mjds (make sure the stws are outside the true range)
-        # since mjd2stw is only an approximate converter
-        minstw = mjd2stw( mjd1 - 0.1)
-        maxstw = mjd2stw( mjd2 + 0.1)
 
         con = db()
 
         a = Scanloginfo_exporter(backend, con)
+        mjd0 = datetime(1858,11,17)        
+
+        try:
+
+            date1 = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            query = 'date'
+            mjd1 = datetime2mjd(date1)
+            # add 6 hours to mjd2
+            dmjd = 0.25
+            mjd2 = mjd1 + dmjd
+            date2 = date1 + relativedelta(days = +dmjd)
+            # estimate stws from mjds (make sure the stws are outside the true range)
+            # since mjd2stw is only an approximate converter
+            minstw = mjd2stw( mjd1 - 0.1)
+            maxstw = mjd2stw( mjd2 + 0.1)
+
+
+        except:
+
+            orbit = int(date)
+            query = 'orbit'
+            [minstw, maxstw, mjd1, mjd2] = a.get_orbit_stw(orbit)
+            date1 = mjd0 + relativedelta(days = +mjd1)
+            date2 = mjd0 + relativedelta(days = +mjd2)
+            minstw = minstw - 16*60*15
+            maxstw = maxstw + 16*60*15
+
+
 
         # extract data from scans within given time ranges
         data = a.get_scan_data(minstw, maxstw, mjd1-0.1, mjd2+0.1)
@@ -337,7 +372,7 @@ class ViewScandata(MethodView):
 
         if "application/json" in accept:
 
-            datadict = scan2jsondict(o.spectra)
+            datadict = scan2dictlist(o.spectra)
 
             return jsonify(**datadict)
             
@@ -534,7 +569,11 @@ class Scan_data_exporter():
           
             spec['freqres'] = 1000000.0
             spec['pointer'] = [ind,res['channels'],1,res['stw']]
-            spec['frequency'] = freq(spec['lofreq'], spec['skyfreq'], spec['ssb_fq'])            
+            if (ind==0 or (ind>0 and self.specdata[ind-1]['lofreq']<>spec['lofreq']
+                                and self.specdata[ind-1]['skyfreq']<>spec['skyfreq'])):
+                spec['frequency'] = freq(spec['lofreq'], spec['skyfreq'], spec['ssb_fq'])
+            else: 
+                spec['frequency'] = self.spectra['frequency'][ind-1]            
 
             for item in spec.keys(): 
                 self.spectra[item].append(spec[item])
@@ -611,7 +650,7 @@ class Calibration_step2():
 
  
 
-def scan2jsondict(spectra):
+def scan2dictlist(spectra):
 
     datadict = {
      'Version'         : spectra['version'],
@@ -919,16 +958,19 @@ class Scanloginfo_exporter():
         '''get min and max stw from a given orbit'''
 
         query = self.con.query('''
-                  select min(foo.stw) as minstw ,max(foo.stw) as maxstw from
-                  (select stw from attitude_level1 where
-                  orbit>={0} and orbit<{0}+10 order by stw) as foo
-                             '''.format(self.orbit))
+                  select min(foo.stw) as minstw ,max(foo.stw) as maxstw,
+                  min(foo.mjd) as minmjd, max(foo.mjd) as maxmjd from
+                  (select stw,mjd from attitude_level1 where
+                  orbit>={0} and orbit<{0}+1 order by stw) as foo
+                             '''.format(orbit))
 
         result = query.dictresult()
         maxstw = result[0]['maxstw']
         minstw = result[0]['minstw']
+        maxmjd = result[0]['maxmjd']
+        minmjd = result[0]['minmjd']
 
-        return minstw,maxstw
+        return minstw,maxstw,minmjd,maxmjd
 
     def get_scan_data(self, minstw, maxstw, minmjd, maxmjd):
         '''get attitude data within given stws'''
