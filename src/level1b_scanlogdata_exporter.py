@@ -8,6 +8,9 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from date_tools import *
 from datetime import date,datetime,timedelta
+from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+from matplotlib import dates,rc
+
 
 class Scanloginfo_exporter():
     '''A class derived for extracting loginfo from odin scan'''
@@ -227,4 +230,4 @@ def get_scan_logdata(con, backend,date,):
 
         loginfo = append2dict(loginfo,scanloginfo)
 
-    return loginfo
+    return loginfo,date1,date2

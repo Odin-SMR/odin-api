@@ -155,7 +155,7 @@ class ViewScaninfo(MethodView):
     def get(self, backend,date,):
         con = db()
 
-        loginfo = get_scan_logdata(con, backend, date)
+        loginfo,date1,date2 = get_scan_logdata(con, backend, date)
 
         lista = []
         for ind in range(len(loginfo['ScanID'])):
@@ -171,7 +171,7 @@ class ViewScaninfoplot(MethodView):
 
         con = db()
 
-        loginfo = get_scan_logdata(con, backend, date)
+        loginfo,date1,date2 = get_scan_logdata(con, backend, date)
 
         accept = request.headers['Accept']
 
