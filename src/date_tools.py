@@ -28,7 +28,7 @@ def mjd2stw(mjd1):
     return int(stw)
 
 def stw2mjd(stw):
-    """Convert from stw to mjc"""
+    """Convert from stw to mjd"""
     stw0 = 6161431982
     mjd0 = 56416.7782534
     rate = 1/16.0016444
@@ -42,5 +42,14 @@ def stw_from_date(date1, date2):
     stw1 = mjd2stw(mjd1)
     stw2 = mjd2stw(mjd2)
     return stw1, stw2
+
+def datetime2mjd(date):
+    """datetime to mjd"""
+    mjd0 = datetime(1858,11,17)
+    datetime_diff = date-mjd0
+    seconds_per_day = 24.0*60*60
+    mjd = datetime_diff.days + datetime_diff.seconds/seconds_per_day
+    return mjd
+
 #======================================
 
