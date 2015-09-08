@@ -1,0 +1,5 @@
+img.loadingsql {
+    height: 600px;
+    width: 800px;
+    background: transparent url(/static/images/odin-loader.gif) no-repeat scroll center center;
+}
