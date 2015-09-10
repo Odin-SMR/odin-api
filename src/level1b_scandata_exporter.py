@@ -13,12 +13,12 @@ class Scan_data_exporter():
         self.backend=backend
         self.con=con
 
-    def get_db_data(self,calstw):
+    def get_db_data(self,freqmode,calstw):
         '''export orbit data from database tables'''
         self.calstw = calstw
 
         #extract all target spectrum data for the orbit
-        temp=[self.backend,calstw]
+        temp=[self.backend,calstw,freqmode]
         query=self.con.query('''
               select calstw,stw,backend,orbit,mjd,lst,intmode,spectra,
               alevel,version,channels,skyfreq,lofreq,restfreq,maxsuppression,
@@ -32,7 +32,8 @@ class Scan_data_exporter():
               join ac_level0  using (backend,stw)
               join shk_level1  using (backend,stw)
               where calstw={1} and backend='{0}' and version=8
-              and sig_type='SIG'
+              and sig_type='SIG' and
+              freqmode={2}
               order by stw asc,intmode asc'''.format(*temp))
         result=query.dictresult()
     
@@ -50,6 +51,7 @@ class Scan_data_exporter():
                join ac_level0  using (backend,stw)
                join shk_level1  using (backend,stw)
                where stw={1} and backend='{0}' and version=8
+               and freqmode={2}
                order by stw asc,intmode asc,spectype asc'''.format(*temp))
         result2=query2.dictresult()
 
@@ -565,12 +567,12 @@ def plot_scan(backend,calstw,spectra):
 
 
 
-def get_scan_data(con, backend, scanno):
+def get_scan_data(con, backend, freqmode, scanno):
     
     #export data
     calstw = int(scanno)
     o = Scan_data_exporter(backend,con)
-    ok = o.get_db_data(calstw)
+    ok = o.get_db_data(freqmode,calstw)
 
     if ok==0:
         print 'data for scan {0} not found'.format(calstw)

@@ -37,21 +37,36 @@ class Scanloginfo_exporter():
 
         return minstw,maxstw,minmjd,maxmjd
 
-    def get_scan_data(self, minstw, maxstw, minmjd, maxmjd):
+    def get_scan_data(self, minstw, maxstw, minmjd, maxmjd, freqmode=-1):
         '''get attitude data within given stws'''
 
-        query = self.con.query('''
-                  select stw,calstw,latitude,longitude,mjd,
-                  altitude,sunzd,freqmode from
-                  attitude_level1
-                  join ac_level1b using(stw,backend)
-                  join ac_level0 using(stw,backend)
-                  where stw between {0} and {1} and
-                  mjd between {2} and {3} and
-                  backend = '{4}' and sig_type='SIG' and
-                  (intmode=1023 or intmode=511)
-                  order by stw
+        if freqmode==-1:
+            query = self.con.query('''
+                      select stw,calstw,latitude,longitude,mjd,
+                      altitude,sunzd,freqmode from
+                      attitude_level1
+                      join ac_level1b using(stw,backend)
+                      join ac_level0 using(stw,backend)
+                      where stw between {0} and {1} and
+                      mjd between {2} and {3} and
+                      backend = '{4}' and sig_type='SIG' and
+                      (intmode=1023 or intmode=511)
+                      order by stw
                              '''.format(*[minstw,maxstw,minmjd,maxmjd,self.backend]))
+        else:
+            query = self.con.query('''
+                      select stw,calstw,latitude,longitude,mjd,
+                      altitude,sunzd,freqmode from
+                      attitude_level1
+                      join ac_level1b using(stw,backend)
+                      join ac_level0 using(stw,backend)
+                      where stw between {0} and {1} and
+                      mjd between {2} and {3} and
+                      backend = '{4}' and sig_type='SIG' and
+                      freqmode = {5} and
+                      (intmode=1023 or intmode=511)
+                      order by stw
+                             '''.format(*[minstw,maxstw,minmjd,maxmjd,self.backend,freqmode]))
 
         result = query.dictresult()
 
@@ -179,7 +194,7 @@ def copyemptydict(a):
 
 
 
-def get_scan_logdata(con, backend,date,):
+def get_scan_logdata(con, backend,date,freqmode=-1,dmjd=0.25):
 
 
     a = Scanloginfo_exporter(backend, con)
@@ -191,7 +206,6 @@ def get_scan_logdata(con, backend,date,):
         query = 'date'
         mjd1 = datetime2mjd(date1)
         # add 6 hours to mjd2
-        dmjd = 0.25
         mjd2 = mjd1 + dmjd
         date2 = date1 + relativedelta(days = +dmjd)
         # estimate stws from mjds (make sure the stws are outside the true range)
@@ -210,7 +224,7 @@ def get_scan_logdata(con, backend,date,):
         maxstw = maxstw + 16*60*15
 
     # extract data from scans within given time ranges
-    data = a.get_scan_data(minstw, maxstw, mjd1-0.1, mjd2+0.1)
+    data = a.get_scan_data(minstw, maxstw, mjd1-0.1, mjd2+0.1, freqmode)
 
     calstw = N.unique(data['calstw'])
     # loop over scans and extract the desired data
