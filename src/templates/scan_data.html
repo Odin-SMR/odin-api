@@ -5,10 +5,10 @@
 <h1> List of scans!</h1>
 <p>Placeholder... info you want to see: scans observed for the given day</p>
 <br>
-<img src="/viewodinscan/{{date}}/{{backend}}/{{freqmode}}/plot.png" class="loadingsql" />
+<img src="/viewscan/{{date}}/{{backend}}/{{freqmode}}/plot.png" class="loadingsql" />
 <ul>
 {% for item in lista %}
-<a href="/viewodinscan/{{date}}/{{backend}}/{{item[2]}}/{{item[8]}}"> 
+<a href="/viewscan/{{date}}/{{backend}}/{{item[2]}}/{{item[8]}}"> 
 {{item[1]}} , FM = {{item[2]}} , Lat:{{item[3]}} - {{item[4]}}, SunZD = {{item[5]}} , Ztan: {{item[6]}} - {{item[7]}} </an>
 <br>
 {% endfor %}			

@@ -4,6 +4,7 @@ from pg import DB
 from sys import stderr,stdout,stdin,argv,exit
 import matplotlib.pyplot as plt
 import matplotlib
+from utils import copyemptydict
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from date_tools import *
@@ -184,15 +185,6 @@ def append2dict(a,b):
     for item in a.keys():
         a[item].append(b[item])
     return a
-
-def copyemptydict(a):
-    b = dict()
-    for item in a.keys():
-        b[item] = []
-    return b
-
-
-
 
 def get_scan_logdata(con, backend,date,freqmode=-1,dmjd=0.25):
 

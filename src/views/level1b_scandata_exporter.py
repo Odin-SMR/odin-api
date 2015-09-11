@@ -2,6 +2,7 @@ import numpy
 import copy
 from pg import DB
 from sys import stderr,stdout,stdin,argv,exit
+from utils import copyemptydict
 import matplotlib.pyplot as plt
 import matplotlib
 from dateutil.relativedelta import relativedelta
@@ -407,13 +408,6 @@ def scan2dictlist(spectra):
             pass
   
     return datadict 
-
-
-def copyemptydict(a):
-    b = dict()
-    for item in a.keys():
-        b[item] = []
-    return b
 
 
 
