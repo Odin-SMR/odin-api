@@ -1,6 +1,6 @@
 """A simple datamodel implementation"""
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, url_for
 from flask import render_template, jsonify, abort
 from flask.views import MethodView
 from sqlalchemy import create_engine
@@ -247,25 +247,39 @@ class ViewDateInfo(MethodView):
 
         result = query.dictresult()
         lista = []
-        datadict = {
+        datadict1 = {
             'Date'     : [],
+            'Info'  : [],
+                    }
+        datadict2 = {
             'Backend'  : [],
             'FreqMode' : [],
             'NumScan'  : [],
+            'URL'      : [],
                     }
-        datadict['Date'].append(str(date1.date()))
+
+        datadict1['Date'].append(str(date1.date()))
         for row in result:
+            datadict2 = {
+            'Backend'  : [],
+            'FreqMode' : [],
+            'NumScan'  : [],
+            'URL'      : [],
+                    }
             lista.append([date1.date(),row['backend'],row['freqmode'],row['count']])
-            datadict['Backend'].append(row['backend'])
-            datadict['FreqMode'].append(row['freqmode'])
-            datadict['NumScan'].append(row['count']) 
+            datadict2['Backend'] = row['backend']
+            datadict2['FreqMode'] = row['freqmode']
+            datadict2['NumScan'] = row['count']
+            temp = [ request.url_root,str(date1.date()), row['backend'], row['freqmode']]
+            datadict2['URL'] = '''{0}viewodinscan/{1}/{2}/{3}'''.format(*temp)
+            datadict1['Info'].append(datadict2)
         con.close()
         accept = request.headers['Accept']
 
         if "application/json" in accept:
             
 
-            return jsonify(**datadict)
+            return jsonify(**datadict1)
 
         else:
       
@@ -341,7 +355,15 @@ class ViewFreqmodeInfo(MethodView):
                     loginfo[item]=loginfo[item].tolist()
                 except:
                     pass
-
+            loginfo['Info'] = []
+            for fm,scanid in zip(loginfo['FreqMode'],loginfo['ScanID']):
+                datadict={'ScanID' : [],
+                          'URL'    : [],}
+                temp = [ request.url_root, date, backend, fm, scanid]
+                datadict['ScanID'] = scanid
+                datadict['URL'] = '''{0}viewodinscan/{1}/{2}/{3}/{4}'''.format(*temp)
+                loginfo['Info'].append(datadict)
+    
             return jsonify(**loginfo)
 
         else:
