@@ -25,147 +25,102 @@ class ViewIndex(MethodView):
     def get(self):
         return render_template('index.html')
 
-
-
-class ViewDateInfo(MethodView):
+class DateInfo(MethodView):
     """plots information"""
     def get(self, date):
-        con = DatabaseConnector()
+        """GET"""
         date1 = datetime.strptime(date, '%Y-%m-%d')
         date2 = date1 + relativedelta(days=+1)
         mjd1 = date2mjd(date1)
         mjd2 = date2mjd(date2)
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        temp = [stw1, stw2, mjd1, mjd2]
-        query_str = ''' select freqmode, backend, count(distinct(stw)) from
-             ac_cal_level1b
-             join attitude_level1 using(backend,stw)
-             where stw between {0} and {1}
-             and mjd between {2} and {3}
-             group by backend,freqmode
-             order by backend,freqmode '''.format(*temp)
+        query_str = self.gen_query(stw1, stw2, mjd1, mjd2)
+        date = date1.date().isoformat()
+        info_list = self.gen_data(query_str)
+        return jsonify(Date=date, Info=info_list)
 
-        query = con.query(query_str)
-
+    def gen_data(self, query_string):
+        con = DatabaseConnector()
+        query = con.query(query_string)
         result = query.dictresult()
-        lista = []
-        datadict1 = {
-            'Date'     : [],
-            'Info'  : [],
-            }
-        datadict2 = {
-            'Backend'  : [],
-            'FreqMode' : [],
-            'NumScan'  : [],
-            'URL'      : [],
-            }
-
-        datadict1['Date'].append(str(date1.date()))
+        info_list = []
         for row in result:
-            datadict2 = {
-                'Backend'  : [],
-                'FreqMode' : [],
-                'NumScan'  : [],
-                'URL'      : [],
-                }
-            lista.append(
-                [date1.date(), row['backend'], row['freqmode'], row['count']])
-            datadict2['Backend'] = row['backend']
-            datadict2['FreqMode'] = row['freqmode']
-            datadict2['NumScan'] = row['count']
-            temp = [
-                request.url_root,
-                str(date1.date()),
-                row['backend'],
-                row['freqmode']
-                ]
-            datadict2['URL'] = '''{0}viewscan/{1}/{2}/{3}'''.format(*temp)
-            datadict1['Info'].append(datadict2)
+            info_dict = {}
+            info_dict['Backend'] = row['backend']
+            info_dict['FreqMode'] = row['freqmode']
+            info_dict['NumScan'] = row['count']
+            info_dict['URL'] = '{0}viewscan/{1}/{2}/{3}'.format(
+                request.url_root, date, row['backend'], row['freqmode'])
+            info_list.append(info_dict)
         con.close()
-        accept = request.headers['Accept']
+        return info_list
 
-        if "application/json" in accept:
-            return jsonify(**datadict1)
-        else:
-            return render_template(
-                'scan_info.html', scanno=int(1), lista=lista)
+    def gen_query(self, stw1, stw2, mjd1, mjd2):
+        query_str = (
+            "select freqmode, backend, count(distinct(stw)) "
+            "from ac_cal_level1b "
+            "join attitude_level1 using(backend,stw) "
+            "where stw between {0} and {1} "
+            "and mjd between {2} and {3} "
+            "group by backend,freqmode "
+            "order by backend,freqmode "
+            ).format(stw1, stw2, mjd1, mjd2)
+        return query_str
 
-class ViewDateBackendInfo(MethodView):
+
+class DateBackendInfo(DateInfo):
     """plots information"""
     def get(self, date, backend):
-
-        con = DatabaseConnector()
+        """GET"""
         date1 = datetime.strptime(date, '%Y-%m-%d')
-        date2 = date1 + relativedelta(days = +1)
+        date2 = date1 + relativedelta(days=+1)
         mjd1 = date2mjd(date1)
         mjd2 = date2mjd(date2)
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        temp = [stw1, stw2, mjd1, mjd2, backend]
-        query_str = '''
-             select freqmode, backend, count(distinct(stw)) from
-             ac_cal_level1b
-             join attitude_level1 using(backend,stw)
-             where stw between {0} and {1}
-             and mjd between {2} and {3}
-             and backend='{4}'
-             group by backend,freqmode
-             order by backend,freqmode
-                         '''.format(*temp)
+        query_str = self.gen_query(stw1, stw2, mjd1, mjd2, backend)
+        date = date1.date().isoformat()
+        info_list = self.gen_data(query_str)
+        return jsonify(Date=date, Info=info_list)
 
-        query = con.query(query_str)
+    def gen_query(self, stw1, stw2, mjd1, mjd2, backend):
+        query_str = (
+            "select freqmode, backend, count(distinct(stw)) "
+            "from ac_cal_level1b "
+            "join attitude_level1 using(backend,stw) "
+            "where stw between {0} and {1} "
+            "and mjd between {2} and {3} "
+            "and backend='{4}' "
+            "group by backend,freqmode "
+            "order by backend,freqmode "
+            ).format(stw1, stw2, mjd1, mjd2, backend)
+        return query_str
 
-        result = query.dictresult()
-        lista = []
-        for row in result:
-            lista.append([date1.date(),row['backend'],row['freqmode'],row['count']])
-        con.close()
-        accept = request.headers['Accept']
-
-        if "application/json" in accept:
-
-            return jsonify(**lista)
-
-        else:
-
-            return render_template('scan_info.html', scanno=int(1),lista=lista)
-
-class ViewFreqmodeInfo(MethodView):
+class FreqmodeInfo(MethodView):
     """loginfo for all scans from a given date and freqmode"""
     def get(self, date, backend, freqmode):
         con = DatabaseConnector()
         loginfo, date1, date2 = get_scan_logdata(
             con, backend, date+'T00:00:00', int(freqmode), 1)
-        lista = []
-        for ind in range(len(loginfo['ScanID'])):
+        for index in range(len(loginfo['ScanID'])):
             row = []
-            row.append(loginfo['DateTime'][ind].date())
+            row.append(loginfo['DateTime'][index].date())
             for item in ['DateTime', 'FreqMode', 'StartLat', 'EndLat', 'SunZD', 'AltStart', 'AltEnd', 'ScanID']:
-                row.append(loginfo[item][ind])
-            lista.append(row)
-        accept = request.headers['Accept']
-        if "application/json" in accept:
-            for item in loginfo.keys():
-                try:
-                    loginfo[item] = loginfo[item].tolist()
-                except:
-                    pass
-            loginfo['Info'] = []
-            for fm, scanid in zip(loginfo['FreqMode'], loginfo['ScanID']):
-                datadict = {'ScanID':[], 'URL':[]}
-                temp = [request.url_root, date, backend, fm, scanid]
-                datadict['ScanID'] = scanid
-                datadict['URL'] = '''{0}viewodinscan/{1}/{2}/{3}/{4}'''.format(*temp)
-                loginfo['Info'].append(datadict)
-            return jsonify(**loginfo)
-        else:
-            return render_template(
-                'scan_data.html',
-                date=loginfo['DateTime'][0].date(),
-                backend=backend,
-                freqmode=freqmode,
-                lista=lista)
+                row.append(loginfo[item][index])
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except:
+                pass
+        loginfo['Info'] = []
+        for fm, scanid in zip(loginfo['FreqMode'], loginfo['ScanID']):
+            datadict = {'ScanID':[], 'URL':[]}
+            temp = [request.url_root, date, backend, fm, scanid]
+            datadict['ScanID'] = scanid
+            datadict['URL'] = '''{0}viewodinscan/{1}/{2}/{3}/{4}'''.format(*temp)
+            loginfo['Info'].append(datadict)
+        return jsonify(**loginfo)
 
 class ViewFreqmodeInfoPlot(MethodView):
     """plots information: loginfo for all scans from a given date and freqmode"""
