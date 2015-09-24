@@ -2,8 +2,10 @@
 
 from flask import Flask
 from views.views import DateInfo, DateBackendInfo
-from views.views import ViewFreqmodeInfoPlot, ViewScanSpec
-from views.views import FreqmodeInfo, ViewIndex
+from views.views import ScanSpec
+from views.views import FreqmodeInfo
+from views.smr_site import ViewIndex, ViewFreqmodeInfoPlot
+from os import environ
 
 class Odin(Flask):
     """The main app running the odin site"""
@@ -18,12 +20,12 @@ class Odin(Flask):
             view_func=DateBackendInfo.as_view('backendinfo')
             )
         self.add_url_rule(
-            '/rest_api/v1/scan_info/<date>/<backend>/<freqmode>/',
+            '/rest_api/v1/freqmode_info/<date>/<backend>/<freqmode>/',
             view_func=FreqmodeInfo.as_view('scaninfo')
             )
         self.add_url_rule(
             '/rest_api/v1/scan/<backend>/<freqmode>/<scanno>/',
-            view_func=ViewScanSpec.as_view('scan')
+            view_func=ScanSpec.as_view('scan')
             )
         self.add_url_rule(
             '/',
@@ -36,7 +38,7 @@ class Odin(Flask):
 def main():
     """Default function"""
     app = Odin(__name__)
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=not environ.has_key('ODIN_API_PRODUCTION'))
 
 if __name__ == "__main__":
     main()
