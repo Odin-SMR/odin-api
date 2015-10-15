@@ -18,11 +18,23 @@ from matplotlib import dates, rc
 from dateutil.relativedelta import relativedelta
 import matplotlib
 from os import environ
+from database import DatabaseConnector
 class ViewIndex(MethodView):
     """View of all scans"""
 
     def get(self):
         return render_template('index.html', data=str(environ.has_key('ODIN_API_PRODUCTION')))
+
+class ViewLevel1(MethodView):
+    """View of all scans"""
+
+    def get(self):
+        return render_template('level1.html')
+class ViewLevel2(MethodView):
+    """View of all scans"""
+
+    def get(self):
+        return render_template('level2.html')
 
 
 class ViewScanSpec(MethodView):

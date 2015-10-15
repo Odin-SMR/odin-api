@@ -2,9 +2,9 @@
 
 from flask import Flask
 from views.views import DateInfo, DateBackendInfo
-from views.views import ScanSpec
-from views.views import FreqmodeInfo
-from views.smr_site import ViewIndex, ViewFreqmodeInfoPlot
+from views.views import ScanSpec, FreqmodeInfo
+from views.smr_site import ViewIndex, ViewScanSpec, ViewLevel1, ViewFreqmodeInfoPlot, ViewLevel2
+from views.data_info import FileInfo
 from os import environ
 
 class Odin(Flask):
@@ -28,12 +28,28 @@ class Odin(Flask):
             view_func=ScanSpec.as_view('scan')
             )
         self.add_url_rule(
+            '/rest_api/v1/file_info/',
+            view_func=FileInfo.as_view('file_info')
+            )
+        self.add_url_rule(
             '/',
             view_func=ViewIndex.as_view('index')
             )
         self.add_url_rule(
+            '/level1',
+            view_func=ViewLevel1.as_view('level1')
+            )
+        self.add_url_rule(
+            '/level2',
+            view_func=ViewLevel1.as_view('level2')
+            )
+        self.add_url_rule(
             '/browse/<backend>/<freqmode>/<scanno>/',
-            view_func=ViewFreqmodeInfoPlot.as_view('viewscan')
+            view_func=ViewScanSpec.as_view('viewscan')
+            )
+        self.add_url_rule(
+            '/plot/<date>/<backend>/<freqmode>',
+            view_func=ViewFreqmodeInfoPlot.as_view('plotscans')
             )
 def main():
     """Default function"""

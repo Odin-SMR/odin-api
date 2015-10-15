@@ -2,9 +2,102 @@
 
 
 {% block content %}
-<h1> Odin/SMR Data catalog</h1>
-<p>more information soon...</p>
-{% if data %}
-<p> production = {{ data }} <p>
-{% endif %}
+<div class="container">
+  <div class="jumbotron">
+      <h1> Odin/SMR Data catalog</h1>
+  </div>
+
+      {% if data %}
+      <p> production = {{ data }} <p>
+      {% endif %}
+  
+<div class="container-fluid">
+      <hr id="news" class="featurette-divider">
+
+      <div  class="row featurette">
+        <div class="col-md-7">
+          <h2 class="featurette-heading">Monitoring the sky <span class="text-muted">from above</span></h2>
+          <p class="lead">The Odin satellite was launched in February 2001 and
+was designed to combine two scientific disciplines on a single spacecraft in
+studies of star formation/early solar system (astronomy) and of the mechanisms
+behind the depletion of the ozone layer in the earth atmosphere and the effects
+of global warming (aeronomy).</p>
+
+          <p>The satellite has been used as a true observatory in order to best
+respond to scientific challenges. The astronomy mission was successfully
+concluded in the spring of 2007 and since then the satellite has been used
+exclusively for studies of the Earth’s atmosphere. During the first three years
+of the Odin mission, when both astronomy and aeronomy observations were
+conducted, the available observing time was shared equally between the two
+disciplines.</p>
+
+<!--
+<p>The main instrument on Odin is an advanced radiometer using a 1.1 m
+telescope, designed to be used for both the astronomy and aeronomy missions.
+The radiometer works in essentially unexplored frequency bands (486-580 GHz and
+at 119 GHz) with an unsurpassed sensitivity and spatial resolution.
+
+<p>For the aeronomy mission the payload is complemented by a spectrograph,
+named OSIRIS (Optical Spectrograph and Infrared Imaging System). OSIRIS
+provides simultaneous observations in two channels; a UV/Visible channel with a
+passband of 280-800 nm, and an IR channel with a total pass band of 30 nm,
+centered on 1.27 microns.</p>
+
+<p>In order to fulfill the scientific requirements Odin is 3-axis stabilized,
+capable of switching between astronomy and aeronomy modes. It can be staring at
+astronomical targets for hours with an accuracy of 15 arc seconds or can scan
+the limb of the Earth's atmosphere at various speeds between 10 and 120 km
+altitudes, 40 times per orbit, with a reconstructed accuracy of 1.2 arc
+minutes. The entire satellite is pointed towards the targets.</p>
+
+<p>Odin was placed into a 600 km sun-synchronous, terminator orbit by a START-1
+rocket on 20 February 2001 from Svobodny, far eastern Russia.</p> 
+
+<p>The Swedish Space Corporation, on behalf of the Swedish National Space Board
+and the space agencies of Canada (CSA), Finland (TEKES) and France (CNES), has
+developed the satellite for astronomers and atmospheric researchers in the
+participating countries. The satellite is operated from a ground station at
+Esrange.  </p>
+-->
+
+        </div>
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Generic placeholder image">
+        </div>
+      </div>
+
+      <hr id="consortium" class="featurette-divider">
+
+      <div class="row featurette">
+        <div class="col-md-7 col-md-push-5">
+          <h2 class="featurette-heading">The consortium who make the data flow from space. <span class="text-muted">all the way to you</span></h2>
+          <p class="lead">Already from the start of the project Chalmers and the department of Geo and space Sciences hav been responsible for processing the level2 product.</p>
+          <p> This has been financed by ESA since 2007. Odin is a part of ESA's Third party misson program withinits Earthnet Programme. In 2015 ESA took initiative for a complete rerun of the full dataset from Odin.</p>
+          <p>Chalmers and Moflow make this possible</p>
+        </div>
+        <div class="col-md-5 col-md-pull-7">
+          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto9.jpg') }}" alt="Generic placeholder image">
+        </div>
+        </div>
+      </div>
+
+      <hr class="featurette-divider">
+
+      <div class="row featurette">
+        <div class="col-md-7">
+          <h2 class="featurette-heading">Contact us <span class="text-muted">you will find us on earth</span></h2>
+          <p class="lead">The mission scientist for ODIN/SMR is Donal Murtagh (Chalmers) and ESA's contact is Bojan Bojkov </p>
+        </div>
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/AS4-1-410HR.jpg') }}" alt="Generic placeholder image">
+        </div>
+      </div>
+      <hr class="featurette-divider">
+
+      <!-- /END THE FEATURETTES -->
+
+
+</div
+</div>
 {% endblock %}
+

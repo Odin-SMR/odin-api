@@ -10,7 +10,6 @@ from date_tools import *
 from utils import copyemptydict
 from level1b_scandata_exporter import *
 from level1b_scanlogdata_exporter import *
-from pg import DB
 from sys import stderr, stdout, stdin, argv, exit
 import matplotlib.pyplot as plt
 from datetime import date, datetime, timedelta
@@ -18,6 +17,7 @@ from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 from matplotlib import dates, rc
 from dateutil.relativedelta import relativedelta
 import matplotlib
+from database import DatabaseConnector
 
 class DateInfo(MethodView):
     """plots information"""
@@ -128,13 +128,3 @@ class ScanSpec(MethodView):
         #spectra is a dictionary containing the relevant data
         datadict = scan2dictlist(spectra)
         return jsonify(**datadict)
-
-class DatabaseConnector(DB):
-    def __init__(self):
-        super(DatabaseConnector, self).__init__(
-            dbname='odin',
-            user='odinop',
-            host='postgresql',
-            passwd='***REMOVED***'
-            )
-
