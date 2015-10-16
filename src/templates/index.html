@@ -8,7 +8,9 @@
   </div>
 
       {% if data %}
-      <p> production = {{ data }} <p>
+      {% if data|string() is equalto "False" %}
+          <i class="fa fa-tachometer"></i>
+      {% endif %}
       {% endif %}
   
 <div class="container-fluid">
@@ -71,9 +73,18 @@ Esrange.  </p>
       <div class="row featurette">
         <div class="col-md-7 col-md-push-5">
           <h2 class="featurette-heading">The consortium who make the data flow from space. <span class="text-muted">all the way to you</span></h2>
-          <p class="lead">Already from the start of the project Chalmers and the department of Geo and space Sciences hav been responsible for processing the level2 product.</p>
-          <p> This has been financed by ESA since 2007. Odin is a part of ESA's Third party misson program withinits Earthnet Programme. In 2015 ESA took initiative for a complete rerun of the full dataset from Odin.</p>
-          <p>Chalmers and Moflow make this possible</p>
+
+          <p class="lead">In september 2015 ESA took the initiative to reprocess the Odin SMR data set. Since the launch of Odin in 2001 Chalmers and
+          the department of Geo and Space Sciences have been responsible for
+          processing the level2 product.</p>
+
+          <p> The processing activity has been financed by ESA since 2007. Odin is a part
+          of ESA's Third party misson program within its Earthnet Programme.
+          </p> 
+          
+          <p>The current reprocessing campaign is being realized as a
+          cooperation between <a href="http://www.chalmers.se">Chalmers</a> and <a hreg="http://www.molflow.com">Molflow</a>.</p>
+
         </div>
         <div class="col-md-5 col-md-pull-7">
           <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto9.jpg') }}" alt="Generic placeholder image">
@@ -81,12 +92,25 @@ Esrange.  </p>
         </div>
       </div>
 
-      <hr class="featurette-divider">
+      <hr id="contact" class="featurette-divider">
 
       <div class="row featurette">
         <div class="col-md-7">
           <h2 class="featurette-heading">Contact us <span class="text-muted">you will find us on earth</span></h2>
           <p class="lead">The mission scientist for ODIN/SMR is Donal Murtagh (Chalmers) and ESA's contact is Bojan Bojkov </p>
+          <p> Dr. Bojan Bojkov</p>
+
+          <p>
+          <i class="fa fa-map-marker"></i>
+
+          ESA-ESRIN <br/>
+          Via Galileo Galilei Frascati (RM) <br/>
+          00044 Italy
+          </p>
+
+          <i class="fa fa-envelope"></i>
+
+          Bojan.bojkov@esa.int 
         </div>
         <div class="col-md-5">
           <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/AS4-1-410HR.jpg') }}" alt="Generic placeholder image">
