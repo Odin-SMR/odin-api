@@ -6,10 +6,11 @@ postgresql:
 #    - POSTGRES_PASSWORD:test
 
 webapi:
-  image: docker.molflow.com/odin_redo/odin_api:latest
+  image: cb2231687051
   ports: 
     - 5000:5000
   volumes:
-    - src/:/app
+    - src/:/app 
+    - /home/bengt/test/data/:/var/lib/odindata
   links:
     - postgresql

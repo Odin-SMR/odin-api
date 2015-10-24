@@ -1,4 +1,6 @@
 from datetime import datetime
+import datetime as DT
+
 # These functions should be moved to a folder somewhere
 def datestring_to_date(string):
     """create a datetime from string"""
@@ -14,10 +16,21 @@ def datestring_to_date(string):
     date = datetime(year, month, day)
     return date
 
+
+def addday2datetime(dt,days):
+    return dt.date() + DT.timedelta(days=days)
+    
+
 def date2mjd(date1):
     """Convert from date to mjd"""
     mjd1 = date1-datetime(1858, 11, 17)
     return mjd1.days
+
+def mjd2datetime(mjd):
+    mjd0 = DT.datetime(1858, 11, 17)
+    datetime = mjd0 +DT.timedelta(mjd)
+    return datetime
+
 
 def mjd2stw(mjd1):
     """Convert from mjd to stw"""

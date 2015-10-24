@@ -1,15 +1,18 @@
 """ doc
 """
-from flask import request, send_file
+from flask import request, send_file, url_for
 from flask import render_template, jsonify
 from flask.views import MethodView
 import io
 from matplotlib import use
 use("Agg")
 from date_tools import *
+from geoloc_tools import *
 from utils import copyemptydict
 from level1b_scandata_exporter import *
 from level1b_scanlogdata_exporter import *
+from read_apriori import *
+from newdonalettyEcmwfNC import *
 from sys import stderr, stdout, stdin, argv, exit
 import matplotlib.pyplot as plt
 from datetime import date, datetime, timedelta
@@ -18,6 +21,7 @@ from matplotlib import dates, rc
 from dateutil.relativedelta import relativedelta
 import matplotlib
 from database import DatabaseConnector
+import requests as R
 
 class DateInfo(MethodView):
     """plots information"""
@@ -116,6 +120,25 @@ class FreqmodeInfo(MethodView):
                 backend, 
                 fm, 
                 scanid)
+            datadict['URL-ptz'] = '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}'.format(
+                request.url_root,
+                date,
+                backend,
+                fm,
+                scanid)
+            species_list = ['BrO', 'Cl2O2', 'CO', 'HCl', 'HO2', 'NO2', 'OCS', 'C2H2',  
+                            'ClO', 'H2CO', 'HCN', 'HOBr', 'NO', 'OH', 'C2H6', 'ClONO2',  
+                            'H2O2', 'HCOOH', 'HOCl', 'O2', 'SF6', 'CH3Cl', 'ClOOCl',  
+                            'H2O', 'HF', 'N2', 'O3', 'SO2', 'CH3CN', 'CO2', 'H2S', 'HI',     
+                            'N2O', 'OBrO', 'CH4', 'COF2', 'HBr', 'HNO3', 'NH3', 'OClO']
+            for species in species_list:
+                datadict['''URL-apriori-{0}'''.format(species)] = '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}'.format(
+                    request.url_root,
+                    species,
+                    date,
+                    backend,
+                    fm,
+                    scanid)
             loginfo['Info'].append(datadict)
         return jsonify(**loginfo)
 
@@ -128,3 +151,37 @@ class ScanSpec(MethodView):
         #spectra is a dictionary containing the relevant data
         datadict = scan2dictlist(spectra)
         return jsonify(**datadict)
+
+class ScanPTZ(MethodView):
+    """plots information: data from a given scan"""
+    def get(self, date, backend, freqmode, scanno):
+        temp = [request.url_root, date, backend, freqmode]
+        url = '''{0}rest_api/v1/freqmode_info/{1}/{2}/{3}'''.format(*temp)
+        mjd,day_of_year,midlat,midlon = get_geoloc_info(url,scanno)
+        datadict = run_donaletty(mjd,midlat,midlon,scanno)
+        for item in ['P','T','Z']:
+            datadict[item]=datadict[item].tolist()
+        return jsonify(**datadict)
+
+class ScanAPR(MethodView):
+    """plots information: data from a given scan"""
+    def get(self, species, date, backend, freqmode, scanno):
+        temp = [request.url_root, date, backend, freqmode]
+        url = '''{0}rest_api/v1/freqmode_info/{1}/{2}/{3}'''.format(*temp)
+        mjd,day_of_year,midlat,midlon = get_geoloc_info(url,scanno)
+        datadict = get_apriori(species, day_of_year, midlat)
+        for item in ['pressure','vmr']:
+            datadict[item]=datadict[item].tolist()
+        return jsonify(**datadict)
+
+
+
+class DatabaseConnector(DB):
+    def __init__(self):
+        super(DatabaseConnector, self).__init__(
+            dbname='odin',
+            user='odinop',
+            host='postgresql',
+            passwd='***REMOVED***'
+            )
+

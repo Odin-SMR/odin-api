@@ -5,6 +5,9 @@ from views.views import DateInfo, DateBackendInfo
 from views.views import ScanSpec, FreqmodeInfo
 from views.smr_site import ViewIndex, ViewScanSpec, ViewLevel1, ViewFreqmodeInfoPlot, ViewLevel2
 from views.data_info import FileInfo
+from views.views import ScanPTZ, ScanAPR
+from views.views import FreqmodeInfo
+from views.smr_site import ViewIndex, ViewFreqmodeInfoPlot
 from os import environ
 
 class Odin(Flask):
@@ -32,6 +35,14 @@ class Odin(Flask):
             view_func=FileInfo.as_view('file_info')
             )
         self.add_url_rule(
+            '/rest_api/v1/ptz/<date>/<backend>/<freqmode>/<scanno>/',
+            view_func=ScanPTZ.as_view('ptz')
+            )
+        self.add_url_rule(
+            '/rest_api/v1/apriori/<species>/<date>/<backend>/<freqmode>/<scanno>/',
+            view_func=ScanAPR.as_view('apriori')
+            )
+        self.add_url_rule(
             '/',
             view_func=ViewIndex.as_view('index')
             )
@@ -54,7 +65,7 @@ class Odin(Flask):
 def main():
     """Default function"""
     app = Odin(__name__)
-    app.run(host='0.0.0.0', debug=not environ.has_key('ODIN_API_PRODUCTION'))
+    app.run(host='0.0.0.0', debug=not environ.has_key('ODIN_API_PRODUCTION'),threaded=True)
 
 if __name__ == "__main__":
     main()

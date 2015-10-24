@@ -99,7 +99,6 @@ class Scanloginfo_exporter():
         datei = mjd0 + relativedelta(days = +data['mjd'][ind[0]])
         #check that scan starts within desired time span
         if datei >= date1 and datei<=date2:
-
             outdata = {
              'ScanID'        : calstw,
              'StartLat'      : data['latitude'][ind[0]],
