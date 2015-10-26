@@ -171,7 +171,7 @@ def save_zptfile(basedir,date,scanid,zpt):
 
     rootgrp = NC.Dataset(fullfile, 'w', format='NETCDF4')
     datagrp = rootgrp.createGroup('Data')
-    level = datagrp.createDimension('level', None)
+    level = datagrp.createDimension('level', 151)
 
     Z = datagrp.createVariable('Z','f4',('level',))
     Z.units = 'Km'
