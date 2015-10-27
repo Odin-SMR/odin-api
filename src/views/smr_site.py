@@ -39,7 +39,7 @@ class ViewLevel2(MethodView):
 
 class ViewScanSpec(MethodView):
     """plots information: data from a given scan"""
-    def get(self, date, backend, freqmode, scanno):
+    def get(self, backend, freqmode, scanno):
         con=DatabaseConnector()
         calstw = int(scanno)
         spectra = get_scan_data(con, backend, freqmode, scanno)

@@ -11,6 +11,7 @@
 	<link rel="stylesheet" href="{{ url_for('static', filename='font-awesome-4.4.0/css/font-awesome.min.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-datepicker3.min.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.dataTables.min.css') }}">
     <link href="{{ url_for('static', filename='css/odin.css') }}" rel="stylesheet">
   </head>
   <body>
@@ -22,32 +23,9 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap-datepicker.min.js') }}"></script>
-    <script type="text/javascript">
-      // When the document is ready
-      $(document).ready(function () {
-            
-            
-        $('#example1').datepicker({
-          format: "yyyy-mm-dd",
-          autoclose: true,
-          startDate: '2015-01-03'
-        }).on('changeDate', function(e){
-          $('#info-image').attr('src','/plot/'+(e.format("yyyy-mm-dd"))+'/AC2/1');
-          $.getJSON('/rest_api/v1/freqmode_info/'+(e.format("yyyy-mm-dd"))+'/AC2/1',
-          function(data) {
-            var table;
-            table = '<thead>\n<tr>\n<th>MJD</th>\n</tr>\n</thead>\n<tbody>\n';
-            for (var i = 0; i<data.MJD.length; i++) {
-              table = table + '<tr>';
-              table = table + '<td>'+data.MJD[i]+'</td>\n';
-              table = table + '</tr>\n';
-            };
-            table = table + '</tbody>\n';
-            $('#info-table').html(table);
-          });
-        });
-      
-      });
-    </script>
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/odin_api.js') }}"></script>
+{% block script %}
+{% endblock %}
   </body>
 </html>

@@ -41,6 +41,12 @@
           <div>
               <input  type="text" value="2015-01-03" id="example1">
           </div>
+          <h2 class="sub-header">Data</h2>
+          <div class="table-responsive">
+            <table id="level1-date" class="table table-striped">
+              <!-- empty table -->
+            </table>
+          </div>
           <div>
               <img id="info-image" class="img-responsive" src="{{ url_for('static', filename='images/empty.png') }}"/>
           </div>
@@ -58,8 +64,25 @@
       </div>
     </div>
 
-
 {% endblock %}
 
 {% block footer %}
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript">
+      // When the document is ready
+      $(document).ready(function () {
+            
+        var startDate ='2015-01-03';    
+        $('#example1').datepicker({
+          format: "yyyy-mm-dd",
+          autoclose: true,
+          startDate: startDate
+          }).on('changeDate', function(e) {
+            updateLevel1(e.format('yyyy-mm-dd'))
+          });
+        updateLevel1(startDate);
+      });
+    </script>
 {% endblock %}
