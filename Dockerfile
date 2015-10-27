@@ -53,5 +53,6 @@ RUN git clone https://github.com/Unidata/netcdf4-python.git && \
     python setup.py install
 
 copy src/ /app/
+run cd /app && python setup.py develop
 expose 5000
-cmd python /app/api.py
+cmd python -m odinapi.api
