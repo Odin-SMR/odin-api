@@ -192,8 +192,114 @@ class FreqmodeInfo(MethodView):
                             )
                 loginfo['Info'].append(datadict)
         elif version == "v2":
-            loginfo = {'test':1}
-        return jsonify(loginfo)
+
+            loginfo, _, _ = get_scan_logdata(
+                con, backend, date+'T00:00:00', int(freqmode), 1)
+            for index in range(len(loginfo['ScanID'])):
+                row = []
+                row.append(loginfo['DateTime'][index].date())
+                for item in [
+                        'DateTime',
+                        'FreqMode',
+                        'StartLat',
+                        'EndLat',
+                        'SunZD',
+                        'AltStart',
+                        'AltEnd',
+                        'ScanID']:
+                    row.append(loginfo[item][index])
+           
+            for item in loginfo.keys():
+                try:
+                    loginfo[item] = loginfo[item].tolist()
+                except AttributeError:
+                    pass
+            loginfo['Info'] = []
+            for ind in range(len(loginfo)):
+      
+                freq_mode = loginfo['FreqMode'][ind]
+                scanid = loginfo['ScanID'][ind]
+                
+                datadict = dict()
+                for item in [
+                        'DateTime',
+                        'FreqMode',
+                        'StartLat',
+                        'EndLat',
+                        'SunZD',
+                        'AltStart',
+                        'AltEnd',
+                        'ScanID']:
+
+                    datadict[item]=loginfo[item][ind]
+
+                datadict['URL'] = '{0}rest_api/v1/scan/{1}/{2}/{3}'.format(
+                    request.url_root,
+                    backend,
+                    freq_mode,
+                    scanid)
+                datadict['URL-ptz'] = (
+                    '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}').format(
+                        request.url_root,
+                        date,
+                        backend,
+                        freq_mode,
+                        scanid
+                        )
+                species_list = [
+                    'BrO',
+                    'Cl2O2',
+                    'CO',
+                    'HCl',
+                    'HO2',
+                    'NO2',
+                    'OCS',
+                    'C2H2',
+                    'ClO',
+                    'H2CO',
+                    'HCN',
+                    'HOBr',
+                    'NO',
+                    'OH',
+                    'C2H6',
+                    'ClONO2',
+                    'H2O2',
+                    'HCOOH',
+                    'HOCl',
+                    'O2',
+                    'SF6',
+                    'CH3Cl',
+                    'ClOOCl',
+                    'H2O',
+                    'HF',
+                    'N2',
+                    'O3',
+                    'SO2',
+                    'CH3CN',
+                    'CO2',
+                    'H2S',
+                    'HI',
+                    'N2O',
+                    'OBrO',
+                    'CH4',
+                    'COF2',
+                    'HBr',
+                    'HNO3',
+                    'NH3',
+                    'OClO']
+                for species in species_list:
+                    datadict['''URL-apriori-{0}'''.format(species)] = (
+                        '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}').format(
+                            request.url_root,
+                            species,
+                            date,
+                            backend,
+                            freq_mode,
+                            scanid
+                            )
+                loginfo['Info'].append(datadict)
+
+        return jsonify({'Info':loginfo['Info']})
 
 
 class ScanSpec(MethodView):
