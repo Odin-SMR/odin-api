@@ -99,21 +99,68 @@ class FreqmodeInfo(MethodView):
         """GET method"""
         con = DatabaseConnector()
         loginfo = {}
+        itemlist = [
+                    'DateTime',
+                    'FreqMode',
+                    'StartLat',
+                    'EndLat',
+                    'StartLon',
+                    'EndLon',
+                    'SunZD',
+                    'AltStart',
+                    'AltEnd',
+                    'ScanID']
+        species_list = [
+                    'BrO',
+                    'Cl2O2',
+                    'CO',
+                    'HCl',
+                    'HO2',
+                    'NO2',
+                    'OCS',
+                    'C2H2',
+                    'ClO',
+                    'H2CO',
+                    'HCN',
+                    'HOBr',
+                    'NO',
+                    'OH',
+                    'C2H6',
+                    'ClONO2',
+                    'H2O2',
+                    'HCOOH',
+                    'HOCl',
+                    'O2',
+                    'SF6',
+                    'CH3Cl',
+                    'ClOOCl',
+                    'H2O',
+                    'HF',
+                    'N2',
+                    'O3',
+                    'SO2',
+                    'CH3CN',
+                    'CO2',
+                    'H2S',
+                    'HI',
+                    'N2O',
+                    'OBrO',
+                    'CH4',
+                    'COF2',
+                    'HBr',
+                    'HNO3',
+                    'NH3',
+                    'OClO']
+ 
+
+
         if version == "v1":
             loginfo, _, _ = get_scan_logdata(
                 con, backend, date+'T00:00:00', int(freqmode), 1)
             for index in range(len(loginfo['ScanID'])):
                 row = []
                 row.append(loginfo['DateTime'][index].date())
-                for item in [
-                        'DateTime',
-                        'FreqMode',
-                        'StartLat',
-                        'EndLat',
-                        'SunZD',
-                        'AltStart',
-                        'AltEnd',
-                        'ScanID']:
+                for item in itemlist:
                     row.append(loginfo[item][index])
             for item in loginfo.keys():
                 try:
@@ -139,47 +186,6 @@ class FreqmodeInfo(MethodView):
                         freq_mode,
                         scanid
                         )
-                species_list = [
-                    'BrO',
-                    'Cl2O2',
-                    'CO',
-                    'HCl',
-                    'HO2',
-                    'NO2',
-                    'OCS',
-                    'C2H2',
-                    'ClO',
-                    'H2CO',
-                    'HCN',
-                    'HOBr',
-                    'NO',
-                    'OH',
-                    'C2H6',
-                    'ClONO2',
-                    'H2O2',
-                    'HCOOH',
-                    'HOCl',
-                    'O2',
-                    'SF6',
-                    'CH3Cl',
-                    'ClOOCl',
-                    'H2O',
-                    'HF',
-                    'N2',
-                    'O3',
-                    'SO2',
-                    'CH3CN',
-                    'CO2',
-                    'H2S',
-                    'HI',
-                    'N2O',
-                    'OBrO',
-                    'CH4',
-                    'COF2',
-                    'HBr',
-                    'HNO3',
-                    'NH3',
-                    'OClO']
                 for species in species_list:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}').format(
@@ -198,15 +204,7 @@ class FreqmodeInfo(MethodView):
             for index in range(len(loginfo['ScanID'])):
                 row = []
                 row.append(loginfo['DateTime'][index].date())
-                for item in [
-                        'DateTime',
-                        'FreqMode',
-                        'StartLat',
-                        'EndLat',
-                        'SunZD',
-                        'AltStart',
-                        'AltEnd',
-                        'ScanID']:
+                for item in itemlist:
                     row.append(loginfo[item][index])
            
             for item in loginfo.keys():
@@ -221,15 +219,7 @@ class FreqmodeInfo(MethodView):
                 scanid = loginfo['ScanID'][ind]
                 
                 datadict = dict()
-                for item in [
-                        'DateTime',
-                        'FreqMode',
-                        'StartLat',
-                        'EndLat',
-                        'SunZD',
-                        'AltStart',
-                        'AltEnd',
-                        'ScanID']:
+                for item in itemlist:
 
                     datadict[item]=loginfo[item][ind]
 
@@ -246,47 +236,6 @@ class FreqmodeInfo(MethodView):
                         freq_mode,
                         scanid
                         )
-                species_list = [
-                    'BrO',
-                    'Cl2O2',
-                    'CO',
-                    'HCl',
-                    'HO2',
-                    'NO2',
-                    'OCS',
-                    'C2H2',
-                    'ClO',
-                    'H2CO',
-                    'HCN',
-                    'HOBr',
-                    'NO',
-                    'OH',
-                    'C2H6',
-                    'ClONO2',
-                    'H2O2',
-                    'HCOOH',
-                    'HOCl',
-                    'O2',
-                    'SF6',
-                    'CH3Cl',
-                    'ClOOCl',
-                    'H2O',
-                    'HF',
-                    'N2',
-                    'O3',
-                    'SO2',
-                    'CH3CN',
-                    'CO2',
-                    'H2S',
-                    'HI',
-                    'N2O',
-                    'OBrO',
-                    'CH4',
-                    'COF2',
-                    'HBr',
-                    'HNO3',
-                    'NH3',
-                    'OClO']
                 for species in species_list:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}').format(
@@ -299,7 +248,13 @@ class FreqmodeInfo(MethodView):
                             )
                 loginfo['Info'].append(datadict)
 
-        return jsonify({'Info':loginfo['Info']})
+        if version == "v1":
+
+            return jsonify(loginfo)
+
+        elif version == "v2":
+
+            return jsonify({'Info':loginfo['Info']})
 
 
 class ScanSpec(MethodView):
@@ -329,11 +284,11 @@ class ScanPTZ(MethodView):
 
 class ScanAPR(MethodView):
     """plots information: data from a given scan"""
-    def get(self, version, species, mdate, backend, freqmode, scanno):
+    def get(self, version, species, date, backend, freqmode, scanno):
         """GET-method"""
         url = '''{0}rest_api/v1/freqmode_info/{1}/{2}/{3}'''.format(
             request.url_root,
-            mdate,
+            date,
             backend,
             freqmode)
         _, day_of_year, midlat, _ = get_geoloc_info(url, scanno)
