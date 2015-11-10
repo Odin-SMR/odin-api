@@ -112,7 +112,7 @@ class Scanloginfo_exporter():
              'FreqMode'      : data['freqmode'][ind[0]],
              'NumSpec'       : ind.shape[0],
              'FirstSpectrum' : data['stw'][ind[0]],
-             'LasttSpectrum' : data['stw'][ind[-1]],
+             'LastSpectrum' : data['stw'][ind[-1]],
              'DateTime'      : mjd0 + timedelta(( data['mjd'][ind[0]] + data['mjd'][ind[-1]] ) / 2.0),
                    }
 

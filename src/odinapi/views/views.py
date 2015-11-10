@@ -109,7 +109,13 @@ class FreqmodeInfo(MethodView):
                     'SunZD',
                     'AltStart',
                     'AltEnd',
-                    'ScanID']
+                    'NumSpec',
+                    'FirstSpectrum',
+                    'LastSpectrum' ,
+                    'MJD',
+                    'ScanID',
+                     
+]
         species_list = [
                     'BrO',
                     'Cl2O2',
