@@ -7,6 +7,7 @@ from matplotlib import use
 use("Agg")
 from geoloc_tools import get_geoloc_info
 from utils import copyemptydict
+from level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v2
 from level1b_scandata_exporter import get_scan_data, scan2dictlist
 from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
@@ -268,10 +269,18 @@ class ScanSpec(MethodView):
     def get(self, version, backend, freqmode, scanno):
         """GET-method"""
         con = DatabaseConnector()
-        spectra = get_scan_data(con, backend, freqmode, scanno)
-        #spectra is a dictionary containing the relevant data
-        datadict = scan2dictlist(spectra)
-        return jsonify(datadict)
+        if version == "v1":
+            spectra = get_scan_data(con, backend, freqmode, scanno)
+            #spectra is a dictionary containing the relevant data
+            datadict = scan2dictlist(spectra)
+            return jsonify(datadict)
+        elif version == "v2":
+            spectra = get_scan_data_v2(con, backend, freqmode, scanno)
+            #spectra is a dictionary containing the relevant data
+            datadict = scan2dictlist_v2(spectra)
+            return jsonify(datadict)
+       
+
 
 class ScanPTZ(MethodView):
     """plots information: data from a given scan"""
