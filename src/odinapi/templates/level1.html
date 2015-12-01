@@ -80,16 +80,20 @@
     <script type="text/javascript">
       // When the document is ready
       $(document).ready(function () {
-            
-        var startDate ='2015-01-03';    
+
+        var startDate ='2001-02-20';
+        var endDate   ='2042-02-11';
+        var startView ='2015-01-03';
         $('#example1').datepicker({
           format: "yyyy-mm-dd",
           autoclose: true,
-          startDate: startDate
+          startDate: startDate,
+          endDate:    endDate,
+          startView: startView
           }).on('changeDate', function(e) {
             updateLevel1(e.format('yyyy-mm-dd'))
           });
-        updateLevel1(startDate);
+        updateLevel1(startView);
       });
     </script>
 {% endblock %}
