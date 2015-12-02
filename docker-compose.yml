@@ -1,16 +1,16 @@
 postgresql:
-  image: docker.molflow.com/odin_db:latest
+  image: docker2.molflow.com/odin_rerun/odin_db:latest
   ports:
     - 5432:5432
 #  environment:
 #    - POSTGRES_PASSWORD:test
 
 webapi:
-  image: docker.molflow.com/odin_redo/odin_api:latest
-  ports: 
+  image: docker2.molflow.com/odin_rerun/odin_api:latest
+  ports:
     - 5000:5000
   volumes:
-    - src/:/app 
+    - src/:/app
     - data/:/var/lib/odindata
   links:
     - postgresql
