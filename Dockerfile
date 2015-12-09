@@ -1,4 +1,4 @@
-from ubuntu:latest
+from ubuntu:14.04
 run apt-get update && apt-get install -y \
     python-numpy \
     python-psycopg2 \
@@ -10,8 +10,10 @@ run apt-get update && apt-get install -y \
     git \
     curl \
     m4 \
-    build-essential && \
-    apt-get clean
+    build-essential \
+    --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 run pip install flask flask-bootstrap sqlalchemy
 
 #************* DEPENDENCIES 
