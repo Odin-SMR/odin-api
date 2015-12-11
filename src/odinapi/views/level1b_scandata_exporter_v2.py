@@ -118,7 +118,10 @@ class Scan_data_exporter():
                     cc = N.ndarray(shape=(8*96,),dtype='float64',
                          buffer=self.con.unescape_bytea(row['cc']))
                     # store only zerolags
-                    refdata['cc'].append(cc[0::96])
+                    zerolag = []
+                    for cci in cc[0::96]:
+                        zerolag.append( self.zeroLag(cci, 1.0) )
+                    refdata['cc'].append(zerolag)
                 else:
                     refdata[item].append(row[item])
         
@@ -244,6 +247,23 @@ class Scan_data_exporter():
 
 
 
+    def inv_erfc(self,z):
+        p =[1.591863138, -2.442326820, 0.37153461]
+        q =[1.467751692, -3.013136362, 1.00000000]
+        x = 1.0-z
+        y = (x*x-0.5625)
+        y = x*(p[0]+(p[1]+p[2]*y)*y)/(q[0]+(q[1]+q[2]*y)*y)
+        return y
+
+
+    def zeroLag(self,zlag,v):
+        if (zlag >= 1.0 or zlag <= 0.0): 
+            return 0.0
+        x = v/self.inv_erfc(zlag)
+        return  x*x/2.0
+
+
+
 class Calibration_step2():
     def __init__(self,con):
         self.con=con
@@ -359,7 +379,7 @@ class Quality_control():
         
         qual =  0x0001
         tspill_min = 3
-        tspill_max = 10
+        tspill_max = 12
         
         if not self.specdata['tspill'][0] >= tspill_min and self.specdata['tspill'][0] <= tspill_max:  
             self.quality = self.quality + qual
@@ -409,7 +429,7 @@ class Quality_control():
         # check Tb, search for physically unrealistic values
         qual = 0x0020
         tb_min = -15
-        tb_max = 250
+        tb_max = 280
         if self.specdata['backend'][0]==1:
             # do not consider to test band 1 and 2 of AC1
             specind = N.arange(112*2,112*8,1)
@@ -527,23 +547,34 @@ class Quality_control():
         for item in self.refdata.keys(): 
             self.refdata[item] = self.refdata[item][okind]
 
+
        
     def get_zerolagvar(self):
         # identify the power variation of the two surrounding reference measurements
-        self.zerolagvar = N.zeros( (self.specdata['stw'].shape[0], 8) )
+        self.zerolagvar = []
+        #N.ones( (self.specdata['stw'].shape[0], 8) )*-1.0
+        ones = N.array(N.ones(8)*-1).tolist()
         for ind,stw in enumerate(self.specdata['stw']):
             if ind<2:
+                self.zerolagvar.append(ones)
                 continue
             ind1 = N.nonzero( (self.refdata['stw']<stw) )[0]
             ind2 = N.nonzero( (self.refdata['stw']>stw) )[0]
 
             if ind1.shape[0]==0 or ind2.shape[0]==0:
+                self.zerolagvar.append( ones )
                 continue
 
-            dg = N.abs(self.refdata['cc'][ind1[-1]] - self.refdata['cc'][ind2[0]])
-            g = ( self.refdata['cc'][ind1[-1]] + self.refdata['cc'][ind2[0]] ) / 2.0
-            self.zerolagvar[ind] = dg/g*100
-
+            z1 = N.array(self.refdata['cc'][ind1[-1]])
+            z2 = N.array(self.refdata['cc'][ind2[0]])
+            dg = N.abs( z1 - z2)
+            g = N.array(( z1 + z2 ) / 2.0)
+            i = N.nonzero((g>0))[0]
+            frac = N.array(ones)
+            i = N.nonzero((g>0))[0]
+            frac[i] = dg[i]/g[i]*100.0
+            self.zerolagvar.append( frac.tolist() )
+            #self.zerolagvar[ind] = g
 
 
 
@@ -574,7 +605,7 @@ def specdict():
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
              'pointer', 'tspill','ssb_fq', 
-             'calstw','frequency','zerolagvar']
+             'calstw','frequency','zerolagvar','ssb']
 
     for item in lista:
         spec[item] = []
@@ -678,8 +709,10 @@ def scan2dictlist_v2(spectra):
      'FreqMode'        : spectra['freqmode'],
      'TSpill'          : spectra['tspill'],
      'ScanID'          : spectra['calstw'],
-     'Frequency'       : spectra['frequency']*1e9,
-     'ZeroLagVar'      : spectra['zerolagvar']
+     'Frequency'       : spectra['frequency'],
+     'ZeroLagVar'      : spectra['zerolagvar'],
+     'SSB'             : spectra['ssb'],
+
     }
 
     for item in datadict.keys():
@@ -689,6 +722,451 @@ def scan2dictlist_v2(spectra):
             pass
   
     return datadict 
+
+
+#-------------------------------------------------------------------
+#function [f] = qsmr_frequency(scan_h,numspec)
+#
+# DESCRIPTION:  Generates frequency per spectrum in scan, 
+#               2001/21/9. Partly provided by Frank Merino,
+#               updated by C. jimenez, M. Olberg, N. Lautie, 
+#               J. Urban (2002-2007).
+#
+# INPUT:        (struct) scan_h:  structure created by call such as below: 
+#                               scan_h = read_hdfheader(SMR,file_id,nrec).
+#               (int) num_spec: spectrum number in HDF file for which
+#                               the frequencies shall be determined.
+#
+# OUT:          (double) frequency vector (AOS) or matrix (AC) [Hz].
+#              
+# VERSION:      2007-Jan-26 (JU) 
+#-------------------------------------------------------------------
+
+
+class Scan_h():
+    def __init__(self):
+        self.Level = []
+        self.Channels = [] 
+        self.IntMode = []
+        self.FreqCal = []
+        self.Quality = []
+        self.SkyFreq = []
+        self.Backend = [] 
+        self.FreqRes = []
+        self.RestFreq = []
+        self.LOFreq = []
+
+def qsmr_frequency(scan_h,ispec,numspec=3):
+   
+    #--- filling S to use Franks mscript
+    S = Scan_h()
+    S.Level     = scan_h['level'][numspec]
+    S.Channels  = scan_h['channels'][numspec]
+    S.IntMode   = scan_h['intmode'][numspec]
+    S.FreqCal   = scan_h['ssb_fq'][numspec];
+    S.Quality   = scan_h['quality'][numspec];
+    S.SkyFreq   = scan_h['skyfreq'][ispec];
+    S.Backend   = scan_h['backend'][numspec];
+    S.FreqRes   = scan_h['freqres'][numspec];
+    S.RestFreq  = scan_h['restfreq'][ispec];
+    S.Quality = 0
+
+    # -- correcting Doppler in LO
+    S.LOFreq    = scan_h['lofreq'][ispec]-(S.SkyFreq-S.RestFreq);
+
+    # Note:
+    # S.Backend(numspec) == 1 -> AC1
+    # S.Backend(numspec) == 2 -> AC2
+    # S.Backend(numspec) == 3 -> AOS
+    # otherwise : FBA
+
+    # --- START FRANKS MSCRIPT---------------------------------------
+
+    n = S.Channels;
+    f = [];
+
+    # --  == 1 missing
+
+    #--- if FSORTED frequency sorting performed ---------------------
+    # if bitand(hex2dec(S.Level), hex2dec('0080'))==1
+    # if bitand(S.Level, hex2dec('0080'))==1
+  
+    # ISORTED bit is now part of Quality %%%
+
+    #JU%if bitand(hex2dec(S.Quality), hex2dec('02000000'))
+    
+    if S.Quality & 0x02000000:
+
+        x = N.arange(0,n)-N.floor(n/2);
+        f = N.zeros(n);
+        c = S.FreqCal[end:-1:1];    # MO uses fliplr, but we have here a
+        #c = fliplr(S.FreqCal);     # column vector (PE 060602)
+        f = polyval(c, x);
+        mode = 0;
+
+    else: #------------------------------------------------------------
+    
+    
+        if S.Backend == 3:    
+            # -- AOS
+            x = N.arange(0,n)-N.floor(n/2);
+            c = S.FreqCal[end:-1:1];   # MO uses fliplr, but we have here a
+            f = 3900.0e6*N.ones(1,n)-(polyval(c, x)-2100.0e6);
+            mode = 0;
+      
+        else: 
+            # -- autocorrelators
+            # new code for spectra which have ADC_SEQ set %%% 
+
+            if S.IntMode & 256:
+                #
+                # The IntMode reported by the correlator is interpreted as
+                # a bit pattern. Because this bit pattern only describes ADC
+                # 2-8, the real bit pattern is obtained by left shifting it
+                # by one bit and adding one (i.e. it is assumed that ADC 1
+                # is always on).
+                #
+                # The sidebands used are represented by vector ssb, this is
+                # hard-wired into the correlators:
+                ssb = [1, -1, 1, -1, -1, 1, -1, 1];
+      
+                # Analyse the correlator mode by reading the bit pattern
+                # from right to left(!) and calculating a sequence of 16
+                # integers whose meaning is as follows:
+                #
+                # n1 ssb1 n2 ssb2 n3 ssb3 ... n8 ssb8
+                # 
+                # n1 ... n8 are the numbers of chips that are cascaded 
+                # to form a band. 
+                # ssb1 ... ssb8 are +1 or -1 for USB or SSB, respectively.  
+                # Unused ADCs are represented by zeros.
+                #
+                # examples (the "classical" modes):
+                #
+                # mode 0x00: ==> bit pattern 00000001
+                # 8  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+                # i.e. ADC 1 uses 8 chips in upper-side band mode
+                #
+                # mode 0x08: ==> bit pattern 00010001
+                # 4  1  0  0  0  0  0  0  4 -1  0  0  0  0  0  0
+                # i.e. ADC 1 uses 4 chips in upper-side band mode
+                # and  ADC 5 uses 4 chips in lower-side band mode
+                #
+                # mode 0x2A: ==> bit pattern 01010101
+                # 2  1  0  0  2  1  0  0  2 -1  0  0  2 -1  0  0
+                # i.e. ADC 1 uses 2 chips in upper-side band mode
+                # and  ADC 3 uses 2 chips in upper-side band mode
+                # and  ADC 5 uses 2 chips in lower-side band mode
+                # and  ADC 7 uses 2 chips in lower-side band mode
+                #
+                # mode 0x7F: ==> bit pattern 11111111
+                # 1  1  1 -1  1  1  1 -1  1 -1  1  1  1 -1  1  1
+                # i.e. ADC 1 uses 1 chip in upper-side band mode
+                # and  ADC 2 uses 1 chip in lower-side band mode
+                # and  ADC 3 uses 1 chip in upper-side band mode
+                # and  ADC 4 uses 1 chip in lower-side band mode
+                # and  ADC 5 uses 1 chip in lower-side band mode
+                # and  ADC 6 uses 1 chip in upper-side band mode
+                # and  ADC 7 uses 1 chip in lower-side band mode
+                # and  ADC 8 uses 1 chip in upper-side band mode
+                #
+                mode = S.IntMode & 255;
+                bands = 0;
+                seq = N.zeros(16, dtype='int');
+                m = 0;
+                for bit in range(8):
+                    if ( ( mode & (1<<bit) ) !=0 ):
+                        m = bit
+                    seq[2*m] = seq[2*m]+1;
+               
+                for bit in range(8):
+                    if seq[2*bit] > 0:
+                        seq[2*bit+1] = ssb[bit];
+                    else:
+                        seq[2*bit+1] = 0;
+        
+                f = N.zeros( shape=(8,112) );
+
+                bands = [1, 2, 3, 4, 5, 6, 7, 8];      # default: use all bands
+                if S.IntMode & 512:                    # test for split mode
+                    if S.IntMode & 1024:
+                        bands = [3, 4, 7, 8];          # upper band
+                    else:
+                        bands = [1, 2, 5, 6];          # lower band
+                for adc in N.array(bands)-1:     
+                    if seq[2*adc] > 0:
+                        df = 1.0e6/seq[2*adc];
+                        if seq[2*adc+1] < 0:
+                            df = -df;
+                        for j in range(1,seq[2*adc]+1):
+                            m = adc+j-1;
+                            # The frequencies are calculated by noting that two
+                            # consecutive ADCs share the same internal SSB-LO:
+                            f[m,:] = S.FreqCal[N.round(adc/2)] * N.ones(112) + N.arange(0,112,1) * df + (j-1) * 112 * df;
+
+                if S.IntMode & 512:     # for split mode keep used bands only
+                    f = f[bands,:];
+                
+
+                ####  end of new code %%%
+      
+      
+            else:
+              
+                df = S.FreqRes;
+                mode = S.IntMode & 15;
+                if S.IntMode & (1 << 4):
+                    if S.IntMode & ( 1 << 5 ):
+                        if mode == 2:
+                            m = n;
+                            f = S.FreqCal[2-1] * N.ones(m) - N.arange(m-1, -1, 1) * df;
+                        elif mode == 3:
+                            m = n/2;
+                            f = [ 
+                                S.FreqCal[4-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                                S.FreqCal[3-1] * N.ones(m) + N.arange(0, m, 1) * df 
+                                ];
+                        else:
+                            m = n/4;
+                            f = [ 
+                                S.FreqCal[3-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                                S.FreqCal[3-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                                S.FreqCal[4-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                                S.FreqCal[4-1] * N.ones(m) + N.arange(0, m, 1) * df 
+                                ];
+                        
+                    else:
+                        if mode == 2:
+                            m = n;
+                            f = S.FreqCal[1-1] * N.ones(m) + N.arange(0, m , 1) * df;
+                        elif mode == 3:
+                            m = n/2;
+                            f = [ 
+                                S.FreqCal[2-1] * N.ones(m) - N.arange(m-1,-1,-1) * df,
+                                S.FreqCal[1-1] * N.ones(m) + N.arange(0, m, 1) * df 
+                                ];
+                        else:
+                            m = n/4;
+                            f = [ 
+                                S.FreqCal[1-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                                S.FreqCal[1-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                                S.FreqCal[2-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                                S.FreqCal[2-1] * N.ones(m) + N.arange(0, m, 1) * df 
+                                ];
+                else:
+                    if mode == 1:
+                        m = n;
+                        f = S.FreqCal[1-1] * N.ones(m) + N.arange(0, m, 1) * df;
+                    elif mode == 2:
+                        m = n/2;
+                        f = [ 
+                            S.FreqCal[1-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                            S.FreqCal[2-1] * N.ones(m) - N.arange(m-1, -1, -1) * df 
+                            ];
+                    elif mode == 3:
+                        m = n/4;
+                        f = [ 
+                            S.FreqCal[2-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                            S.FreqCal[1-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                            S.FreqCal[4-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                            S.FreqCal[3-1] * N.ones(m) + N.arange(0, m, 1) * df 
+                            ];
+                    else:
+                        m = n/8;
+                        f = [ 
+                            S.FreqCal[1-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                            S.FreqCal[1-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                            S.FreqCal[2-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                            S.FreqCal[2-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                            S.FreqCal[3-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                            S.FreqCal[3-1] * N.ones(m) + N.arange(0, m, 1) * df,
+                            S.FreqCal[4-1] * N.ones(m) - N.arange(m-1, -1, -1) * df,
+                            S.FreqCal[4-1] * N.ones(m) + N.arange(0, m, 1) * df 
+                            ];
+    # --------------------------------------------------------
+
+    if f==[]:
+        print 'qsmr_frequency.py: no frequencies, spectrum not frequency sorted!'
+        return []
+   
+    #f = f'; %'
+
+    if S.Quality & int('00001000', 2) == 0:
+
+        if (S.SkyFreq - S.LOFreq) > 0.0:
+            f = S.LOFreq + f;
+        else:
+            f = S.LOFreq - f;
+
+    # --- END FRANKS MSCRIPT---------------------------------------
+
+    return f
+
+
+
+
+# smrl1b_ac_freqsort   Sorts AC spectra
+#
+#   Auto-correlator spectra are sorted, on the same time as data coming from
+#   bad modules, and with interference from internal IF signals, can be
+#   removed. AC spectra have over-lapping parts. That is, some frequencies are
+#   repeated.
+#
+#   Modules to be removed are specified by selecting a frequency inside the
+#   module. This frequency can not be inside overlapping frequency
+#   parts. This argument can be a vector. Several modules are then removed.
+#
+#   If *rm_edge_channels* is set, then first and last channel of each module
+#   is removed. This in order to remove possible contamination of internal
+#   IF signals. 
+#
+#   Spectra can be sorted in several ways (*sortmeth*):
+#
+#     'mean' : Data at over-lapping frequencies are averaged.
+#
+#     'from_start' : First value for duplictaed frequencies is kept. Second
+#     value is ignored.
+#
+#     'from_end' : Second value for duplicated frequencies is kept. First
+#     value is ignored.
+#
+#   The function can sort several spectra in parallel. Each frequency and
+#   spectrum vector is then a column in *f* and *y*, respectively. The
+#   sorting is based then solely on data in first column of *f*.
+#
+# FORMAT   [f,y] = smrl1b_ac_freqsort(f,y,bad_modules,rm_edge_chs,sortmeth)
+#        
+# OUT   f           Sorted frequency column vector(s). 
+#       y           Sorted spectrum column vector(s).
+# IN    f           Sorted frequency vector.
+#       y           Sorted spectrum vector.
+# OPT   bad_modules See above. Default is [].
+#       rm_edge_chs Removal of egede channels. Default is false.
+#       sortmeth    See above. Default is 'mean'.
+
+# 2006-11-08   Created by Patrick Eriksson.
+
+
+def smrl1b_ac_freqsort(f, y, bad_modules=[], rm_edge_chs=False, sortmeth='mean'):
+
+    f0 = N.array(f)
+    f = N.array(f)
+    y = N.array(y)
+    ssb_ind = N.ones(896)
+    for ind in range(8):
+        ssb_ind[ind*112:(ind+1)*112] = ind +1
+
+    if f.shape[0] == 896:
+
+        #- Remove bad modules
+        #
+
+        if not bad_modules==[]  or  rm_edge_chs:
+
+            ind = N.ones(896);
+
+            if not bad_modules == []:
+                #- find frequency limit for each module
+                fs = N.array(f)
+                fs.shape = (8,112)
+                fs = N.array([ N.min(fs,1) , N.max(fs,1) ]);
+                for i in range(len(bad_modules)):
+                    ii = N.nonzero( (bad_modules[i] >= fs[0,:])  &  (bad_modules[i] <= fs[1,:]) )[0];
+                    if ii.shape[0] == 0 or ii.shape[0] > 1:
+                        error                    
+                    ind[(ii)*112 + N.arange(0,112,1) ] = 0;
+            if rm_edge_chs:
+               
+                ind[ N.append( N.arange(0,896,112), N.arange(111,896,112) ) ] = 0;
+        
+            ind = N.nonzero( (ind>0) )[0];
+
+            f = N.array(f)
+            y = N.array(y)
+            f = f[ind];
+            y = y[ind];
+            ssb_ind = ssb_ind[ind]
+
+    #- Sort
+    #
+    if sortmeth == 'from_middle':
+        [f, y, ssb_ind] = sort_from_middle( f, y , ssb_ind, f0);
+    elif sortmeth == 'from_start':
+        [f, y, ssb_ind] = sort_from_start( f, y , ssb_ind);
+    elif sortmeth=='from_end':
+        [f,y] = sort_from_end( f, y );
+    elif sortmeth == 'mean':
+        [f1,y1]  = sort_from_start( f, y );
+        [f2,y2]  = sort_from_end( f, y );
+        f        = f1;
+        y        = ( y1 + y2 ) / 2.0;
+    
+    ind = N.argsort(f)
+    f = f[ind];
+    y = y[ind];
+    ssb_ind = ssb_ind[ind] 
+
+    ssb = []
+    for ind in range(8):
+        i = N.nonzero( (ssb_ind==ind+1) )[0]
+        if i.shape[0]>0:
+            ssb.extend( [ind+1,N.min(i)+1,N.max(i)+1])
+        else:
+            ssb.extend( [ind+1,-1,-1])
+    return f,y,ssb
+
+def sort_from_middle(f, y, ssb_ind, f0):
+
+    #- Sort
+    #
+    # remove overlapping channels
+    # choose the channel which is closest to its 
+    # sub-band frequency center
+    fs = N.array(f0)
+    fs.shape = (8,112)
+    fs = N.mean(fs,1)
+
+    ind = []
+    for i in range(f.shape[0]):
+        multi_f = N.nonzero( (f[i]==f) )[0]
+        if multi_f.shape[0]==1:
+            ind.append(i)
+        else:
+            ssb_ind_i = N.array(ssb_ind[multi_f]-1).astype(int)
+            ssb_f0 = fs[ssb_ind_i]
+            ii = N.argsort( N.abs(ssb_f0 - f[i]) )
+            ind.append(multi_f[ii[0]])
+
+    ind = N.unique(N.array(ind))
+    f = f[ind];
+    y = y[ind];
+    ssb_ind = ssb_ind[ind]
+    ind = N.argsort(f)
+    f = f[ind];
+    y = y[ind];
+    ssb_ind = ssb_ind[ind]
+
+    return f,y,ssb_ind
+
+
+def sort_from_start(f,y, ssb_ind):
+    n = f.shape[0];
+    [fu,ind] = N.unique( f[ N.arange(n-1,-1,-1) ] , return_index=True);
+    ind      = n - 1 - ind;
+    f        = f[ind];
+    y        = y[ind];
+    ssb_ind  = ssb_ind[ind];
+    return f,y,ssb_ind
+
+
+def sort_from_end(f,y):
+    [fu,ind] = N.unique( f, return_index=True);
+    f        = f[ind];
+    y        = y[ind];
+    return f,y
+
+
+
 
 
 
@@ -918,6 +1396,64 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     q.run_control()    
     o.spectra['quality'] = q.quality
     o.spectra['zerolagvar'] = q.zerolagvar
+
+    # add frequency vector to each spectrum in the o.spectra structure
+    rm_edge_ch = True
+    if backend=='AC1':
+        bad_modules = N.array([1,2])
+    elif backend=='AC2':
+        bad_modules = N.array([3])
+    
+    sortmeth = 'mean'
+    sortmeth = 'from_start'
+    spectra = N.array(o.spectra['spectrum'])
+    o.spectra['spectrum'] = []
+    o.spectra['frequency'] = []
+    o.spectra['ssb'] = []
+    channels = []
+    freqinfo = { 'IFreqGrid' : [], 'LOFreq' : [], 'SSB' : []}
+    for numspec in range( len(o.spectra['stw']) ): 
+        
+        f = qsmr_frequency(o.spectra,numspec)
+        f = N.array(f)
+        # check if any sub-band is "dead" and the append to bad_modules
+        ys = N.array(spectra[numspec])
+        ys.shape = (8,112) 
+        ytest = N.mean(ys,1)
+        badssb_ind = N.nonzero( (ytest==0) )[0]
+        if badssb_ind.shape[0]>0:
+            bad_modules = N.append( bad_modules, badssb_ind + 1 )   
+
+        f_modules = N.mean(f,1)
+        remove_modules = f_modules[bad_modules-1]
+        f.shape = (f.shape[0]*f.shape[1],)    
+        y = spectra[numspec]
+        f,y,ssb = smrl1b_ac_freqsort(f, y, remove_modules, rm_edge_ch, sortmeth)  
+
+        # -- correcting Doppler in LO
+        skyfreq  = o.spectra['skyfreq'][numspec]
+        lofreq   = o.spectra['lofreq'][numspec]
+        restfreq = o.spectra['restfreq'][numspec]
+        lofreq   = lofreq - ( skyfreq - restfreq );
+
+        if (skyfreq - lofreq) > 0.0:
+            #f = S.LOFreq + f;
+            f = (f - lofreq)
+        else:
+            #f = S.LOFreq - f;
+            f = -(lofreq - f) 
+        if numspec == 0:
+            #o.spectra['frequency'].append(f.tolist())
+            #o.spectra['frequency'].append(f.tolist())
+            freqinfo['IFreqGrid'] = f.tolist()
+            freqinfo['SSB'].append(ssb)
+            o.spectra['ssb'].append(ssb)
+            #o.spectra['ssb'].append({'ssb':ssb,'lofreq':lofreq})
+        freqinfo['LOFreq'].append(lofreq)
+        channels.append(y.shape[0])
+        o.spectra['spectrum'].append(y.tolist())
+    o.spectra['frequency'] = freqinfo 
+    o.spectra['channels'] = channels
 
     #o.spectra is a dictionary containing the relevant data
     return o.spectra
