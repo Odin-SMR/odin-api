@@ -1,11 +1,10 @@
 '''
 Created on Mar 12, 2009
-New version Oct 2014 - dicovered that geometric height was in the files 
+New version Oct 2014 - dicovered that geometric height was in the files
 @author: donal
 '''
 from netCDF4 import Dataset
 import numpy as np
-from pylab import interp
 
 class NCecmwf(dict):
     '''
@@ -15,7 +14,7 @@ class NCecmwf(dict):
 
     def __init__(self, filename):
         '''
-        This routine will allow us to access 
+        This routine will allow us to access
         '''
         def readfield(fid,fieldname,lonsort):
             np.disp('Reading field')
@@ -23,7 +22,7 @@ class NCecmwf(dict):
             #field=np.r_[field]*field.scale_factor+field.add_offset
             field=np.ma.filled(field,np.nan)[:,:,lonsort]
             return field
-    
+
         fid=Dataset(filename, 'r')
         groups=fid.groups.keys()
         groupnames={}
@@ -49,7 +48,7 @@ class NCecmwf(dict):
         cfn="Pressure Level"
         cf=pres
         self.update(dict({'fid':fid,'lats': lats, 'lons': lons, 'lonsort': lonsort,'pres': pres, 'gmh': gmh, 'theta':theta, 'CurrentFieldName':cfn,'CurrentField':cf}))
-    
+
 
     def extractprofile_on_z(self,fieldname,latpt,longpt,newz):
         gmh=self['gmh']
@@ -70,7 +69,7 @@ class NCecmwf(dict):
         else:
             field=self['CurrentField']
         return field
- 
+
     def extractfield_on_p (self,fieldname,plevels):
         '''
         This routine will extract a field on given pressure levels
@@ -100,12 +99,12 @@ class NCecmwf(dict):
                 #f=interpolate.interp1d(np.flipud(logpres[:,i,j]),np.flipud(field[:,i,j]))
                 #newfield[:,i,j]=np.interp(np.log(plevels),np.flipud(logpres[:,i,j]),np.flipud(field[:,i,j]))
                 newfield[:,i,j]=np.flipud(np.interp(np.flipud(thlevels),np.flipud(theta[:,i,j]),np.flipud(field[:,i,j])))
-        newfield=newfield[:,:,self['lonsort']]       #sort longitudes        
-        return newfield    
-    
+        newfield=newfield[:,:,self['lonsort']]       #sort longitudes
+        return newfield
+
     def fileclose (self):
         self['fid'].close()
-                
-        
-            
-        
+
+
+
+

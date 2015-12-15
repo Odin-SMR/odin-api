@@ -1,12 +1,13 @@
 """ doc
 """
-from flask import request
-from flask import jsonify
+from flask import request,url_for
+from flask import jsonify, abort
 from flask.views import MethodView
 from matplotlib import use
 use("Agg")
 from geoloc_tools import get_geoloc_info
 from utils import copyemptydict
+from level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v2
 from level1b_scandata_exporter import get_scan_data, scan2dictlist
 from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
@@ -249,47 +250,6 @@ class FreqmodeInfo(MethodView):
                         freq_mode,
                         scanid
                         )
-                species_list = [
-                    'BrO',
-                    'Cl2O2',
-                    'CO',
-                    'HCl',
-                    'HO2',
-                    'NO2',
-                    'OCS',
-                    'C2H2',
-                    'ClO',
-                    'H2CO',
-                    'HCN',
-                    'HOBr',
-                    'NO',
-                    'OH',
-                    'C2H6',
-                    'ClONO2',
-                    'H2O2',
-                    'HCOOH',
-                    'HOCl',
-                    'O2',
-                    'SF6',
-                    'CH3Cl',
-                    'ClOOCl',
-                    'H2O',
-                    'HF',
-                    'N2',
-                    'O3',
-                    'SO2',
-                    'CH3CN',
-                    'CO2',
-                    'H2S',
-                    'HI',
-                    'N2O',
-                    'OBrO',
-                    'CH4',
-                    'COF2',
-                    'HBr',
-                    'HNO3',
-                    'NH3',
-                    'OClO']
                 for species in species_list:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
