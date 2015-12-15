@@ -1,6 +1,6 @@
 """ doc
 """
-from flask import request
+from flask import request,url_for
 from flask import jsonify, abort
 from flask.views import MethodView
 from matplotlib import use
@@ -301,11 +301,9 @@ class ScanPTZ(MethodView):
         """GET-method"""
         if not version in ['v1', 'v2', 'v3']:
             abort(404)
-        url = '''{0}rest_api/v1/freqmode_info/{1}/{2}/{3}'''.format(
-            request.url_root,
-            date,
-            backend,
-            freqmode)
+        url_base = request.headers['Host']
+        url_base = url_base.replace('webapi','localhost')
+        url =  'http://' + url_base + url_for('.scaninfo',version='v1', date=date, backend=backend,freqmode=freqmode)
         mjd, _, midlat, midlon = get_geoloc_info(url, scanno)
         datadict = run_donaletty(mjd, midlat, midlon, scanno)
         for item in ['P', 'T', 'Z']:
@@ -318,14 +316,14 @@ class ScanAPR(MethodView):
         """GET-method"""
         if not version in ['v1', 'v2', 'v3']:
             abort(404)
-        url = '''{0}rest_api/v1/freqmode_info/{1}/{2}/{3}'''.format(
-            request.url_root,
-            date,
-            backend,
-            freqmode)
+        url_base = request.headers['Host']
+        url_base = url_base.replace('webapi','localhost')
+        url =  'http://' + url_base + url_for('.scaninfo',version='v1', date=date, backend=backend,freqmode=freqmode)
+
         _, day_of_year, midlat, _ = get_geoloc_info(url, scanno)
         datadict = get_apriori(species, day_of_year, midlat)
         for item in ['pressure', 'vmr']:
             datadict[item] = datadict[item].tolist()
         return jsonify(datadict)
+
 
