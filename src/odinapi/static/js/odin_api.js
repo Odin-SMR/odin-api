@@ -35,24 +35,6 @@ function updateOverview(date, back, freq) {
 }
 
 function updateDataTable(date, back, freq) {
-/*  $.getJSON('/rest_api/v1/freqmode_info/'+date+'/AC2/1',
-    function(data) {
-      var table;
-      table = `
-<thead>i
-  <tr>
-    <th>Date</th>
-  </tr>
-</thead>
-<tbody>`;
-      for (var i = 0; i<data.MJD.length; i++) {
-        table = table + '<tr>';
-        table = table + '<td>'+data.DateTime[i]+'</td>\n';
-        table = table + '</tr>\n';
-      };
-      table = table + '</tbody>\n';
-      $('#info-table').html(table);
-    });*/
     $('#info-table').DataTable( {
         "ajax": {
             "url": '/rest_api/v1/freqmode_info/'+date+'/'+back+'/'+freq,
