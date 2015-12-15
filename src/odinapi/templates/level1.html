@@ -54,6 +54,7 @@
               <!-- empty table -->
             </table>
           </div>
+            <div id="smart-plot" class="plotter" ></div>
           <div>
               <img id="info-image" class="img-responsive" src="{{ url_for('static', filename='images/empty.png') }}"/>
           </div>
@@ -87,13 +88,13 @@
         $('#example1').datepicker({
           format: "yyyy-mm-dd",
           autoclose: true,
-          startDate: startDate,
-          endDate: endDate,
-          startView: startView
+          startDate: startDate
           }).on('changeDate', function(e) {
             updateLevel1(e.format('yyyy-mm-dd'))
           });
-        updateLevel1(startView);
+        initLevel1(startView);
+        //initPlot(plotdata);
+        initDataTable(startView,'AC1',2);
       });
     </script>
 {% endblock %}
