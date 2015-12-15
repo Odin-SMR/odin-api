@@ -10,7 +10,7 @@ webapi:
   ports:
     - 5000:5000
   volumes:
-    - src/:/app
-    - data/:/var/lib/odindata
+    - ./src/:/app
+    - ./data/:/var/lib/odindata
   links:
     - postgresql
