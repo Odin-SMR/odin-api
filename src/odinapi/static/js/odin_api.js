@@ -48,12 +48,12 @@ function initLevel1(date) {
         updatePlot(date, backend, freqmode)
     }); 
 }
+
 function updateLevel1(date) {
     var table;
     table = $('#level1-date').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
 }
-
 
 function addInfo (data, backend, freqmode) {
     return '<table width="100%">'+
@@ -164,4 +164,50 @@ function updateDataTable(date, back, freq) {
     var table;
     table = $('#info-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
+}
+
+// Functions used to populate calendar view:
+
+var freqmodeColours {
+  '00': 'Black',
+  '01': 'AliceBlue',
+  '02': 'RoyalBlue',
+  '08': 'Purple',
+  '13': 'FireBrick',
+  '14': 'ForestGreen',
+  '17': 'SaddleBrown',
+  '19': 'Silver',
+  '21': 'LightSkyBlue',
+  '22': 'Navy',
+  '23': 'RebeccaPurple',
+  '24': 'Teal',
+}
+
+var freqmodeTextColours {
+  '00': 'White',
+  '01': 'Black',
+  '02': 'White',
+  '08': 'White',
+  '13': 'White',
+  '14': 'White',
+  '17': 'White',
+  '19': 'Black',
+  '21': 'Black',
+  '22': 'White',
+  '23': 'White',
+  '24': 'White',
+}
+
+function initCalendarData() {
+        $('#info-table').DataTable( {
+            "data": [],
+            "columns": [
+                {"title": "DateTime"},
+                {"title": "AltStart"},
+                {"title": "AltEnd"},
+                {"title": "FreqMode"},
+                {"title": "SunZD"},
+                {"title": "URL"},
+            ]
+    });
 }
