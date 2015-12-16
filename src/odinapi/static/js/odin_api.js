@@ -1,19 +1,35 @@
 function initLevel1(date) {
     var table = $('#level1-date').DataTable({
         "ajax": {
-            "url": '/rest_api/v1/freqmode_info/'+date,
+            "url": '/rest_api/v3/freqmode_info/'+date,
             "dataSrc": "Info",
             },
         "columns": [
-            {"data": "Backend"},
-            {"data": "FreqMode"},
-            {"data": "NumScan"},
-            {"data": "URL"},
+            {
+                "data": "Backend",
+                "title": "Backend",
+            },
+            { 
+                "data": "FreqMode",
+                "title": "FreqMode",
+            },
+            {
+                "data": "NumScan",
+                "title": "NumScan",
+            },
+            {
+                "data": "URL",
+                "title": "URL",
+                "render": function ( data, type, full, meta ) {
+                  return '<a href="'+data+'">Get JSON data</a>';
+                },
+            },
             ],
         "paging":   false,
         "ordering": false,
-        "info":     false
+        "info":     false,
         })
+
     $('#level1-date tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr')
         var row = table.row(tr)
@@ -32,9 +48,14 @@ function initLevel1(date) {
         updatePlot(date, backend, freqmode)
     }); 
 }
+function updateLevel1(date) {
+    var table;
+    table = $('#level1-date').DataTable();
+    table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
+}
+
 
 function addInfo (data, backend, freqmode) {
-    console.log(backend)
     return '<table width="100%">'+
         '<tr><td id="smart-plot-lat-' + backend + '-' + freqmode + 
         '" class="plotter"></td></tr>' +
@@ -46,38 +67,11 @@ function addInfo (data, backend, freqmode) {
         '" class="plotter"></td></tr>'+
         '</table>'
 }
-function updateLevel1(date) {
-    var table;
-    table = $('#level1-date').DataTable();
-    table.ajax.url('/rest_api/v1/freqmode_info/' + date).load();
-}
 
 function updateOverview(date, back, freq) {
   $('#info-image').attr('src','/plot/'+date+'/'+back+'/'+freq);
 }
 
-function updateDataTable(date, back, freq) {
-        var table
-        var dataSet = []
-        table = $('#info-table').DataTable();
-        $.getJSON(
-            '/rest_api/v1/freqmode_info/'+date+'/'+back+'/'+freq,
-            function(data) {
-                $.each( data["SunZD"], function (index, value) {
-                    dataSet.push( [
-                        data["DateTime"][index],
-                        data["AltStart"][index],
-                        data["AltEnd"][index],
-                        data["FreqMode"][index],
-                        data["SunZD"][index],
-                        data["Info"][index]["URL"],
-                    ])
-            })
-        table.clear().draw();
-        table.rows.add(dataSet); // Add new data
-        table.columns.adjust().draw(); // Redraw the DataTable
-        })
-}
 function updatePlot(date, back, freq) {
         var sun = []
         var lat = []
@@ -103,8 +97,9 @@ function updatePlot(date, back, freq) {
                 })
                 opt={
                     "series":{
+                        "color": "#2C5AA0",
                         "points":{
-                            "show":true
+                            "show":true,
                         }
                     },
                     "xaxis":{
@@ -122,15 +117,51 @@ function updatePlot(date, back, freq) {
         }
 
 function initDataTable() {
-        $('#info-table').DataTable( {
-            "data": [],
-            "columns": [
-                {"title": "DateTime"},
-                {"title": "AltStart"},
-                {"title": "AltEnd"},
-                {"title": "FreqMode"},
-                {"title": "SunZD"},
-                {"title": "URL"},
-            ]
+    var date = '2015-01-03'
+    var back = 'AC2'
+    var freq = '1'
+    $('#info-table').DataTable( {
+        "ajax": {
+            "dataSrc": "Info",
+            "url": '/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq,
+            },
+        "data": [],
+        "columns": [
+                {
+                    "data": "DateTime",
+                    "title": "DateTime",
+                },
+                {
+                    "data": "AltStart",
+                    "title": "AltStart",
+                },
+                {
+                    "data": "AltEnd",
+                    "title": "AltEnd",
+                },
+                {
+                    "data":"FreqMode",
+                    "title": "FreqMode",
+                },
+                {
+                    "data": "SunZD",
+                    "title": "SunZD",
+                },
+                {
+                    "data": "URL",
+                    "title": "Data URL (JSON)",
+                    "render": function ( data, type, full, meta ) {
+                        return '<a href="'+data+'">Get JSON data</a>';
+                },
+
+                },
+         ],
     });
+}
+
+
+function updateDataTable(date, back, freq) {
+    var table;
+    table = $('#info-table').DataTable();
+    table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
 }

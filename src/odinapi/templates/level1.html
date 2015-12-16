@@ -48,20 +48,19 @@
           <div>
               <input  type="text" value="2015-01-03" id="example1">
           </div>
-          <h2 class="sub-header">Data</h2>
+          <h2 class="sub-header">Meta information from measurments</h2>
+          <p>The table below describes the mesurments made the selected date. Click on a row to get mor information</p>
           <div class="table-responsive">
             <table id="level1-date" class="table table-striped">
               <!-- empty table -->
             </table>
           </div>
             <div id="smart-plot" class="plotter" ></div>
-          <div>
-              <img id="info-image" class="img-responsive" src="{{ url_for('static', filename='images/empty.png') }}"/>
-          </div>
           <div id="ddata">
                
           </div>
-          <h2 class="sub-header">Data</h2>
+          <h2 class="sub-header">Scan information</h2>
+          <p>Scan data can be downloaded direktly from our rest-API using the links in the URL colummn. A scan is a group of spectra collected by the instrument when sweeping from the top of the Atmosphere to the bottom (or reversed)</p>
           <div class="table-responsive">
             <table id="info-table" class="table table-striped">
               <!-- empty table -->
