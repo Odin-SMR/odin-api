@@ -1,0 +1,117 @@
+{% block content %}
+
+<script>
+
+	$(document).ready(function() {
+
+		$('#calendar').fullCalendar({
+			defaultDate: '2015-12-12',
+			editable: true,
+			eventLimit: true, // allow "more" link when too many events
+			events: [
+				{
+					title: 'All Day Event',
+					url: 'https://www.molflow.com/',
+					color: 'AliceBlue',
+					testColor: 'Black',
+					start: '2015-12-01'
+				},
+				{
+					title: 'Long Event',
+					url: 'https://www.molflow.com/',
+					color: 'RoyalBlue',
+					testColor: 'white',
+					start: '2015-12-07'
+				},
+				{
+					title: 'Repeating Event',
+					url: 'https://www.molflow.com/',
+					color: 'Purple',
+					testColor: 'white',
+					start: '2015-12-09T16:00:00'
+				},
+				{
+					title: 'Repeating Event',
+					url: 'https://www.molflow.com/',
+					color: 'FireBrick',
+					testColor: 'white',
+					start: '2015-12-16T16:00:00'
+				},
+				{
+					title: 'Conference',
+					url: 'https://www.molflow.com/',
+					color: 'ForestGreen',
+					testColor: 'white',
+					start: '2015-12-11'
+				},
+				{
+					title: 'Meeting',
+					url: 'https://www.molflow.com/',
+					color: 'Orange',
+					testColor: 'white',
+					start: '2015-12-12T10:30:00'
+				},
+				{
+					title: 'Lunch',
+					url: 'https://www.molflow.com/',
+					color: 'Maroon',
+					testColor: 'white',
+					start: '2015-12-12T12:00:00'
+				},
+				{
+					title: 'Meeting',
+					url: 'https://www.molflow.com/',
+					color: 'Silver',
+					testColor: 'Black',
+					start: '2015-12-12T14:30:00'
+				},
+				{
+					title: 'Happy Hour',
+					url: 'https://www.molflow.com/',
+					color: 'LightSkyBlue',
+					testColor: 'Black',
+					start: '2015-12-12T17:30:00'
+				},
+				{
+					title: 'Dinner',
+					url: 'https://www.molflow.com/',
+					color: 'Navy',
+					testColor: 'white',
+					start: '2015-12-12T20:00:00'
+				},
+				{
+					title: 'Birthday Party',
+					url: 'https://www.molflow.com/',
+					color: 'RebeccaPurple',
+					testColor: 'white',
+					start: '2015-12-13T07:00:00'
+				},
+				{
+					title: 'Click for Molflow',
+					url: 'https://www.molflow.com/',
+					color: 'Teal',
+					testColor: 'white',
+					start: '2015-12-28'
+				}
+			]
+		});
+	});
+
+</script>
+<style>
+
+	body {
+		margin: 40px 10px;
+		padding: 0;
+		font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+		font-size: 14px;
+	}
+
+	#calendar {
+		max-width: 900px;
+		margin: 0 auto;
+	}
+
+</style>
+
+{% endblock %}
