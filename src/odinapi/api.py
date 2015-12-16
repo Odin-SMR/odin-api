@@ -9,6 +9,7 @@ from odinapi.views.data_info import FileInfo
 from odinapi.views.views import ScanPTZ, ScanAPR
 from os import environ
 
+
 class Odin(Flask):
     """The main app running the odin site"""
     def __init__(self, name):
@@ -38,7 +39,8 @@ class Odin(Flask):
             view_func=ScanPTZ.as_view('ptz')
             )
         self.add_url_rule(
-            '/rest_api/<version>/apriori/<species>/<date>/<backend>/<freqmode>/<scanno>/',
+            '/rest_api/<version>/apriori/<species>/<date>/<backend>/'
+            '<freqmode>/<scanno>/',
             view_func=ScanAPR.as_view('apriori')
             )
         self.add_url_rule(
@@ -61,15 +63,16 @@ class Odin(Flask):
             '/plot/<date>/<backend>/<freqmode>',
             view_func=ViewFreqmodeInfoPlot.as_view('plotscans')
             )
+
+
 def main():
     """Default function"""
     app = Odin(__name__)
     app.run(
         host='0.0.0.0',
-        debug=not environ.has_key('ODIN_API_PRODUCTION'),
+        debug='ODIN_API_PRODUCTION' in environ,
         threaded=True
         )
 
 if __name__ == "__main__":
     main()
-
