@@ -7665,7 +7665,16 @@ var View = FC.View = Class.extend({
 
 	// Computes if the given event is allowed to be dragged by the user
 	isEventDraggable: function(event) {
-		return false;
+		var source = event.source || {};
+
+		return firstDefined(
+			event.startEditable,
+			source.startEditable,
+			this.opt('eventStartEditable'),
+			event.editable,
+			source.editable,
+			this.opt('editable')
+		);
 	},
 
 
