@@ -168,7 +168,7 @@ function updateDataTable(date, back, freq) {
 
 // Functions used to populate calendar view:
 
-var freqmodeColours {
+var freqmodeColours = {
   '00': 'Black',
   '01': 'AliceBlue',
   '02': 'RoyalBlue',
@@ -183,7 +183,7 @@ var freqmodeColours {
   '24': 'Teal',
 }
 
-var freqmodeTextColours {
+var freqmodeTextColours = {
   '00': 'White',
   '01': 'Black',
   '02': 'White',
