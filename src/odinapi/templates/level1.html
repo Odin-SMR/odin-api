@@ -94,9 +94,7 @@
                     updateCalendar(start, end, timezone, callback);
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-                    console.log(calEvent.start.format());
-                    console.log(calEvent.Backend);
-                    console.log(calEvent.FreqMode);
+                    updateLevel1(calEvent.start.format());
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
                     return false;
