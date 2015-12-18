@@ -1329,8 +1329,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
 
     if ok==0:
         print 'data for scan {0} not found'.format(calstw)
-        exit(0)
-
+        return {}
     o.decode_data()
 
  

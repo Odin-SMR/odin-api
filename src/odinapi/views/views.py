@@ -286,10 +286,14 @@ class ScanSpec(MethodView):
         elif version == "v2":
             spectra = get_scan_data_v2(con, backend, freqmode, scanno)
             #spectra is a dictionary containing the relevant data
+            if spectra == {}:
+                abort(404)
             datadict = scan2dictlist_v2(spectra)
             return jsonify(datadict)
         elif version == "v3":
             spectra = get_scan_data_v2(con, backend, freqmode, scanno)
+            if spectra == {}:
+                abort(404)
             #spectra is a dictionary containing the relevant data
             datadict = scan2dictlist_v2(spectra)
             return jsonify(datadict)
