@@ -43,8 +43,8 @@ function initLevel1(date) {
             row.child( addInfo( row.data(), backend, freqmode )).show()
             tr.addClass('shown')
         }
-        updateOverview(date, backend,freqmode)
-        updateDataTable(date, backend,freqmode)
+        //updateOverview(date, backend, freqmode)
+        updateDataTable(date, backend, freqmode)
         updatePlot(date, backend, freqmode)
     });
 }
@@ -68,8 +68,8 @@ function addInfo (data, backend, freqmode) {
         '</table>'
 }
 
-function updateOverview(date, back, freq) {
-  $('#info-image').attr('src','/plot/'+date+'/'+back+'/'+freq);
+function updateOverview(url) {
+  $('#info-image').attr('src', url.replace("rest_api/v3/scan", "browse"));
 }
 
 function updatePlot(date, back, freq) {
@@ -120,7 +120,7 @@ function initDataTable() {
     var date = '2015-01-03'
     var back = 'AC2'
     var freq = '1'
-    $('#info-table').DataTable( {
+    var table = $('#info-table').DataTable( {
         "ajax": {
             "dataSrc": "Info",
             "url": '/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq,
@@ -156,13 +156,20 @@ function initDataTable() {
                 },
                 {
                     "data": "URL",
-                    "title": "Data overview",
+                    "title": "Scan overview",
                     "render": function ( data, type, full, meta ) {
-                        return '<a href="'+data.replace("rest_api/v3/scan",
-                               "browse")+'">Show overview</a>';
+                        return '<a href="#info-image">Show overview</a>';
                     },
                 },
          ],
+    });
+
+    $('#info-table tbody').on( 'click', 'tr', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
+        var url = $(this).children().eq(5).find('a').attr("href");
+
+        updateOverview(url);
     });
 }
 
