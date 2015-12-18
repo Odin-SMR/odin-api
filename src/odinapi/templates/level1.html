@@ -46,11 +46,8 @@
           </div>
 -->
           <div id='calendar'> </div>
-          <div>
-              <input  type="text" value="2015-01-03" id="example1">
-          </div>
           <h2 class="sub-header">Meta information from measurments</h2>
-          <p>The table below describes the mesurments made the selected date. Click on a row to get mor information</p>
+          <p>The table below describes the mesurments made the selected date. Click on a row to get more information</p>
           <div class="table-responsive">
             <table id="level1-date" class="table table-striped">
               <!-- empty table -->
@@ -61,7 +58,7 @@
 
           </div>
           <h2 class="sub-header">Scan information</h2>
-          <p>Scan data can be downloaded direktly from our rest-API using the links in the URL colummn. A scan is a group of spectra collected by the instrument when sweeping from the top of the Atmosphere to the bottom (or reversed)</p>
+          <p>Scan data can be downloaded directly from our rest-API using the links in the URL colummn. A scan is a group of spectra collected by the instrument when sweeping from the top of the Atmosphere to the bottom (or reversed)</p>
           <div class="table-responsive">
             <table id="info-table" class="table table-striped">
               <!-- empty table -->
@@ -79,32 +76,25 @@
 
 {% block script %}
     <script type="text/javascript">
-      // When the document is ready
-      $(document).ready(function () {
 
-        var startDate ='2001-02-20';
-        var endDate ='2042-02-11';
-        var startView ='2015-01-03';
-        $('#example1').datepicker({
-          format: "yyyy-mm-dd",
-          autoclose: true,
-          startDate: startDate
-          }).on('changeDate', function(e) {
-            updateLevel1(e.format('yyyy-mm-dd'))
-          });
-        initLevel1(startView);
-        //initPlot(plotdata);
-        initDataTable(startView,'AC1',2);
+        // When the document is ready
+        $(document).ready(function () {
 
-        $('#calendar').fullCalendar({
-            defaultDate: '2015-01-03',
-            editable: false,
-            eventLimit: true, // allow "more" link when too many events
-            events: function(start, end, timezone, callback) {
-                updateCalendar(start, end, timezone, callback);
-            }
+            var startView ='2015-01-03';
+
+            initLevel1(startView);
+            //initPlot(plotdata);
+            initDataTable(startView,'AC1',2);
+
+            $('#calendar').fullCalendar({
+                defaultDate: '2015-01-03',
+                editable: false,
+                eventLimit: true, // allow "more" link when too many events
+                events: function(start, end, timezone, callback) {
+                    updateCalendar(start, end, timezone, callback);
+                }
+            });
         });
-    });
 
     </script>
 {% endblock %}
