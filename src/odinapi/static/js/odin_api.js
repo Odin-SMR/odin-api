@@ -9,7 +9,7 @@ function initLevel1(date) {
                 "data": "Backend",
                 "title": "Backend",
             },
-            { 
+            {
                 "data": "FreqMode",
                 "title": "FreqMode",
             },
@@ -46,7 +46,7 @@ function initLevel1(date) {
         updateOverview(date, backend,freqmode)
         updateDataTable(date, backend,freqmode)
         updatePlot(date, backend, freqmode)
-    }); 
+    });
 }
 
 function updateLevel1(date) {
@@ -57,9 +57,9 @@ function updateLevel1(date) {
 
 function addInfo (data, backend, freqmode) {
     return '<table width="100%">'+
-        '<tr><td id="smart-plot-lat-' + backend + '-' + freqmode + 
+        '<tr><td id="smart-plot-lat-' + backend + '-' + freqmode +
         '" class="plotter"></td></tr>' +
-        '<tr><td id="smart-plot-lon-' + backend + '-' + freqmode + 
+        '<tr><td id="smart-plot-lon-' + backend + '-' + freqmode +
         '" class="plotter"></td></tr>' +
         '<tr><td id="smart-plot-sun-' + backend + '-' + freqmode +
         '" class="plotter"></td></tr>'+
@@ -87,7 +87,7 @@ function updatePlot(date, back, freq) {
                     time_point = moment
                     datestring = date + " " +data["DateTime"][index].split(" ")[4]
                     var momentDate = moment(
-                        datestring, 
+                        datestring,
                         'YYYY-MM-DD HH:mm:ss');
                     sun.push( [momentDate.toDate(), value] );
                     lat.push( [momentDate.toDate(), data["StartLat"][index]] );
