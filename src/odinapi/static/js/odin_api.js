@@ -169,10 +169,10 @@ function updateDataTable(date, back, freq) {
 // Functions used to populate calendar view:
 
 var freqmodeColours = {
-  '00': 'Black',
-  '01': 'AliceBlue',
-  '02': 'RoyalBlue',
-  '08': 'Purple',
+  '0': 'Black',
+  '1': 'AliceBlue',
+  '2': 'RoyalBlue',
+  '8': 'Purple',
   '13': 'FireBrick',
   '14': 'ForestGreen',
   '17': 'SaddleBrown',
@@ -184,10 +184,10 @@ var freqmodeColours = {
 }
 
 var freqmodeTextColours = {
-  '00': 'White',
-  '01': 'Black',
-  '02': 'White',
-  '08': 'White',
+  '0': 'White',
+  '1': 'Black',
+  '2': 'White',
+  '8': 'White',
   '13': 'White',
   '14': 'White',
   '17': 'White',
@@ -198,16 +198,42 @@ var freqmodeTextColours = {
   '24': 'White',
 }
 
-function initCalendarData() {
-        $('#info-table').DataTable( {
-            "data": [],
-            "columns": [
-                {"title": "DateTime"},
-                {"title": "AltStart"},
-                {"title": "AltEnd"},
-                {"title": "FreqMode"},
-                {"title": "SunZD"},
-                {"title": "URL"},
-            ]
-    });
+function updateCalendar(start, end, timezone, callback) {
+    var theDate = start;
+    var events = [];
+    // Loop over time interval in view:
+    while (theDate < end) {
+        // For ech day, get json from rest:
+        $.ajax({
+            type: 'GET',
+            url: '/rest_api/v3/freqmode_info/' +
+                 theDate.stripTime().format() + '/',
+            async: false,
+            dataType: "json",
+            success: function(data) {
+                // Check if there are scans in Info, if so, loop
+                // over the elements under Info and add to events list:
+                $.each(data.Info, function(index, theInfo) {
+                    theEvent = {
+                        title: "FreqMode: " +
+                               theInfo.FreqMode + " (" +
+                               theInfo.Backend +  "): " +
+                               theInfo.NumScan + " scans",
+                        start: theDate.stripTime().format(),
+                        // This should link to the report for the day:
+                        url: theInfo.URL,
+                        // also add color and textColor based on freqmode
+                        color: freqmodeColours[theInfo.FreqMode],
+                        textColor: freqmodeTextColours[theInfo.FreqMode],
+                    };
+                    events.push(theEvent);
+                });
+            }
+        });
+        // Increment loop "Moment":
+        theDate.add(1, 'd');
+    }
+    // Callback with events list  makes Calendar update:
+    callback(events);
 }
+

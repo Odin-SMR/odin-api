@@ -97,95 +97,12 @@
         initDataTable(startView,'AC1',2);
 
         $('#calendar').fullCalendar({
-            defaultDate: '2015-12-12',
+            defaultDate: '2015-01-03',
             editable: false,
             eventLimit: true, // allow "more" link when too many events
-            events: [
-                {
-                    title: 'All Day Event',
-                    url: 'https://www.molflow.com/',
-                    color: 'AliceBlue',
-                    textColor: 'Black',
-                    start: '2015-12-01'
-                },
-                {
-                    title: 'Long Event',
-                    url: 'https://www.molflow.com/',
-                    color: 'RoyalBlue',
-                    textColor: 'white',
-                    start: '2015-12-07'
-                },
-                {
-                    title: 'Repeating Event',
-                    url: 'https://www.molflow.com/',
-                    color: 'Purple',
-                    textColor: 'white',
-                    start: '2015-12-09T16:00:00'
-                },
-                {
-                    title: 'Repeating Event',
-                    url: 'https://www.molflow.com/',
-                    color: 'FireBrick',
-                    textColor: 'white',
-                    start: '2015-12-16T16:00:00'
-                },
-                {
-                    title: 'Conference',
-                    url: 'https://www.molflow.com/',
-                    color: 'ForestGreen',
-                    textColor: 'white',
-                    start: '2015-12-11'
-                },
-                {
-                    title: 'Meeting',
-                    url: 'https://www.molflow.com/',
-                    color: 'Orange',
-                    textColor: 'white',
-                    start: '2015-12-12T10:30:00'
-                },
-                {
-                    title: 'Lunch',
-                    url: 'https://www.molflow.com/',
-                    color: 'Maroon',
-                    textColor: 'white',
-                    start: '2015-12-12T12:00:00'
-                },
-                {
-                    title: 'Meeting',
-                    url: 'https://www.molflow.com/',
-                    color: 'Silver',
-                    textColor: 'Black',
-                    start: '2015-12-12T14:30:00'
-                },
-                {
-                    title: 'Happy Hour',
-                    url: 'https://www.molflow.com/',
-                    color: 'LightSkyBlue',
-                    textColor: 'Black',
-                    start: '2015-12-12T17:30:00'
-                },
-                {
-                    title: 'Dinner',
-                    url: 'https://www.molflow.com/',
-                    color: 'Navy',
-                    textColor: 'white',
-                    start: '2015-12-12T20:00:00'
-                },
-                {
-                    title: 'Birthday Party',
-                    url: 'https://www.molflow.com/',
-                    color: 'RebeccaPurple',
-                    textColor: 'white',
-                    start: '2015-12-13T07:00:00'
-                },
-                {
-                    title: 'Click for Molflow',
-                    url: 'https://www.molflow.com/',
-                    color: 'Teal',
-                    textColor: 'white',
-                    start: '2015-12-28'
-                }
-            ]
+            events: function(start, end, timezone, callback) {
+                updateCalendar(start, end, timezone, callback);
+            }
         });
     });
 
