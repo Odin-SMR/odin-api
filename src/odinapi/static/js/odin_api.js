@@ -232,8 +232,7 @@ function updateCalendar(start, end, timezone, callback) {
                 // over the elements under Info and add to events list:
                 $.each(data.Info, function(index, theInfo) {
                     theEvent = {
-                        title: "FreqMode: " +
-                               theInfo.FreqMode + " (" +
+                        title: "FM: " + theInfo.FreqMode + " (" +
                                theInfo.Backend +  "): " +
                                theInfo.NumScan + " scans",
                         start: theDate.stripTime().format(),
