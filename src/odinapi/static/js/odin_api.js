@@ -146,12 +146,15 @@ function initDataTable() {
                 {
                     "data": "SunZD",
                     "title": "SunZD",
+                    "render": function ( data, type, full, meta ) {
+                        return parseFloat(data).toFixed(2);
+                    }
                 },
                 {
                     "data": "URL",
                     "title": "Data URL (JSON)",
                     "render": function ( data, type, full, meta ) {
-                        return '<a href="'+data+'">Get JSON data</a>';
+                        return '<a href="' + data + '">Get JSON data</a>';
                     },
                 },
                 {
