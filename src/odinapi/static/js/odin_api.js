@@ -222,9 +222,12 @@ function updateCalendar(start, end, timezone, callback) {
                         start: theDate.stripTime().format(),
                         // This should link to the report for the day:
                         url: theInfo.URL,
-                        // also add color and textColor based on freqmode
+                        // Add color and textColor based on freqmode:
                         color: freqmodeColours[theInfo.FreqMode],
                         textColor: freqmodeTextColours[theInfo.FreqMode],
+                        // Save some metadata:
+                        FreqMode: theInfo.FreqMode,
+                        Backend: theInfo.Backend,
                     };
                     events.push(theEvent);
                 });

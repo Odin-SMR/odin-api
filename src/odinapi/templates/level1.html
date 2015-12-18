@@ -84,7 +84,7 @@
 
             initLevel1(startView);
             //initPlot(plotdata);
-            initDataTable(startView,'AC1',2);
+            initDataTable(startView, 'AC1', 2);
 
             $('#calendar').fullCalendar({
                 defaultDate: startView,
@@ -92,7 +92,15 @@
                 eventLimit: true, // allow "more" link when too many events
                 events: function(start, end, timezone, callback) {
                     updateCalendar(start, end, timezone, callback);
-                }
+                },
+                eventClick: function(calEvent, jsEvent, view) {
+                    console.log(calEvent.start.format());
+                    console.log(calEvent.Backend);
+                    console.log(calEvent.FreqMode);
+                    updateDataTable(calEvent.start.format(), calEvent.Backend,
+                                    calEvent.FreqMode);
+                    return false;
+                },
             });
         });
 
