@@ -152,8 +152,15 @@ function initDataTable() {
                     "title": "Data URL (JSON)",
                     "render": function ( data, type, full, meta ) {
                         return '<a href="'+data+'">Get JSON data</a>';
+                    },
                 },
-
+                {
+                    "data": "URL",
+                    "title": "Data overview",
+                    "render": function ( data, type, full, meta ) {
+                        return '<a href="'+data.replace("rest_api/v3/scan",
+                               "browse")+'">Show overview</a>';
+                    },
                 },
          ],
     });
