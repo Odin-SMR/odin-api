@@ -213,6 +213,7 @@ class FreqmodeInfo(MethodView):
 
             loginfo, _, _ = get_scan_logdata(
                 con, backend, date+'T00:00:00', int(freqmode), 1)
+            
             for index in range(len(loginfo['ScanID'])):
                 row = []
                 row.append(loginfo['DateTime'][index].date())
@@ -225,7 +226,7 @@ class FreqmodeInfo(MethodView):
                 except AttributeError:
                     pass
             loginfo['Info'] = []
-            for ind in range(len(loginfo)):
+            for ind in range(len(loginfo['ScanID'])):
       
                 freq_mode = loginfo['FreqMode'][ind]
                 scanid = loginfo['ScanID'][ind]
@@ -240,7 +241,7 @@ class FreqmodeInfo(MethodView):
                     version,
                     backend,
                     freq_mode,
-                    scanid)
+                    scanid)       
                 datadict['URL-ptz'] = (
                     '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
                         request.url_root,
