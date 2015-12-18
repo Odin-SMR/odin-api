@@ -198,6 +198,7 @@ var freqmodeColours = {
   '22': 'Navy',
   '23': 'RebeccaPurple',
   '24': 'Teal',
+  '29': 'LightSteelBlue',
 }
 
 var freqmodeTextColours = {
@@ -213,6 +214,7 @@ var freqmodeTextColours = {
   '22': 'White',
   '23': 'White',
   '24': 'White',
+  '29': 'Black',
 }
 
 function updateCalendar(start, end, timezone, callback) {
