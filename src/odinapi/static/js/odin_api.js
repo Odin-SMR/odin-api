@@ -231,6 +231,7 @@ function updateCalendar(start, end) {
             dataType: "json",
             success: function(data) {
                 // Loop over the elements under Info and create event:
+                var events = [];
                 $.each(data.Info, function(index, theInfo) {
                     theEvent = {
                         title: "FM: " + theInfo.FreqMode + " (" +
@@ -248,8 +249,10 @@ function updateCalendar(start, end) {
                         Backend: theInfo.Backend,
                     };
                     // Push event to calendar:
-                    $('#calendar').fullCalendar('renderEvent', theEvent, false);
+                    //$('#calendar').fullCalendar('renderEvent', theEvent, false);
+                    events.push(theEvent);
                 });
+                $('#calendar').fullCalendar('addEventSource', events);
             }
         });
         // Increment loop "Moment":
