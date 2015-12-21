@@ -107,7 +107,7 @@
                 eventClick: function(calEvent, jsEvent, view) {
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
-                    $('#datepicker1').setDate(calEvent.start.format());
+                    $('#datepicker1').datepicker('update', calEvent.start.format());
                     return false;
                 },
             });
