@@ -1,5 +1,5 @@
 function initLevel1(date) {
-    $('#level1-date').html("for " + date);
+    $('#level1-date').html(date);
 
     var table = $('#level1-date-table').DataTable({
         "ajax": {
@@ -35,6 +35,7 @@ function initLevel1(date) {
     $('#level1-date-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr')
         var row = table.row(tr)
+        var date = $('#level1-date').text();
         var backend = $(this).children().eq(0).text()
         var freqmode = $(this).children().eq(1).text()
         if (row.child.isShown()) {
@@ -45,7 +46,6 @@ function initLevel1(date) {
             row.child( addInfo( row.data(), backend, freqmode )).show()
             tr.addClass('shown')
         }
-        //updateOverview(date, backend, freqmode)
         updateDataTable(date, backend, freqmode)
         updatePlot(date, backend, freqmode)
     });
@@ -55,7 +55,7 @@ function updateLevel1(date) {
     var table;
     table = $('#level1-date-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
-    $('#level1-date').html("for " + date);
+    $('#level1-date').html(date);
 }
 
 function addInfo (data, backend, freqmode) {
@@ -182,6 +182,7 @@ function initDataTable() {
 
 function updateDataTable(date, back, freq) {
     var table;
+    console.log(date);
     table = $('#info-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
 }

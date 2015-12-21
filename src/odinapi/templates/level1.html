@@ -40,7 +40,7 @@
           <div>
               <input  type="text" value="2015-01-03" id="datepicker1">
           </div>
-          <h2 class="sub-header">Overview of daily measurements <span id=level1-date></span></h2>
+          <h2 class="sub-header">Overview of daily measurements for <span id=level1-date></span></h2>
           <p>The table below describes the measurements made the selected date.
           Click on a row to get more information.</p>
           <div class="table-responsive">
@@ -55,7 +55,10 @@
 
           </div>
           <h2 class="sub-header">Scan information</h2>
-          <p>Scan data can be downloaded directly from our rest-API using the links in the URL colummn. A scan is a group of spectra collected by the instrument when sweeping from the top of the Atmosphere to the bottom (or reversed)</p>
+          <p>Scan data can be downloaded directly from our rest-API using the
+          links in the URL colummn. A scan is a group of spectra collected by
+          the instrument when sweeping from the top of the atmosphere to the
+          bottom (or reversed)</p>
           <div class="table-responsive">
             <table id="info-table" class="table table-striped">
               <!-- empty table -->
@@ -106,9 +109,9 @@
                     callback();
                 },
                 eventClick: function(calEvent, jsEvent, view) {
+                    $('#datepicker1').datepicker('setDate', calEvent.start.format());
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
-                    $('#datepicker1').datepicker('setDate', calEvent.start.format());
                     return false;
                 },
             });
