@@ -59,9 +59,9 @@ class DateInfo(MethodView):
         query_str = (
             "select freqmode, backend, count(distinct(stw)) "
             "from ac_cal_level1b "
-            "join attitude_level1 using(backend,stw) "
+            # "join attitude_level1 using(backend,stw) "
             "where stw between {0} and {1} "
-            "and mjd between {2} and {3} "
+            # "and mjd between {2} and {3} "
             "group by backend,freqmode "
             "order by backend,freqmode "
             ).format(stw1, stw2, mjd1, mjd2)
@@ -87,9 +87,9 @@ class DateBackendInfo(DateInfo):
         query_str = (
             "select freqmode, backend, count(distinct(stw)) "
             "from ac_cal_level1b "
-            "join attitude_level1 using(backend,stw) "
+            # "join attitude_level1 using(backend,stw) "
             "where stw between {0} and {1} "
-            "and mjd between {2} and {3} "
+            # "and mjd between {2} and {3} "
             "and backend='{4}' "
             "group by backend,freqmode "
             "order by backend,freqmode "
@@ -120,7 +120,7 @@ class FreqmodeInfo(MethodView):
                     'LastSpectrum' ,
                     'MJD',
                     'ScanID',
-                     
+
 ]
         species_list = [
                     'BrO',
@@ -163,7 +163,7 @@ class FreqmodeInfo(MethodView):
                     'HNO3',
                     'NH3',
                     'OClO']
- 
+
 
 
         if version == "v1":
@@ -213,13 +213,13 @@ class FreqmodeInfo(MethodView):
 
             loginfo, _, _ = get_scan_logdata(
                 con, backend, date+'T00:00:00', int(freqmode), 1)
-            
+
             for index in range(len(loginfo['ScanID'])):
                 row = []
                 row.append(loginfo['DateTime'][index].date())
                 for item in itemlist:
                     row.append(loginfo[item][index])
-           
+
             for item in loginfo.keys():
                 try:
                     loginfo[item] = loginfo[item].tolist()
@@ -227,10 +227,10 @@ class FreqmodeInfo(MethodView):
                     pass
             loginfo['Info'] = []
             for ind in range(len(loginfo['ScanID'])):
-      
+
                 freq_mode = loginfo['FreqMode'][ind]
                 scanid = loginfo['ScanID'][ind]
-                
+
                 datadict = dict()
                 for item in itemlist:
 
@@ -241,7 +241,7 @@ class FreqmodeInfo(MethodView):
                     version,
                     backend,
                     freq_mode,
-                    scanid)       
+                    scanid)
                 datadict['URL-ptz'] = (
                     '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
                         request.url_root,
