@@ -231,9 +231,13 @@ function updateCalendar(start, end, timezone, callback) {
                  theDate.stripTime().format() + '/',
             async: false,
             dataType: "json",
+            error: function(e) {
+                console.log(e);
+            },
             success: function(data) {
                 // Check if there are scans in Info, if so, loop
                 // over the elements under Info and add to events list:
+                console.log(data);
                 $.each(data.Info, function(index, theInfo) {
                     theEvent = {
                         title: "FM: " + theInfo.FreqMode + " (" +
@@ -250,7 +254,8 @@ function updateCalendar(start, end, timezone, callback) {
                         FreqMode: theInfo.FreqMode,
                         Backend: theInfo.Backend,
                     };
-                    events.push(theEvent);
+                    $('#calendar').fullCalendar('renderEvent', theEvent, true);
+                    //events.push(theEvent);
                 });
             }
         });
