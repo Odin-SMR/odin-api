@@ -102,7 +102,8 @@
                 editable: false,
                 eventLimit: true, // allow "more" link when too many events
                 events: function(start, end, timezone, callback) {
-                    updateCalendar(start, end, timezone, callback);
+                    updateCalendar(start, end);
+                    callback();
                 },
                 eventClick: function(calEvent, jsEvent, view) {
                     updateDataTable(calEvent.start.format(), calEvent.Backend,

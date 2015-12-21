@@ -220,7 +220,7 @@ var freqmodeTextColours = {
   '29': 'Black',
 }
 
-function updateCalendar(start, end, timezone, callback) {
+function updateCalendar(start, end) {
     var theDate = start;
     // Loop over time interval in view:
     while (theDate < end) {
@@ -229,18 +229,15 @@ function updateCalendar(start, end, timezone, callback) {
             type: 'GET',
             url: '/rest_api/v3/freqmode_info/' +
                  theDate.stripTime().format() + '/',
-            async: false,
             dataType: "json",
             success: function(data) {
-                // Check if there are scans in Info, if so, loop
-                // over the elements under Info and add to events list:
-                var events = [];
+                // Loop over the elements under Info and create event:
                 $.each(data.Info, function(index, theInfo) {
                     theEvent = {
                         title: "FM: " + theInfo.FreqMode + " (" +
                                theInfo.Backend +  "): " +
                                theInfo.NumScan + " scans",
-                        start: theDate.stripTime().format(),
+                        start: data.Date,
                         // This should link to the report for the day:
                         // url: theInfo.URL,
                         url: "#level1-date",
@@ -251,15 +248,13 @@ function updateCalendar(start, end, timezone, callback) {
                         FreqMode: theInfo.FreqMode,
                         Backend: theInfo.Backend,
                     };
-                    events.push(theEvent);
+                    // Push event to calendar:
+                    $('#calendar').fullCalendar('renderEvent', theEvent, false);
                 });
-                $('#calendar').fullCalendar('addEventSource', events);
             }
         });
         // Increment loop "Moment":
         theDate.add(1, 'd');
     }
-    // Callback with events list  makes Calendar update:
-    callback();
 }
 
