@@ -92,33 +92,64 @@ class Scanloginfo_exporter():
 
         return data
 
-    def extract_scan_loginfo(self,data,calstw,date1,date2):
+    def extract_scan_loginfo(self,data,calstw,date1,date2,version='v1'):
         '''extract loginfo for a given scan '''
-        mjd0 = datetime(1858,11,17)
-        ind = N.nonzero( (data['calstw']==calstw) )[0]
-        datei = mjd0 + relativedelta(days = +data['mjd'][ind[0]])
-        #check that scan starts within desired time span
-        if datei >= date1 and datei<=date2:
-            outdata = {
-             'ScanID'        : calstw,
-             'StartLat'      : data['latitude'][ind[0]],
-             'EndLat'        : data['latitude'][ind[-1]],
-             'StartLon'      : data['longitude'][ind[0]],
-             'EndLon'        : data['longitude'][ind[-1]],
-             'AltStart'      : data['altitude'][ind[0]],
-             'AltEnd'        : data['altitude'][ind[-1]],
-             'MJD'           : ( data['mjd'][ind[0]] + data['mjd'][ind[-1]] ) / 2.0,
-             'SunZD'         : ( data['sunzd'][ind[0]] + data['sunzd'][ind[-1]] ) / 2.0,
-             'FreqMode'      : data['freqmode'][ind[0]],
-             'NumSpec'       : ind.shape[0],
-             'FirstSpectrum' : data['stw'][ind[0]],
-             'LastSpectrum' : data['stw'][ind[-1]],
-             'DateTime'      : mjd0 + timedelta(( data['mjd'][ind[0]] + data['mjd'][ind[-1]] ) / 2.0),
-                   }
+        if version in ['v1', 'v2', 'v3']:
+            mjd0 = datetime(1858,11,17)
+            ind = N.nonzero( (data['calstw']==calstw) )[0]
+            datei = mjd0 + relativedelta(days = +data['mjd'][ind[0]])
+            #check that scan starts within desired time span
+            if datei >= date1 and datei<=date2:
+                outdata = {
+                 'ScanID'        : calstw,
+                 'StartLat'      : data['latitude'][ind[0]],
+                 'EndLat'        : data['latitude'][ind[-1]],
+                 'StartLon'      : data['longitude'][ind[0]],
+                 'EndLon'        : data['longitude'][ind[-1]],
+                 'AltStart'      : data['altitude'][ind[0]],
+                 'AltEnd'        : data['altitude'][ind[-1]],
+                 'MJD'           : ( data['mjd'][ind[0]] + data['mjd'][ind[-1]] ) / 2.0,
+                 'SunZD'         : ( data['sunzd'][ind[0]] + data['sunzd'][ind[-1]] ) / 2.0,
+                 'FreqMode'      : data['freqmode'][ind[0]],
+                 'NumSpec'       : ind.shape[0],
+                 'FirstSpectrum' : data['stw'][ind[0]],
+                 'LastSpectrum' : data['stw'][ind[-1]],
+                 'DateTime'      : mjd0 + timedelta(( data['mjd'][ind[0]] + data['mjd'][ind[-1]] ) / 2.0),
+                       }
+                 
 
-            return outdata
-        else:
-            return []
+                return outdata
+
+            else:
+
+                return []
+
+        elif version in ['v4']:
+            mjd0 = datetime(1858,11,17)
+            ind = N.nonzero( (data['calstw']==calstw) )[0]
+            datei = mjd0 + relativedelta(days = +data['mjd'][ind[0]])
+            #check that scan starts within desired time span
+            if datei >= date1 and datei<=date2:
+                outdata = {
+                 'ScanID'        : calstw,
+                 'LatStart'      : data['latitude'][ind[0]],
+                 'LatEnd'        : data['latitude'][ind[-1]],
+                 'LonStart'      : data['longitude'][ind[0]],
+                 'LonEnd'        : data['longitude'][ind[-1]],
+                 'AltStart'      : data['altitude'][ind[0]],
+                 'AltEnd'        : data['altitude'][ind[-1]],
+                 'MJDStart'      : data['mjd'][ind[0]],
+                 'MJDEnd'        : data['mjd'][ind[-1]],
+                 'SunZD'         : ( data['sunzd'][ind[0]] + data['sunzd'][ind[-1]] ) / 2.0,
+                 'FreqMode'      : data['freqmode'][ind[0]],
+                 'NumSpec'       : ind.shape[0],
+                 'DateTime'  : mjd0 + timedelta(( data['mjd'][ind[0]] + data['mjd'][ind[-1]] ) / 2.0),
+                       }
+                return outdata
+
+
+            else:
+                return []
 
 
 def plot_loginfo(backend,date1,date2,data):
@@ -185,7 +216,7 @@ def append2dict(a,b):
         a[item].append(b[item])
     return a
 
-def get_scan_logdata(con, backend,date,freqmode=-1,dmjd=0.25):
+def get_scan_logdata(con, backend,date,freqmode=-1,dmjd=0.25,version='v1'):
 
 
     a = Scanloginfo_exporter(backend, con)
@@ -223,7 +254,7 @@ def get_scan_logdata(con, backend,date,freqmode=-1,dmjd=0.25):
     loginfodict_created = 0
     for ind,stw in enumerate(calstw):
 
-        scanloginfo = a.extract_scan_loginfo(data,stw,date1,date2)
+        scanloginfo = a.extract_scan_loginfo(data, stw, date1, date2, version)
 
         if scanloginfo==[]:
             continue
