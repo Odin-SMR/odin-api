@@ -42,7 +42,6 @@ function initLevel1(date) {
             row.child.hide()
             tr.removeClass('shown')
         }else {
-            console.log(backend)
             row.child( addInfo( row.data(), backend, freqmode )).show()
             tr.addClass('shown')
         }
@@ -182,7 +181,6 @@ function initDataTable() {
 
 function updateDataTable(date, back, freq) {
     var table;
-    console.log(date);
     table = $('#info-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
 }
