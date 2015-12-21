@@ -370,6 +370,7 @@ class Quality_control():
         self.filter_references()
 
         self.check_ref_inttime()
+        self.check_moon_in_mainbeam()
         
         self.get_zerolagvar()
         
@@ -451,9 +452,12 @@ class Quality_control():
     def check_Int(self):
         # check that integration times are valid
         qual = 0x0040
-        inttime_min = 0.5
-        inttime_max = 10
-        ind = N.nonzero( (self.specdata['inttime']<inttime_min) | (self.specdata['inttime']>=inttime_max) )[0] 
+        ok_inttimes = [0.85, 1.85, 3.85]
+        dt=0.01
+        # inttime must be within ok_inttimes+-dt to be ok
+        ind = N.nonzero( ( N.abs( self.specdata['inttime'] - ok_inttimes[0] ) > dt ) & 
+                         ( N.abs( self.specdata['inttime'] - ok_inttimes[1] ) > dt ) &
+                         ( N.abs( self.specdata['inttime'] - ok_inttimes[2] ) > dt ) )[0] 
         self.quality[ind] = self.quality[ind] + qual
 
     def check_obs_sequence(self):
@@ -514,6 +518,14 @@ class Quality_control():
                 self.quality[ind] = self.quality[ind] + qual
         
 
+
+    def check_moon_in_mainbeam(self):
+         # check if moon is in the main beam
+         qual = 0x0200
+         MOONMB = 0x0200
+         ind1 = N.nonzero( (self.specdata['skybeamhit'] & MOONMB == MOONMB))[0]
+         if ind1.shape[0]<>0:
+             self.quality[ind] = self.quality[ind] + qual
 
     def filter_references(self):
         # identify reference signals that we do not trust,
@@ -715,6 +727,63 @@ def scan2dictlist_v2(spectra):
 
     }
 
+    for item in datadict.keys():
+        try:
+            datadict[item] = datadict[item].tolist()
+        except:
+            pass
+  
+    return datadict 
+
+
+def scan2dictlist_v4(spectra):
+
+    datadict = {
+     'Version'         : spectra['version'][2::],
+     'Quality'         : spectra['quality'][2::],
+     'STW'             : spectra['stw'][2::],
+     'MJD'             : spectra['mjd'][2::],
+     'Orbit'           : spectra['orbit'][2::],
+     'Spectrum'        : spectra['spectrum'][2::],
+     'TrecSpectrum'    : spectra['spectrum'][0],
+     'Frontend'        : spectra['frontend'][2::],
+     'Backend'         : spectra['backend'][2::],
+     'RA2000'          : spectra['ra2000'][2::],
+     'Dec2000'         : spectra['dec2000'][2::],
+     'Longitude'       : spectra['longitude'][2::],
+     'Latitude'        : spectra['latitude'][2::],
+     'Altitude'        : spectra['altitude'][2::],
+     #'Qtarget'         : spectra['qtarget'][2::],
+     #'Qachieved'       : spectra['qachieved'][2::],
+     #'Qerror'          : spectra['qerror'][2::],
+     'GPSpos'          : spectra['gpspos'][2::],
+     'GPSvel'          : spectra['gpsvel'][2::],
+     'SunPos'          : spectra['sunpos'][2::],
+     'MoonPos'         : spectra['moonpos'][2::],
+     'SunZD'           : spectra['sunzd'][2::],
+     'Vgeo'            : spectra['vgeo'][2::],
+     'Tcal'            : spectra['hotloada'][2::],
+     'Trec'            : spectra['tsys'][2::],
+     'SBpath'          : spectra['sbpath'][2::],
+     'LOFreq'          : spectra['lofreq'][2::],
+     'SkyFreq'         : spectra['skyfreq'][2::],
+     'RestFreq'        : spectra['restfreq'][2::],
+     #'MaxSuppression'  : spectra['maxsuppression'][2::],
+     'AttitudeVersion' : spectra['soda'][2::],
+     'FreqRes'         : spectra['freqres'][2::],
+     'FreqCal'         : spectra['ssb_fq'][2::],
+     'IntTime'         : spectra['inttime'][2::],
+     'EffTime'         : spectra['efftime'][2::],
+     'Channels'        : spectra['channels'][2::],
+     'FreqMode'        : spectra['freqmode'][2::],
+     'TSpill'          : spectra['tspill'][2::],
+     'ScanID'          : spectra['calstw'][2::],
+     'Apodization'     : N.ones(len(spectra['quality']),dtype='int'),
+     'Frequency'       : spectra['frequency'],
+     'ZeroLagVar'      : spectra['zerolagvar'][2::],
+
+    }
+    
     for item in datadict.keys():
         try:
             datadict[item] = datadict[item].tolist()
@@ -1410,7 +1479,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     o.spectra['frequency'] = []
     o.spectra['ssb'] = []
     channels = []
-    freqinfo = { 'IFreqGrid' : [], 'LOFreq' : [], 'SSB' : []}
+    freqinfo = { 'IFreqGrid' : [], 'LOFreq' : [], 'SubBandIndex' : []}
     for numspec in range( len(o.spectra['stw']) ): 
         
         f = qsmr_frequency(o.spectra,numspec)
@@ -1445,12 +1514,15 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
             #o.spectra['frequency'].append(f.tolist())
             #o.spectra['frequency'].append(f.tolist())
             freqinfo['IFreqGrid'] = f.tolist()
-            freqinfo['SSB'].append(ssb)
+            freqinfo['SubBandIndex'].append(ssb[1::3])
+            freqinfo['SubBandIndex'].append(ssb[2::3])
             o.spectra['ssb'].append(ssb)
             #o.spectra['ssb'].append({'ssb':ssb,'lofreq':lofreq})
-        freqinfo['LOFreq'].append(lofreq)
+        if numspec>1:
+            freqinfo['LOFreq'].append(lofreq)
         channels.append(y.shape[0])
         o.spectra['spectrum'].append(y.tolist())
+    
     o.spectra['frequency'] = freqinfo 
     o.spectra['channels'] = channels
 
