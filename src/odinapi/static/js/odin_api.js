@@ -1,5 +1,5 @@
 function initLevel1(date) {
-     $('#level1-date').html("for " + date);
+    $('#level1-date').html("for " + date);
 
     var table = $('#level1-date-table').DataTable({
         "ajax": {
@@ -55,6 +55,7 @@ function updateLevel1(date) {
     var table;
     table = $('#level1-date-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
+    $('#level1-date').html("for " + date);
 }
 
 function addInfo (data, backend, freqmode) {
