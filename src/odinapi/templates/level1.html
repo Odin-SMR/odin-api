@@ -106,7 +106,7 @@
 
             var startView ='2015-01-03';
             var startDate ='2001-02-20';
-            var endDate ='2042-02-11';
+            var endDate = '2042-02-11';
 
             $('#datepicker1').datepicker({
                 format: "yyyy-mm-dd",
@@ -129,9 +129,10 @@
                     updateCalendar(start, end, timezone, callback);
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-                    updateLevel1(calEvent.start.format());
+                    //updateLevel1(calEvent.start.format());
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
+                    var status = $('#datepicker1').setDate(calEvent.start.format());
                     return false;
                 },
             });

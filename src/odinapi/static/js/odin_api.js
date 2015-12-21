@@ -239,7 +239,8 @@ function updateCalendar(start, end, timezone, callback) {
                                theInfo.NumScan + " scans",
                         start: theDate.stripTime().format(),
                         // This should link to the report for the day:
-                        url: theInfo.URL,
+                        // url: theInfo.URL,
+                        url: "#level1-date",
                         // Add color and textColor based on freqmode:
                         color: freqmodeColours[theInfo.FreqMode],
                         textColor: freqmodeTextColours[theInfo.FreqMode],
