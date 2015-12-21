@@ -221,7 +221,6 @@ var freqmodeTextColours = {
 
 function updateCalendar(start, end, timezone, callback) {
     var theDate = start;
-    var events = [];
     // Loop over time interval in view:
     while (theDate < end) {
         // For ech day, get json from rest:
@@ -234,6 +233,7 @@ function updateCalendar(start, end, timezone, callback) {
             success: function(data) {
                 // Check if there are scans in Info, if so, loop
                 // over the elements under Info and add to events list:
+                var events = [];
                 $.each(data.Info, function(index, theInfo) {
                     theEvent = {
                         title: "FM: " + theInfo.FreqMode + " (" +
@@ -250,15 +250,15 @@ function updateCalendar(start, end, timezone, callback) {
                         FreqMode: theInfo.FreqMode,
                         Backend: theInfo.Backend,
                     };
-                    $('#calendar').fullCalendar('renderEvent', theEvent, true);
-                    //events.push(theEvent);
+                    events.push(theEvent);
                 });
+                $('#calendar').fullCalendar('addEventSource', events);
             }
         });
         // Increment loop "Moment":
         theDate.add(1, 'd');
     }
     // Callback with events list  makes Calendar update:
-    callback(events);
+    callback();
 }
 
