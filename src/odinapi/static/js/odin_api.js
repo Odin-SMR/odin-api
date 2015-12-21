@@ -1,5 +1,7 @@
 function initLevel1(date) {
-    var table = $('#level1-date').DataTable({
+     $('#level1-date').html("for " + date);
+
+    var table = $('#level1-date-table').DataTable({
         "ajax": {
             "url": '/rest_api/v3/freqmode_info/'+date,
             "dataSrc": "Info",
@@ -30,7 +32,7 @@ function initLevel1(date) {
         "info":     false,
         })
 
-    $('#level1-date tbody').on( 'click', 'tr', function () {
+    $('#level1-date-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr')
         var row = table.row(tr)
         var backend = $(this).children().eq(0).text()
@@ -51,7 +53,7 @@ function initLevel1(date) {
 
 function updateLevel1(date) {
     var table;
-    table = $('#level1-date').DataTable();
+    table = $('#level1-date-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
 }
 

@@ -36,39 +36,15 @@
           the overview table. On clicking a row in the scan table, an image
           visualising the scan data will be displayed.</p>
 
-<!--
-          <div class="row placeholders">
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img data-src="holder.js/200x200/auto/sky" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Label</h4>
-              <span class="text-muted">Something else</span>
-            </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img data-src="holder.js/200x200/auto/vine" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Label</h4>
-              <span class="text-muted">Something else</span>
-            </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img data-src="holder.js/200x200/auto/sky" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Label</h4>
-              <span class="text-muted">Something else</span>
-            </div>
-            <div class="col-xs-6 col-sm-3 placeholder">
-              <img data-src="holder.js/200x200/auto/vine" class="img-responsive" alt="Generic placeholder thumbnail">
-              <h4>Label</h4>
-              <span class="text-muted">Something else</span>
-            </div>
-          </div>
--->
           <div id='calendar'> </div>
           <div>
               <input  type="text" value="2015-01-03" id="datepicker1">
           </div>
-          <h2 class="sub-header">Overview of daily measurements</h2>
+          <h2 class="sub-header">Overview of daily measurements <span id=level1-date></span></h2>
           <p>The table below describes the measurements made the selected date.
           Click on a row to get more information.</p>
           <div class="table-responsive">
-            <table id="level1-date" class="table table-striped">
+            <table id="level1-date-table" class="table table-striped">
               <!-- empty table -->
             </table>
           </div>
@@ -129,10 +105,9 @@
                     updateCalendar(start, end, timezone, callback);
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-                    //updateLevel1(calEvent.start.format());
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
-                    var status = $('#datepicker1').setDate(calEvent.start.format());
+                    $('#datepicker1').setDate(calEvent.start.format());
                     return false;
                 },
             });
