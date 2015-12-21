@@ -70,7 +70,7 @@ def main():
     app = Odin(__name__)
     app.run(
         host='0.0.0.0',
-        debug='ODIN_API_PRODUCTION' in environ,
+        debug='ODIN_API_PRODUCTION' not in environ,
         threaded=True
         )
 
