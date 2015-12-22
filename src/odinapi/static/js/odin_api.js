@@ -221,6 +221,8 @@ var freqmodeTextColours = {
 
 function updateCalendar(start, end) {
     var theDate = start;
+    // Clear calendar.  It's a pity, but seems to be necessary:
+    $('#calendar').fullCalendar('removeEvents');
     // Loop over time interval in view:
     while (theDate < end) {
         // For ech day, get json from rest:
