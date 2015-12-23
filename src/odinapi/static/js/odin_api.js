@@ -61,14 +61,22 @@ function updateLevel1(date) {
 
 function addInfo (data, backend, freqmode) {
     return '<table width="100%">'+
+        '<tr><td>Latitudinal distribution of scans:</td></tr>' +
         '<tr><td id="smart-plot-lat-' + backend + '-' + freqmode +
-        '" class="plotter"></td></tr>' +
+            '" class="plotter"></td></tr>' +
+        '</td></tr>' +
+        '<tr><td>Longitudinal distribution of scans:</td></tr>' +
         '<tr><td id="smart-plot-lon-' + backend + '-' + freqmode +
-        '" class="plotter"></td></tr>' +
+            '" class="plotter"></td></tr>' +
+        '</td></tr>' +
+        '<tr><td>Sun ZD distribution of scans:</td></tr>' +
         '<tr><td id="smart-plot-sun-' + backend + '-' + freqmode +
-        '" class="plotter"></td></tr>'+
+            '" class="plotter"></td></tr>' +
+        '</td></tr>'+
+        '<tr><td>Altitude distribution of scans:</td></tr>' +
         '<tr><td id="smart-plot-scan-'+ backend + '-' + freqmode +
-        '" class="plotter"></td></tr>'+
+            '" class="plotter"></td></tr>' +
+        '</td></tr>' +
         '</table>'
 }
 
@@ -109,10 +117,10 @@ function updatePlot(date, back, freq) {
                         "max": currDate.endOf("day").toDate().getTime()
                     }
                 }
-                $.plot("#smart-plot-lat-"+back+'-'+freq, [lat], opt)//{series:{points: {show:true}}})
-                $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt)//{series:{points: {show:true}}})
-                $.plot("#smart-plot-sun-" +back+'-'+freq, [sun], opt)
-                $.plot("#smart-plot-scan-" +back+'-'+freq, [scan], opt)
+                $.plot("#smart-plot-lat-"+back+'-'+freq, [lat], opt);//{series:{points: {show:true}}})
+                $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt);//{series:{points: {show:true}}})
+                $.plot("#smart-plot-sun-" +back+'-'+freq, [sun], opt);
+                $.plot("#smart-plot-scan-" +back+'-'+freq, [scan], opt);
             })
         }
 
