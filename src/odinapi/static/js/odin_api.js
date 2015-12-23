@@ -1,3 +1,5 @@
+// Functions for updating overview table and plots:
+
 function initLevel1(date) {
     $('#level1-date').html(date);
 
@@ -70,10 +72,6 @@ function addInfo (data, backend, freqmode) {
         '</table>'
 }
 
-function updateOverview(url) {
-  $('#info-image').attr('src', url.replace("rest_api/v3/scan", "browse"));
-}
-
 function updatePlot(date, back, freq) {
         var sun = []
         var lat = []
@@ -118,6 +116,9 @@ function updatePlot(date, back, freq) {
             })
         }
 
+
+// Functions for updating scan info table and plots:
+
 function initDataTable() {
     var date = '2015-01-03'
     var back = 'AC2'
@@ -159,13 +160,13 @@ function initDataTable() {
                         return '<a href="' + data + '">Get JSON data</a>';
                     },
                 },
-                {
+                /*{
                     "data": "URL",
                     "title": "Scan overview",
                     "render": function ( data, type, full, meta ) {
                         return '<a href="#info-image">Show overview</a>';
                     },
-                },
+                },*/
          ],
     });
 
@@ -173,17 +174,36 @@ function initDataTable() {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
         var url = $(this).children().eq(5).find('a').attr("href");
+        var url_array = url.split('/');
+        var id = url_array[url_array.length - 1];
+        if (row.child.isShown()) {
+            row.child.hide()
+            tr.removeClass('shown')
+        }else {
+            row.child(addOverview(url, id)).show()
+            tr.addClass('shown')
+        }
 
-        updateOverview(url);
+        updateOverview(url, id);
     });
 }
 
+function updateOverview(url, id) {
+    //$('#info-image').attr('src', url.replace("rest_api/v3/scan", "browse"));
+    $('#info-image-' + id).attr('src', url.replace("rest_api/v3/scan", "browse"));
+}
+
+function addOverview(url, id) {
+    return '<img id="info-image-' + id + '" class="img-responsive"' +
+           ' src="{{ url_for("static", filename="images/empty.png") }}"/>'
+}
 
 function updateDataTable(date, back, freq) {
     var table;
     table = $('#info-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
 }
+
 
 // Functions used to populate calendar view:
 
