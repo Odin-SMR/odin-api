@@ -35,20 +35,24 @@ function initLevel1(date) {
         })
 
     $('#level1-date-table tbody').on( 'click', 'tr', function () {
-        var tr = $(this).closest('tr')
-        var row = table.row(tr)
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
         var date = $('#level1-date').text();
-        var backend = $(this).children().eq(0).text()
-        var freqmode = $(this).children().eq(1).text()
+        var backend = $(this).children().eq(0).text();
+        var freqmode = $(this).children().eq(1).text();
         if (row.child.isShown()) {
-            row.child.hide()
-            tr.removeClass('shown')
+            row.child.hide();
+            tr.removeClass('shown');
         }else {
-            row.child( addInfo( row.data(), backend, freqmode )).show()
-            tr.addClass('shown')
+            row.child( addInfo( row.data(), backend, freqmode )).show();
+            tr.addClass('shown');
         }
-        updateDataTable(date, backend, freqmode)
-        updatePlot(date, backend, freqmode)
+        // The plot rows don't have the necessary attributes, so don't try to
+        // update when those are clicked (this is a bit of a hack):
+        if ((backend != "AC1") && (backend != "AC2")) {
+            updateDataTable(date, backend, freqmode);
+            updatePlot(date, backend, freqmode);
+        }
     });
 }
 
