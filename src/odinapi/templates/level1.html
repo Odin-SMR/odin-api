@@ -101,6 +101,11 @@
             initDataTable(startView, 'AC1', 2);
 
             $('#calendar').fullCalendar({
+                header: {
+                    left: 'title',
+                    center: '',
+                    right: 'today prevYear,prev,next,nextYear'
+                },
                 aspectRatio: 1.618,
                 defaultDate: startView,
                 editable: false,
