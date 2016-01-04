@@ -74,6 +74,7 @@ function clearLevel1Table() {
     var table;
     table = $('#level1-date-table').DataTable();
     table.clear();
+    table.draw();
 }
 
 function addInfo (data, backend, freqmode) {
@@ -246,6 +247,7 @@ function clearDataTable() {
     var table;
     table = $('#info-table').DataTable();
     table.clear();
+    table.draw();
 }
 
 
