@@ -85,7 +85,7 @@ function addInfo (data, backend, freqmode) {
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
-            '<td colspan="4">Sun ZD distribution of scans:</td>' +
+            '<td colspan="4">Sun zenith angle (ZD) distribution of scans:</td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-sun-' + backend + '-' + freqmode +
