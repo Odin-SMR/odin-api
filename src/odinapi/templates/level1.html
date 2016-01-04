@@ -26,7 +26,7 @@
           <h2>Instructions</h2>
           <p>
           Select a date from the calendar or enter date in in the date field
-          below. The overview table, constaining information of the
+          in the header. The overview table, constaining information of the
           measurements for the selected day, will automatically update.
           Click on a row in the table to view an overview of the measurements
           performed in a specific freqmode of interest.<p>
@@ -37,9 +37,9 @@
           visualising the scan data will be displayed.</p>
 
           <div id='calendar'> </div>
-          <div>
+          <!-- div>
               <input  type="text" value="2015-01-03" id="datepicker1">
-          </div>
+          </div -->
           <h2 class="sub-header">Overview of daily measurements for <span id=level1-date></span></h2>
           <p>The table below describes the measurements made the selected date.
           Click on a row to get more information.</p>
@@ -78,23 +78,9 @@
     <script type="text/javascript">
         // When the document is ready
         $(document).ready(function () {
-
             var startView ='2015-01-03';
             var startDate ='2001-02-20';
             var endDate = '2042-02-11';
-
-            $('#datepicker1').datepicker({
-                format: "yyyy-mm-dd",
-                autoclose: true,
-                startDate: startDate
-            }).on('changeDate', function(e) {
-                $('#calendar').fullCalendar('gotoDate', e.format('yyyy-mm-dd'));
-                updateLevel1(e.format('yyyy-mm-dd'));
-            });
-
-            initLevel1(startView);
-            //initPlot(plotdata);
-            initDataTable(startView, 'AC1', 2);
 
             $('#calendar').fullCalendar({
                 header: {
@@ -118,6 +104,24 @@
                     return false;
                 },
             });
+
+            // Add datepicker to header/toolbar of calendar:
+            $('.fc-left').after('<input type="text" value="2015-01-03"' +
+                                'id="datepicker1">');
+
+            $('#datepicker1').datepicker({
+                format: "yyyy-mm-dd",
+                autoclose: true,
+                startDate: startDate
+            }).on('changeDate', function(e) {
+                $('#calendar').fullCalendar('gotoDate', e.format('yyyy-mm-dd'));
+                updateLevel1(e.format('yyyy-mm-dd'));
+            });
+
+            initLevel1(startView);
+            //initPlot(plotdata);
+            initDataTable(startView, 'AC1', 2);
+
         });
 
     </script>
