@@ -64,23 +64,35 @@ function updateLevel1(date) {
 }
 
 function addInfo (data, backend, freqmode) {
-    return '<table width="100%">'+
-        '<tr><td>Latitudinal distribution of scans:</td></tr>' +
-        '<tr><td id="smart-plot-lat-' + backend + '-' + freqmode +
-            '" class="plotter"></td></tr>' +
-        '</td></tr>' +
-        '<tr><td>Longitudinal distribution of scans:</td></tr>' +
-        '<tr><td id="smart-plot-lon-' + backend + '-' + freqmode +
-            '" class="plotter"></td></tr>' +
-        '</td></tr>' +
-        '<tr><td>Sun ZD distribution of scans:</td></tr>' +
-        '<tr><td id="smart-plot-sun-' + backend + '-' + freqmode +
-            '" class="plotter"></td></tr>' +
-        '</td></tr>'+
-        '<tr><td>Altitude distribution of scans:</td></tr>' +
-        '<tr><td id="smart-plot-scan-'+ backend + '-' + freqmode +
-            '" class="plotter"></td></tr>' +
-        '</td></tr>' +
+    return '<table width="100%">' +
+        '<tr>' +
+            '<td colspan="4">Latitudinal distribution of scans:</td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4" id="smart-plot-lat-' + backend + '-' + freqmode +
+                '" class="plotter"></td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4">Longitudinal distribution of scans:</td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4" id="smart-plot-lon-' + backend + '-' + freqmode +
+                '" class="plotter"></td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4">Sun ZD distribution of scans:</td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4" id="smart-plot-sun-' + backend + '-' + freqmode +
+                '" class="plotter"></td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4">Altitude distribution of scans:</td>' +
+        '</tr>' +
+        '<tr>' +
+            '<td colspan="4" id="smart-plot-scan-' + backend + '-' + freqmode +
+                '" class="plotter"></td>' +
+        '</tr>' +
         '</table>'
 }
 
