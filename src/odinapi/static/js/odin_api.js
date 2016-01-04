@@ -48,13 +48,15 @@ function initLevel1(date) {
             tr.addClass('shown');
         }
         // The plot rows don't have the necessary attributes, so don't try to
-        // update when those are clicked (this is a bit of a hack):
+        // update when those are clicked:
         if ((backend == "AC1") || (backend == "AC2")) {
+            clearDataTable();
             updateDataTable(date, backend, freqmode);
             updatePlot(date, backend, freqmode);
         } else if (!tr.hasClass("foldablePlot")) {
             backend = tr.prev().children().eq(0).text();
             freqmode = tr.prev().children().eq(1).text();
+            clearDataTable();
             updateDataTable(date, backend, freqmode);
             updatePlot(date, backend, freqmode);
         }
@@ -66,6 +68,12 @@ function updateLevel1(date) {
     table = $('#level1-date-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
     $('#level1-date').html(date);
+}
+
+function clearLevel1Table() {
+    var table;
+    table = $('#level1-date-table').DataTable();
+    table.clear();
 }
 
 function addInfo (data, backend, freqmode) {
@@ -232,6 +240,12 @@ function updateDataTable(date, back, freq) {
     var table;
     table = $('#info-table').DataTable();
     table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
+}
+
+function clearDataTable() {
+    var table;
+    table = $('#info-table').DataTable();
+    table.clear();
 }
 
 

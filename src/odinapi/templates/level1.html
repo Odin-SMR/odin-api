@@ -111,6 +111,7 @@
                 },
                 eventClick: function(calEvent, jsEvent, view) {
                     $('#datepicker1').datepicker('setDate', calEvent.start.format());
+                    clearDataTable();
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
                     return false;
