@@ -115,6 +115,7 @@
                 startDate: startDate
             }).on('changeDate', function(e) {
                 $('#calendar').fullCalendar('gotoDate', e.format('yyyy-mm-dd'));
+                clearDataTable();
                 updateLevel1(e.format('yyyy-mm-dd'));
             });
 
