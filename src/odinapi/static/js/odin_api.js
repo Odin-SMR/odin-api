@@ -38,8 +38,8 @@ function initLevel1(date) {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
         var date = $('#level1-date').text();
-        var backend = $(this).children().eq(0).text();
-        var freqmode = $(this).children().eq(1).text();
+        var backend = tr.children().eq(0).text();
+        var freqmode = tr.children().eq(1).text();
         if (row.child.isShown()) {
             row.child.hide();
             tr.removeClass('shown');
@@ -50,6 +50,11 @@ function initLevel1(date) {
         // The plot rows don't have the necessary attributes, so don't try to
         // update when those are clicked (this is a bit of a hack):
         if ((backend == "AC1") || (backend == "AC2")) {
+            updateDataTable(date, backend, freqmode);
+            updatePlot(date, backend, freqmode);
+        } else if (!tr.hasClass("foldablePlot")) {
+            backend = tr.prev().children().eq(0).text();
+            freqmode = tr.prev().children().eq(1).text();
             updateDataTable(date, backend, freqmode);
             updatePlot(date, backend, freqmode);
         }
@@ -65,35 +70,35 @@ function updateLevel1(date) {
 
 function addInfo (data, backend, freqmode) {
     return '<table width="100%">' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4">Latitudinal distribution of scans:</td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-lat-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4">Longitudinal distribution of scans:</td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-lon-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4">Sun ZD distribution of scans:</td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-sun-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4">Altitude distribution of scans:</td>' +
         '</tr>' +
-        '<tr>' +
+        '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-scan-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
-        '</table>'
+        '</table>';
 }
 
 function updatePlot(date, back, freq) {
