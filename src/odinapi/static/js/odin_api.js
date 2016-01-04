@@ -49,7 +49,7 @@ function initLevel1(date) {
         }
         // The plot rows don't have the necessary attributes, so don't try to
         // update when those are clicked (this is a bit of a hack):
-        if ((backend != "AC1") && (backend != "AC2")) {
+        if ((backend == "AC1") || (backend == "AC2")) {
             updateDataTable(date, backend, freqmode);
             updatePlot(date, backend, freqmode);
         }
