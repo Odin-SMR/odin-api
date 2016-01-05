@@ -5,7 +5,7 @@ function initLevel1(date) {
 
     var table = $('#level1-date-table').DataTable({
         "ajax": {
-            "url": '/rest_api/v3/freqmode_info/'+date,
+            "url": '/rest_api/v3/freqmode_info/' + date + '/',
             "dataSrc": "Info",
             },
         "columns": [
@@ -157,11 +157,12 @@ function updatePlot(date, back, freq) {
 
 // Functions for updating scan info table and plots:
 
-function initDataTable(date, back, freq) {
+function initDataTable(data, back, freq) {
     var table = $('#info-table').DataTable( {
         "ajax": {
             "dataSrc": "Info",
-            "url": '/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq,
+            "url": '/rest_api/v3/freqmode_info/' + date + '/' + back + '/' +
+                freq + '/',
             },
         "data": [],
         "columns": [
@@ -229,7 +230,8 @@ function addOverview(url, id) {
 function updateDataTable(date, back, freq) {
     var table;
     table = $('#info-table').DataTable();
-    table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' + freq).load();
+    table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' +
+            freq + '/').load();
 }
 
 function clearDataTable() {
