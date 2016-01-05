@@ -1,7 +1,5 @@
 import numpy
-import copy
-from pg import DB
-from sys import stderr,stdout,stdin,argv,exit
+from flask import abort
 from utils import copyemptydict
 import matplotlib.pyplot as plt
 import matplotlib
@@ -37,7 +35,7 @@ class Scan_data_exporter():
               freqmode={2}
               order by stw asc,intmode asc'''.format(*temp))
         result=query.dictresult()
-    
+
         #extract all calibration spectrum data for the orbit
         query2=self.con.query('''
                select stw,backend,orbit,mjd,lst,intmode,spectra,alevel,version,
@@ -57,12 +55,12 @@ class Scan_data_exporter():
         result2=query2.dictresult()
 
         if result==[] or result2==[]:
-            print '''could not extract all necessary data for '{0}' in scan {1}'''.format(*temp) 
+            print '''could not extract all necessary data for '{0}' in scan {1}'''.format(*temp)
             return 0
 
 
 
-        #combine target and calibration data 
+        #combine target and calibration data
         self.specdata=[] #list of both target and calibration spectrum data
         self.scaninfo=[] #list of calstw that tells which scan a spectra belongs too
         for ind,row2 in enumerate(result2):
@@ -75,8 +73,8 @@ class Scan_data_exporter():
             for row in result:
                 if row['calstw']==row2['stw']:
                     self.scaninfo.append(row['calstw'])
-                    self.specdata.append(row) 
-    
+                    self.specdata.append(row)
+
         return 1
 
     def decode_data(self):
@@ -103,7 +101,7 @@ class Scan_data_exporter():
             for item in ['qtarget','qachieved','qerror','gpspos',
                      'gpsvel','sunpos','moonpos']:
                 spec[item]=eval(
-                           res[item].replace( '{','(').replace('}',')') )   
+                           res[item].replace( '{','(').replace('}',')') )
 
             ssb_fq1=eval(res['ssb_fq'].replace('{','(').replace('}',')'))
             spec['ssb_fq']= numpy.array(ssb_fq1)*1e6
@@ -172,7 +170,7 @@ class Scan_data_exporter():
                 'WATER','Water isotope').replace(
                 'SUMMER','Summer mesosphere').replace(
                 'DYNAM','Transport')+\
-                ' FM='+str(res['freqmode']) 
+                ' FM='+str(res['freqmode'])
 
             spec['level'] = res['alevel']+res['version']
 
@@ -180,7 +178,7 @@ class Scan_data_exporter():
             spec['quality'] = 0
             spec['discipline'] = 1
             spec['topic'] = 1
-            spec['spectrum_index'] = ind         
+            spec['spectrum_index'] = ind
             spec['obsmode'] = 2
 
             spec['freqres'] = 1000000.0
@@ -190,10 +188,10 @@ class Scan_data_exporter():
             elif (ind==0 or (ind>0 and self.specdata[ind-1]['lofreq']<>spec['lofreq']
                                 and self.specdata[ind-1]['skyfreq']<>spec['skyfreq'])):
                 spec['frequency'] = freq(spec['lofreq'], spec['skyfreq'], spec['ssb_fq'])
-            else: 
-                spec['frequency'] = self.spectra['frequency'][ind-1]            
+            else:
+                spec['frequency'] = self.spectra['frequency'][ind-1]
 
-            for item in spec.keys(): 
+            for item in spec.keys():
                 self.spectra[item].append(spec[item])
 
 class Calibration_step2():
@@ -206,26 +204,26 @@ class Calibration_step2():
 
         hotload_lower=int(numpy.floor(hotload))
         hotload_upper=int(numpy.ceil(hotload))
-        hotload_range='''{{{0},{1}}}'''.format(*[hotload_lower,hotload_upper])  
+        hotload_range='''{{{0},{1}}}'''.format(*[hotload_lower,hotload_upper])
         temp=[backend,frontend,version,intmode,sourcemode,freqmode,
               ssb_fq,altitude_range,hotload_range]
 
         #find out if we already have required data
         for ind,spec in enumerate(self.spectra):
 
-            if (spec['backend'] == backend and 
+            if (spec['backend'] == backend and
                 spec['frontend'] == frontend and
-                spec['version'] == version and 
-                spec['intmode'] == intmode and 
+                spec['version'] == version and
+                spec['intmode'] == intmode and
                 spec['sourcemode'] == sourcemode and
-                spec['freqmode'] == freqmode and 
-                spec['ssb_fq'] == ssb_fq and 
-                spec['altitude_range'] == altitude_range and 
+                spec['freqmode'] == freqmode and
+                spec['ssb_fq'] == ssb_fq and
+                spec['altitude_range'] == altitude_range and
                 spec['hotload_range'] == hotload_range):
                 self.spec = spec
                 return
 
-        #now we did not have the required data, so load it    
+        #now we did not have the required data, so load it
         query=self.con.query('''
               select hotload_range,median_fit,channels
               from ac_cal_level1c where backend='{0}' and
@@ -293,7 +291,7 @@ def specdict():
              'lo', 'sigtype', 'version', 'quality',
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
-             'pointer', 'tspill','ssb_fq', 
+             'pointer', 'tspill','ssb_fq',
              'calstw','frequency']
 
     for item in lista:
@@ -302,15 +300,15 @@ def specdict():
     return spec
 
 
-  
+
 
 def planck(T,f):
     h = 6.626176e-34;     # Planck constant (Js)
     k = 1.380662e-23;     # Boltzmann constant (J/K)
     T0 = h*f/k
-    if (T > 0.0): 
+    if (T > 0.0):
         Tb = T0/(numpy.exp(T0/T)-1.0);
-    else:         
+    else:
         Tb = 0.0;
 
     return Tb
@@ -319,7 +317,7 @@ def planck(T,f):
 def freq(lofreq,skyfreq,LO):
     n=896
     f=numpy.zeros(shape=(n,))
-    seq=[1,1,1,-1,1,1,1,-1,1,-1,1,1,1,-1,1,1] 
+    seq=[1,1,1,-1,1,1,1,-1,1,-1,1,1,1,-1,1,1]
     m=0
     for adc in range(8):
         if seq[2*adc]:
@@ -327,7 +325,7 @@ def freq(lofreq,skyfreq,LO):
             df = 1.0e6/seq[2*adc]
             if seq[2*adc+1] < 0:
                 df=-df
-            for j in range(k): 
+            for j in range(k):
                 f[m+j] = LO[adc/2] +j*df;
             m += k;
     fdata = numpy.zeros(shape=(n,))
@@ -337,7 +335,7 @@ def freq(lofreq,skyfreq,LO):
             v = lofreq + v
             v /= 1.0e9
             fdata[i] = v
-    else: 
+    else:
         for i in range(n):
             v = f[i]
             v = lofreq - v
@@ -406,8 +404,8 @@ def scan2dictlist(spectra):
             datadict[item] = datadict[item].tolist()
         except:
             pass
-  
-    return datadict 
+
+    return datadict
 
 
 
@@ -420,7 +418,7 @@ def plot_scan(backend,calstw,spectra):
     fig.suptitle('''Scan logdata for {0} : {2} : scan-ID {1} : {3}'''.format(*[backend, calstw, spectra['sourcemode'][0],datei]))
     font = {'family' : 'sans-serif',
         'size'   : 8}
-    matplotlib.rc('font', **font)    
+    matplotlib.rc('font', **font)
 
     #plot tangent altitudes
     ax1 = plt.subplot2grid((9,6), (0,0), colspan=2,rowspan=1)
@@ -448,7 +446,7 @@ def plot_scan(backend,calstw,spectra):
     ax1.minorticks_on()
     ax1.yaxis.set_label_text('Noise [K]')
     ax1.xaxis.set_label_text('Spectrum Index [-]')
-    plt.ylim([0,4])     
+    plt.ylim([0,4])
 
     #plot latitude and longitude
     ax1 = plt.subplot2grid((8,6), (3,0), colspan=2,rowspan=1)
@@ -462,7 +460,7 @@ def plot_scan(backend,calstw,spectra):
     ymax = numpy.ceil(numpy.max(spectra['latitude']))
     plt.ylim([ymin,ymax])
     ax1.yaxis.set_label_text('Lat. [Deg.]')
-    ax1.xaxis.set_label_text('Lon. [Deg]')  
+    ax1.xaxis.set_label_text('Lon. [Deg]')
 
     #plot Trec spectrum
     f = freq(spectra['lofreq'][0],spectra['skyfreq'][0],spectra['ssb_fq'][0])
@@ -527,7 +525,7 @@ def plot_scan(backend,calstw,spectra):
     if backend == 'AC1':
         plt.plot(f[112*2::],data[112*2::],'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax]))
     elif backend == 'AC2':
-        plt.plot(f,data,'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax])) 
+        plt.plot(f,data,'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax]))
     plt.ylim([-10,10])
     plt.legend(bbox_to_anchor=(0.02, 0.95), loc=2, borderaxespad=0.)
     ax1.grid(True)
@@ -537,7 +535,7 @@ def plot_scan(backend,calstw,spectra):
     ax1.yaxis.set_label_text('Tb. [K]')
     ax1.xaxis.set_label_text('Freq. [GHz]')
 
-   
+
     #plot average of each band as function of tangent altitude
     ax1 = plt.subplot2grid((7,32), (4,0), colspan=9,rowspan=3)
     s1 = len(spectra['spectrum'][2::])
@@ -562,7 +560,7 @@ def plot_scan(backend,calstw,spectra):
 
 
 def get_scan_data(con, backend, freqmode, scanno):
-    
+
     #export data
     calstw = int(scanno)
     o = Scan_data_exporter(backend,con)
@@ -570,11 +568,11 @@ def get_scan_data(con, backend, freqmode, scanno):
 
     if ok==0:
         print 'data for scan {0} not found'.format(calstw)
-        exit(0)
+        abort(404)
 
     o.decode_data()
 
- 
+
     #perform calibration step2 for target spectrum
     c = Calibration_step2(con)
     for ind,s in enumerate(o.specdata):
@@ -635,6 +633,3 @@ def get_scan_data(con, backend, freqmode, scanno):
 
     #o.spectra is a dictionary containing the relevant data
     return o.spectra
-
-
-
