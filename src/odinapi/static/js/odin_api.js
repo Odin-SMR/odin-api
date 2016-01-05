@@ -80,28 +80,28 @@ function clearLevel1Table() {
 function addInfo (data, backend, freqmode) {
     return '<table width="100%">' +
         '<tr class="foldablePlot">' +
-            '<td colspan="4">Latitudinal distribution of scans:</td>' +
+            '<td colspan="4">Latitudes of first spectra in scans:</td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-lat-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
-            '<td colspan="4">Longitudinal distribution of scans:</td>' +
+            '<td colspan="4">Longitudes of first spectra in scans:</td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-lon-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
-            '<td colspan="4">Sun zenith angle (ZD) distribution of scans:</td>' +
+            '<td colspan="4">Solar zenith angles (ZD) of scans:</td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-sun-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
-            '<td colspan="4">Altitude distribution of scans:</td>' +
+            '<td colspan="4">Number of spectra in scans:</td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4" id="smart-plot-scan-' + backend + '-' + freqmode +
