@@ -328,7 +328,6 @@ function drawStatistics() {
     var sum = 0;
     $.getJSON('/rest_api/v4/statistics/freqmode', function(rawdata) {
         $.each( rawdata["Data"], function (ind, val) {
-            console.log(val["freqmode"], val["sum"]);
             data[ind] = {
                 color: freqmodeColours[val["freqmode"]],
                 data: val["sum"],
@@ -337,7 +336,7 @@ function drawStatistics() {
             sum += val["sum"];
         });
 
-        $.plot($('#totalStatistics'), data, {
+        $.plot($('#fmStats'), data, {
             series: {
                 pie: {
                     show: true,
@@ -345,5 +344,6 @@ function drawStatistics() {
                 }
             }
         });
+        $('#fmStatsLabel').html("Total number of scans: " + sum);
     });
 }
