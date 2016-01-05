@@ -3,7 +3,8 @@
 from flask import Flask
 from odinapi.views.views import DateInfo, DateBackendInfo
 from odinapi.views.views_cached import DateInfoCached
-from odinapi.views.statistics import TotalFreqmodeStatistics
+from odinapi.views.statistics import (TotalFreqmodeStatistics,
+                                      AnnualNscanStatistics)
 from odinapi.views.views import ScanSpec, FreqmodeInfo
 from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
                                     ViewLevel1Stats,)
@@ -77,6 +78,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/statistics/freqmode/',
             view_func=TotalFreqmodeStatistics.as_view('freqmodestatistics')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/statistics/annual/',
+            view_func=AnnualNscanStatistics.as_view('annualstatistics')
             )
 
 

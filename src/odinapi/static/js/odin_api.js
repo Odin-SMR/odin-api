@@ -324,8 +324,12 @@ function updateCalendar(start, end) {
 // Functions for generating statistics plots:
 
 function drawStatistics() {
-    var data = [];
-    var sum = 0;
+    var data;
+    var sum;
+
+    // Generate freqmode statistics plot:
+    data = [];
+    sum = 0;
     $.getJSON('/rest_api/v4/statistics/freqmode', function(rawdata) {
         $.each( rawdata["Data"], function (ind, val) {
             data[ind] = {
@@ -344,6 +348,32 @@ function drawStatistics() {
                 }
             }
         });
-        $('#fmStatsLabel').html("Total number of scans: " + sum);
+        $('#fmStatsLabel').html("Total number of scans by freqmode:");
+
+        $('#totalNumberLabel').html("The data base contains a total of " +
+                sum + " scans");
+    });
+
+    // Generate yearly statistics plot:
+    data = [];
+    sum = 0;
+    $.getJSON('/rest_api/v4/statistics/annual', function(rawdata) {
+        $.each( rawdata["Data"], function (ind, val) {
+            data[ind] = {
+                data: val["sum"],
+                label: val["year"] + " (" + val["sum"] + ")",
+            }
+            sum += val["sum"];
+        });
+
+        $.plot($('#annualStats'), data, {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                }
+            }
+        });
+        $('#annualStatsLabel').html("Total number of scans by year:");
     });
 }
