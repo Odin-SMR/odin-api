@@ -14,7 +14,10 @@ class DateInfoCached(MethodView):
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
         date1 = datetime.strptime(date, '%Y-%m-%d')
-        query_str = self.gen_query(date)
+        try:
+            query_str = self.gen_query(date1)
+        except:
+            query_str = self.gen_query("2015-01-03")
         date_iso = date1.date().isoformat()
         info_list = self.gen_data(date_iso, version, query_str)
         return jsonify(Date=date_iso, Info=info_list)
@@ -43,6 +46,5 @@ class DateInfoCached(MethodView):
             "from measurements_cached "
             "where date = {0} "
             "order by backend, freqmode "
-            ).format(date.isoformat())
+            ).format(date)
         return query_str
-
