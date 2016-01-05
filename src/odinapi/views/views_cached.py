@@ -3,6 +3,7 @@
 from flask import request
 from flask import jsonify, abort
 from flask.views import MethodView
+from datetime import date as dateclass
 from datetime import datetime
 from database import DatabaseConnector
 
@@ -13,14 +14,14 @@ class DateInfoCached(MethodView):
         """GET"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        date1 = datetime.strptime(date, '%Y-%m-%d')
         try:
-            query_str = self.gen_query(date1)
-        except:
-            query_str = self.gen_query("2015-01-03")
-        date_iso = date1.date().isoformat()
-        info_list = self.gen_data(date_iso, version, query_str)
-        return jsonify(Date=date_iso, Info=info_list)
+            date1 = datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            date1 = datetime(2015, 1, 3)
+        date_iso_str = date1.date().isoformat()
+        query_str = self.gen_query(date_iso_str)
+        info_list = self.gen_data(date_iso_str, version, query_str)
+        return jsonify(Date=date_iso_str, Info=info_list)
 
     def gen_data(self, date, version, query_string):
         con = DatabaseConnector()
@@ -42,9 +43,9 @@ class DateInfoCached(MethodView):
 
     def gen_query(self, date):
         query_str = (
-            "select freqmode, backend, numscans "
-            "from measurements_cached "
-            "where date = {0} "
+            "select freqmode, backend, nscans "
+            "from measurements_cache "
+            "where date = '{0}' "
             "order by backend, freqmode "
             ).format(date)
         return query_str
