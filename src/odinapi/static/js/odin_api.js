@@ -356,23 +356,41 @@ function drawStatistics() {
 
     // Generate yearly statistics plot:
     data = [];
+    xticks = [];
     sum = 0;
     $.getJSON('/rest_api/v4/statistics/annual', function(rawdata) {
+        var theSum;
         $.each( rawdata["Data"], function (ind, val) {
+            // Handle null values, mostly useful for toy data set...
+            if (val["sum"] == null) {
+                theSum = 0;
+            } else {
+                theSum = val["sum"];
+            }
             data[ind] = {
-                data: val["sum"],
+                data: [[val["year"], theSum]],
                 label: val["year"] + " (" + val["sum"] + ")",
             }
+            xticks.push(val["year"]);
             sum += val["sum"];
         });
 
         $.plot($('#annualStats'), data, {
             series: {
-                pie: {
-                    show: true,
-                    radius: 1,
-                }
-            }
+                color: "#2C5AA0",
+                points: {
+                    show: true
+                },
+                lines: {
+                    show: true
+                },
+            },
+            legend: {
+                show: false,
+            },
+            xaxis: {
+                ticks: xticks,
+            },
         });
         $('#annualStatsLabel').html("Total number of scans by year:");
     });
