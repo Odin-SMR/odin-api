@@ -13,14 +13,14 @@ class TotalFreqmodeStatistics(MethodView):
             abort(404)
         query_str = self.gen_query()
         info_list = self.gen_data(query_str)
-        return jsonify(Info=info_list)
+        return jsonify(Data=info_list)
 
     def gen_data(self, query_string):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
         con.close()
-        return [result]
+        return result
 
     def gen_query(self):
         query_str = (
@@ -40,14 +40,14 @@ class AnnualNscanStatistics(MethodView):
             abort(404)
         query_str = self.gen_query()
         info_list = self.gen_data(query_str)
-        return jsonify(Info=info_list)
+        return jsonify(Data=info_list)
 
     def gen_data(self, query_string):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
         con.close()
-        return [result]
+        return result
 
     def gen_query(self):
         query_str = (

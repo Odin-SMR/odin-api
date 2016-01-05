@@ -1,0 +1,40 @@
+
+{% extends "layout.html" %}
+
+
+{% block content %}
+
+   <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li><a href="/level1">Level1 data</a></li>
+            <li class="active"><a href="/level1statistics">
+                    Level1 statistics</a></li>
+          </ul>
+        </div>
+
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">Level1 statistics</h1>
+          <div id="totalStatistics" style="width:400px;height:300px">
+              <div id=totalStatisticsLabel></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript">
+        // When the document is ready
+        $(document).ready(function () {
+            drawStatistics();
+        });
+
+    </script>
+{% endblock %}

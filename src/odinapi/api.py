@@ -5,7 +5,8 @@ from odinapi.views.views import DateInfo, DateBackendInfo
 from odinapi.views.views_cached import DateInfoCached
 from odinapi.views.statistics import TotalFreqmodeStatistics
 from odinapi.views.views import ScanSpec, FreqmodeInfo
-from odinapi.views.smr_site import ViewIndex, ViewScanSpec, ViewLevel1
+from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
+                                    ViewLevel1Stats,)
 from odinapi.views.smr_site import ViewFreqmodeInfoPlot
 from odinapi.views.data_info import FileInfo
 from odinapi.views.views import ScanPTZ, ScanAPR
@@ -56,6 +57,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/level1',
             view_func=ViewLevel1.as_view('level1')
+            )
+        self.add_url_rule(
+            '/level1statistics',
+            view_func=ViewLevel1Stats.as_view('level1statistics')
             )
         self.add_url_rule(
             '/level2',

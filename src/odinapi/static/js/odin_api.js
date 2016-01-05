@@ -257,6 +257,7 @@ var freqmodeColours = {
   '22': 'Navy',
   '23': 'RebeccaPurple',
   '24': 'Teal',
+  '25': 'Gold',
   '29': 'LightSteelBlue',
 }
 
@@ -273,6 +274,7 @@ var freqmodeTextColours = {
   '22': 'White',
   '23': 'White',
   '24': 'White',
+  '24': 'Black',
   '29': 'Black',
 }
 
@@ -318,3 +320,30 @@ function updateCalendar(start, end) {
     }
 }
 
+
+// Functions for generating statistics plots:
+
+function drawStatistics() {
+    var data = [];
+    var sum = 0;
+    $.getJSON('/rest_api/v4/statistics/freqmode', function(rawdata) {
+        $.each( rawdata["Data"], function (ind, val) {
+            console.log(val["freqmode"], val["sum"]);
+            data[ind] = {
+                color: freqmodeColours[val["freqmode"]],
+                data: val["sum"],
+                label: "FM: " + val["freqmode"] + " (" + val["sum"] + ")",
+            }
+            sum += val["sum"];
+        });
+
+        $.plot($('#totalStatistics'), data, {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                }
+            }
+        });
+    });
+}
