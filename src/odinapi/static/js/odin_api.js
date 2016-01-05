@@ -157,7 +157,7 @@ function updatePlot(date, back, freq) {
 
 // Functions for updating scan info table and plots:
 
-function initDataTable(data, back, freq) {
+function initDataTable(date, back, freq) {
     var table = $('#info-table').DataTable( {
         "ajax": {
             "dataSrc": "Info",
