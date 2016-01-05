@@ -3,7 +3,6 @@
 from flask import request
 from flask import jsonify, abort
 from flask.views import MethodView
-from datetime import date as dateclass
 from datetime import datetime
 from database import DatabaseConnector
 
