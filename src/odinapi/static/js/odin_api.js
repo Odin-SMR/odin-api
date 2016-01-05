@@ -157,10 +157,7 @@ function updatePlot(date, back, freq) {
 
 // Functions for updating scan info table and plots:
 
-function initDataTable() {
-    var date = '2015-01-03'
-    var back = 'AC2'
-    var freq = '1'
+function initDataTable(date, back, freq) {
     var table = $('#info-table').DataTable( {
         "ajax": {
             "dataSrc": "Info",
@@ -199,13 +196,6 @@ function initDataTable() {
                                '">Get JSON data</a>';
                     },
                 },
-                /*{
-                    "data": "URL",
-                    "title": "Scan overview",
-                    "render": function ( data, type, full, meta ) {
-                        return '<a href="#info-image">Show overview</a>';
-                    },
-                },*/
          ],
     });
 
@@ -228,7 +218,6 @@ function initDataTable() {
 }
 
 function updateOverview(url, id) {
-    //$('#info-image').attr('src', url.replace("rest_api/v3/scan", "browse"));
     $('#info-image-' + id).attr('src', url.replace("rest_api/v3/scan", "browse"));
 }
 
