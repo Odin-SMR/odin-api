@@ -1,32 +1,27 @@
 """ doc
 """
-from flask import request,url_for
+from flask import request, url_for
 from flask import jsonify, abort
 from flask.views import MethodView
 from matplotlib import use
 use("Agg")
 from geoloc_tools import get_geoloc_info
-from utils import copyemptydict
-from level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v2,scan2dictlist_v4
+from level1b_scandata_exporter_v2 import (get_scan_data_v2, scan2dictlist_v2,
+                                          scan2dictlist_v4)
 from level1b_scandata_exporter import get_scan_data, scan2dictlist
 from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
-from sys import stderr, stdout, stdin, argv, exit
-import matplotlib.pyplot as plt
-from datetime import date, datetime, timedelta
-from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
-from matplotlib import dates, rc
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import matplotlib
 from database import DatabaseConnector
-import requests as R
+
 
 class DateInfo(MethodView):
     """plots information"""
     def get(self, version, date):
         """GET"""
-        if not version in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
         date1 = datetime.strptime(date, '%Y-%m-%d')
         date2 = date1 + relativedelta(days=+1)
@@ -49,8 +44,10 @@ class DateInfo(MethodView):
             info_dict['Backend'] = row['backend']
             info_dict['FreqMode'] = row['freqmode']
             info_dict['NumScan'] = row['count']
-            info_dict['URL'] = '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}'.format(
-                    request.url_root, version, date, row['backend'], row['freqmode'])
+            info_dict['URL'] = (
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                    request.url_root, version, date, row['backend'],
+                    row['freqmode'])
             info_list.append(info_dict)
         con.close()
         return info_list
@@ -96,97 +93,97 @@ class DateBackendInfo(DateInfo):
             ).format(stw1, stw2, mjd1, mjd2, backend)
         return query_str
 
+
 class FreqmodeInfo(MethodView):
     """loginfo for all scans from a given date and freqmode"""
     def get(self, version, date, backend, freqmode):
         """GET method"""
-        if not version in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
 
         con = DatabaseConnector()
         loginfo = {}
-        if version in ['v1','v2','v3']:
+        if version in ['v1', 'v2', 'v3']:
             itemlist = [
-                    'DateTime',
-                    'FreqMode',
-                    'StartLat',
-                    'EndLat',
-                    'StartLon',
-                    'EndLon',
-                    'SunZD',
-                    'AltStart',
-                    'AltEnd',
-                    'NumSpec',
-                    'FirstSpectrum',
-                    'LastSpectrum' ,
-                    'MJD',
-                    'ScanID',       
-              ]
+                'DateTime',
+                'FreqMode',
+                'StartLat',
+                'EndLat',
+                'StartLon',
+                'EndLon',
+                'SunZD',
+                'AltStart',
+                'AltEnd',
+                'NumSpec',
+                'FirstSpectrum',
+                'LastSpectrum',
+                'MJD',
+                'ScanID',
+            ]
         elif version in ['v4']:
             itemlist = [
-                    'DateTime',
-                    'FreqMode',
-                    'LatStart',
-                    'LatEnd',
-                    'LonStart',
-                    'LonEnd',
-                    'SunZD',
-                    'AltStart',
-                    'AltEnd',
-                    'NumSpec',
-                    'MJDStart',
-                    'MJDEnd',
-                    'ScanID',
-              ]
-
+                'DateTime',
+                'FreqMode',
+                'LatStart',
+                'LatEnd',
+                'LonStart',
+                'LonEnd',
+                'SunZD',
+                'AltStart',
+                'AltEnd',
+                'NumSpec',
+                'MJDStart',
+                'MJDEnd',
+                'ScanID',
+            ]
 
         species_list = [
-                    'BrO',
-                    'Cl2O2',
-                    'CO',
-                    'HCl',
-                    'HO2',
-                    'NO2',
-                    'OCS',
-                    'C2H2',
-                    'ClO',
-                    'H2CO',
-                    'HCN',
-                    'HOBr',
-                    'NO',
-                    'OH',
-                    'C2H6',
-                    'ClONO2',
-                    'H2O2',
-                    'HCOOH',
-                    'HOCl',
-                    'O2',
-                    'SF6',
-                    'CH3Cl',
-                    'ClOOCl',
-                    'H2O',
-                    'HF',
-                    'N2',
-                    'O3',
-                    'SO2',
-                    'CH3CN',
-                    'CO2',
-                    'H2S',
-                    'HI',
-                    'N2O',
-                    'OBrO',
-                    'CH4',
-                    'COF2',
-                    'HBr',
-                    'HNO3',
-                    'NH3',
-                    'OClO']
-
-
+            'BrO',
+            'Cl2O2',
+            'CO',
+            'HCl',
+            'HO2',
+            'NO2',
+            'OCS',
+            'C2H2',
+            'ClO',
+            'H2CO',
+            'HCN',
+            'HOBr',
+            'NO',
+            'OH',
+            'C2H6',
+            'ClONO2',
+            'H2O2',
+            'HCOOH',
+            'HOCl',
+            'O2',
+            'SF6',
+            'CH3Cl',
+            'ClOOCl',
+            'H2O',
+            'HF',
+            'N2',
+            'O3',
+            'SO2',
+            'CH3CN',
+            'CO2',
+            'H2S',
+            'HI',
+            'N2O',
+            'OBrO',
+            'CH4',
+            'COF2',
+            'HBr',
+            'HNO3',
+            'NH3',
+            'OClO',
+        ]
 
         if version == "v1":
             loginfo, _, _ = get_scan_logdata(
-                con, backend, date+'T00:00:00', freqmode = int(freqmode), dmjd=1, version = version)
+                con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
+                version=version)
             for index in range(len(loginfo['ScanID'])):
                 row = []
                 row.append(loginfo['DateTime'][index].date())
@@ -201,7 +198,7 @@ class FreqmodeInfo(MethodView):
             for freq_mode, scanid in zip(
                     loginfo['FreqMode'],
                     loginfo['ScanID']):
-                datadict = {'ScanID':[], 'URL':[]}
+                datadict = {'ScanID': [], 'URL': []}
                 datadict['ScanID'] = scanid
                 datadict['URL'] = '{0}rest_api/v1/scan/{1}/{2}/{3}'.format(
                     request.url_root,
@@ -227,11 +224,12 @@ class FreqmodeInfo(MethodView):
                             scanid
                             )
                 loginfo['Info'].append(datadict)
-        elif version in [ 'v2', 'v3']:
+        elif version in ['v2', 'v3']:
 
             loginfo, _, _ = get_scan_logdata(
-                con, backend, date+'T00:00:00', freqmode = int(freqmode), dmjd=1, version = version)
-            
+                con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
+                version=version)
+
             for index in range(len(loginfo['ScanID'])):
                 row = []
                 row.append(loginfo['DateTime'][index].date())
@@ -250,8 +248,7 @@ class FreqmodeInfo(MethodView):
 
                 datadict = dict()
                 for item in itemlist:
-
-                    datadict[item]=loginfo[item][ind]
+                    datadict[item] = loginfo[item][ind]
 
                 datadict['URL'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}'.format(
                     request.url_root,
@@ -284,15 +281,15 @@ class FreqmodeInfo(MethodView):
         elif version in ['v4']:
 
             loginfo, _, _ = get_scan_logdata(
-                con, backend, date+'T00:00:00', freqmode = int(freqmode), dmjd=1, version = version)
+                con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
+                version=version)
 
             for index in range(len(loginfo['ScanID'])):
-                loginfo['DateTime'][index] = loginfo['DateTime'][index].isoformat('T')
-
+                loginfo['DateTime'][index] = (
+                    loginfo['DateTime'][index]).isoformat('T')
 
             for item in loginfo.keys():
                 try:
-                    
                     loginfo[item] = loginfo[item].tolist()
                 except AttributeError:
                     pass
@@ -305,15 +302,15 @@ class FreqmodeInfo(MethodView):
 
                 datadict = dict()
                 for item in itemlist:
-
-                    datadict[item]=loginfo[item][ind]
-                datadict['URLS'] = dict() 
-                datadict['URLS']['URL-spectra'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}'.format(
-                    request.url_root,
-                    version,
-                    backend,
-                    freq_mode,
-                    scanid)
+                    datadict[item] = loginfo[item][ind]
+                datadict['URLS'] = dict()
+                datadict['URLS']['URL-spectra'] = (
+                    '{0}rest_api/{1}/scan/{2}/{3}/{4}').format(
+                        request.url_root,
+                        version,
+                        backend,
+                        freq_mode,
+                        scanid)
                 datadict['URLS']['URL-ptz'] = (
                     '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
                         request.url_root,
@@ -336,15 +333,13 @@ class FreqmodeInfo(MethodView):
                             )
                 loginfo['Info'].append(datadict)
 
-
-
         if version == "v1":
 
             return jsonify(loginfo)
 
-        elif version in  ['v2','v3','v4']:
+        elif version in ['v2', 'v3', 'v4']:
 
-            return jsonify({'Info':loginfo['Info']})
+            return jsonify({'Info': loginfo['Info']})
 
 
 class ScanSpec(MethodView):
@@ -352,16 +347,16 @@ class ScanSpec(MethodView):
     def get(self, version, backend, freqmode, scanno):
         """GET-method"""
         con = DatabaseConnector()
-        if not version in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
         if version == "v1":
             spectra = get_scan_data(con, backend, freqmode, scanno)
-            #spectra is a dictionary containing the relevant data
+            # spectra is a dictionary containing the relevant data
             datadict = scan2dictlist(spectra)
             return jsonify(datadict)
         elif version == "v2":
             spectra = get_scan_data_v2(con, backend, freqmode, scanno)
-            #spectra is a dictionary containing the relevant data
+            # spectra is a dictionary containing the relevant data
             if spectra == {}:
                 abort(404)
             datadict = scan2dictlist_v2(spectra)
@@ -370,14 +365,14 @@ class ScanSpec(MethodView):
             spectra = get_scan_data_v2(con, backend, freqmode, scanno)
             if spectra == {}:
                 abort(404)
-            #spectra is a dictionary containing the relevant data
+            # spectra is a dictionary containing the relevant data
             datadict = scan2dictlist_v2(spectra)
             return jsonify(datadict)
         elif version == "v4":
             spectra = get_scan_data_v2(con, backend, freqmode, scanno)
             if spectra == {}:
                 abort(404)
-            #spectra is a dictionary containing the relevant data
+            # spectra is a dictionary containing the relevant data
             datadict = scan2dictlist_v4(spectra)
             return jsonify(datadict)
 
@@ -386,19 +381,21 @@ class ScanPTZ(MethodView):
     """plots information: data from a given scan"""
     def get(self, version, date, backend, freqmode, scanno):
         """GET-method"""
-        if not version in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
         url_base = request.headers['Host']
-        url_base = url_base.replace('webapi','localhost')
-        url = 'http://' + url_base + url_for('.scaninfo',version='v1', date=date, backend=backend,freqmode=freqmode)
+        url_base = url_base.replace('webapi', 'localhost')
+        url = 'http://' + url_base + url_for('.scaninfo', version='v1',
+                                             date=date, backend=backend,
+                                             freqmode=freqmode)
         mjd, _, midlat, midlon = get_geoloc_info(url, scanno)
         datadict = run_donaletty(mjd, midlat, midlon, scanno)
         for item in ['P', 'T', 'Z']:
-            if item=='P' and version in ['v4']:
-                #convert from hPa to Pa
+            if item == 'P' and version in ['v4']:
+                # convert from hPa to Pa
                 datadict[item] = datadict[item]*100
-            if item=='Z' and version in ['v4']:
-                #convert from km to m
+            if item == 'Z' and version in ['v4']:
+                # convert from km to m
                 datadict[item] = datadict[item]*1000
 
             datadict[item] = datadict[item].tolist()
@@ -408,18 +405,21 @@ class ScanPTZ(MethodView):
             datadictv4['Temperature'] = datadict['T']
             datadictv4['Altitude'] = datadict['Z']
             datadict = datadictv4
-        
+
         return jsonify(datadict)
+
 
 class ScanAPR(MethodView):
     """plots information: data from a given scan"""
     def get(self, version, species, date, backend, freqmode, scanno):
         """GET-method"""
-        if not version in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
         url_base = request.headers['Host']
-        url_base = url_base.replace('webapi','localhost')
-        url = 'http://' + url_base + url_for('.scaninfo',version='v1', date=date, backend=backend,freqmode=freqmode)
+        url_base = url_base.replace('webapi', 'localhost')
+        url = 'http://' + url_base + url_for('.scaninfo', version='v1',
+                                             date=date, backend=backend,
+                                             freqmode=freqmode)
         _, day_of_year, midlat, _ = get_geoloc_info(url, scanno)
         datadict = get_apriori(species, day_of_year, midlat)
         for item in ['pressure', 'vmr']:
@@ -431,4 +431,3 @@ class ScanAPR(MethodView):
             datadictv4['Species'] = datadict['species']
             datadict = datadictv4
         return jsonify(datadict)
-
