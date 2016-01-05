@@ -1,0 +1,48 @@
+""" doc
+"""
+from flask import request
+from flask import jsonify, abort
+from flask.views import MethodView
+from datetime import datetime
+from database import DatabaseConnector
+
+
+class DateInfoCached(MethodView):
+    """DateInfo using a cached table"""
+    def get(self, version, date):
+        """GET"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        date1 = datetime.strptime(date, '%Y-%m-%d')
+        query_str = self.gen_query(date)
+        date_iso = date1.date().isoformat()
+        info_list = self.gen_data(date_iso, version, query_str)
+        return jsonify(Date=date_iso, Info=info_list)
+
+    def gen_data(self, date, version, query_string):
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        info_list = []
+        for row in result:
+            info_dict = {}
+            info_dict['Backend'] = row['backend']
+            info_dict['FreqMode'] = row['freqmode']
+            info_dict['NumScan'] = row['nscans']
+            info_dict['URL'] = (
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                    request.url_root, version, date, row['backend'],
+                    row['freqmode'])
+            info_list.append(info_dict)
+        con.close()
+        return info_list
+
+    def gen_query(self, date):
+        query_str = (
+            "select freqmode, backend, numscans "
+            "from measurements_cached "
+            "where date = {0} "
+            "order by backend, freqmode "
+            ).format(date.isoformat())
+        return query_str
+

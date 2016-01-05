@@ -2,6 +2,7 @@
 
 from flask import Flask
 from odinapi.views.views import DateInfo, DateBackendInfo
+from odinapi.views.views_cached import DateInfoCached
 from odinapi.views.views import ScanSpec, FreqmodeInfo
 from odinapi.views.smr_site import ViewIndex, ViewScanSpec, ViewLevel1
 from odinapi.views.smr_site import ViewFreqmodeInfoPlot
@@ -16,7 +17,11 @@ class Odin(Flask):
         super(Odin, self).__init__(name)
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/',
-            view_func=DateInfo.as_view('freqmodeinfo')
+            view_func=DateInfoCached.as_view('freqmodeinfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_raw/<date>/',
+            view_func=DateInfo.as_view('freqmoderaw')
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/',
