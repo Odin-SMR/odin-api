@@ -400,29 +400,31 @@ function drawStatistics() {
     // Generate yearly statistics plot:
     data = [];
     xticks = [];
-    sum = 0;
-    $.getJSON('/rest_api/v4/statistics/annual', function(rawdata) {
-        var theSum;
-        $.each( rawdata["Data"], function (ind, val) {
-            // Handle null values, mostly useful for toy data set...
-            if (val["sum"] == null) {
-                theSum = 0;
-            } else {
-                theSum = val["sum"];
-            }
-            data[ind] = {
-                data: [[val["year"], theSum]],
-                label: val["year"] + " (" + val["sum"] + ")",
-            }
-            xticks.push(val["year"]);
-            sum += val["sum"];
+    $.getJSON('/rest_api/v4/statistics/freqmode/annual', function(rawdata) {
+        $.each( rawdata["Data"], function (key, val) {
+            data.push({
+                data: val,
+                label: "FM " + key,
+                color: freqmodeColours[key],
+            });
         });
+
+        xticks = rawdata["Years"];
 
         $.plot($('#annualStats'), data, {
             series: {
-                color: "#2C5AA0",
-                points: {
-                    show: true
+                stack: true,
+                lines: {
+                    show: false,
+                    fill: true,
+                    steps: false,
+                },
+                bars: {
+                    show: true,
+                    barWidth: 0.618,
+                    fill: 0.764,
+                    color: '#101010',
+                    lineWidth: 3,
                 },
             },
             legend: {
@@ -432,6 +434,7 @@ function drawStatistics() {
                 ticks: xticks,
             },
         });
-        $('#annualStatsLabel').html("Total number of scans by year:");
+        $('#annualStatsLabel').html("Number of scans and frequency mode" +
+                " distribution per year:");
     });
 }

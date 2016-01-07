@@ -34,31 +34,26 @@ class TotalFreqmodeStatistics(MethodView):
         return query_str
 
 
-class FreqmodeTimeseriesStatistics(MethodView):
-    """Statistics of freqmode distribution as time series"""
-    def get(self, version, year=None):
+class AnnualFreqmodeStatistics(MethodView):
+    """Statistics of number of scans per freqmode for different years"""
+    def get(self, version):
         """GET"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        info_list = []
-        if year is None:
-            for year in xrange(2001, now().year+1):
-                first_date = "{0}-01-01".format(year)
-                last_date = "{0}-12-31".format(year)
-                query_str = self.gen_query(first_date, last_date)
-                result = self.gen_data(query_str)[0]
-                result["year"] = year
-                info_list.append(result)
-        else:
-            for month in xrange(1, 12):
-                first_date = "{0}-{1}-01".format(year, month)
-                last_date = "{0}-{1}-31".format(year, month)
-                query_str = self.gen_query(first_date, last_date)
-                result = self.gen_data(query_str)[0]
-                result["month"] = month
-                info_list.append(result)
+        info_dict = {}
+        years = range(2001, now().year+1)
+        for year in years:
+            first_date = "{0}-01-01".format(year)
+            last_date = "{0}-12-31".format(year)
+            query_str = self.gen_query(first_date, last_date)
+            result = self.gen_data(query_str)
+            for row in result:
+                try:
+                    info_dict[row["freqmode"]].append([year, row["sum"]])
+                except KeyError:
+                    info_dict[row["freqmode"]] = [[year, row["sum"]]]
 
-        return jsonify(Data=info_list)
+        return jsonify(Data=info_dict, Years=years)
 
     def gen_data(self, query_string):
         con = DatabaseConnector()
