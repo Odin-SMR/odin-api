@@ -281,44 +281,42 @@ var freqmodeTextColours = {
 
 function updateCalendar(start, end) {
     var theDate = start;
-    // Loop over time interval in view:
-    while (theDate < end) {
-        // For ech day, get json from rest:
-        if ($('#calendar').fullCalendar('clientEvents',
-                    theDate.format()).length == 0) {
-            $.ajax({
-                type: 'GET',
-                url: '/rest_api/v4/freqmode_info/' +
-                    theDate.stripTime().format() + '/',
-                dataType: "json",
-                success: function(data) {
-                    // Loop over the elements under Info and create event:
-                    $.each(data.Info, function(index, theInfo) {
-                        theEvent = {
-                            title: "FM: " + theInfo.FreqMode + " (" +
-                                theInfo.Backend +  "): " +
-                                theInfo.NumScan + " scans",
-                            start: data.Date,
-                            id: data.Date,
-                            // This should link to the report for the day:
-                            // url: theInfo.URL,
-                            url: "#level1-date",
-                            // Add color and textColor based on freqmode:
-                            color: freqmodeColours[theInfo.FreqMode],
-                            textColor: freqmodeTextColours[theInfo.FreqMode],
-                            // Save some metadata:
-                            FreqMode: theInfo.FreqMode,
-                            Backend: theInfo.Backend,
-                        };
-                        // Push event to calendar:
-                        $('#calendar').fullCalendar('renderEvent', theEvent, true);
-                    });
-                }
-            });
-        };
-        // Increment loop "Moment":
-        theDate.add(1, 'd');
-    }
+    // For ech day, get json from rest:
+    if ($('#calendar').fullCalendar('clientEvents',
+                theDate.format()).length == 0) {
+        $.ajax({
+            type: 'GET',
+            url: '/rest_api/v4/period_info/' +
+                start.format('YYYY/MM/DD/') ,
+            dataType: "json",
+            success: function(data) {
+                var events = [];
+                // Loop over the elements under Info and create event:
+                $.each(data.Info, function(index, theInfo) {
+                    theEvent = {
+                        title: "FM: " + theInfo.FreqMode + " (" +
+                            theInfo.Backend +  "): " +
+                            theInfo.NumScan + " scans",
+                        start: theInfo.Date,
+                        id: theInfo.Date,
+                        // This should link to the report for the day:
+                        // url: theInfo.URL,
+                        url: "#level1-date",
+                        // Add color and textColor based on freqmode:
+                        color: freqmodeColours[theInfo.FreqMode],
+                        textColor: freqmodeTextColours[theInfo.FreqMode],
+                        // Save some metadata:
+                        FreqMode: theInfo.FreqMode,
+                        Backend: theInfo.Backend,
+                    };
+                    events.push(theEvent);
+                    // Push event to calendar:
+                });
+                $('#calendar').fullCalendar('removeEvents');
+                $('#calendar').fullCalendar('addEventSource', events);
+            }
+        });
+    };
 }
 
 
