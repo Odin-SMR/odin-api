@@ -5,7 +5,7 @@ function initLevel1(date) {
 
     var table = $('#level1-date-table').DataTable({
         "ajax": {
-            "url": '/rest_api/v3/freqmode_info/' + date + '/',
+            "url": '/rest_api/v4/freqmode_info/' + date + '/',
             "dataSrc": "Info",
             },
         "columns": [
@@ -66,7 +66,7 @@ function initLevel1(date) {
 function updateLevel1(date) {
     var table;
     table = $('#level1-date-table').DataTable();
-    table.ajax.url('/rest_api/v4/freqmode_info/' + date).load();
+    table.ajax.url('/rest_api/v4/freqmode_info/' + date + '/').load();
     $('#level1-date').html(date);
 }
 
@@ -118,20 +118,17 @@ function updatePlot(date, back, freq) {
         var opt = {}
         var currDate = moment(date, 'YYYY-MM-DD')
         $.getJSON(
-            '/rest_api/v1/freqmode_info/'+date+'/'+back+'/'+freq,
+            '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
             function(data) {
                 xticks =[]
-                $.each( data["SunZD"], function (index, value) {
+                $.each( data["Info"], function (index, data) {
                     time_point = moment
-                    datestring = date + " " +data["DateTime"][index].split(" ")[4]
-                    var momentDate = moment(
-                        datestring,
-                        'YYYY-MM-DD HH:mm:ss');
-                    sun.push( [momentDate.toDate(), value] );
-                    lat.push( [momentDate.toDate(), data["StartLat"][index]] );
-                    lon.push( [momentDate.toDate(), data["StartLon"][index]] );
-                    scan.push( [momentDate.toDate(), data["NumSpec"][index]] );
-                    //xticks.push([index, data["DateTime"][index]])
+                    datestring = data["DateTime"]
+                    var momentDate = moment(datestring);
+                    sun.push( [momentDate.toDate(), data["SunZD"]] );
+                    lat.push( [momentDate.toDate(), data["LatStart"]] );
+                    lon.push( [momentDate.toDate(), data["LonStart"]] );
+                    scan.push([momentDate.toDate(), data["NumSpec"]] );
                 })
                 opt={
                     "series":{
@@ -145,7 +142,10 @@ function updatePlot(date, back, freq) {
                         "minTickSize": [1, "hour"],
                         "min": currDate.startOf("day").toDate().getTime(),
                         "max": currDate.endOf("day").toDate().getTime()
-                    }
+                    },
+                    "grid": {
+                        "hoverable": true,
+                    },
                 }
                 $.plot("#smart-plot-lat-"+back+'-'+freq, [lat], opt);//{series:{points: {show:true}}})
                 $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt);//{series:{points: {show:true}}})
@@ -335,7 +335,7 @@ function drawStatistics() {
     // Generate freqmode statistics plot:
     data = [];
     sum = 0;
-    $.getJSON('/rest_api/v4/statistics/freqmode', function(rawdata) {
+    $.getJSON('/rest_api/v4/statistics/freqmode/', function(rawdata) {
         $.each( rawdata["Data"], function (ind, val) {
             data[ind] = {
                 color: freqmodeColours[val["freqmode"]],
@@ -367,7 +367,7 @@ function drawStatistics() {
                 },
             },
             grid: {
-                hoverable: true,
+                hoverable: false,
             },
             legend: {
                 show: false,
@@ -399,7 +399,7 @@ function drawStatistics() {
     // Generate yearly statistics plot:
     data = [];
     xticks = [];
-    $.getJSON('/rest_api/v4/statistics/freqmode/annual', function(rawdata) {
+    $.getJSON('/rest_api/v4/statistics/freqmode/annual/', function(rawdata) {
         $.each( rawdata["Data"], function (key, val) {
             data.push({
                 data: val,
