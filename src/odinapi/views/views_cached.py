@@ -3,7 +3,7 @@
 from flask import request
 from flask import jsonify, abort
 from flask.views import MethodView
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from database import DatabaseConnector
 
 
@@ -48,3 +48,48 @@ class DateInfoCached(MethodView):
             "order by backend, freqmode "
             ).format(date)
         return query_str
+
+
+class PeriodInfoCached(MethodView):
+    """Period using a cached table
+    This is used to populate the calendar. The standard lenght of the period
+    is six weeks, just enough to fill a Full Calendar view.
+    """
+    def get(self, version, year, month, day):
+        """GET"""
+        if version not in ['v4']:
+            abort(404)
+        try:
+            date_start = date(year, month, day)
+        except ValueError:
+            abort(404)
+        period_length = request.args.get('length', 42, type=int)
+        date_end = date_start + timedelta(days=period_length-1)
+        query_string = (
+            "select date, freqmode, backend, nscans "
+            "from measurements_cache "
+            "where date between '{0}' and '{1}' "
+            "order by backend, freqmode "
+            ).format(date_start.isoformat(), date_end.isoformat())
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        info_list = []
+        for row in result:
+            info_dict = {}
+            info_dict['Date'] = row['date']
+            info_dict['Backend'] = row['backend']
+            info_dict['FreqMode'] = row['freqmode']
+            info_dict['NumScan'] = row['nscans']
+            info_dict['URL'] = (
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                    request.url_root, version, row['date'], row['backend'],
+                    row['freqmode'])
+            info_list.append(info_dict)
+        con.close()
+        return jsonify(
+            period_start=date_start.isoformat(),
+            period_end=date_end.isoformat(),
+            Info=info_list)
+
+
