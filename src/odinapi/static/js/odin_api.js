@@ -368,7 +368,6 @@ function drawStatistics() {
             },
             grid: {
                 hoverable: true,
-                clickable: true
             },
             legend: {
                 show: false,
@@ -404,8 +403,10 @@ function drawStatistics() {
         $.each( rawdata["Data"], function (key, val) {
             data.push({
                 data: val,
-                label: "FM " + key,
                 color: freqmodeColours[key],
+                shortLabel: "FM " + key,
+                label: "FM " + key,
+                longLabel: "Frequency Mode " + key,
             });
         });
 
@@ -424,7 +425,6 @@ function drawStatistics() {
                     barWidth: 0.618,
                     fill: 0.764,
                     color: '#101010',
-                    lineWidth: 3,
                 },
             },
             legend: {
@@ -433,8 +433,29 @@ function drawStatistics() {
             xaxis: {
                 ticks: xticks,
             },
+            grid: {
+                hoverable: true,
+                clickable: true,
+            },
         });
         $('#annualStatsLabel').html("Number of scans and frequency mode" +
                 " distribution per year:");
+
+        $('#annualStatsHover').html("<span style='font-weight:bold;'>" +
+            "Total number of scans: " + sum + "</span>");
+    });
+
+    $('#annualStats').bind("plothover", function(event, pos, obj) {
+
+        if (!obj) {
+            $("#annualStatsHover").html("<span style='font-weight:bold;'>" +
+                "Total number of scans: " + sum + "</span>");
+            return;
+        }
+
+        var scans = obj["datapoint"][1] - obj["datapoint"][2];
+        $("#annualStatsHover").html("<span style='font-weight:bold;'>" +
+            obj.series.longLabel + ", " + obj["datapoint"][0] + ": " +
+             + scans + " scans</span>");
     });
 }
