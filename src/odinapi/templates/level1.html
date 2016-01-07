@@ -16,7 +16,7 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
           <h1 class="page-header">Level1 data dashboard</h1>
           <p>The dashboard is a user interface to browse through and look at
-          level 1b data from the Odin/SMR instrument. The dashboard is
+          Level-1B data from the Odin/SMR instrument. The dashboard is
           currently under development and changes are likely to happen.</p>
           <p>The dashboard uses the Odin/SMR rest-API to look up data. The
           first version of the API is already available for use, the
@@ -27,24 +27,26 @@
           <h2>Instructions</h2>
           <p>
           Select a date from the calendar or enter date in in the date field
-          in the header. The overview table, constaining information of the
+          in the header. The overview table, containing information of the
           measurements for the selected day, will automatically update.
           Click on a row in the table to view an overview of the measurements
-          performed in a specific freqmode of interest.<p>
+          performed in a specific frequency mode (FM) of interest.<p>
           <p> At the bottom of the page another table shows scans made for
-          the chosen freqmode and backend and links to the data itself.
-          This is table is updated automatically when a selection is made in
+          the chosen frequency mode and links to the data itself.
+          This table is updated automatically when a selection is made in
           the overview table. On clicking a row in the scan table, an image
           visualising the scan data will be displayed.</p>
-
+ 
           <div id='calendar'> </div>
           <!-- div>
               <input  type="text" value="2015-01-03" id="datepicker1">
           </div -->
-          <h2 class="sub-header">Overview of daily measurements for <span id=level1-date></span></h2>
-          <p>The table below describes the measurements made the selected date.
-          Click on a row to load the corresponding scan in the Scan information
-          table and to show a graphical overview.</p>
+          <h2 class="sub-header">Scan log data: Overview of daily measurements for <span id=level1-date></span></h2>
+          <p>The table below describes log information of the 
+          measurements/scans made the selected date. 
+          Click on a row to get a graphical overview of this log data,
+          and to load the corresponding Level1B-data in the Scan information-Level1B table below this table. 
+          </p>
           <div class="table-responsive">
             <table id="level1-date-table" class="table table-striped">
               <!-- empty table -->
@@ -56,7 +58,7 @@
           <div id="ddata">
 
           </div>
-          <h2 class="sub-header">Scan information</h2>
+          <h2 class="sub-header">Scan information - Level1B-data</h2>
           <p>Scan data can be downloaded directly from our rest-API using the
           links in the URL colummn. A scan is a group of spectra collected by
           the instrument when sweeping from the top of the atmosphere to the
