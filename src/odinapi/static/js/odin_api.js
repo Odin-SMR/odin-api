@@ -245,20 +245,21 @@ function clearDataTable() {
 // Functions used to populate calendar view:
 
 var freqmodeColours = {
-  '0': 'Black',
-  '1': 'AliceBlue',
-  '2': 'RoyalBlue',
-  '8': 'Purple',
-  '13': 'FireBrick',
-  '14': 'ForestGreen',
-  '17': 'SaddleBrown',
-  '19': 'Silver',
-  '21': 'LightSkyBlue',
-  '22': 'Navy',
-  '23': 'RebeccaPurple',
-  '24': 'Teal',
-  '25': 'Gold',
-  '29': 'LightSteelBlue',
+  // Websafe colours:
+  '0':  '#101010', //'Black',
+  '1':  '#E6E6FA', // 'Lavender',
+  '2':  '#4169E1', // 'RoyalBlue',
+  '8':  '#800080', // 'Purple',
+  '13': '#B22222', // 'FireBrick',
+  '14': '#228B22', // 'ForestGreen',
+  '17': '#8B4513', // 'SaddleBrown',
+  '19': '#C0C0C0', // 'Silver',
+  '21': '#87CDFA', // 'LightSkyBlue',
+  '22': '#000080', // 'Navy',
+  '23': '#663399', // 'RebeccaPurple',
+  '24': '#008080', // 'Teal',
+  '25': '#FFD700', // 'Gold',
+  '29': '#4682B4', // 'SteelBlue',
 }
 
 var freqmodeTextColours = {
