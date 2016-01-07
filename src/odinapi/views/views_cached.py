@@ -52,7 +52,7 @@ class DateInfoCached(MethodView):
 
 class PeriodInfoCached(MethodView):
     """Period using a cached table
-    This is used to populate the calendar. The standard lenght of the period
+    This is used to populate the calendar. The standard length of the period
     is six weeks, just enough to fill a Full Calendar view.
     """
     def get(self, version, year, month, day):
@@ -91,5 +91,3 @@ class PeriodInfoCached(MethodView):
             period_start=date_start.isoformat(),
             period_end=date_end.isoformat(),
             Info=info_list)
-
-
