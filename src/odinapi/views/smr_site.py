@@ -4,7 +4,7 @@ from flask import send_file, render_template
 from flask.views import MethodView
 import io
 from date_tools import *
-from level1b_scandata_exporter import *
+from level1b_scandata_exporter_v2 import *
 from level1b_scanlogdata_exporter import *
 from os import environ
 from database import DatabaseConnector
@@ -44,7 +44,7 @@ class ViewScanSpec(MethodView):
     def get(self, backend, freqmode, scanno):
         con = DatabaseConnector()
         calstw = int(scanno)
-        spectra = get_scan_data(con, backend, freqmode, scanno)
+        spectra = get_scan_data_v2(con, backend, freqmode, scanno)
         fig = plot_scan(backend, calstw, spectra)
         con.close()
         buf = io.BytesIO()
