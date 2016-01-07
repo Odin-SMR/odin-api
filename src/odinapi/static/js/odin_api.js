@@ -323,6 +323,12 @@ function updateCalendar(start, end) {
 
 
 // Functions for generating statistics plots:
+function labelFormatter(label, series) {
+    var shortLabel = series["shortLabel"];
+    return "<div style='font-size:7pt; text-align:center; padding:2px; " +
+           "color:white;'>" + shortLabel + "<br/>" + Math.round(series.percent) +
+           "%</div>";
+}
 
 function drawStatistics() {
     var data;
@@ -336,7 +342,10 @@ function drawStatistics() {
             data[ind] = {
                 color: freqmodeColours[val["freqmode"]],
                 data: val["sum"],
-                label: "FM: " + val["freqmode"] + " (" + val["sum"] + ")",
+                label: "FM " + val["freqmode"] + " (" + val["sum"] + ")",
+                shortLabel: "FM " + val["freqmode"],
+                longLabel: "Frequency Mode " + val["freqmode"] + ": " +
+                    val["sum"] + " scans",
             }
             sum += val["sum"];
         });
@@ -346,13 +355,48 @@ function drawStatistics() {
                 pie: {
                     show: true,
                     radius: 1,
-                }
-            }
+                    innerRadius: 0.382,
+                    label: {
+                        formatter: labelFormatter,
+                        show: true,
+                        threshold: 0.05,
+                        radius: 0.764,
+                        background: {
+                            opacity: 0.236,
+                            color: '#101010'
+                        },
+                    },
+                },
+            },
+            grid: {
+                hoverable: true,
+                clickable: true
+            },
+            legend: {
+                show: false,
+            },
         });
-        $('#fmStatsLabel').html("Total number of scans by freqmode:");
+
+        $('#fmStatsLabel').html("Total number of scans by frequency mode:");
 
         $('#totalNumberLabel').html("The data base contains a total of " +
                 sum + " scans");
+
+        $('#fmStatsHover').html("<span style='font-weight:bold;'>" +
+            "Total number of scans: " + sum + "</span>");
+    });
+
+    $('#fmStats').bind("plothover", function(event, pos, obj) {
+
+        if (!obj) {
+            $("#fmStatsHover").html("<span style='font-weight:bold;'>" +
+                "Total number of scans: " + sum + "</span>");
+            return;
+        }
+
+        var percent = parseFloat(obj.series.percent).toFixed(2);
+        $("#fmStatsHover").html("<span style='font-weight:bold;'>" +
+            obj.series.longLabel + " (" + percent + "%)</span>");
     });
 
     // Generate yearly statistics plot:
@@ -380,9 +424,6 @@ function drawStatistics() {
             series: {
                 color: "#2C5AA0",
                 points: {
-                    show: true
-                },
-                lines: {
                     show: true
                 },
             },
