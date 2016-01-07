@@ -21,18 +21,19 @@ class Scan_data_exporter():
         #extract all target spectrum data for the scan
         temp=[self.backend,calstw,freqmode]
         query=self.con.query('''
-              select calstw,stw,backend,orbit,mjd,lst,intmode,spectra,
-              alevel,version,channels,skyfreq,lofreq,restfreq,maxsuppression,
+              select ac_level1b.stw,calstw,ac_level1b.backend,orbit,mjd,lst,intmode,
+              spectra,alevel,version,channels,skyfreq,lofreq,restfreq,maxsuppression,
               tsys,sourcemode,freqmode,efftime,sbpath,latitude,longitude,
               altitude,skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,
               qerror,gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,
               inttime,ac_level1b.frontend,hotloada,hotloadb,lo,sig_type,
-              ac_level1b.soda
+              ac_level1b.soda,ac_level0.frontend as ac0_frontend
               from ac_level1b
               join attitude_level1  using (backend,stw)
               join ac_level0  using (backend,stw)
-              join shk_level1  using (backend,stw)
-              where calstw={1} and backend='{0}' and version=8
+              join shk_level1 on ac_level1b.stw=shk_level1.stw and ac_level1b.backend=shk_level1.backend
+               and ac_level1b.frontend=shk_level1.frontendsplit 
+              where calstw={1} and ac_level1b.backend='{0}' and version=8
               and sig_type='SIG' and
               freqmode={2}
               order by stw asc,intmode asc'''.format(*temp))
@@ -40,18 +41,20 @@ class Scan_data_exporter():
     
         #extract all calibration spectrum data for the scan
         query2=self.con.query('''
-               select stw,backend,orbit,mjd,lst,intmode,spectra,alevel,version,
+               select ac_cal_level1b.stw,ac_cal_level1b.backend,orbit,mjd,lst,intmode,
+               spectra,alevel,version,
                channels,spectype,skyfreq,lofreq,restfreq,maxsuppression,
                sourcemode,freqmode,sbpath,latitude,longitude,altitude,tspill,
                skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,qerror,
                gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,inttime,
                ac_cal_level1b.frontend,hotloada,hotloadb,lo,sig_type,
-               ac_cal_level1b.soda
+               ac_cal_level1b.soda,ac_level0.frontend as ac0_frontend
                from ac_cal_level1b
                join attitude_level1  using (backend,stw)
                join ac_level0  using (backend,stw)
-               join shk_level1  using (backend,stw)
-               where stw={1} and backend='{0}' and version=8
+               join shk_level1 on ac_cal_level1b.stw=shk_level1.stw and ac_cal_level1b.backend=shk_level1.backend
+               and ac_cal_level1b.frontend=shk_level1.frontendsplit
+               where ac_cal_level1b.stw={1} and ac_cal_level1b.backend='{0}' and version=8
                and freqmode={2}
                order by stw asc,intmode asc,spectype asc'''.format(*temp))
         result2=query2.dictresult()
@@ -143,7 +146,7 @@ class Scan_data_exporter():
                      'maxsuppression','sbpath','latitude','longitude',
                      'altitude','skybeamhit','ra2000','dec2000',
                      'vsource','sunzd','vgeo','vlsr','inttime',
-                     'hotloada','lo','freqmode','soda']:
+                     'hotloada','lo','freqmode','soda','ac0_frontend']:
                 spec[item] = res[item]
 
             if spec['hotloada']==0:
@@ -192,6 +195,11 @@ class Scan_data_exporter():
 
             data = numpy.ndarray(shape=(res['channels'],),dtype='float64',
                            buffer=self.con.unescape_bytea(res['spectra']))
+            try:
+                if res['ac0_frontend']=='SPL' and res['spectype']=='SSB':
+                    data = data[0:448]
+            except:
+                pass   
             spec['spectrum'] = data
 
             #deal with fields that only are stored for calibration
@@ -442,9 +450,12 @@ class Quality_control():
             if ind<2:
                # do not consider calibration spectrum here
                continue
-            
-            q1 = numpy.nonzero( ( spec[specind] <= tb_min ) |
-                                ( spec[specind] >= tb_max ) )[0]        
+            try:
+                q1 = numpy.nonzero( ( spec[specind] <= tb_min ) |
+                                    ( spec[specind] >= tb_max ) )[0] 
+            except:
+                q1 = numpy.nonzero( ( spec <= tb_min ) |
+                                    ( spec >= tb_max ) )[0]       
             if not q1.shape[0]==0:
                 self.quality[ind] = self.quality[ind] + qual
                 
@@ -616,7 +627,7 @@ def specdict():
              'lo', 'sigtype', 'version', 'quality',
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
-             'pointer', 'tspill','ssb_fq', 
+             'pointer', 'tspill','ssb_fq','ac0_frontend', 
              'calstw','frequency','zerolagvar','ssb']
 
     for item in lista:
@@ -1416,8 +1427,31 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     for item in o.spectra.keys():
         o.spectra[item] = numpy.array(o.spectra[item])
 
-    if o.spectra['intmode'][0]<>511:
-        #print 'plotting of data with intmode<>511 is not yet implemented'
+    if o.spectra['ac0_frontend'][0]=='SPL':
+        # "unpslit data" to make it symmetric with data from other modes
+        spectra = copyemptydict(o.spectra)
+        stw = numpy.array(o.spectra['stw'])
+        for ind,stw_i in enumerate(stw):
+            b = copyemptydict(o.spectra)
+            for item in o.spectra.keys():
+                b[item] = o.spectra[item][ind]
+            spectrum = N.zeros(896)
+            if o.spectra['intmode'][0]==1023:
+                spectrum[224:448] = o.spectra['spectrum'][ind][0:224]
+                spectrum[672:896] = o.spectra['spectrum'][ind][224:448]
+            else:
+                spectrum[0:224] = o.spectra['spectrum'][ind][0:224]
+                spectrum[448:672] = o.spectra['spectrum'][ind][224:448]
+            b['spectrum'] = spectrum
+            b['intmode'] = 511
+            for item in b.keys():
+                spectra[item].append(b[item])
+
+        o.spectra = spectra
+        for item in o.spectra.keys():
+            o.spectra[item] = numpy.array(o.spectra[item])
+
+    if o.spectra['intmode'][0]<>511 and o.spectra['ac0_frontend'][0]<>'SPL':
         #unsplit spectra
         stw = numpy.sort(numpy.unique(o.spectra['stw']))
         spectra = copyemptydict(o.spectra)
@@ -1480,8 +1514,10 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     o.spectra['ssb'] = []
     channels = []
     freqinfo = { 'IFreqGrid' : [], 'LOFreq' : [], 'SubBandIndex' : []}
+    #o.spectra['spectrum'] = spectra
+
+   
     for numspec in range( len(o.spectra['stw']) ): 
-        
         f = qsmr_frequency(o.spectra,numspec)
         f = N.array(f)
         # check if any sub-band is "dead" and the append to bad_modules
