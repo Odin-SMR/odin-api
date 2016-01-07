@@ -1304,15 +1304,16 @@ def plot_scan(backend,calstw,spectra):
     ax1.xaxis.set_label_text('Lon. [Deg]')  
 
     #plot Trec spectrum
-    f = freq(spectra['lofreq'][0],spectra['skyfreq'][0],spectra['ssb_fq'][0])
+    #f = freq(spectra['lofreq'][0],spectra['skyfreq'][0],spectra['ssb_fq'][0])
+    f = N.array(spectra['frequency']['IFreqGrid'] + spectra['frequency']['LOFreq'][0])/1e9
     ax1 = plt.subplot2grid((7,5), (0,2), colspan=4,rowspan=1)
 
-    if backend =='AC1':
-        plt.plot(f,spectra['spectrum'][0],'.',markersize=0.5)
-        plt.plot(f[112*2::],spectra['spectrum'][0][112*2::],'.')
-    elif backend =='AC2':
-        plt.plot(f,spectra['spectrum'][0],'.')
-
+    #if backend =='AC1':
+    #    plt.plot(f,spectra['spectrum'][0],'.',markersize=0.5)
+    #    plt.plot(f[112*2::],spectra['spectrum'][0][112*2::],'.')
+    #elif backend =='AC2':
+    #    plt.plot(f,spectra['spectrum'][0],'.')
+    plt.plot(f,spectra['spectrum'][0],'.')
     ax1.grid(True)
     ax1.minorticks_on()
     limx = numpy.array([numpy.floor(numpy.min(f*2)),numpy.ceil(numpy.max(f*2))])/2
@@ -1322,22 +1323,27 @@ def plot_scan(backend,calstw,spectra):
     ymin = numpy.min(spectra['spectrum'][0][ind])
     dy = 100
     limy = [numpy.floor(ymin*dy)/dy-dy,numpy.ceil(ymax*dy)/dy+dy]
-    plt.ylim(limy)
+    #plt.ylim(limy)
     ax1.axes.xaxis.set_ticklabels([])
     ax1.yaxis.set_label_text('Trec. [K]')
 
+
     #plot all spectrum in scan
     ax1 = plt.subplot2grid((7,5), (1,2), colspan=4,rowspan=4)
-    if backend == 'AC1':
-        for z,s in zip(spectra['altitude'],spectra['spectrum'][2::]):
-            plt.plot(f,s,'k.',markersize=0.5)
-        for z,s in zip(spectra['altitude'][2::3],spectra['spectrum'][2::3]):
-            plt.plot(f[112*2::],s[112*2::],'.',label=numpy.int(numpy.around(z/1e3)))
-    elif backend == 'AC2':
-        for z,s in zip(spectra['altitude'],spectra['spectrum'][2::]):
-            plt.plot(f,s,'k.',markersize=0.5)
-        for z,s in zip(spectra['altitude'][2::3],spectra['spectrum'][2::3]):
-            plt.plot(f,s,'.',label=numpy.int(numpy.around(z/1e3)))
+    for z,s in zip(spectra['altitude'],spectra['spectrum'][2::]):
+        plt.plot(f,s,'k.',markersize=0.5)
+    for z,s in zip(spectra['altitude'][2::3],spectra['spectrum'][2::3]):
+        plt.plot(f,s,'.',label=numpy.int(numpy.around(z/1e3)))
+    #if backend == 'AC1':
+    #    for z,s in zip(spectra['altitude'],spectra['spectrum'][2::]):
+    #        plt.plot(f,s,'k.',markersize=0.5)
+    #    for z,s in zip(spectra['altitude'][2::3],spectra['spectrum'][2::3]):
+    #        plt.plot(f[112*2::],s[112*2::],'.',label=numpy.int(numpy.around(z/1e3)))
+    #elif backend == 'AC2':
+    #    for z,s in zip(spectra['altitude'],spectra['spectrum'][2::]):
+    #        plt.plot(f,s,'k.',markersize=0.5)
+    #    for z,s in zip(spectra['altitude'][2::3],spectra['spectrum'][2::3]):
+    #        plt.plot(f,s,'.',label=numpy.int(numpy.around(z/1e3)))
 
     ax1.grid(True)
     ax1.minorticks_on()
@@ -1348,14 +1354,18 @@ def plot_scan(backend,calstw,spectra):
     plt.xlim(limx)
     plt.ylim([-10, 250])
 
+
     #plot average of high altitude spectra
     zmax = numpy.max(spectra['altitude'])
     ind = numpy.nonzero((spectra['altitude'] >= zmax-20e3 ))[0]
     ax1 = plt.subplot2grid((7,5), (5,2), colspan=4,rowspan=2)
     data = []
-    for i,s in zip(ind,spectra['spectrum'][ind]):
-        if i>1:
+    i = 0
+    for s in spectra['spectrum']:
+    #for i,s in zip(ind,spectra['spectrum'][ind]):
+        if i>1 and i in ind:
             data.append(s)
+        i = i + 1
     data = numpy.array(data)
     data = numpy.mean(data,0)
     zmin = numpy.min(spectra['altitude'][ind])
@@ -1363,10 +1373,11 @@ def plot_scan(backend,calstw,spectra):
     zmin = numpy.int(numpy.around(zmin/1e3))
     zmax = numpy.int(numpy.around(zmax/1e3))
     plt.plot(f,data,'k.',markersize=0.5)
-    if backend == 'AC1':
-        plt.plot(f[112*2::],data[112*2::],'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax]))
-    elif backend == 'AC2':
-        plt.plot(f,data,'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax])) 
+    #if backend == 'AC1':
+    #    plt.plot(f[112*2::],data[112*2::],'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax]))
+    #elif backend == 'AC2':
+    #    plt.plot(f,data,'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax]))
+    plt.plot(f,data,'.',label='''high altitude ({0}-{1} Km) average'''.format(*[zmin,zmax])) 
     plt.ylim([-10,10])
     plt.legend(bbox_to_anchor=(0.02, 0.95), loc=2, borderaxespad=0.)
     ax1.grid(True)
@@ -1382,13 +1393,21 @@ def plot_scan(backend,calstw,spectra):
     s1 = len(spectra['spectrum'][2::])
     band = 8
     x = numpy.ndarray(shape=(s1,band))
+    #for band in range(8):
+    #    for i,s in enumerate(spectra['spectrum'][2::]):
+    #        x[i,band] = numpy.mean(s[band*112:(band+1)*112])
+    #    if backend=='AC1' and band<2:
+    #        plt.plot(x[:,band],spectra['altitude'][2::]/1e3,'.-',markersize=0.5,lw=0.2,label=band)
+    #    else:
+    #        plt.plot(x[:,band],spectra['altitude'][2::]/1e3,'.-',label=band)
     for band in range(8):
+        i1=spectra['frequency']['SubBandIndex'][0][band]
+        i2=spectra['frequency']['SubBandIndex'][1][band]
         for i,s in enumerate(spectra['spectrum'][2::]):
-            x[i,band] = numpy.mean(s[band*112:(band+1)*112])
-        if backend=='AC1' and band<2:
-            plt.plot(x[:,band],spectra['altitude'][2::]/1e3,'.-',markersize=0.5,lw=0.2,label=band)
-        else:
+            x[i,band] = numpy.mean(s[i1-1:i2-1])
+        if i1<>-1:
             plt.plot(x[:,band],spectra['altitude'][2::]/1e3,'.-',label=band)
+
     plt.legend(bbox_to_anchor=(1.02, 1.0), loc=2, borderaxespad=0.)
     ax1.grid(True)
     ax1.minorticks_on()
@@ -1436,7 +1455,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
             for item in o.spectra.keys():
                 b[item] = o.spectra[item][ind]
             spectrum = N.zeros(896)
-            if o.spectra['intmode'][0]==1023:
+            if o.spectra['intmode'][0]==2047:
                 spectrum[224:448] = o.spectra['spectrum'][ind][0:224]
                 spectrum[672:896] = o.spectra['spectrum'][ind][224:448]
             else:

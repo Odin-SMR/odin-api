@@ -66,7 +66,7 @@ function initLevel1(date) {
 function updateLevel1(date) {
     var table;
     table = $('#level1-date-table').DataTable();
-    table.ajax.url('/rest_api/v3/freqmode_info/' + date).load();
+    table.ajax.url('/rest_api/v4/freqmode_info/' + date).load();
     $('#level1-date').html(date);
 }
 
@@ -161,7 +161,7 @@ function initDataTable(date, back, freq) {
     var table = $('#info-table').DataTable( {
         "ajax": {
             "dataSrc": "Info",
-            "url": '/rest_api/v3/freqmode_info/' + date + '/' + back + '/' +
+            "url": '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' +
                 freq + '/',
             },
         "data": [],
@@ -203,7 +203,7 @@ function initDataTable(date, back, freq) {
     $('#info-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
-        var url = $(this).children().eq(5).find('a').attr("href").replace("v4", "v3");
+        var url = $(this).children().eq(5).find('a').attr("href").replace("v4", "v4");
         var url_array = url.split('/');
         var id = url_array[url_array.length - 1];
         if (row.child.isShown()) {
@@ -219,7 +219,7 @@ function initDataTable(date, back, freq) {
 }
 
 function updateOverview(url, id) {
-    $('#info-image-' + id).attr('src', url.replace("rest_api/v3/scan", "browse"));
+    $('#info-image-' + id).attr('src', url.replace("rest_api/v4/scan", "browse"));
 }
 
 function addOverview(url, id) {
@@ -288,7 +288,7 @@ function updateCalendar(start, end) {
                     theDate.format()).length == 0) {
             $.ajax({
                 type: 'GET',
-                url: '/rest_api/v3/freqmode_info/' +
+                url: '/rest_api/v4/freqmode_info/' +
                     theDate.stripTime().format() + '/',
                 dataType: "json",
                 success: function(data) {
