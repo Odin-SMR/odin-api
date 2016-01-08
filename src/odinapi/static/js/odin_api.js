@@ -321,6 +321,23 @@ function updateCalendar(start, end) {
 
 
 // Functions for generating statistics plots:
+
+monthNames = {
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
+    12: "Undecimber"
+}
+
 function labelFormatter(label, series) {
     var shortLabel = series["shortLabel"];
     return "<div style='font-size:7pt; text-align:center; padding:2px; " +
@@ -332,6 +349,7 @@ function drawStatistics(year = '') {
     var data;
     var sum;
     var plotMode;
+    var temp = '';
 
     if (year == '') {
         plotMode = "Total";
@@ -382,30 +400,41 @@ function drawStatistics(year = '') {
             },
         });
 
+        if (plotMode == "Total") {
+            temp = "";
+        } else {
+            temp = " for " + year;
+        }
+
         $('#fmStats' + plotMode + 'Label').html(
-                "Total number of scans by frequency mode:");
+                "Total number of scans by frequency mode" + temp + ":");
 
         $('#totalNumberLabel').html("The data base contains a total of " +
                 sum + " scans");
 
         $('#fmStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
-                "Total number of scans: " + sum + "</span>");
+                "Total number of scans" + temp + ": " + sum + "</span>");
     });
 
     $('#fmStats' + plotMode).bind("plothover", function(event, pos, obj) {
+        if (plotMode == "Total") {
+            temp = "";
+        } else {
+            temp = " for " + year;
+        }
 
         if (!obj) {
             $('#fmStats' + plotMode + 'Hover').html(
                     "<span style='font-weight:bold;'>" +
-                    "Total number of scans: " + sum + "</span>");
+                    "Total number of scans" + temp + ": " + sum + "</span>");
             return;
         }
 
         var percent = parseFloat(obj.series.percent).toFixed(2);
         $('#fmStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
-                obj.series.longLabel + " (" + percent + "%)</span>");
+                obj.series.longLabel + temp + " (" + percent + "%)</span>");
     });
 
     // Generate yearly statistics plot:
@@ -421,9 +450,15 @@ function drawStatistics(year = '') {
                 label: "FM " + key,
                 longLabel: "Frequency mode " + key,
             });
+            console.log(val);
         });
+        console.log(rawdata);
 
-        xticks = rawdata["Years"];
+        if (plotMode == "Total") {
+            xticks = rawdata["Years"];
+        } else {
+            xticks = rawdata["Months"];
+        }
 
         $.plot($('#timelineStats' + plotMode), data, {
             series: {
@@ -451,29 +486,70 @@ function drawStatistics(year = '') {
                 clickable: true,
             },
         });
+
+        if (plotMode == "Total") {
+            temp = "year";
+        } else {
+            temp = "month for " + year;
+        }
+
         $('#timelineStats' + plotMode + 'Label').html(
-                "Number of scans and frequency" +
-                "mode distribution per year:");
+                "Number of scans and frequency " +
+                "mode distribution per " + temp +":");
+
+        if (plotMode == "Total") {
+            temp = "";
+        } else {
+            temp = " for " + year;
+        }
 
         $('#timelineStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
-                "Total number of scans: " + sum + "</span>");
+                "Total number of scans" + temp + ": " + sum + "</span>");
     });
 
     $('#timelineStats' + plotMode + '').bind("plothover",
             function(event, pos, obj) {
 
         if (!obj) {
+            if (plotMode == "Total") {
+                temp = "";
+            } else {
+                temp = "for " + year;
+            }
+
             $('#timelineStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
-                "Total number of scans: " + sum + "</span>");
+                "Total number of scans" + temp +": " + sum + "</span>");
             return;
         }
 
         var scans = obj["datapoint"][1] - obj["datapoint"][2];
+
+        if (plotMode == "Total") {
+            temp = obj["datapoint"][0];
+        } else {
+            temp = monthNames[obj["datapoint"][0]];
+        }
+
         $('#timelineStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
-                obj.series.longLabel + ", " + obj["datapoint"][0] + ": " +
+                obj.series.longLabel + ", " + temp + ": " +
                 + scans + " scans</span>");
     });
+
+    if (plotMode == "Total") {
+        $('#timelineStats' + plotMode + '').bind("plotclick",
+                function(event, pos, obj) {
+            var year;
+
+            if (!obj) {
+                return;
+            }
+
+            year = obj["datapoint"][0];
+
+            drawStatistics(year);
+        });
+    }
 }
