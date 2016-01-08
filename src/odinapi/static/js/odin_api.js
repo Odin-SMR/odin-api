@@ -328,9 +328,16 @@ function labelFormatter(label, series) {
            "%</div>";
 }
 
-function drawStatistics() {
+function drawStatistics(year=-1) {
     var data;
     var sum;
+    var plotMode;
+
+    if (year < 0) {
+        plotMode = "Total";
+    } else {
+        plotMode = "Year";
+    }
 
     // Generate freqmode statistics plot:
     data = [];
@@ -348,7 +355,7 @@ function drawStatistics() {
             sum += val["sum"];
         });
 
-        $.plot($('#fmStats'), data, {
+        $.plot($('#fmStats' + plotMode), data, {
             series: {
                 pie: {
                     show: true,
@@ -374,26 +381,30 @@ function drawStatistics() {
             },
         });
 
-        $('#fmStatsLabel').html("Total number of scans by frequency mode:");
+        $('#fmStats' + plotMode + 'Label').html(
+                "Total number of scans by frequency mode:");
 
         $('#totalNumberLabel').html("The data base contains a total of " +
                 sum + " scans");
 
-        $('#fmStatsHover').html("<span style='font-weight:bold;'>" +
-            "Total number of scans: " + sum + "</span>");
+        $('#fmStats' + plotMode + 'Hover').html(
+                "<span style='font-weight:bold;'>" +
+                "Total number of scans: " + sum + "</span>");
     });
 
-    $('#fmStats').bind("plothover", function(event, pos, obj) {
+    $('#fmStats' + plotMode + '').bind("plothover", function(event, pos, obj) {
 
         if (!obj) {
-            $("#fmStatsHover").html("<span style='font-weight:bold;'>" +
-                "Total number of scans: " + sum + "</span>");
+            $("#fmStats' + plotMode + 'Hover").html(
+                    "<span style='font-weight:bold;'>" +
+                    "Total number of scans: " + sum + "</span>");
             return;
         }
 
         var percent = parseFloat(obj.series.percent).toFixed(2);
-        $("#fmStatsHover").html("<span style='font-weight:bold;'>" +
-            obj.series.longLabel + " (" + percent + "%)</span>");
+        $("#fmStats' + plotMode + 'Hover").html(
+                "<span style='font-weight:bold;'>" +
+                obj.series.longLabel + " (" + percent + "%)</span>");
     });
 
     // Generate yearly statistics plot:
@@ -412,7 +423,7 @@ function drawStatistics() {
 
         xticks = rawdata["Years"];
 
-        $.plot($('#annualStats'), data, {
+        $.plot($('#timelineStats' + plotMode + ''), data, {
             series: {
                 stack: true,
                 lines: {
@@ -438,24 +449,29 @@ function drawStatistics() {
                 clickable: true,
             },
         });
-        $('#annualStatsLabel').html("Number of scans and frequency mode" +
-                " distribution per year:");
+        $('#timelineStats' + plotMode + 'Label').html(
+                "Number of scans and frequency" +
+                "mode distribution per year:");
 
-        $('#annualStatsHover').html("<span style='font-weight:bold;'>" +
-            "Total number of scans: " + sum + "</span>");
+        $('#timelineStats' + plotMode + 'Hover').html(
+                "<span style='font-weight:bold;'>" +
+                "Total number of scans: " + sum + "</span>");
     });
 
-    $('#annualStats').bind("plothover", function(event, pos, obj) {
+    $('#timelineStats' + plotMode + '').bind("plothover",
+            function(event, pos, obj) {
 
         if (!obj) {
-            $("#annualStatsHover").html("<span style='font-weight:bold;'>" +
+            $("#timelineStats' + plotMode + 'Hover").html(
+                "<span style='font-weight:bold;'>" +
                 "Total number of scans: " + sum + "</span>");
             return;
         }
 
         var scans = obj["datapoint"][1] - obj["datapoint"][2];
-        $("#annualStatsHover").html("<span style='font-weight:bold;'>" +
-            obj.series.longLabel + ", " + obj["datapoint"][0] + ": " +
-             + scans + " scans</span>");
+        $("#timelineStats' + plotMode + 'Hover").html(
+                "<span style='font-weight:bold;'>" +
+                obj.series.longLabel + ", " + obj["datapoint"][0] + ": " +
+                + scans + " scans</span>");
     });
 }
