@@ -342,7 +342,7 @@ function drawStatistics() {
                 data: val["sum"],
                 label: "FM " + val["freqmode"] + " (" + val["sum"] + ")",
                 shortLabel: "FM " + val["freqmode"],
-                longLabel: "Frequency Mode " + val["freqmode"] + ": " +
+                longLabel: "Frequency mode " + val["freqmode"] + ": " +
                     val["sum"] + " scans",
             }
             sum += val["sum"];
@@ -406,7 +406,7 @@ function drawStatistics() {
                 color: freqmodeColours[key],
                 shortLabel: "FM " + key,
                 label: "FM " + key,
-                longLabel: "Frequency Mode " + key,
+                longLabel: "Frequency mode " + key,
             });
         });
 
