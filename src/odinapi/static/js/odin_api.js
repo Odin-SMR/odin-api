@@ -342,7 +342,8 @@ function drawStatistics(year = '') {
     // Generate freqmode statistics plot:
     data = [];
     sum = 0;
-    $.getJSON('/rest_api/v4/statistics/freqmode/?year=' + year, function(rawdata) {
+    $.getJSON('/rest_api/v4/statistics/freqmode/?year=' + year,
+            function(rawdata) {
         $.each( rawdata["Data"], function (ind, val) {
             data[ind] = {
                 color: freqmodeColours[val["freqmode"]],
