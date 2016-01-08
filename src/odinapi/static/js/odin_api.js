@@ -367,7 +367,7 @@ function drawStatistics() {
                 },
             },
             grid: {
-                hoverable: false,
+                hoverable: true,
             },
             legend: {
                 show: false,
