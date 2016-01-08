@@ -407,7 +407,9 @@ function drawStatistics(year = '') {
         }
 
         $('#fmStats' + plotMode + 'Label').html(
-                "Total number of scans by frequency mode" + temp + ":");
+                "<span style='font-weight:bold;'>" +
+                "Total number of scans by frequency mode" + temp + ":" +
+                "</span>");
 
         $('#totalNumberLabel').html("The data base contains a total of " +
                 sum + " scans");
@@ -494,8 +496,10 @@ function drawStatistics(year = '') {
         }
 
         $('#timelineStats' + plotMode + 'Label').html(
+                "<span style='font-weight:bold;'>" +
                 "Number of scans and frequency " +
-                "mode distribution per " + temp +":");
+                "mode distribution per " + temp +":" +
+                "</span>");
 
         if (plotMode == "Total") {
             temp = "";
