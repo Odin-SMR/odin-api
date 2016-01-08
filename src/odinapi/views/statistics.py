@@ -1,15 +1,15 @@
 """ doc
 """
-from flask import jsonify, abort
+from flask import jsonify, abort, request
 from flask.views import MethodView
 from database import DatabaseConnector
 import datetime
 now = datetime.datetime.now
 
 
-class TotalFreqmodeStatistics(MethodView):
+class FreqmodeStatistics(MethodView):
     """Statistics of total number of scans per freqmode"""
-    def get(self, version):
+    def get(self, version, year=''):
         """GET"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
@@ -34,9 +34,9 @@ class TotalFreqmodeStatistics(MethodView):
         return query_str
 
 
-class AnnualFreqmodeStatistics(MethodView):
+class TimelineFreqmodeStatistics(MethodView):
     """Statistics of number of scans per freqmode for different years"""
-    def get(self, version):
+    def get(self, version, year=''):
         """GET"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)

@@ -333,7 +333,7 @@ function drawStatistics(year = '') {
     var sum;
     var plotMode;
 
-    if (year < 0) {
+    if (year == '') {
         plotMode = "Total";
     } else {
         plotMode = "Year";
@@ -342,7 +342,7 @@ function drawStatistics(year = '') {
     // Generate freqmode statistics plot:
     data = [];
     sum = 0;
-    $.getJSON('/rest_api/v4/statistics/freqmode/' + year, function(rawdata) {
+    $.getJSON('/rest_api/v4/statistics/freqmode/?year=' + year, function(rawdata) {
         $.each( rawdata["Data"], function (ind, val) {
             data[ind] = {
                 color: freqmodeColours[val["freqmode"]],
@@ -392,17 +392,17 @@ function drawStatistics(year = '') {
                 "Total number of scans: " + sum + "</span>");
     });
 
-    $('#fmStats' + plotMode + '').bind("plothover", function(event, pos, obj) {
+    $('#fmStats' + plotMode).bind("plothover", function(event, pos, obj) {
 
         if (!obj) {
-            $("#fmStats' + plotMode + 'Hover").html(
+            $('#fmStats' + plotMode + 'Hover').html(
                     "<span style='font-weight:bold;'>" +
                     "Total number of scans: " + sum + "</span>");
             return;
         }
 
         var percent = parseFloat(obj.series.percent).toFixed(2);
-        $("#fmStats' + plotMode + 'Hover").html(
+        $('#fmStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
                 obj.series.longLabel + " (" + percent + "%)</span>");
     });
@@ -410,7 +410,7 @@ function drawStatistics(year = '') {
     // Generate yearly statistics plot:
     data = [];
     xticks = [];
-    $.getJSON('/rest_api/v4/statistics/freqmode/timeline/' + year,
+    $.getJSON('/rest_api/v4/statistics/freqmode/timeline/?year=' + year,
             function(rawdata) {
         $.each( rawdata["Data"], function (key, val) {
             data.push({
@@ -424,7 +424,7 @@ function drawStatistics(year = '') {
 
         xticks = rawdata["Years"];
 
-        $.plot($('#timelineStats' + plotMode + ''), data, {
+        $.plot($('#timelineStats' + plotMode), data, {
             series: {
                 stack: true,
                 lines: {
@@ -463,14 +463,14 @@ function drawStatistics(year = '') {
             function(event, pos, obj) {
 
         if (!obj) {
-            $("#timelineStats' + plotMode + 'Hover").html(
+            $('#timelineStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
                 "Total number of scans: " + sum + "</span>");
             return;
         }
 
         var scans = obj["datapoint"][1] - obj["datapoint"][2];
-        $("#timelineStats' + plotMode + 'Hover").html(
+        $('#timelineStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
                 obj.series.longLabel + ", " + obj["datapoint"][0] + ": " +
                 + scans + " scans</span>");

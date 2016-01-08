@@ -1,7 +1,6 @@
 """ doc
 """
-from flask import request
-from flask import jsonify, abort
+from flask import jsonify, abort, request
 from flask.views import MethodView
 from datetime import datetime, date, timedelta
 from database import DatabaseConnector
