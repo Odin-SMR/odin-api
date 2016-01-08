@@ -23,7 +23,7 @@ class Odin(Flask):
             view_func=DateInfoCached.as_view('freqmodeinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/period_info/<int:year>/<int:month>/' +
+            '/rest_api/<version>/period_info/<int:year>/<int:month>/'
             '<int:day>/',
             view_func=PeriodInfoCached.as_view('periodinfo')
             )
@@ -36,11 +36,12 @@ class Odin(Flask):
             view_func=DateBackendInfo.as_view('backendinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/freqmode_info/<date>/<backend>/<freqmode>/',
+            '/rest_api/<version>/freqmode_info/<date>/<backend>/'
+            '<int:freqmode>/',
             view_func=FreqmodeInfo.as_view('scaninfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/scan/<backend>/<freqmode>/<scanno>/',
+            '/rest_api/<version>/scan/<backend>/<int:freqmode>/<int:scanno>/',
             view_func=ScanSpec.as_view('scan')
             )
         self.add_url_rule(
@@ -48,12 +49,13 @@ class Odin(Flask):
             view_func=FileInfo.as_view('file_info')
             )
         self.add_url_rule(
-            '/rest_api/<version>/ptz/<date>/<backend>/<freqmode>/<scanno>/',
+            '/rest_api/<version>/ptz/<date>/<backend>/<int:freqmode>/'
+            '<int:scanno>/',
             view_func=ScanPTZ.as_view('ptz')
             )
         self.add_url_rule(
             '/rest_api/<version>/apriori/<species>/<date>/<backend>/'
-            '<freqmode>/<scanno>/',
+            '<int:freqmode>/<int:scanno>/',
             view_func=ScanAPR.as_view('apriori')
             )
         self.add_url_rule(
@@ -73,11 +75,11 @@ class Odin(Flask):
             view_func=ViewLevel1.as_view('level2')
             )
         self.add_url_rule(
-            '/browse/<backend>/<freqmode>/<scanno>/',
+            '/browse/<backend>/<int:freqmode>/<int:scanno>/',
             view_func=ViewScanSpec.as_view('viewscan')
             )
         self.add_url_rule(
-            '/plot/<date>/<backend>/<freqmode>',
+            '/plot/<date>/<backend>/<int:freqmode>',
             view_func=ViewFreqmodeInfoPlot.as_view('plotscans')
             )
         self.add_url_rule(
