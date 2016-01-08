@@ -402,6 +402,8 @@ function drawStatistics(year = '') {
 
         if (plotMode == "Total") {
             temp = "";
+            $('#totalNumberLabel').html("The data base contains a total of " +
+                    sum + " scans");
         } else {
             temp = " for " + year;
         }
@@ -410,9 +412,6 @@ function drawStatistics(year = '') {
                 "<span style='font-weight:bold;'>" +
                 "Total number of scans by frequency mode" + temp + ":" +
                 "</span>");
-
-        $('#totalNumberLabel').html("The data base contains a total of " +
-                sum + " scans");
 
         $('#fmStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
