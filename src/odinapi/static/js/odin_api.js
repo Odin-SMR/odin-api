@@ -345,7 +345,7 @@ function labelFormatter(label, series) {
            "%</div>";
 }
 
-function drawStatistics(year = '') {
+function drawStatistics(year) {
     var data;
     var sum;
     var plotMode;
