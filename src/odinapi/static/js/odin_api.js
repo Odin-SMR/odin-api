@@ -244,7 +244,7 @@ function clearDataTable() {
 
 // Functions used to populate calendar view:
 
-var freqmodeColours = {
+freqmodeColours = {
   // Websafe colours:
   '0':  '#101010', //'Black',
   '1':  '#E6E6FA', // 'Lavender',
@@ -262,7 +262,7 @@ var freqmodeColours = {
   '29': '#4682B4', // 'SteelBlue',
 }
 
-var freqmodeTextColours = {
+freqmodeTextColours = {
   '0': 'White',
   '1': 'Black',
   '2': 'White',
@@ -452,9 +452,7 @@ function drawStatistics(year = '') {
                 label: "FM " + key,
                 longLabel: "Frequency mode " + key,
             });
-            console.log(val);
         });
-        console.log(rawdata);
 
         if (plotMode == "Total") {
             xticks = rawdata["Years"];
@@ -556,4 +554,37 @@ function drawStatistics(year = '') {
             drawStatistics(year);
         });
     }
+}
+
+freqmodeInfo = {
+    1: ["501.180 - 501.580, 501.980 - 502.380", "ClO, O3, N2O"],
+    2: ["544.100 - 544.902", "HNO3, O3"],
+    8: ["488.950 - 489.350, 488.35 - 488.750", "H2(18)O, O3, H2O"],
+    13: ["556.598 - 557.398", "H2(16)O, O3"],
+    14:
+    ["576.062 - 576.862", "CO, O3"],
+    17: ["489.950 - 490.750", "HDO, (18)O3"],
+    19: ["556.550 - 557.350", "H2O, O3"],
+    21: ["551.152 - 551.552, 551.752 - 552.152", "NO, O3, H2(17)O"],
+    22: ["576.254 - 576.654, 577.069 - 577.469", "CO, O3, HO2, (18)O3"],
+    23: ["488.350 - 488.750, 556.702 - 557.102", "H2(16)0, O3"],
+    24: ["576.062 - 576.862", "CO, O3"],
+    25: ["502.998 - 504.198", "H2(16)O, O3"],
+}
+
+function renderFreqmodeInfoTable () {
+    theTable = "<table class='table'><tr><td></td><td><b>Frequency mode</b></td>" +
+        "<td><b>Frequency range [GHz]</b></td><td><b>Species</b></td></tr>"
+    $.each( freqmodeInfo, function(key, val) {
+        theTable += "<tr>" +
+            "<td bgcolor='" + freqmodeColours[key] + "'> </td>" +
+            "<td>" + key + "</td>" +
+            "<td>" + val[0] + "</td>" +
+            "<td>" + val[1] + "</td>" +
+            "</tr>";
+    });
+
+    theTable += "</table>";
+
+    $('#freqmodeInfoTable').html(theTable);
 }

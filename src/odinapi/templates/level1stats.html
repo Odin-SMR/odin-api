@@ -17,7 +17,8 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
           <h1 class="page-header">Level1 statistics</h1>
           <p>This page displays statistics of Odin/SMR scans for various
-          frequency modes, that are defined in the table below.</p>
+          frequency modes, that are defined in the table below.
+          Click on a year to see detailed statistics for that year!</p>
 
           <p>
           <h4 id="totalNumberLabel"></h4>
@@ -35,6 +36,8 @@
             <div id="timelineStatsTotalHover"></div>
           </div>
 
+          <div class="col-sm-12 col-md-12 col-ld-12"><br/></div>
+
           <div class="col-sm-9 col-md-4 col-ld-4">
             <h4 id="fmStatsYearLabel"></h4>
             <div id="fmStatsYear" style="width:320px;height:320px"></div>
@@ -47,76 +50,9 @@
             <div id="timelineStatsYearHover"></div>
           </div>
 
-          <div class="col-sm-9 col-md-12 col-ld-12">
-          <table border="1" style="width:70%">
-          <tr>
-            <td>Frequency mode</td>
-            <td>Frequency range [GHz]</td>
-            <td>Species</td>
-          </tr>
-          <tr>
-            <td>1</td>
-            <td>501.180 - 501.580, 501.980 - 502.380</td>
-            <td>ClO, O3, N2O</td>
-         </tr>
-         <tr>
-            <td>2</td>
-            <td>544.100 - 544.902</td>
-            <td>HNO3, O3</td>
-         </tr>
-         <tr>
-            <td>8</td>
-            <td>488.950 - 489.350, 488.35 - 488.750</td>
-            <td>H2(18)O, O3, H2O</td>
-         </tr>
-         <tr>
-            <td>13</td>
-            <td>556.598 - 557.398</td>
-            <td>H2(16)O, O3</td>
-         </tr>
-         <tr>
-            <td>14</td>
-            <td>576.062 - 576.862</td>
-            <td>CO, O3</td>
-         </tr>
+          <div class="col-sm-12 col-md-12 col-ld-12"><br/></div>
 
-         <tr>
-            <td>17</td>
-            <td>489.950 - 490.750</td>
-            <td>HDO, (18)O3</td>
-         </tr>
-         <tr>
-            <td>19</td>
-            <td>556.550 - 557.350</td>
-            <td>H2O, O3</td>
-         </tr>
-         <tr>
-            <td>21</td>
-            <td>551.152 - 551.552, 551.752 - 552.152</td>
-            <td>NO, O3, H2(17)O</td>
-         </tr>
-         <tr>
-            <td>22</td>
-            <td>576.254 - 576.654, 577.069 - 577.469</td>
-            <td>CO, O3, HO2, (18)O3</td>
-         </tr>
-         <tr>
-            <td>23</td>
-            <td>488.350 - 488.750, 556.702 - 557.102</td>
-            <td>H2(16)0, O3</td>
-         </tr>
-         <tr>
-            <td>24</td>
-            <td>576.062 - 576.862</td>
-            <td>CO, O3</td>
-         </tr>
-         <tr>
-            <td>25</td>
-            <td>502.998 - 504.198</td>
-            <td>H2(16)O, O3</td>
-         </tr>
-         </table>
-          </div>
+          <div class="col-sm-9 col-md-9 col-ld-9" id="freqmodeInfoTable"></div>
 
         </div>
       </div>
@@ -132,6 +68,7 @@
         // When the document is ready
         $(document).ready(function () {
             drawStatistics();
+            renderFreqmodeInfoTable();
         });
 
     </script>
