@@ -328,7 +328,7 @@ function labelFormatter(label, series) {
            "%</div>";
 }
 
-function drawStatistics(year=-1) {
+function drawStatistics(year = '') {
     var data;
     var sum;
     var plotMode;
@@ -342,7 +342,7 @@ function drawStatistics(year=-1) {
     // Generate freqmode statistics plot:
     data = [];
     sum = 0;
-    $.getJSON('/rest_api/v4/statistics/freqmode/', function(rawdata) {
+    $.getJSON('/rest_api/v4/statistics/freqmode/' + year, function(rawdata) {
         $.each( rawdata["Data"], function (ind, val) {
             data[ind] = {
                 color: freqmodeColours[val["freqmode"]],
@@ -410,7 +410,8 @@ function drawStatistics(year=-1) {
     // Generate yearly statistics plot:
     data = [];
     xticks = [];
-    $.getJSON('/rest_api/v4/statistics/freqmode/annual/', function(rawdata) {
+    $.getJSON('/rest_api/v4/statistics/freqmode/timeline/' + year,
+            function(rawdata) {
         $.each( rawdata["Data"], function (key, val) {
             data.push({
                 data: val,
