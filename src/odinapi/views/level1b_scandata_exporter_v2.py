@@ -230,10 +230,10 @@ class Scan_data_exporter():
                 'SUMMER','Summer mesosphere').replace(
                 'DYNAM','Transport')+\
                 ' FM='+str(res['freqmode']) 
-
+                          
             spec['level'] = res['alevel']+res['version']
 
-            spec['version'] = 262
+            spec['version'] = 8
             spec['quality'] = 0
             spec['discipline'] = 1
             spec['topic'] = 1
@@ -283,9 +283,8 @@ class Calibration_step2():
         hotload_lower=int(numpy.floor(hotload))
         hotload_upper=int(numpy.ceil(hotload))
         hotload_range='''{{{0},{1}}}'''.format(*[hotload_lower,hotload_upper])  
-        temp=[backend,frontend,version,intmode,sourcemode,freqmode,
-              ssb_fq,altitude_range,hotload_range]
-
+        
+        temp = [freqmode, version, intmode, ssb_fq, altitude_range, hotload_range]
         #find out if we already have required data
         for ind,spec in enumerate(self.spectra):
 
@@ -301,18 +300,18 @@ class Calibration_step2():
                 self.spec = spec
                 return
 
-        #now we did not have the required data, so load it    
         query=self.con.query('''
               select hotload_range,median_fit,channels
-              from ac_cal_level1c where backend='{0}' and
-              frontend='{1}' and version={2} and intmode={3}
-              and sourcemode='{4}' and freqmode={5} and ssb_fq='{6}' and
-              altitude_range='{7}' and hotload_range='{8}'
+              from ac_cal_level1c where freqmode={0} and 
+              version={1} and intmode={2} and ssb_fq='{3}' and
+              altitude_range='{4}' and hotload_range='{5}'
                              '''.format(*temp))
+
         result=query.dictresult()
 
         if result==[]:
             medianfit=0.0
+
         else:
             medianfit=numpy.ndarray(shape=(result[0]['channels'],),
                                 dtype='float64',
@@ -338,7 +337,12 @@ class Calibration_step2():
         t_sky = planck(2.7,spec['skyfreq'][ind])
         eta = 1-spec['tspill'][ind]/300.0 #main beam efficeiency
         w = 1/eta*(1- ( spec['spectrum'][ind] )/ ( t_load ))
-        spec['spectrum'][ind] = spec['spectrum'][ind]-w*self.spec['spectrum']
+        if not N.isscalar(self.spec['spectrum']):
+            f_ind = N.nonzero( (spec['spectrum'][ind]<>0) )[0]
+            reduce = N.array(w*self.spec['spectrum'])
+            data = N.array(spec['spectrum'][ind])
+            data[f_ind] = data[f_ind] - reduce[f_ind]
+            spec['spectrum'][ind] = data
         return spec
 
 
@@ -628,7 +632,7 @@ def specdict():
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
              'pointer', 'tspill','ssb_fq','ac0_frontend', 
-             'calstw','frequency','zerolagvar','ssb']
+             'calstw','frequency','zerolagvar','ssb',]
 
     for item in lista:
         spec[item] = []

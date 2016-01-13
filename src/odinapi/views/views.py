@@ -6,9 +6,9 @@ from flask.views import MethodView
 from matplotlib import use
 use("Agg")
 from geoloc_tools import get_geoloc_info
+from level1b_scandata_exporter import get_scan_data, scan2dictlist
 from level1b_scandata_exporter_v2 import (get_scan_data_v2, scan2dictlist_v2,
                                           scan2dictlist_v4)
-from level1b_scandata_exporter import get_scan_data, scan2dictlist
 from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
