@@ -111,24 +111,24 @@ function addInfo (data, backend, freqmode) {
 }
 
 function updatePlot(date, back, freq) {
-        var sun = []
-        var lat = []
-        var lon = []
-        var scan = []
-        var opt = {}
-        var currDate = moment(date, 'YYYY-MM-DD')
+        var sun = [];
+        var lat = [];
+        var lon = [];
+        var scan = [];
+        var opt = {};
+        var currDate = moment(date, 'YYYY-MM-DD');
         $.getJSON(
             '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
             function(data) {
-                xticks =[]
-                $.each( data["Info"], function (index, data) {
-                    time_point = moment
-                    datestring = data["DateTime"]
+                xticks =[];
+                $.each( data.Info, function (index, data) {
+                    time_point = moment;
+                    datestring = data.DateTime;
                     var momentDate = moment(datestring);
-                    sun.push( [momentDate.toDate(), data["SunZD"]] );
-                    lat.push( [momentDate.toDate(), data["LatStart"]] );
-                    lon.push( [momentDate.toDate(), data["LonStart"]] );
-                    scan.push([momentDate.toDate(), data["NumSpec"]] );
+                    sun.push( [momentDate.toDate(), data.SunZD] );
+                    lat.push( [momentDate.toDate(), data.LatStart] );
+                    lon.push( [momentDate.toDate(), data.LonStart] );
+                    scan.push([momentDate.toDate(), data.NumSpec] );
                 })
                 opt={
                     "series":{
@@ -207,11 +207,11 @@ function initDataTable(date, back, freq) {
         var url_array = url.split('/');
         var id = url_array[url_array.length - 1];
         if (row.child.isShown()) {
-            row.child.hide()
-            tr.removeClass('shown')
+            row.child.hide();
+            tr.removeClass('shown');
         }else {
-            row.child(addOverview(url, id)).show()
-            tr.addClass('shown')
+            row.child(addOverview(url, id)).show();
+            tr.addClass('shown');
         }
 
         updateOverview(url, id);
@@ -224,7 +224,7 @@ function updateOverview(url, id) {
 
 function addOverview(url, id) {
     return '<img id="info-image-' + id + '" class="img-responsive"' +
-           ' src="{{ url_for("static", filename="images/empty.png") }}"/>'
+           ' src="{{ url_for("static", filename="images/empty.png") }}"/>';
 }
 
 function updateDataTable(date, back, freq) {
@@ -275,7 +275,7 @@ freqmodeTextColours = {
   '22': 'White',
   '23': 'White',
   '24': 'White',
-  '24': 'Black',
+  '25': 'Black',
   '29': 'Black',
 }
 
@@ -283,7 +283,7 @@ function updateCalendar(start, end) {
     var theDate = start;
     // For ech day, get json from rest:
     if ($('#calendar').fullCalendar('clientEvents',
-                theDate.format()).length == 0) {
+                theDate.format()).length === 0) {
         $.ajax({
             type: 'GET',
             url: '/rest_api/v4/period_info/' +
@@ -335,11 +335,11 @@ monthNames = {
     10: "October",
     11: "November",
     12: "December",
-    12: "Undecimber"
+    13: "Undecimber"
 }
 
 function labelFormatter(label, series) {
-    var shortLabel = series["shortLabel"];
+    var shortLabel = series.shortLabel;
     return "<div style='font-size:7pt; text-align:center; padding:2px; " +
            "color:white;'>" + shortLabel + "<br/>" + Math.round(series.percent) +
            "%</div>";
@@ -351,7 +351,7 @@ function drawStatistics(year) {
     var plotMode;
     var temp = '';
 
-    if (year == '') {
+    if (year === '') {
         plotMode = "Total";
     } else {
         plotMode = "Year";
@@ -362,16 +362,16 @@ function drawStatistics(year) {
     sum = 0;
     $.getJSON('/rest_api/v4/statistics/freqmode/?year=' + year,
             function(rawdata) {
-        $.each( rawdata["Data"], function (ind, val) {
+        $.each( rawdata.Data, function (ind, val) {
             data[ind] = {
-                color: freqmodeColours[val["freqmode"]],
-                data: val["sum"],
-                label: "FM " + val["freqmode"] + " (" + val["sum"] + ")",
-                shortLabel: "FM " + val["freqmode"],
-                longLabel: "Frequency mode " + val["freqmode"] + ": " +
-                    val["sum"] + " scans",
+                color: freqmodeColours[val.freqmode],
+                data: val.sum,
+                label: "FM " + val.freqmode + " (" + val.sum + ")",
+                shortLabel: "FM " + val.freqmode,
+                longLabel: "Frequency mode " + val.freqmode + ": " +
+                    val.sum + " scans",
             }
-            sum += val["sum"];
+            sum += val.sum;
         });
 
         $.plot($('#fmStats' + plotMode), data, {
@@ -443,7 +443,7 @@ function drawStatistics(year) {
     xticks = [];
     $.getJSON('/rest_api/v4/statistics/freqmode/timeline/?year=' + year,
             function(rawdata) {
-        $.each( rawdata["Data"], function (key, val) {
+        $.each( rawdata.Data, function (key, val) {
             data.push({
                 data: val,
                 color: freqmodeColours[key],
@@ -454,9 +454,9 @@ function drawStatistics(year) {
         });
 
         if (plotMode == "Total") {
-            xticks = rawdata["Years"];
+            xticks = rawdata.Years;
         } else {
-            xticks = rawdata["Months"];
+            xticks = rawdata.Months;
         }
 
         $.plot($('#timelineStats' + plotMode), data, {
@@ -525,18 +525,18 @@ function drawStatistics(year) {
             return;
         }
 
-        var scans = obj["datapoint"][1] - obj["datapoint"][2];
+        var scans = obj.datapoint[1] - obj.datapoint[2];
 
         if (plotMode == "Total") {
-            temp = obj["datapoint"][0];
+            temp = obj.datapoint[0];
         } else {
-            temp = monthNames[obj["datapoint"][0]];
+            temp = monthNames[obj.datapoint[0]];
         }
 
         $('#timelineStats' + plotMode + 'Hover').html(
                 "<span style='font-weight:bold;'>" +
                 obj.series.longLabel + ", " + temp + ": " +
-                + scans + " scans</span>");
+                scans + " scans</span>");
     });
 
     if (plotMode == "Total") {
@@ -548,7 +548,7 @@ function drawStatistics(year) {
                 return;
             }
 
-            year = obj["datapoint"][0];
+            year = obj.datapoint[0];
 
             drawStatistics(year);
         });
@@ -573,7 +573,7 @@ freqmodeInfo = {
 
 function renderFreqmodeInfoTable () {
     theTable = "<table class='table'><tr><td></td><td><b>Frequency mode</b></td>" +
-        "<td><b>Frequency range [GHz]</b></td><td><b>Species</b></td></tr>"
+        "<td><b>Frequency range [GHz]</b></td><td><b>Species</b></td></tr>";
     $.each( freqmodeInfo, function(key, val) {
         theTable += "<tr>" +
             "<td bgcolor='" + freqmodeColours[key] + "'> </td>" +
