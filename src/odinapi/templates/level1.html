@@ -36,16 +36,20 @@
           This table is updated automatically when a selection is made in
           the overview table. On clicking a row in the scan table, an image
           visualising the scan data will be displayed.</p>
- 
+
           <div id='calendar'> </div>
           <!-- div>
               <input  type="text" value="2015-01-03" id="datepicker1">
           </div -->
-          <h2 class="sub-header">Scan log data: Overview of daily measurements for <span id=level1-date></span></h2>
-          <p>The table below describes log information of the 
-          measurements/scans made the selected date. 
-          Click on a row to get a graphical overview of this log data,
-          and to load the corresponding Level1B-data in the Scan information-Level1B table below this table. 
+          <h2 class="sub-header">
+              Scan log data: Overview of daily measurements for
+              <span id=level1-date></span>
+          </h2>
+          <p>The table below describes log information of the
+          measurements/scans made the selected date.
+          Click on a row to get a graphical overview of this log data, and to
+          load the corresponding Level1B-data in the Scan information-Level1B
+          table below this table.
           </p>
           <div class="table-responsive">
             <table id="level1-date-table" class="table table-striped">
@@ -104,7 +108,8 @@
                     callback();
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-                    $('#datepicker1').datepicker('setDate', calEvent.start.format());
+                    $('#datepicker1').datepicker(
+                            'setDate', calEvent.start.format());
                     clearDataTable();
                     updateDataTable(calEvent.start.format(), calEvent.Backend,
                                     calEvent.FreqMode);
@@ -121,7 +126,8 @@
                 autoclose: true,
                 startDate: startDate
             }).on('changeDate', function(e) {
-                $('#calendar').fullCalendar('gotoDate', e.format('yyyy-mm-dd'));
+                $('#calendar').fullCalendar(
+                        'gotoDate', e.format('yyyy-mm-dd'));
                 clearDataTable();
                 updateLevel1(e.format('yyyy-mm-dd'));
             });
