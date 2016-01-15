@@ -263,7 +263,7 @@ freqmodeColours = {
   '102': '#6495ED', // 'CornFlowerBlue',
   '113': '#CD5C5C', // 'IndianRed',
   '119': '#DCDCDC', // 'Gainsboro',
-  '121': '#87CEFA', // 'LightSkyBlue',
+  '121': '#B0E0E6', // 'PowderBlue',
 }
 
 freqmodeTextColours = {
