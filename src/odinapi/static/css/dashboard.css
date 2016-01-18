@@ -73,6 +73,7 @@ body {
 
 .main {
   padding: 20px;
+  max-width: 1600px;
 }
 @media (min-width: 768px) {
   .main {
