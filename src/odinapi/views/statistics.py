@@ -110,8 +110,12 @@ class TimelineFreqmodeStatistics(MethodView):
     def _fill_blanks(self, indices, info_dict):
         for key in info_dict.keys():
             for n, ind in enumerate(indices):
-                if info_dict[key][0] != ind:
-                    info_dict[key].insert(n, [ind, 0])
+                try:
+                    if info_dict[key][n][0] != ind:
+                        info_dict[key].insert(n, [ind, 0])
+                except IndexError:
+                    if ind == 12:
+                        info_dict[key].append([ind, 0])
         return info_dict
 
     def gen_data(self, query_string):
