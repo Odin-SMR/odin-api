@@ -114,8 +114,7 @@ class TimelineFreqmodeStatistics(MethodView):
                     if info_dict[key][n][0] != ind:
                         info_dict[key].insert(n, [ind, 0])
                 except IndexError:
-                    if ind == 12:
-                        info_dict[key].append([ind, 0])
+                    info_dict[key].append([ind, 0])
         return info_dict
 
     def gen_data(self, query_string):
