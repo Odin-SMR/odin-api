@@ -86,6 +86,7 @@ class TimelineFreqmodeStatistics(MethodView):
                     info_dict[row["freqmode"]].append([year, row["sum"]])
                 except KeyError:
                     info_dict[row["freqmode"]] = [[year, row["sum"]]]
+        info_dict = self._fill_blanks(years, info_dict)
         return jsonify(Data=info_dict, Years=years)
 
     def get_months(self, year):
@@ -103,7 +104,15 @@ class TimelineFreqmodeStatistics(MethodView):
                     info_dict[row["freqmode"]].append([month, row["sum"]])
                 except KeyError:
                     info_dict[row["freqmode"]] = [[month, row["sum"]]]
+        info_dict = self._fill_blanks(months, info_dict)
         return jsonify(Data=info_dict, Months=months, Year=year)
+
+    def _fill_blanks(self, indices, info_dict):
+        for key in info_dict.keys():
+            for n, ind in enumerate(indices):
+                if info_dict[key][0] != ind:
+                    info_dict[key].insert(n, [ind, 0])
+        return info_dict
 
     def gen_data(self, query_string):
         con = DatabaseConnector()
