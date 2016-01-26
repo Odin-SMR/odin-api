@@ -6,6 +6,9 @@ from requests import get
 from requests.exceptions import HTTPError
 from datetime import date, timedelta
 from psycopg2 import connect
+from argparse import ArgumentParser
+from dateutil import parser as date_parser
+
 
 def odin_connection():
     """Connects to the database, returns a connection"""
@@ -17,6 +20,7 @@ def odin_connection():
         )
     connection = connect(connection_string)
     return connection
+
 
 def add_to_database(cursor, day, freqmode, numscans, backend):
     """Add an entry to the database, delete the oldone first"""
@@ -30,14 +34,30 @@ def add_to_database(cursor, day, freqmode, numscans, backend):
         'insert into measurements_cache values(%s,%s,%s,%s)',
         (day, freqmode, numscans, backend))
 
-def main():
-    """Script to populate database with 'cached'info"""
+
+def setup_arguments():
+    parser = ArgumentParser(decription="Repopulate the cached data table")
+    parser.add_argument("-s", "--start", dest="start_date", action="store",
+                        default=(date.today()-timedelta(months=1)).isoformat(),
+                        help="start of period to look for new data "
+                        "(default: one month back)")
+    parser.add_argument("-e", "--end", dest="end_date", action="store",
+                        default=date.today().isoformat(),
+                        help="end of period to look for new data "
+                        "(default: today)")
+    return parser
+
+
+def main(start_date=date.today()-timedelta(months=1), end_date=date.today()):
+    """Script to populate database with 'cached'info.
+
+    Walks backwards from end_date to start_date."""
     step = timedelta(days=-1)
-    current_date = date(2016, 1, 17)
-    end_date = date(2009, 1, 1)
+    current_date = end_date
+    earliest_date = start_date
     db_connection = odin_connection()
     db_cursor = db_connection.cursor()
-    while current_date >= end_date:
+    while current_date >= earliest_date:
         url = (
             'http://odin.rss.chalmers.se/'
             'rest_api/v4/freqmode_raw/{}/'.format(current_date.isoformat())
@@ -64,4 +84,26 @@ def main():
     db_connection.close()
 
 if __name__ == '__main__':
-    main()
+    parser = setup_arguments()
+    args = parser.parse_args()
+
+    try:
+        start_date = date_parser.parse(args.start_date).date()
+    except TypeError:
+        print "Could not understand start date {0}".format(args.start_date)
+        exit(1)
+
+    try:
+        end_date = date_parser.parse(args.end_date).date()
+    except TypeError:
+        print "Could not understand end date {0}".format(args.end_date)
+        exit(1)
+
+    try:
+        assert(end_date > start_date)
+    except AssertionError:
+        print "End date must be after start date!"
+        print "Got: start {0}, end {1}".format(args.start_date, args.end_date)
+        exit(1)
+
+    exit(main(start_date, end_date))
