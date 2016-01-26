@@ -39,7 +39,7 @@ def add_to_database(cursor, day, freqmode, numscans, backend):
 def setup_arguments():
     parser = ArgumentParser(decription="Repopulate the cached data table")
     parser.add_argument("-s", "--start", dest="start_date", action="store",
-                        default=(date.today()-timedelta(months=1)).isoformat(),
+                        default=(date.today()-timedelta(days=31)).isoformat(),
                         help="start of period to look for new data "
                         "(default: one month back)")
     parser.add_argument("-e", "--end", dest="end_date", action="store",
@@ -49,7 +49,7 @@ def setup_arguments():
     return parser
 
 
-def main(start_date=date.today()-timedelta(months=1), end_date=date.today()):
+def main(start_date=date.today()-timedelta(days=31), end_date=date.today()):
     """Script to populate database with 'cached'info.
 
     Walks backwards from end_date to start_date."""
