@@ -46,10 +46,13 @@ def setup_arguments():
                         default=date.today().isoformat(),
                         help="end of period to look for new data "
                         "(default: today)")
+    parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
+                        help="use verbose output")
     return parser
 
 
-def main(start_date=date.today()-timedelta(days=31), end_date=date.today()):
+def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
+         verbose=False):
     """Script to populate database with 'cached'info.
 
     Walks backwards from end_date to start_date."""
@@ -79,7 +82,8 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today()):
                 freqmode['Backend']
                 )
         db_connection.commit()
-        print current_date, "OK"
+        if verbose:
+            print current_date, "OK"
         current_date = current_date + step
     db_cursor.close()
     db_connection.close()
@@ -107,4 +111,4 @@ if __name__ == '__main__':
         print "Got: start {0}, end {1}".format(args.start_date, args.end_date)
         exit(1)
 
-    exit(main(start_date, end_date))
+    exit(main(start_date, end_date, args.verbose))
