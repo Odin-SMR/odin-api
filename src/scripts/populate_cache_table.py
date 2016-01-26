@@ -37,7 +37,7 @@ def add_to_database(cursor, day, freqmode, numscans, backend):
 
 
 def setup_arguments():
-    parser = ArgumentParser(decription="Repopulate the cached data table")
+    parser = ArgumentParser(description="Repopulate the cached data table")
     parser.add_argument("-s", "--start", dest="start_date", action="store",
                         default=(date.today()-timedelta(days=31)).isoformat(),
                         help="start of period to look for new data "
