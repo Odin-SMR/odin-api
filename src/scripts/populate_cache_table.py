@@ -1,4 +1,4 @@
-#! /usr/env python
+#! /usr/bin/env python
 """
 Part of odin-api, tools to make it happen
 """
