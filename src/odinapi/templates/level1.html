@@ -38,9 +38,6 @@
           visualising the scan data will be displayed.</p>
 
           <div id='calendar'> </div>
-          <!-- div>
-              <input  type="text" value="2015-01-03" id="datepicker1">
-          </div -->
           <h2 class="sub-header">
               Scan log data: Overview of daily measurements for
               <span id=level1-date></span>
@@ -88,9 +85,11 @@
 {% block script %}
     <script type="text/javascript">
         // When the document is ready
+        var date = new Date();
+
         $(document).ready(function () {
-            var startView ='2015-01-03';
-            var startDate ='2001-02-20';
+            var startView = date.toISOString().slice(0, 10);
+            var startDate = '2001-02-20';
             var endDate = '2042-02-11';
 
             $('#calendar').fullCalendar({
@@ -118,8 +117,8 @@
             });
 
             // Add datepicker to header/toolbar of calendar:
-            $('.fc-left').after('<input type="text" value="2015-01-03"' +
-                                'id="datepicker1">');
+            $('.fc-left').after('<input type="text" value="' + startView +
+                                '"' + 'id="datepicker1">');
 
             $('#datepicker1').datepicker({
                 format: "yyyy-mm-dd",
