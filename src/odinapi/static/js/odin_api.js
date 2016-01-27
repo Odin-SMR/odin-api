@@ -158,6 +158,12 @@ function updatePlot(date, back, freq) {
 // Functions for updating scan info table and plots:
 
 function initDataTable(date, back, freq) {
+    if (back === '') {
+        back = "AC1";
+    }
+    if (freq === '') {
+        freq = "2";
+    }
     var table = $('#info-table').DataTable( {
         "ajax": {
             "dataSrc": "Info",
@@ -308,7 +314,6 @@ function updateCalendar(start, end) {
                         start: theInfo.Date,
                         id: theInfo.Date,
                         // This should link to the report for the day:
-                        // url: theInfo.URL,
                         url: "#level1-date",
                         // Add color and textColor based on freqmode:
                         color: freqmodeColours[theInfo.FreqMode],

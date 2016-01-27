@@ -284,9 +284,13 @@ class FreqmodeInfo(MethodView):
                 con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
                 version=version)
 
-            for index in range(len(loginfo['ScanID'])):
-                loginfo['DateTime'][index] = (
-                    loginfo['DateTime'][index]).isoformat('T')
+            try:
+                for index in range(len(loginfo['ScanID'])):
+                    loginfo['DateTime'][index] = (
+                        loginfo['DateTime'][index]).isoformat('T')
+            except KeyError:
+                loginfo['Info'] = []
+                return jsonify({'Info': loginfo['Info']})
 
             for item in loginfo.keys():
                 try:

@@ -87,10 +87,11 @@
         // When the document is ready
         var date = new Date();
         {% if data %}
-            {% if data|string() is equalto "False" %}
+            {% if data|string() is equalto "True" %}
         date = new Date('2015-01-12');
             {% endif %}
         {% endif %}
+        $.fn.dataTable.ext.errMode = 'throw';
 
         $(document).ready(function () {
             var startView = date.toISOString().slice(0, 10);
@@ -137,7 +138,7 @@
             });
 
             initLevel1(startView);
-            initDataTable(startView, 'AC1', 2);
+            initDataTable(startView, '', '');
 
         });
 
