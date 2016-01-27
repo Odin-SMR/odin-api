@@ -22,7 +22,8 @@ class ViewLevel1(MethodView):
     """View of all scans"""
 
     def get(self):
-        return render_template('level1.html')
+        return render_template('level1.html', data=str('ODIN_API_PRODUCTION' in
+                                                       environ))
 
 
 class ViewLevel1Stats(MethodView):

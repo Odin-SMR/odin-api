@@ -86,6 +86,11 @@
     <script type="text/javascript">
         // When the document is ready
         var date = new Date();
+        {% if data %}
+            {% if data|string() is equalto "False" %}
+        date = new Date('2015-01-12');
+            {% endif %}
+        {% endif %}
 
         $(document).ready(function () {
             var startView = date.toISOString().slice(0, 10);
