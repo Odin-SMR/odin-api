@@ -28,9 +28,9 @@ def add_to_database(cursor, day, freqmode, numscans, backend):
     cursor.execute(
         """
         delete from measurements_cache
-        where date=%s and freqmode=%s and nscans=%s and backend=%s
+        where date=%s and freqmode=%s and backend=%s
         """,
-        (day, freqmode, numscans, backend))
+        (day, freqmode, backend))
     cursor.execute(
         'insert into measurements_cache values(%s,%s,%s,%s)',
         (day, freqmode, numscans, backend))
