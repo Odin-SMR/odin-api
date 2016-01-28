@@ -11,6 +11,7 @@ from level1b_scandata_exporter_v2 import (get_scan_data_v2, scan2dictlist_v2,
                                           scan2dictlist_v4)
 from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
+from read_mls import read_mls_file
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -435,3 +436,131 @@ class ScanAPR(MethodView):
             datadictv4['Species'] = datadict['species']
             datadict = datadictv4
         return jsonify(datadict)
+
+class VdsInfo(MethodView):
+    """verification data set scan info"""
+    def get(self, version, backend, freqmode):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        query_string = '''select * from collocations where backend='{0}' and 
+                          freqmode={1}'''.format(*[backend, freqmode])
+        datadict = self.gen_data(query_string, version, backend, freqmode)
+        return jsonify(datadict)
+
+    def gen_data(self, query_string, version, backend, freqmode):
+
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        datadict = {'Info': []}
+        lista = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart', 
+                 'LonEnd', 'LonStart', 'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime', 
+                 'Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index', 
+                 'DMJD', 'DTheta']
+        species_list = [
+            'BrO',
+            'Cl2O2',
+            'CO',
+            'HCl',
+            'HO2',
+            'NO2',
+            'OCS',
+            'C2H2',
+            'ClO',
+            'H2CO',
+            'HCN',
+            'HOBr',
+            'NO',
+            'OH',
+            'C2H6',
+            'ClONO2',
+            'H2O2',
+            'HCOOH',
+            'HOCl',
+            'O2',
+            'SF6',
+            'CH3Cl',
+            'ClOOCl',
+            'H2O',
+            'HF',
+            'N2',
+            'O3',
+            'SO2',
+            'CH3CN',
+            'CO2',
+            'H2S',
+            'HI',
+            'N2O',
+            'OBrO',
+            'CH4',
+            'COF2',
+            'HBr',
+            'HNO3',
+            'NH3',
+            'OClO',
+        ]
+
+
+        for row in result:
+            data = dict()
+            for item in lista:
+                data[item] = row[item.lower()]
+            data['URLS'] = dict()
+            data['URLS']['URL-spectra'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}'.format(
+                    request.url_root,
+                    version,
+                    backend,
+                    freqmode,
+                    row['scanid'])
+            data['URLS']['URL-ptz'] = (
+                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
+                        request.url_root,
+                        version,
+                        row['date'],
+                        backend,
+                        freqmode,
+                        row['scanid']
+                        )
+            for species in species_list:
+                data['URLS']['''URL-apriori-{0}'''.format(species)] = (
+                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
+                            request.url_root,
+                            version,
+                            species,
+                            row['date'],
+                            backend,
+                            freqmode,
+                            row['scanid']
+                            )
+            data['URLS']['''URL-{0}-{1}'''.format(row['instrument'],row['species'])] = (
+                 '{0}rest_api/{1}/vds_external/{2}/{3}/{4}/{5}').format(
+                 request.url_root,
+                 version,
+                 row['instrument'],
+                 row['species'],
+                 row['file'],
+                 row['file_index']
+                 )
+            datadict['Info'].append(data)
+        con.close()
+        return datadict  
+
+
+class VdsExtData(MethodView):
+    """display verification data set data from external instruments"""
+    def get(self, version, instrument, species ,file, file_index):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        datadict = self.gen_data(instrument, species, file, file_index)        
+        return jsonify(datadict)
+
+    def gen_data(self, instrument, species, file, file_index):
+        
+        if instrument=='mls':
+            data = read_mls_file(file,file_index)  
+        else:
+            abort(404)
+
+        return data

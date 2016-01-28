@@ -11,6 +11,7 @@ from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
 from odinapi.views.smr_site import ViewFreqmodeInfoPlot
 from odinapi.views.data_info import FileInfo
 from odinapi.views.views import ScanPTZ, ScanAPR
+from odinapi.views.views import VdsInfo, VdsExtData
 from os import environ
 
 
@@ -90,6 +91,16 @@ class Odin(Flask):
             '/rest_api/<version>/statistics/freqmode/timeline/',
             view_func=TimelineFreqmodeStatistics.as_view('timefmstatistics')
             )
+        self.add_url_rule(
+            '/rest_api/<version>/vds/<backend>/<freqmode>/',
+            view_func=VdsInfo.as_view('vdsinfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/vds_external/<instrument>/<species>/<file>/<file_index>/',
+            view_func=VdsExtData.as_view('vdsextdata')
+            )
+
+
 
 
 def main():
