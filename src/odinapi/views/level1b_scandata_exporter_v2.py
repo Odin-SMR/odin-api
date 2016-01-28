@@ -1539,18 +1539,18 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     freqinfo = { 'IFreqGrid' : [], 'LOFreq' : [], 'SubBandIndex' : []}
     #o.spectra['spectrum'] = spectra
 
+    for numspec in range( len(o.spectra['stw']) ):
+        ys = N.array(spectra[numspec])
+        ys.shape = (8,112)
+        ytest = N.mean(ys,1)
+        badssb_ind = N.nonzero( (ytest==0) )[0]
+        if badssb_ind.shape[0]>0:
+            bad_modules = N.append( bad_modules, badssb_ind + 1 )
+    bad_modules = N.unique(bad_modules)
    
     for numspec in range( len(o.spectra['stw']) ): 
         f = qsmr_frequency(o.spectra,numspec)
         f = N.array(f)
-        # check if any sub-band is "dead" and the append to bad_modules
-        ys = N.array(spectra[numspec])
-        ys.shape = (8,112) 
-        ytest = N.mean(ys,1)
-        badssb_ind = N.nonzero( (ytest==0) )[0]
-        if badssb_ind.shape[0]>0:
-            bad_modules = N.append( bad_modules, badssb_ind + 1 )   
-
         f_modules = N.mean(f,1)
         remove_modules = f_modules[bad_modules-1]
         f.shape = (f.shape[0]*f.shape[1],)    

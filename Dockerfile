@@ -15,6 +15,7 @@ run apt-get update && apt-get install -y \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 run pip install flask flask-bootstrap sqlalchemy
+run pip install cython
 
 #************* DEPENDENCIES
 ADD dependencies/ /dependencies/
@@ -59,6 +60,8 @@ RUN git clone https://github.com/Unidata/netcdf4-python.git && \
     python setup.py build && \
     python setup.py install && \
     cd .. && rm -rf netcdf4-python*
+
+run HDF5_DIR=/dependencies/hdf5-1.8.16/hdf5 pip install h5py
 
 copy src/ /app/
 run cd /app && python setup.py develop
