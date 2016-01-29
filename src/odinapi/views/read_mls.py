@@ -6,13 +6,14 @@ from dateutil.relativedelta import relativedelta
 
 def read_mls_file(file,file_index):
 
+    file_index = int(file_index)
     mls_datapath = '/home/bengt/work/odin_reprocessing/vds/data/mls/O3/v04'
     mls_datapath = '/var/lib/odindata/MLS/'
 
-    #ls '/var/lib/odindata/MLS/'
     #year = '2015'
     #month = '01'
-    #datapath = "{0}/{1}/{2}/".format(*[mls_datapath,year,month])
+    #mls_datapath = "{0}/{1}/{2}/".format(*[mls_datapath,year,month])
+
     ifile = mls_datapath + file
     data = dict()
     data_fields = dict()
@@ -37,11 +38,24 @@ def read_mls_file(file,file_index):
         mjd_i = date_i - datetime(1858,11,17)
         sec_per_day = 24*60*60.0
         mjd.append( mjd_i.total_seconds()/sec_per_day )
-    geolocation_fields['MJD'] = mjd
+    geolocation_fields['MJD'] = N.array(mjd)
 
     data['data_fields'] = data_fields
     data['geolocation_fields'] = geolocation_fields
 
+    # select data from the given index
+    for item in data['data_fields'].keys():
+        data['data_fields'][item] = data['data_fields'][item][file_index].tolist()
+    for item in data['geolocation_fields'].keys():
+        if item not in ['Pressure']:
+            data['geolocation_fields'][item] = data['geolocation_fields'][item][file_index].tolist()    
+        else:
+            data['geolocation_fields'][item] = data['geolocation_fields'][item].tolist()
     return data
 
 
+if 0:
+    file = 'MLS-Aura_L2GP-O3_v04-20-c01_2015d011.he5'
+    file_index = 3370
+    data=read_mls_file(file,file_index)
+    print data

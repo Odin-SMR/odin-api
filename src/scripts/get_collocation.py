@@ -49,7 +49,7 @@ def get_odin_scans(con, date, freqmode):
     return result
 
 
-def get_mls_scans(mjd, dmjd, species, R0):
+def get_comp_scans(instrument, mjd, dmjd, species, R0):
 
     data = {
             'file'        : [],
@@ -60,9 +60,14 @@ def get_mls_scans(mjd, dmjd, species, R0):
             'theta'       : [],
             }
 
+    if instrument == 'mls':
+        table = 'mls_scan'
+    elif instrument == 'mipas':
+        table = 'mipas_scan'
+   
     query = con.query('''select file,file_index,latitude,longitude,mjd
-                 from mls_scan where mjd between {0}-{1} and {0}+{1}
-                 and species='{2}' '''.format(*[mjd,dmjd,species]))
+                 from {0} where mjd between {1}-{2} and {1}+{2}
+                 and species='{3}' '''.format(*[table, mjd, dmjd, species]))
 
     result = query.dictresult()
 
@@ -85,19 +90,18 @@ if __name__ == "__main__":
     # test freqmode and date below
     backend = 'AC1'
     freqmode = 2
-    date = '2015-01-12'
+    date = '2012-01-01'
     
-    instrument = 'mls'
+    instrument = 'mipas'
     species = 'O3'
+
     # co-location criteria
     dmjd = 0.125 # scans within 3 hours
     dtheta = 1.0 # scans within 1 degree
 
-
     con = db()
 
     odin_scans =  get_odin_scans(con, date, freqmode)
-
 
     for scan in odin_scans:
 
@@ -109,9 +113,8 @@ if __name__ == "__main__":
         R0 = N.array([x0, y0, z0])
         mjd = (scan['mjdstart'] + scan['mjdend']) / 2.0 
 
-        if instrument == 'mls':
-            # search in mls_scan table
-            data = get_mls_scans(mjd, dmjd, species, R0)
+        # search for candidate colloocation scans
+        data = get_comp_scans(instrument, mjd, dmjd, species, R0)
 
         # identify the accepted co-locations
         ind = N.nonzero( (data['theta']<dtheta) )[0] 
