@@ -12,6 +12,7 @@ from level1b_scandata_exporter_v2 import (get_scan_data_v2, scan2dictlist_v2,
 from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
 from read_mls import read_mls_file
+from read_mipas import read_mipas_file
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -453,10 +454,10 @@ class VdsInfo(MethodView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
-        datadict = {'Info': []}
-        lista = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart', 
-                 'LonEnd', 'LonStart', 'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime', 
-                 'Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index', 
+        datadict = {'VDS': []}
+        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart', 
+                 'LonEnd', 'LonStart', 'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime']
+        lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index', 
                  'DMJD', 'DTheta']
         species_list = [
             'BrO',
@@ -504,8 +505,14 @@ class VdsInfo(MethodView):
 
         for row in result:
             data = dict()
-            for item in lista:
-                data[item] = row[item.lower()]
+            odin = dict()
+            for item in lista1:
+                odin[item] = row[item.lower()]
+            collocation = dict()             
+            for item in lista2:
+                collocation[item] = row[item.lower()]
+            data['OdinInfo'] = odin
+            data['CollocationInfo'] = collocation
             data['URLS'] = dict()
             data['URLS']['URL-spectra'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}'.format(
                     request.url_root,
@@ -542,7 +549,7 @@ class VdsInfo(MethodView):
                  row['file'],
                  row['file_index']
                  )
-            datadict['Info'].append(data)
+            datadict['VDS'].append(data)
         con.close()
         return datadict  
 
@@ -558,8 +565,11 @@ class VdsExtData(MethodView):
 
     def gen_data(self, instrument, species, file, file_index):
         
-        if instrument=='mls':
-            data = read_mls_file(file,file_index)  
+        if instrument == 'mls':
+            data = read_mls_file(file,file_index)
+        elif instrument == 'mipas':
+            data = read_mipas_file(file,file_index)
+  
         else:
             abort(404)
 
