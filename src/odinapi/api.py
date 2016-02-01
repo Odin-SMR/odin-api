@@ -20,17 +20,13 @@ class Odin(Flask):
     def __init__(self, name):
         super(Odin, self).__init__(name)
         self.add_url_rule(
-            '/rest_api/<version>/freqmode_info/<date>/',
-            view_func=DateInfoCached.as_view('freqmodeinfo')
-            )
-        self.add_url_rule(
             '/rest_api/<version>/period_info/<int:year>/<int:month>/'
             '<int:day>/',
             view_func=PeriodInfoCached.as_view('periodinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/freqmode_raw/<date>/',
-            view_func=DateInfo.as_view('freqmoderaw')
+            '/rest_api/<version>/freqmode_info/<date>/',
+            view_func=DateInfoCached.as_view('freqmodeinfo')
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/',
@@ -40,6 +36,19 @@ class Odin(Flask):
             '/rest_api/<version>/freqmode_info/<date>/<backend>/'
             '<int:freqmode>/',
             view_func=FreqmodeInfo.as_view('scaninfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_raw/<date>/',
+            view_func=DateInfo.as_view('freqmoderaw')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_raw/<date>/<backend>/',
+            view_func=DateBackendInfo.as_view('backendraw')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_raw/<date>/<backend>/'
+            '<int:freqmode>/',
+            view_func=FreqmodeInfo.as_view('scanraw')
             )
         self.add_url_rule(
             '/rest_api/<version>/scan/<backend>/<int:freqmode>/<int:scanno>/',
@@ -96,11 +105,10 @@ class Odin(Flask):
             view_func=VdsInfo.as_view('vdsinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/vds_external/<instrument>/<species>/<file>/<file_index>/',
+            '/rest_api/<version>/vds_external/<instrument>/<species>/<file>/'
+            '<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
             )
-
-
 
 
 def main():
