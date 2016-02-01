@@ -79,7 +79,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
             url_scan = (
-                '{0}/{1}/{2}/'.format(url_day, freqmode['Backend'],
+                '{0}{1}/{2}/'.format(url_day, freqmode['Backend'],
                                       freqmode['FreqMode'])
                 )
             response = get(url_scan)
