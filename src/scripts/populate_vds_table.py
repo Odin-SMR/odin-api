@@ -74,7 +74,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
         try:
             response.raise_for_status()
         except HTTPError, msg:
-            print current_date, msg
+            print current_date, msg, url_day
             continue
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
@@ -86,7 +86,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             try:
                 response.raise_for_status()
             except HTTPError, msg:
-                print current_date, msg
+                print current_date, msg, url_scan
                 continue
             json_data_scan = response.json()
             for scan in json_data_scan['Info']:
