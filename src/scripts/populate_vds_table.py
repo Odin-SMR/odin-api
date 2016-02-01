@@ -92,7 +92,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             for scan in json_data_scan['Info']:
                 add_to_database(
                     db_cursor,
-                    json_data_scan['Date'],
+                    json_data_day['Date'],
                     freqmode['FreqMode'],
                     freqmode['Backend'],
                     scan["AltEnd"],
