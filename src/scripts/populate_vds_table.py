@@ -23,16 +23,23 @@ def odin_connection():
     return connection
 
 
-def add_to_database(cursor, day, freqmode, backend, altend, altstart, datetime,
-                    latend, latstart, lonend, lonstart, mjdend, mjdstart,
-                    numspec, scanid, sunzd):
-    """Add an entry to the database, delete the oldone first"""
+def delete_day_from_database(cursor, day):
+    """Delete all entries for a single day from database"""
     cursor.execute(
         """
         delete from scans_cache
-        where freqmode=%s and scanid=%s
+        where date=%s
         """,
-        (freqmode, scanid))
+        (date))
+
+
+def add_to_database(cursor, day, freqmode, backend, altend, altstart, datetime,
+                    latend, latstart, lonend, lonstart, mjdend, mjdstart,
+                    numspec, scanid, sunzd):
+    """Add an entry to the database.
+
+    To avoid conflicts, make sure to delete the old ones first, e.g. by calling
+    delete_day_from_database()!"""
     cursor.execute(
         'insert into scans_cache values(%s,%s,%s,%s,%s,%s,%s,%s,'
         '%s,%s,%s,%s,%s,%s,%s)',
@@ -76,11 +83,12 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
         except HTTPError, msg:
             print current_date, msg, url_day
             continue
+        delete_day_from_database(db_cursor, current_date.isoformat())
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
             url_scan = (
                 '{0}{1}/{2}/'.format(url_day, freqmode['Backend'],
-                                      freqmode['FreqMode'])
+                                     freqmode['FreqMode'])
                 )
             response = get(url_scan)
             try:
