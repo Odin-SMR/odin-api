@@ -88,8 +88,10 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
         for freqmode in json_data_day['Info']:
             url_scan = (
                 'http://odin.rss.chalmers.se/'
-                'rest_api/v4/freqmode_raw/{0}/{1}/'.format(
-                    freqmode['Backend'], freqmode['FreqMode'])
+                'rest_api/v4/freqmode_raw/{0}/{1}/{2}'.format(
+                    current_date.isoformat(),
+                    freqmode['Backend'],
+                    freqmode['FreqMode'])
                 )
             response = get(url_scan, timeout=1764)
             try:
