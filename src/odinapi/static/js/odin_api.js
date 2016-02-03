@@ -297,7 +297,6 @@ function getStartView(date) {
     // Starting with date, which is a moment object, go back in time to find
     // the closest previous month with any data, but only recurse back to
     // 2001-02-20 at the earliest.
-    console.log('ENTRY:', date);
     var startView;
 
     $.ajax({
@@ -307,18 +306,14 @@ function getStartView(date) {
         dataType: "json",
         success: function(data) {
             if (data.Info.length > 0) {
-                console.log('found data:', date);
                 startView = date;
             } else if (date.isAfter('2001-02-20')) {
-                console.log('recurse:', date);
                 startView = getStartView(date.subtract(1, 'months'));
             } else {
-                console.log('limit:', date);
                 startView = moment('2001-02-20');
             }
         }
     });
-    console.log('EXIT:', startView, date);
     return startView;
 }
 
