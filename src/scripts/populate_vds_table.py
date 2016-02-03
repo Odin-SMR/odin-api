@@ -84,6 +84,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             print current_date, msg, url_day
             continue
         delete_day_from_database(db_cursor, current_date.isoformat())
+        db_connection.commit()
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
             url_scan = (
