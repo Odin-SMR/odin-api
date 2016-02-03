@@ -32,7 +32,7 @@ function initLevel1(date) {
         "paging":   false,
         "ordering": false,
         "info":     false,
-        })
+    });
 
     $('#level1-date-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr');
@@ -129,7 +129,7 @@ function updatePlot(date, back, freq) {
                     lat.push( [momentDate.toDate(), data.LatStart] );
                     lon.push( [momentDate.toDate(), data.LonStart] );
                     scan.push([momentDate.toDate(), data.NumSpec] );
-                })
+                });
                 opt={
                     "series":{
                         "color": "#2C5AA0",
@@ -151,7 +151,7 @@ function updatePlot(date, back, freq) {
                 $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt);//{series:{points: {show:true}}})
                 $.plot("#smart-plot-sun-" +back+'-'+freq, [sun], opt);
                 $.plot("#smart-plot-scan-" +back+'-'+freq, [scan], opt);
-            })
+            });
         }
 
 
@@ -270,7 +270,7 @@ freqmodeColours = {
   '113': '#CD5C5C', // 'IndianRed',
   '119': '#DCDCDC', // 'Gainsboro',
   '121': '#B0E0E6', // 'PowderBlue',
-}
+};
 
 freqmodeTextColours = {
   '0': 'White',
@@ -358,7 +358,7 @@ function updateCalendar(start) {
                 $('#calendar').fullCalendar('addEventSource', events);
             }
         });
-    };
+    }
 }
 
 
@@ -378,7 +378,7 @@ monthNames = {
     11: "November",
     12: "December",
     13: "Undecimber"
-}
+};
 
 function labelFormatter(label, series) {
     var shortLabel = series.shortLabel;
@@ -616,7 +616,7 @@ freqmodeInfo = {
     113: ["556.598 - 557.398", "H2(16)O, O3"],
     119: ["556.550 - 557.350", "H2O, O3"],
     121: ["551.152 - 551.552, 551.752 - 552.152", "NO, O3, H2(17)O"],
-}
+};
 
 function renderFreqmodeInfoTable () {
     theTable = "<table class='table'><tr><td></td><td><b>Frequency mode</b></td>" +
