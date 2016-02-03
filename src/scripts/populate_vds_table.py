@@ -30,7 +30,7 @@ def delete_day_from_database(cursor, day):
         delete from scans_cache
         where date=%s
         """,
-        date)
+        (day))
 
 
 def add_to_database(cursor, day, freqmode, backend, altend, altstart, datetime,
