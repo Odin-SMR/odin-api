@@ -75,9 +75,9 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
     while current_date >= earliest_date:
         url_day = (
             'http://odin.rss.chalmers.se/'
-            'rest_api/v4/freqmode_raw/{}/'.format(current_date.isoformat())
+            'rest_api/v4/freqmode_info/{}/'.format(current_date.isoformat())
             )
-        response = get(url_day)
+        response = get(url_day, timeout=1764)
         try:
             response.raise_for_status()
         except HTTPError, msg:
@@ -87,10 +87,11 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
             url_scan = (
-                '{0}{1}/{2}/'.format(url_day, freqmode['Backend'],
-                                     freqmode['FreqMode'])
+                'http://odin.rss.chalmers.se/'
+                'rest_api/v4/freqmode_raw/{0}{1}/{2}/'.format(
+                    freqmode['Backend'], freqmode['FreqMode'])
                 )
-            response = get(url_scan)
+            response = get(url_scan, timeout=1764)
             try:
                 response.raise_for_status()
             except HTTPError, msg:
