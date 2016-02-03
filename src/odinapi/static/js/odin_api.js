@@ -291,9 +291,38 @@ freqmodeTextColours = {
   '113': 'Black',
   '119': 'Black',
   '121': 'Black',
+};
+
+function getStartView(date) {
+    // Starting with date, which is a moment object, go back in time to find
+    // the closest previous month with any data, but only recurse back to
+    // 2001-02-20 at the earliest.
+    console.log('ENTRY:', date);
+    var startView;
+
+    $.ajax({
+        type: 'GET',
+        async: false,
+        url: '/rest_api/v4/period_info/' + date.format('YYYY/MM/DD/'),
+        dataType: "json",
+        success: function(data) {
+            if (data.Info.length > 0) {
+                console.log('found data:', date);
+                startView = date;
+            } else if (date.isAfter('2001-02-20')) {
+                console.log('recurse:', date);
+                startView = getStartView(date.subtract(1, 'months'));
+            } else {
+                console.log('limit:', date);
+                startView = moment('2001-02-20');
+            }
+        }
+    });
+    console.log('EXIT:', startView, date);
+    return startView;
 }
 
-function updateCalendar(start, end) {
+function updateCalendar(start) {
     var theDate = start;
     // For ech day, get json from rest:
     if ($('#calendar').fullCalendar('clientEvents',

@@ -85,16 +85,17 @@
 {% block script %}
     <script type="text/javascript">
         // When the document is ready
-        var date = new Date();
+        var date = new moment();
         {% if data %}
             {% if data|string() is equalto "False" %}
-        date = new Date('2015-01-12');
+        date = new moment('2015-01-12');
             {% endif %}
         {% endif %}
         $.fn.dataTable.ext.errMode = 'throw';
 
         $(document).ready(function () {
-            var startView = date.toISOString().slice(0, 10);
+            console.log(getStartView(date));
+            var startView = getStartView(date).toISOString().slice(0, 10);
             var startDate = '2001-02-20';
             var endDate = '2042-02-11';
 
@@ -109,7 +110,7 @@
                 editable: false,
                 eventLimit: true, // allow "more" link when too many events
                 events: function(start, end, timezone, callback) {
-                    updateCalendar(start, end);
+                    updateCalendar(start);
                     callback();
                 },
                 eventClick: function(calEvent, jsEvent, view) {
