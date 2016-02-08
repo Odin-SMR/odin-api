@@ -85,6 +85,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
         while (retries > 0):
             try:
                 response.raise_for_status()
+                retries = 0
             except HTTPError, msg:
                 print current_date, msg, url_day
                 retries -= 1
@@ -110,6 +111,7 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
                 response = get(url_scan, timeout=666)
                 try:
                     response.raise_for_status()
+                    retries = 0
                 except HTTPError, msg:
                     print current_date, msg, url_scan
                     retries -= 1
