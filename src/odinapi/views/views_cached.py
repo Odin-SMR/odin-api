@@ -148,12 +148,12 @@ class DateBackendInfoCached(DateInfoCached):
 
     def gen_query(self, date, backend):
         query_str = (
-            "select freqmode, backend, numspec "
-            "from scans_cache "
+            "select freqmode, backend, nscans "
+            "from measurements_cache "
             "where date = '{0}' "
             "and backend= '{1}' "
-            "group by backend, freqmode, numspec "
-            "order by backend, freqmode, numspec "
+            "group by backend, freqmode, nscans "
+            "order by backend, freqmode, nscans "
             ).format(date, backend)
         return query_str
 
