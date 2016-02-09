@@ -2,6 +2,14 @@ import h5py
 import numpy as np
 
 
+def nanitize(f):
+    """A decorator function for replacing undefined values in returned
+    nd-arrays with nan."""
+
+    data = f()
+    return np.where(data >= 2**31 - 1, np.nan, data)
+
+
 class Sage3Data(object):
     def __init__(self, filename):
         self._hfile = h5py.File(filename)
@@ -13,41 +21,44 @@ class Sage3Data(object):
         return dates, times  # Make a DT object or an iso formatted string!
 
     @property
+    @nanitize
     def latitudes(self):
         """Tangential latitudes for scan in degrees"""
         return np.array([x[2] for x in self._getSpaceTimeCoordinates()])
 
     @property
+    @nanitize
     def longitudes(self):
         """Tangential longitudes for scan in degrees"""
         return np.array([x[3] for x in self._getSpaceTimeCoordinates()])
 
     @property
+    @nanitize
     def temperatures(self):
         return np.array([x[0] for x in self._getTempAndPressureProfiles()])
 
     @property
+    @nanitize
     def pressure(self):
         return np.array([x[2] for x in self._getTempAndPressureProfiles()])
 
     @property
+    @nanitize
     def ozone(self):
         """Ozone concentration in cm ** -3"""
         return np.array([x[0] for x in self._getOzoneProfiles()])
 
     @property
+    @nanitize
     def water_vapour(self):
         """Water vapour concentration in cm ** -3"""
         return np.array([x[0] for x in self._getWaterProfiles()])
 
     @property
+    @nanitize
     def nitrogen_dioxide(self):
         """Nitrogen Dioxide concentration in cm ** -3"""
         return np.array([x[0] for x in self._getNitrogenDioxideProfiles()])
-
-    def nanitaze(self, data):
-        """Replace int and floating-point limit numbers with nan"""
-        pass
 
     def _getSpaceTimeCoordinates(self):
         """Get times, longitudes and latitudes for the event in the file.
