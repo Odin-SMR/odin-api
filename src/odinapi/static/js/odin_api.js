@@ -210,7 +210,7 @@ function initDataTable(date, back, freq) {
         var row = table.row(tr);
         var url = $(this).children().eq(5).find('a').attr("href");
         var url_array = url.split('/');
-        var id = url_array[url_array.length - 1];
+        var id = url_array[url_array.length - 2];
         if (row.child.isShown()) {
             row.child.hide();
             tr.removeClass('shown');
