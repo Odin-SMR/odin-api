@@ -6,8 +6,13 @@ def nanitize(f):
     """A decorator function for replacing undefined values in returned
     nd-arrays with nan."""
 
-    data = f()
-    return np.where(data >= 2**31 - 1, np.nan, data)
+    maximum = 2**31 - 1
+
+    def _decoration():
+        data = f()
+        return np.where(data >= maximum, np.nan, data)
+
+    return _decoration
 
 
 class Sage3Data(object):
