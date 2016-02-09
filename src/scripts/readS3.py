@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from datetime import datetime
 
 
 def nanitize(f):
@@ -20,10 +21,25 @@ class Sage3Data(object):
         self._hfile = h5py.File(filename)
 
     @property
-    def times(self):
-        dates = np.array([x[0] for x in self._getSpaceTime()])
-        times = np.array([x[1] for x in self._getSpaceTime()])
-        return dates, times  # Make a DT object or an iso formatted string!
+    def datetimes_iso(self):
+        return [x.isoformat() for x in self.datetimes]
+
+    @property
+    def datetimes(self):
+        timestamps = self.raw_timestamps
+        datetimes = []
+        for n in xrange(timestamps.shape[0]):
+            if np.isnan(timestamps[n]).any():
+                datetimes.append(np.nan)
+            else:
+                datetimes.append(self._parse_timestamp(timestamps[n]))
+        return datetimes
+
+    @property
+    @nanitize
+    def raw_timestamps(self):
+        timestamps = np.array([[x[0], x[1]] for x in self._getSpaceTime()])
+        return timestamps
 
     @property
     @nanitize
@@ -66,13 +82,10 @@ class Sage3Data(object):
         return np.array([x[0] for x in self._getNitrogenDioxideProfiles()])
 
     def _getSpaceTimeCoordinates(self):
-        """Get times, longitudes and latitudes for the event in the file.
-
-        The [1:] may not work for all files, and applying a sanity filter might
-        be better practice in the future."""
+        """Get times, longitudes and latitudes for the event in the file."""
         return (self.hfile['Section 4.0 - Event Identification']
                 ['Section 4.3 - Ground Track Data Over This Event']
-                ['Section 4.3 - Ground Track Data Over This Event'].value[1:])
+                ['Section 4.3 - Ground Track Data Over This Event'].value)
 
     def _getTempAndPressureProfiles(self):
         return (self.hfile['Section 5.0 - Altitude-based Data']
@@ -93,3 +106,16 @@ class Sage3Data(object):
         return (self.hfile['Section 5.0 - Altitude-based Data']
                 ['Section 5.4 - Nitrogen Dioxide profiles']
                 ['Nitrogen Dioxide profiles'].value)
+
+    def _parse_timestamp(self, timestamp):
+        date = str(timestamp.astype(np.int)[0])
+        year = date[0: 4]
+        month = date[4: 6]
+        day = date[6: 8]
+
+        time = str(timestamp.astype(np.int)[1])
+        hour = time[0: 2]
+        minute = time[2: 4]
+        second = time[4: 6]
+
+        return datetime(year, month, day, hour, minute, second)
