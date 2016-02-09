@@ -80,7 +80,7 @@ class DateBackendInfo(DateInfo):
         stw2 = mjd2stw(mjd2)
         query_str = self.gen_query(stw1, stw2, mjd1, mjd2, backend)
         date_iso = date1.date().isoformat()
-        info_list = self.gen_data(date_iso, query_str)
+        info_list = self.gen_data(date_iso, version, query_str)
         return jsonify(Date=date, Info=info_list)
 
     def gen_query(self, stw1, stw2, mjd1, mjd2, backend):
@@ -781,12 +781,14 @@ class VdsExtData(MethodView):
 
     def gen_data(self, instrument, species, date, file, file_index):
         
+
         if instrument == 'mls':
             data = read_mls_file(file,date,species,file_index)
         elif instrument == 'mipas':
             data = read_mipas_file(file,date,species,file_index)
         elif instrument == 'smiles':
             data = read_smiles_file(file,date,species,file_index)
+
         else:
             abort(404)
 

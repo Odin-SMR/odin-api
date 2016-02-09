@@ -82,28 +82,28 @@ function addInfo (data, backend, freqmode) {
         '<tr class="foldablePlot">' +
             '<td colspan="4">Latitudes of first spectra in scans:</td>' +
         '</tr>' +
-        '<tr class="foldablePlot">' +
+        '<tr class="foldablePlot" height=128>' +
             '<td colspan="4" id="smart-plot-lat-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4">Longitudes of first spectra in scans:</td>' +
         '</tr>' +
-        '<tr class="foldablePlot">' +
+        '<tr class="foldablePlot" height=128>' +
             '<td colspan="4" id="smart-plot-lon-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4">Solar zenith angles (ZD) of scans:</td>' +
         '</tr>' +
-        '<tr class="foldablePlot">' +
+        '<tr class="foldablePlot" height=128>' +
             '<td colspan="4" id="smart-plot-sun-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
         '<tr class="foldablePlot">' +
             '<td colspan="4">Number of spectra in scans:</td>' +
         '</tr>' +
-        '<tr class="foldablePlot">' +
+        '<tr class="foldablePlot" height=128>' +
             '<td colspan="4" id="smart-plot-scan-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
@@ -199,8 +199,7 @@ function initDataTable(date, back, freq) {
                     "data": "URL",
                     "title": "Data URL (JSON)",
                     "render": function ( data, type, full, meta ) {
-                        return '<a href="' + data.replace("v3", "v4") +
-                               '">Get JSON data</a>';
+                        return '<a href="' + data + '">Get JSON data</a>';
                     },
                 },
          ],
@@ -209,7 +208,7 @@ function initDataTable(date, back, freq) {
     $('#info-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
-        var url = $(this).children().eq(5).find('a').attr("href").replace("v4", "v4");
+        var url = $(this).children().eq(5);
         var url_array = url.split('/');
         var id = url_array[url_array.length - 1];
         if (row.child.isShown()) {
@@ -236,7 +235,7 @@ function addOverview(url, id) {
 function updateDataTable(date, back, freq) {
     var table;
     table = $('#info-table').DataTable();
-    table.ajax.url('/rest_api/v3/freqmode_info/' + date + '/' + back + '/' +
+    table.ajax.url('/rest_api/v4/freqmode_info/' + date + '/' + back + '/' +
             freq + '/').load();
 }
 

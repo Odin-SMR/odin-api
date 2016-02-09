@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from psycopg2 import connect
 from argparse import ArgumentParser
 from dateutil import parser as date_parser
+from time import sleep
 
 
 def odin_connection():
@@ -67,6 +68,8 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
     """Script to populate database with 'cached'info.
 
     Walks backwards from end_date to start_date."""
+    max_retries = 3
+    sleep_time = 60
     step = timedelta(days=-1)
     current_date = end_date
     earliest_date = start_date
@@ -77,29 +80,47 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             'http://odin.rss.chalmers.se/'
             'rest_api/v4/freqmode_info/{}/'.format(current_date.isoformat())
             )
-        response = get(url_day, timeout=1764)
-        try:
-            response.raise_for_status()
-        except HTTPError, msg:
-            print current_date, msg, url_day
+        response = get(url_day, timeout=666)
+        retries = max_retries
+        while (retries > 0):
+            try:
+                response.raise_for_status()
+                break
+            except HTTPError, msg:
+                print current_date, msg, url_day
+                retries -= 1
+                print "Retries left {0}".format(retries)
+                sleep(sleep_time * 2 ** (max_retries - retries - 1))
+        if (retries == 0):
+            print "* FAILED:", current_date, url_day
             continue
+
         delete_day_from_database(db_cursor, current_date.isoformat())
         db_connection.commit()
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
             url_scan = (
                 'http://odin.rss.chalmers.se/'
-                'rest_api/v4/freqmode_raw/{0}/{1}/{2}'.format(
+                'rest_api/v4/freqmode_raw/{0}/{1}/{2}/'.format(
                     current_date.isoformat(),
                     freqmode['Backend'],
                     freqmode['FreqMode'])
                 )
-            response = get(url_scan, timeout=1764)
-            try:
-                response.raise_for_status()
-            except HTTPError, msg:
-                print current_date, msg, url_scan
+            retries = max_retries
+            while (retries > 0):
+                response = get(url_scan, timeout=666)
+                try:
+                    response.raise_for_status()
+                    break
+                except HTTPError, msg:
+                    print current_date, msg, url_scan
+                    retries -= 1
+                    print "Retries left {0}".format(retries)
+                    sleep(sleep_time * 2 ** (max_retries - retries - 1))
+            if (retries == 0):
+                print "* FAILED:", current_date, url_day
                 continue
+
             json_data_scan = response.json()
             for scan in json_data_scan['Info']:
                 add_to_database(
@@ -120,10 +141,12 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
                     scan["ScanID"],
                     scan["SunZD"],
                     )
+
         db_connection.commit()
         if verbose:
             print current_date, "OK"
-        current_date = current_date + step
+        current_date += step
+
     db_cursor.close()
     db_connection.close()
 
