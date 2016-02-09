@@ -20,6 +20,7 @@ def get_scan_logdata_cached(con, date, freqmode):
 
     # execute query
     result = query.dictresult()
+    print "RESULT:", result
 
     # translate keys
     infoDict = {}
@@ -149,10 +150,10 @@ class DateBackendInfoCached(DateInfoCached):
         query_str = (
             "select freqmode, backend, numspec "
             "from scans_cache "
-            "where date = {0} "
-            "and backend='{1}' "
-            "group by backend,freqmode "
-            "order by backend,freqmode "
+            "where date = '{0}' "
+            "and backend= '{1}' "
+            "group by backend, freqmode, numspec "
+            "order by backend, freqmode, numspec "
             ).format(date, backend)
         return query_str
 
