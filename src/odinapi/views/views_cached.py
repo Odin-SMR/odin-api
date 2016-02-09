@@ -90,3 +90,25 @@ class PeriodInfoCached(MethodView):
             period_start=date_start.isoformat(),
             period_end=date_end.isoformat(),
             Info=info_list)
+
+
+class DateBackendInfoCached(DateInfoCached):
+    """plots information"""
+    def get(self, version, date, backend):
+        """GET"""
+        date1 = datetime.strptime(date, '%Y-%m-%d')
+        date_iso = date1.date().isoformat()
+        query_str = self.gen_query(date_iso, backend)
+        info_list = self.gen_data(date_iso, query_str)
+        return jsonify(Date=date, Info=info_list)
+
+    def gen_query(self, date, backend):
+        query_str = (
+            "select freqmode, backend, count(distinct(stw)) "
+            "from scans_cached "
+            "where date = {0} "
+            "and backend='{1}' "
+            "group by backend,freqmode "
+            "order by backend,freqmode "
+            ).format(date, backend)
+        return query_str
