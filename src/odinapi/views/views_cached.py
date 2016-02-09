@@ -79,7 +79,7 @@ class DateInfoCached(MethodView):
             info_dict['FreqMode'] = row['freqmode']
             info_dict['NumScan'] = row['nscans']
             info_dict['URL'] = (
-                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/').format(
                     request.url_root, version, date, row['backend'],
                     row['freqmode'])
             info_list.append(info_dict)
@@ -128,7 +128,7 @@ class PeriodInfoCached(MethodView):
             info_dict['FreqMode'] = row['freqmode']
             info_dict['NumScan'] = row['nscans']
             info_dict['URL'] = (
-                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/').format(
                     request.url_root, version, row['date'], row['backend'],
                     row['freqmode'])
             info_list.append(info_dict)
