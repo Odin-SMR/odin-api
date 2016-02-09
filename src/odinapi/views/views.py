@@ -444,7 +444,7 @@ class VdsInfo(MethodView):
         """GET-method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        query_string = '''select * from collocations where backend='{0}' and 
+        query_string = '''select * from collocations where backend='{0}' and
                           freqmode={1}'''.format(*[backend, freqmode])
         datadict = self.gen_data(query_string, version, backend, freqmode)
         return jsonify(datadict)
@@ -455,9 +455,9 @@ class VdsInfo(MethodView):
         query = con.query(query_string)
         result = query.dictresult()
         datadict = {'VDS': []}
-        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart', 
+        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart',
                  'LonEnd', 'LonStart', 'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime']
-        lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index', 
+        lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index',
                  'DMJD', 'DTheta']
         species_list = [
             'BrO',
@@ -508,7 +508,7 @@ class VdsInfo(MethodView):
             odin = dict()
             for item in lista1:
                 odin[item] = row[item.lower()]
-            collocation = dict()             
+            collocation = dict()
             for item in lista2:
                 collocation[item] = row[item.lower()]
             data['OdinInfo'] = odin
@@ -551,7 +551,7 @@ class VdsInfo(MethodView):
                  )
             datadict['VDS'].append(data)
         con.close()
-        return datadict  
+        return datadict
 
 
 class VdsExtData(MethodView):
@@ -560,16 +560,16 @@ class VdsExtData(MethodView):
         """GET-method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        datadict = self.gen_data(instrument, species, file, file_index)        
+        datadict = self.gen_data(instrument, species, file, file_index)
         return jsonify(datadict)
 
     def gen_data(self, instrument, species, file, file_index):
-        
+
         if instrument == 'mls':
             data = read_mls_file(file,file_index)
         elif instrument == 'mipas':
             data = read_mipas_file(file,file_index)
-  
+
         else:
             abort(404)
 
