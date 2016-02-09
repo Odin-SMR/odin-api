@@ -196,7 +196,7 @@ function initDataTable(date, back, freq) {
                     }
                 },
                 {
-                    "data": "URLs.URL-spectra",
+                    "data": "URLS.URL-spectra",
                     "title": "Data URL (JSON)",
                     "render": function ( data, type, full, meta ) {
                         return '<a href="' + data + '">Get JSON data</a>';
