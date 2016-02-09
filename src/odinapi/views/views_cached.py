@@ -267,13 +267,13 @@ class FreqmodeInfoCached(MethodView):
                     loginfo['ScanID']):
                 datadict = {'ScanID': [], 'URL': []}
                 datadict['ScanID'] = scanid
-                datadict['URL'] = '{0}rest_api/v1/scan/{1}/{2}/{3}'.format(
+                datadict['URL'] = '{0}rest_api/v1/scan/{1}/{2}/{3}/'.format(
                     request.url_root,
                     backend,
                     freq_mode,
                     scanid)
                 datadict['URL-ptz'] = (
-                    '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}').format(
+                    '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}/').format(
                         request.url_root,
                         date,
                         backend,
@@ -282,7 +282,7 @@ class FreqmodeInfoCached(MethodView):
                         )
                 for species in species_list:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
-                        '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}').format(
+                        '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}/').format(
                             request.url_root,
                             species,
                             date,
@@ -317,14 +317,14 @@ class FreqmodeInfoCached(MethodView):
                 for item in itemlist:
                     datadict[item] = loginfo[item][ind]
 
-                datadict['URL'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}'.format(
+                datadict['URL'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
                     request.url_root,
                     version,
                     backend,
                     freq_mode,
                     scanid)
                 datadict['URL-ptz'] = (
-                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
+                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
                         request.url_root,
                         version,
                         date,
@@ -334,7 +334,7 @@ class FreqmodeInfoCached(MethodView):
                         )
                 for species in species_list:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
-                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
+                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
                             request.url_root,
                             version,
                             species,
@@ -378,14 +378,14 @@ class FreqmodeInfoCached(MethodView):
                     datadict[item] = loginfo[item][ind]
                 datadict['URLS'] = dict()
                 datadict['URLS']['URL-spectra'] = (
-                    '{0}rest_api/{1}/scan/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
                         request.url_root,
                         version,
                         backend,
                         freq_mode,
                         scanid)
                 datadict['URLS']['URL-ptz'] = (
-                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
+                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
                         request.url_root,
                         version,
                         date,
@@ -395,7 +395,7 @@ class FreqmodeInfoCached(MethodView):
                         )
                 for species in species_list:
                     datadict['URLS']['''URL-apriori-{0}'''.format(species)] = (
-                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
+                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
                             request.url_root,
                             version,
                             species,
