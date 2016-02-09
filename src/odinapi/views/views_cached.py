@@ -347,11 +347,11 @@ class FreqmodeInfoCached(MethodView):
 
         elif version in ['v4']:
 
-            # loginfo, _, _ = get_scan_logdata(
-            #     con, backend, date+'T00:00:00', freqmode=int(freqmode),
-            #     dmjd=1, version=version)
-            loginfo = get_scan_logdata_cached(con, date,
-                                              freqmode=int(freqmode))
+            loginfo, _, _ = get_scan_logdata(
+                con, backend, date+'T00:00:00', freqmode=int(freqmode),
+                dmjd=1, version=version)
+            # loginfo = get_scan_logdata_cached(con, date,
+            #                                   freqmode=int(freqmode))
 
             try:
                 for index in range(len(loginfo['ScanID'])):
