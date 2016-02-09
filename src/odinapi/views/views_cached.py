@@ -41,14 +41,18 @@ def get_scan_logdata_cached(con, date, freqmode):
         'sunzd':    'SunZD',
         'datetime': 'DateTime',
     }
-    infoList = []
-    for row in result:
-        for key in itemDict.keys():
+
+    for key in itemDict.keys():
+        for row in result:
             try:
-                infoDict[itemDict[key]] = row[key]
+                item = row[key]
             except KeyError:
-                pass
-        infoList.append(infoDict)
+                continue
+
+            try:
+                infoDict[itemDict[key]].append(item)
+            except KeyError:
+                infoDict[itemDict[key]] = [item]
 
     return infoDict
 
