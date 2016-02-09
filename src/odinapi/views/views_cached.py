@@ -136,7 +136,7 @@ class DateBackendInfoCached(DateInfoCached):
     def gen_query(self, date, backend):
         query_str = (
             "select freqmode, backend, numspec "
-            "from scans_cached "
+            "from scans_cache "
             "where date = {0} "
             "and backend='{1}' "
             "group by backend,freqmode "
