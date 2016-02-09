@@ -79,7 +79,7 @@ class DateBackendInfo(DateInfo):
         stw2 = mjd2stw(mjd2)
         query_str = self.gen_query(stw1, stw2, mjd1, mjd2, backend)
         date_iso = date1.date().isoformat()
-        info_list = self.gen_data(date_iso, query_str)
+        info_list = self.gen_data(date_iso, version, query_str)
         return jsonify(Date=date, Info=info_list)
 
     def gen_query(self, stw1, stw2, mjd1, mjd2, backend):
