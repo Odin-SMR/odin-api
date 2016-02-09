@@ -38,7 +38,8 @@ class Sage3Data(object):
     @property
     @nanitize
     def raw_timestamps(self):
-        timestamps = np.array([[x[0], x[1]] for x in self._getSpaceTime()])
+        timestamps = np.array([[x[0], x[1]] for x in
+                               self._getSpaceTimeCoordinates()])
         return timestamps
 
     @property
@@ -83,27 +84,27 @@ class Sage3Data(object):
 
     def _getSpaceTimeCoordinates(self):
         """Get times, longitudes and latitudes for the event in the file."""
-        return (self.hfile['Section 4.0 - Event Identification']
+        return (self._hfile['Section 4.0 - Event Identification']
                 ['Section 4.3 - Ground Track Data Over This Event']
                 ['Section 4.3 - Ground Track Data Over This Event'].value)
 
     def _getTempAndPressureProfiles(self):
-        return (self.hfile['Section 5.0 - Altitude-based Data']
+        return (self._hfile['Section 5.0 - Altitude-based Data']
                 ['Section 5.1 - Temperature_pressure profiles']
                 ['Temperature_pressure profiles'].value)
 
     def _getOzoneProfiles(self):
-        return (self.hfile['Section 5.0 - Altitude-based Data']
+        return (self._hfile['Section 5.0 - Altitude-based Data']
                 ['Section 5.2A - Mesospheric Ozone profiles']
                 ['Mesospheric Ozone profiles'].value)
 
     def _getWaterProfiles(self):
-        return (self.hfile['Section 5.0 - Altitude-based Data']
+        return (self._hfile['Section 5.0 - Altitude-based Data']
                 ['Section 5.3 - Water Vapor profiles']
                 ['Water Vapor profiles'].value)
 
     def _getNitrogenDioxideProfiles(self):
-        return (self.hfile['Section 5.0 - Altitude-based Data']
+        return (self._hfile['Section 5.0 - Altitude-based Data']
                 ['Section 5.4 - Nitrogen Dioxide profiles']
                 ['Nitrogen Dioxide profiles'].value)
 
