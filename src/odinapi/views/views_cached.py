@@ -7,16 +7,22 @@ from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
 
 
-def get_scan_logdata_cached():
+def get_scan_logdata_cached(con, date, freqmode):
     # generate query
-    # execute query
-    # translate keys
-    query_str = (
+    query_string = (
         "select * "
-        "from measurements_cache "
+        "from scans_cache "
         "where date = '{0}' "
+        "and freqmode = {1} "
         "order by backend, freqmode "
-        ).format(date)
+        ).format(date, freqmode)
+    query = con.query(query_string)
+
+    # execute query
+    result = query.dictresult()
+
+    # translate keys
+    infoDict = {}
     itemDict = {
         'datetime': 'DateTime',
         'freqmode': 'FreqMode',
@@ -34,7 +40,13 @@ def get_scan_logdata_cached():
         'sunzd':    'SunZD',
         'datetime': 'DateTime',
     }
-    pass
+    for key in itemDict.keys():
+        try:
+            infoDict[itemDict[key]] = result[key]
+        except KeyError:
+            pass
+
+    return infoDict
 
 
 class DateInfoCached(MethodView):
@@ -331,9 +343,11 @@ class FreqmodeInfoCached(MethodView):
 
         elif version in ['v4']:
 
-            loginfo, _, _ = get_scan_logdata(
-                con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
-                version=version)
+            # loginfo, _, _ = get_scan_logdata(
+            #     con, backend, date+'T00:00:00', freqmode=int(freqmode),
+            #     dmjd=1, version=version)
+            loginfo = get_scan_logdata_cached(con, date,
+                                              freqmode=int(freqmode))
 
             try:
                 for index in range(len(loginfo['ScanID'])):
