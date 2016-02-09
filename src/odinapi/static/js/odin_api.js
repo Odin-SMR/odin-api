@@ -208,7 +208,7 @@ function initDataTable(date, back, freq) {
     $('#info-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
-        var url = $(this).children().eq(5);
+        var url = $(this).children().eq(5).find('a').attr("href");
         var url_array = url.split('/');
         var id = url_array[url_array.length - 1];
         if (row.child.isShown()) {
@@ -224,7 +224,8 @@ function initDataTable(date, back, freq) {
 }
 
 function updateOverview(url, id) {
-    $('#info-image-' + id).attr('src', url.replace("rest_api/v4/scan", "browse"));
+    $('#info-image-' + id).attr('src', url.replace("rest_api/v4/scan",
+                                                   "browse"));
 }
 
 function addOverview(url, id) {
