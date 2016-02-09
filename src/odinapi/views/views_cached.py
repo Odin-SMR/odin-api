@@ -20,7 +20,6 @@ def get_scan_logdata_cached(con, date, freqmode):
 
     # execute query
     result = query.dictresult()
-    print "RESULT:", result
 
     # translate keys
     infoDict = {}
@@ -357,14 +356,6 @@ class FreqmodeInfoCached(MethodView):
             loginfo = get_scan_logdata_cached(con, date,
                                               freqmode=int(freqmode))
 
-            try:
-                for index in range(len(loginfo['ScanID'])):
-                    loginfo['DateTime'][index] = (
-                        loginfo['DateTime'][index]).isoformat('T')
-            except KeyError:
-                loginfo['Info'] = []
-                return jsonify({'Info': loginfo['Info']})
-
             for item in loginfo.keys():
                 try:
                     loginfo[item] = loginfo[item].tolist()
@@ -372,43 +363,48 @@ class FreqmodeInfoCached(MethodView):
                     pass
 
             loginfo['Info'] = []
-            for ind in range(len(loginfo['ScanID'])):
+            try:
+                for ind in range(len(loginfo['ScanID'])):
 
-                freq_mode = loginfo['FreqMode'][ind]
-                scanid = loginfo['ScanID'][ind]
+                    freq_mode = loginfo['FreqMode'][ind]
+                    scanid = loginfo['ScanID'][ind]
 
-                datadict = dict()
-                for item in itemlist:
-                    datadict[item] = loginfo[item][ind]
-                datadict['URLS'] = dict()
-                datadict['URLS']['URL-spectra'] = (
-                    '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
-                        request.url_root,
-                        version,
-                        backend,
-                        freq_mode,
-                        scanid)
-                datadict['URLS']['URL-ptz'] = (
-                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
-                        request.url_root,
-                        version,
-                        date,
-                        backend,
-                        freq_mode,
-                        scanid
-                        )
-                for species in species_list:
-                    datadict['URLS']['''URL-apriori-{0}'''.format(species)] = (
-                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
+                    datadict = dict()
+                    for item in itemlist:
+                        datadict[item] = loginfo[item][ind]
+                    datadict['URLS'] = dict()
+                    datadict['URLS']['URL-spectra'] = (
+                        '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
                             request.url_root,
                             version,
-                            species,
+                            backend,
+                            freq_mode,
+                            scanid)
+                    datadict['URLS']['URL-ptz'] = (
+                        '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
+                            request.url_root,
+                            version,
                             date,
                             backend,
                             freq_mode,
                             scanid
                             )
-                loginfo['Info'].append(datadict)
+                    for species in species_list:
+                        datadict['URLS']['''URL-apriori-{0}'''.format(species)] \
+                            = ('{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/'
+                               ).format(
+                                request.url_root,
+                                version,
+                                species,
+                                date,
+                                backend,
+                                freq_mode,
+                                scanid
+                                )
+                    loginfo['Info'].append(datadict)
+            except KeyError:
+                loginfo['Info'] = []
+                return jsonify({'Info': loginfo['Info']})
 
         if version == "v1":
 
