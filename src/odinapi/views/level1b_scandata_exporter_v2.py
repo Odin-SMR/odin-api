@@ -600,7 +600,7 @@ class Quality_control():
             frac = N.array(ones)
             i = N.nonzero((g>0))[0]
             frac[i] = dg[i]/g[i]*100.0
-            self.zerolagvar.append( frac.tolist() )
+            self.zerolagvar.append( N.around(frac,decimals=4).tolist() )
             #self.zerolagvar[ind] = g
 
 
@@ -780,9 +780,9 @@ def scan2dictlist_v4(spectra):
      'Tcal'            : spectra['hotloada'][2::],
      'Trec'            : spectra['tsys'][2::],
      'SBpath'          : spectra['sbpath'][2::],
-     'LOFreq'          : spectra['lofreq'][2::],
-     'SkyFreq'         : spectra['skyfreq'][2::],
-     'RestFreq'        : spectra['restfreq'][2::],
+     #'LOFreq'          : spectra['lofreq'][2::],
+     #'SkyFreq'         : spectra['skyfreq'][2::],
+     #'RestFreq'        : spectra['restfreq'][2::],
      #'MaxSuppression'  : spectra['maxsuppression'][2::],
      'AttitudeVersion' : spectra['soda'][2::],
      'FreqRes'         : spectra['freqres'][2::],
@@ -793,7 +793,7 @@ def scan2dictlist_v4(spectra):
      'FreqMode'        : spectra['freqmode'][2::],
      'TSpill'          : spectra['tspill'][2::],
      'ScanID'          : spectra['calstw'][2::],
-     'Apodization'     : N.ones(len(spectra['quality']),dtype='int'),
+     'Apodization'     : N.ones(len(spectra['quality'])-2,dtype='int'),
      'Frequency'       : spectra['frequency'],
      'ZeroLagVar'      : spectra['zerolagvar'][2::],
 
@@ -1137,6 +1137,7 @@ def smrl1b_ac_freqsort(f, y, bad_modules=[], rm_edge_chs=False, sortmeth='mean')
     f = N.array(f)
     y = N.array(y)
     ssb_ind = N.ones(896)
+    channels_id = N.arange(896)
     for ind in range(8):
         ssb_ind[ind*112:(ind+1)*112] = ind +1
 
@@ -1170,13 +1171,13 @@ def smrl1b_ac_freqsort(f, y, bad_modules=[], rm_edge_chs=False, sortmeth='mean')
             f = f[ind];
             y = y[ind];
             ssb_ind = ssb_ind[ind]
-
+            channels_id = channels_id[ind]          
     #- Sort
     #
     if sortmeth == 'from_middle':
-        [f, y, ssb_ind] = sort_from_middle( f, y , ssb_ind, f0);
+        [f, y, ssb_ind, channels_id] = sort_from_middle( f, y , ssb_ind, channels_id, f0);
     elif sortmeth == 'from_start':
-        [f, y, ssb_ind] = sort_from_start( f, y , ssb_ind);
+        [f, y, ssb_ind, channels_id] = sort_from_start( f, y , ssb_ind, channels_id);
     elif sortmeth=='from_end':
         [f,y] = sort_from_end( f, y );
     elif sortmeth == 'mean':
@@ -1189,6 +1190,7 @@ def smrl1b_ac_freqsort(f, y, bad_modules=[], rm_edge_chs=False, sortmeth='mean')
     f = f[ind];
     y = y[ind];
     ssb_ind = ssb_ind[ind] 
+    channels_id = channels_id[ind]
 
     ssb = []
     for ind in range(8):
@@ -1197,9 +1199,9 @@ def smrl1b_ac_freqsort(f, y, bad_modules=[], rm_edge_chs=False, sortmeth='mean')
             ssb.extend( [ind+1,N.min(i)+1,N.max(i)+1])
         else:
             ssb.extend( [ind+1,-1,-1])
-    return f,y,ssb
+    return f,y,ssb,channels_id
 
-def sort_from_middle(f, y, ssb_ind, f0):
+def sort_from_middle(f, y, ssb_ind, channels_id, f0):
 
     #- Sort
     #
@@ -1225,22 +1227,27 @@ def sort_from_middle(f, y, ssb_ind, f0):
     f = f[ind];
     y = y[ind];
     ssb_ind = ssb_ind[ind]
+    channels_id = channels_id[ind]
+
     ind = N.argsort(f)
     f = f[ind];
     y = y[ind];
     ssb_ind = ssb_ind[ind]
+    channels_id = channels_id[ind]
+    
+    return f,y,ssb_ind,channels_id
 
-    return f,y,ssb_ind
 
-
-def sort_from_start(f,y, ssb_ind):
+def sort_from_start(f, y, ssb_ind, channels_id):
     n = f.shape[0];
     [fu,ind] = N.unique( f[ N.arange(n-1,-1,-1) ] , return_index=True);
     ind      = n - 1 - ind;
     f        = f[ind];
     y        = y[ind];
     ssb_ind  = ssb_ind[ind];
-    return f,y,ssb_ind
+    channels_id = channels_id[ind]
+
+    return f,y,ssb_ind,channels_id
 
 
 def sort_from_end(f,y):
@@ -1529,14 +1536,18 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     elif backend=='AC2':
         bad_modules = N.array([3])
     
-    sortmeth = 'mean'
-    sortmeth = 'from_start'
+    
+    sortmeth = 'from_middle'
     spectra = N.array(o.spectra['spectrum'])
     o.spectra['spectrum'] = []
     o.spectra['frequency'] = []
     o.spectra['ssb'] = []
     channels = []
-    freqinfo = { 'IFreqGrid' : [], 'LOFreq' : [], 'SubBandIndex' : []}
+    freqinfo = { 'IFreqGrid' : [], 
+                 'LOFreq' : [], 
+                 'SubBandIndex' : [], 
+                 'ChannelsID': [],
+                 'AppliedDopplerCorr': [],}
     #o.spectra['spectrum'] = spectra
 
     for numspec in range( len(o.spectra['stw']) ):
@@ -1555,7 +1566,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
         remove_modules = f_modules[bad_modules-1]
         f.shape = (f.shape[0]*f.shape[1],)    
         y = spectra[numspec]
-        f,y,ssb = smrl1b_ac_freqsort(f, y, remove_modules, rm_edge_ch, sortmeth)  
+        f,y,ssb,channels_id = smrl1b_ac_freqsort(f, y, remove_modules, rm_edge_ch, sortmeth)  
 
         # -- correcting Doppler in LO
         skyfreq  = o.spectra['skyfreq'][numspec]
@@ -1575,12 +1586,14 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
             freqinfo['IFreqGrid'] = f.tolist()
             freqinfo['SubBandIndex'].append(ssb[1::3])
             freqinfo['SubBandIndex'].append(ssb[2::3])
+            freqinfo['ChannelsID'] = N.array(channels_id+1).tolist()
             o.spectra['ssb'].append(ssb)
             #o.spectra['ssb'].append({'ssb':ssb,'lofreq':lofreq})
         if numspec>1:
             freqinfo['LOFreq'].append(lofreq)
+            freqinfo['AppliedDopplerCorr'].append(-( skyfreq - restfreq ))
         channels.append(y.shape[0])
-        o.spectra['spectrum'].append(y.tolist())
+        o.spectra['spectrum'].append( N.around(y,decimals=3).tolist() )
     
     o.spectra['frequency'] = freqinfo 
     o.spectra['channels'] = channels

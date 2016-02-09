@@ -254,7 +254,7 @@ def run_donaletty(mjd,midlat,midlon,scanid):
         a.loadecmwfdata()
         zpt = a.makeprofile( midlat, midlon, date, scanid )       
         save_zptfile(zptpath,date,scanid,zpt) 
-
+    zpt['datetime'] = datetime2mjd(datetime.strptime(zpt['datetime'], '%Y-%m-%dT%H:%M:%S'))
     return zpt
 
 

@@ -411,6 +411,9 @@ class ScanPTZ(MethodView):
             datadictv4['Pressure'] = datadict['P']
             datadictv4['Temperature'] = datadict['T']
             datadictv4['Altitude'] = datadict['Z']
+            datadictv4['Latitude'] = datadict['latitude']
+            datadictv4['Longitude'] = datadict['longitude']
+            datadictv4['MJD'] = datadict['datetime']
             datadict = datadictv4
 
         return jsonify(datadict)

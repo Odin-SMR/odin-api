@@ -20,7 +20,7 @@ def read_mls_file(file,date,species,file_index):
     geolocation_fields = dict()
 
     f = h5py.File(ifile, 'r')
-    fdata = f['HDFEOS']['SWATHS']['O3']
+    fdata = f['HDFEOS']['SWATHS'][species]
 
     for item in fdata['Data Fields'].keys():
         data_fields[item] = N.array(fdata['Data Fields'][item])
