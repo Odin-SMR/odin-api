@@ -1,9 +1,21 @@
 import numpy as N
 from pg import DB
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import os
 
 class db(DB):
     def __init__(self):
-        DB.__init__(self,dbname='odin',user='odinop',host='localhost')
+        #DB.__init__(self,dbname='odin',user='odinop',host='localhost')
+        DB.__init__(self,dbname='odin',user='odinop',
+                    host='malachite.rss.chalmers.se',passwd='***REMOVED***')
+
+#class db1(DB):
+#    def __init__(self):
+#        DB.__init__(self,dbname='odin',user='odinop',host='localhost')
+        #DB.__init__(self,dbname='odin',user='odinop',
+        #            host='malachite.rss.chalmers.se',passwd='***REMOVED***')
+
 
 def sph2cart(az, el, r):
 
@@ -49,9 +61,10 @@ def get_odin_scans(con, date, freqmode):
     return result
 
 
-def get_comp_scans(instrument, mjd, dmjd, species, R0):
+def get_comp_scans(data, mjd, dmjd, R0):
 
-    data = {
+    okdata = {
+            'species'     : [],
             'file'        : [],
             'file_index'  : [],
             'latitude'    : [],
@@ -60,101 +73,206 @@ def get_comp_scans(instrument, mjd, dmjd, species, R0):
             'theta'       : [],
             }
 
-    if instrument == 'mls':
-        table = 'mls_scan'
-    elif instrument == 'mipas':
-        table = 'mipas_scan'
-   
-    query = con.query('''select file,file_index,latitude,longitude,mjd
-                 from {0} where mjd between {1}-{2} and {1}+{2}
-                 and species='{3}' '''.format(*[table, mjd, dmjd, species]))
-
-    result = query.dictresult()
-
-    for row in result:
-        for item in row.keys():
-            data[item].append(row[item])
+    ind = N.nonzero( ( data['mjd'] > mjd - dmjd ) & ( data['mjd'] < mjd + dmjd ) )[0]    
+    deg2rad = N.pi/180.0
+    for i_ind in ind:
+        for item in ['species', 'file', 'file_index', 'latitude', 'longitude', 'mjd']:
+            okdata[item].append(data[item][i_ind]) 
         # calculate position difference in degrees 
-        x, y, z = sph2cart(row['longitude']*deg2rad, row['latitude']*deg2rad, 1.0)
+        x, y, z = sph2cart(data['longitude'][i_ind]*deg2rad, data['latitude'][i_ind]*deg2rad, 1.0)
         R1 = N.array([x, y, z])
-        data['theta'].append( N.arccos( N.linalg.linalg.dot(R0, R1) ) * 180.0/N.pi )
+        okdata['theta'].append( N.arccos( N.linalg.linalg.dot(R0, R1) ) * 180.0/N.pi )
     
-    for item in data.keys():
-        data[item] = N.array( data[item] )     
+    for item in okdata.keys():
+        okdata[item] = N.array( okdata[item] )     
 
-    return data
+    return okdata
+
+
+def read_comp_file(instrument, species, mjd_i, current_file=[], data=[]):
+
+    mjd0 = datetime(1858,11,17)
+    date_i = mjd0 + relativedelta(days = mjd_i)
+
+    if instrument == 'mls':
+        file = 'Aura_MLS_scanpos_{0}_{1}{2:02}.txt'.format(*[species, date_i.year,date_i.month]) 
+    elif instrument == 'mipas':
+        file = 'Envisat_MIPAS_scanpos_{0}_{1}{2:02}.txt'.format(*[species, date_i.year,date_i.month])
+    elif instrument == 'smiles':
+        file = 'ISS_SMILES_scanpos_{0}_A_{1}{2:02}.txt'.format(*[species, date_i.year,date_i.month])
+
+    if file == current_file:
+        return file, data
+    
+    file_i = filepath + file
+    if not os.path.isfile(file_i):
+        return [],[]
+
+    f = open(file_i,'r')
+    lines = f.readlines()
+    data = {
+         'species'    : [],
+         'file'       : [],
+         'file_index' : [],
+         'latitude'   : [],
+         'longitude'  : [],
+         'mjd'        : [],
+           }
+
+    for line in lines:
+
+        parts = line.split()
+
+        data['species'].append( parts[0] )
+        data['file'].append( parts[1] )
+        data['file_index'].append( int(parts[2]) )
+        data['latitude'].append( float(parts[3]) )
+        data['longitude'].append( float(parts[4]) )
+        data['mjd'].append( float(parts[5]) )
+
+    for item in data.keys():
+        data[item] = N.array( data[item] )
+
+    f.close()
+
+    return file, data
+
+
+def get_collocation(instrument):
+
+    n = 1
+
+    con = db()
+    #con1 = db1()
+   
+    scaninfo = []
+    date0 = datetime(2009,10,1)
+    for day_i in range(200):
+        
+        date = date0 + relativedelta(days = day_i)
+        date = '{0}-{1:02}-{2:02}'.format(*[date.year,date.month,date.day])
+        print date        
+
+        odin_scans =  get_odin_scans(con, date, freqmode)
+        if len(odin_scans) == 0:
+            continue
+       
+
+        current_file = []
+        data = []
+        for scan in odin_scans:
+  
+            if scan['altstart']<0 or scan['altend']<0:
+                continue 
+
+            # calculate scan mean position
+            midlat,midlon = getscangeoloc( scan['latstart'], scan['lonstart'],
+                                       scan['latend'], scan['lonend'] )
+            deg2rad = N.pi/180.0
+            x0, y0, z0 = sph2cart(midlon*deg2rad, midlat*deg2rad, 1.0)
+            R0 = N.array([x0, y0, z0])
+            mjd = (scan['mjdstart'] + scan['mjdend']) / 2.0 
+
+            # search for candidate collocation scans
+        
+            # 1. read scan data from matching month
+            sourcefile, data = read_comp_file(instrument, species, mjd, current_file = current_file, data = data)
+            if sourcefile == []:
+                continue
+            else:
+                current_file = sourcefile
+                data = data     
+    
+            # 2. search in the data from matching month
+            okdata = get_comp_scans(data, mjd, dmjd, R0)
+            # okdata contains scans that matches in time
+            if okdata['mjd']==[]:
+                continue
+        
+            # identify the accepted co-locations
+            ind = N.nonzero( (okdata['theta']<dtheta) )[0] 
+            if ind.shape[0] == 0:
+                continue
+            # find the closest scan
+            tempind = N.argsort( okdata['theta'][ind] )
+
+            for i in [ind[tempind][0]]:
+                #Backend, Freqmode, ScanID, File, File_Index
+                temp = { 
+                  'date':         date,
+                  'backend':      backend,
+                  'freqmode':     freqmode,
+                  'scanid':       scan['scanid'],
+                  'altend':       scan['altend'],
+                  'altstart':     scan['altstart'],
+                  'latend':       scan['latend'],
+                  'latstart':     scan['latstart'],
+                  'lonend':       scan['lonend'],
+                  'lonstart':     scan['lonstart'],
+                  'mjdend':       scan['mjdend'],
+                  'mjdstart':     scan['mjdstart'],
+                  'numspec':      scan['numspec'],
+                  'sunzd':        scan['sunzd'],
+                  'datetime':     scan['datetime'],
+                  'instrument':   instrument,
+                  'file':         okdata['file'][i],
+                  'file_index':   okdata['file_index'][i],
+                  'latitude':     okdata['latitude'][i],
+                  'longitude':    okdata['longitude'][i],
+                  'mjd':          okdata['mjd'][i],
+                  'dmjd':         N.abs( okdata['mjd'][i]-mjd ),
+                  'dtheta':       okdata['theta'][i],
+                  'species':      species,   
+                   }
+                temp2 = [ 
+                             species, 
+                             okdata['file'][i], 
+                             okdata['file_index'][i], 
+                             okdata['latitude'][i],
+                             okdata['longitude'][i],
+                             okdata['mjd'][i],
+                             scan['sunzd'],
+                               ]
+                line = "{0}\t{1}\t{2}\t{3:7.2f}\t{4:7.2f}\t{5:7.4f}\t{6:7.2f}\n".format(*temp2)
+                scaninfo.append(line)
+                tempkeys = [temp['backend'],temp['freqmode'],temp['scanid'],temp['file'],temp['file_index']]
+                con.query('''delete from collocations 
+                         where backend='{0}' and freqmode={1} and scanid={2}
+                         and file='{3}' and file_index={4}
+                         '''.format(*tempkeys))
+                #print temp
+                con.insert('collocations',temp)
+                print date,n
+                n = n + 1
+    outfile ="/home/bengt/work/odin-api/src/scripts/test_{0}.txt".format(*[instrument])
+    print outfile
+    f = open(outfile, 'w')
+    f.writelines(scaninfo)
+    f.close() 
+           
+    con.close()
+    #con1.close()
 
 
 if __name__ == "__main__":
 
+
     # test freqmode and date below
     backend = 'AC1'
     freqmode = 2
-    date = '2012-01-01'
-    
-    instrument = 'mipas'
-    species = 'O3'
+    for species in ['HNO3','O3']:
 
-    # co-location criteria
-    dmjd = 0.125 # scans within 3 hours
-    dtheta = 1.0 # scans within 1 degree
+        # co-location criteria
+        dmjd = 1/24.0 # scans within 1 hours
+        dz = 300.0 #km
+        r = 6371.0 #Earth radius in km
+        dtheta = dz/(r*2*N.pi/360.0) # scans within dz km must be within an angle of dtheta
 
-    con = db()
 
-    odin_scans =  get_odin_scans(con, date, freqmode)
-
-    for scan in odin_scans:
-
-        # calculate scan mean position
-        midlat,midlon = getscangeoloc( scan['latstart'], scan['lonstart'],
-                                       scan['latend'], scan['lonend'] )
-        deg2rad = N.pi/180.0
-        x0, y0, z0 = sph2cart(midlon*deg2rad, midlat*deg2rad, 1.0)
-        R0 = N.array([x0, y0, z0])
-        mjd = (scan['mjdstart'] + scan['mjdend']) / 2.0 
-
-        # search for candidate colloocation scans
-        data = get_comp_scans(instrument, mjd, dmjd, species, R0)
-
-        # identify the accepted co-locations
-        ind = N.nonzero( (data['theta']<dtheta) )[0] 
-
-        for i in ind:
-            #Backend, Freqmode, ScanID, File, File_Index
-            temp = { 
-                'date':         date,
-                'backend':      backend,
-                'freqmode':     freqmode,
-                'scanid':       scan['scanid'],
-                'altend':       scan['altend'],
-                'altstart':     scan['altstart'],
-                'latend':       scan['latend'],
-                'latstart':     scan['latstart'],
-                'lonend':       scan['lonend'],
-                'lonstart':     scan['lonstart'],
-                'mjdend':       scan['mjdend'],
-                'mjdstart':     scan['mjdstart'],
-                'numspec':      scan['numspec'],
-                'sunzd':        scan['sunzd'],
-                'datetime':     scan['datetime'],
-                'instrument':   instrument,
-                'file':         data['file'][i],
-                'file_index':   data['file_index'][i],
-                'latitude':     data['latitude'][i],
-                'longitude':    data['longitude'][i],
-                'mjd':          data['mjd'][i],
-                'dmjd':         N.abs( data['mjd'][i]-mjd ),
-                'dtheta':       data['theta'][i],
-                'species':      species,   
-               }
-          
-            tempkeys = [temp['backend'],temp['freqmode'],temp['scanid'],temp['file'],temp['file_index']]
-
-            con.query('''delete from collocations 
-                     where backend='{0}' and freqmode={1} and scanid={2}
-                     and file='{3}' and file_index={4}
-                     '''.format(*tempkeys))
-            print temp
-            con.insert('collocations',temp)
-           
-    con.close()
+        filepath = '/home/bengt/work/odin-api/data/vds-data/scanpos/'
+        instrument = 'mls'
+        get_collocation(instrument)
+        instrument = 'smiles'
+        get_collocation(instrument)
+        instrument = 'mipas'
+        get_collocation(instrument)

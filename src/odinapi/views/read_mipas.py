@@ -5,12 +5,16 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
-def read_mipas_file(file, file_index):
+def read_mipas_file(file,date,species,file_index):
 
     file_index = int(file_index)
 
-    mipas_datapath = '/var/lib/odindata/MIPAS/'
-    #mipas_datapath = '/home/bengt/work/odin-api/data/MIPAS/'
+    mipas_datapath = '/vds-data/Envisat_MIPAS_Level2/{0}/V5'.format(*[species.upper()])
+    
+    year = date[0:4]
+    month = date[5:7]
+    mipas_datapath = "{0}/{1}/{2}/".format(*[mipas_datapath,year,month])
+    
     ifile = mipas_datapath + file
 
     data = dict()
@@ -19,18 +23,34 @@ def read_mipas_file(file, file_index):
     data = dict()
     for item in fgr.variables.keys():
         data[item] = N.array(fgr.variables[item][:])
-    fgr.close()
+
+
+    if fgr.variables['time'].units == 'days since 1970-1-1 0:0:0':
+        t0_unit = 1
+    elif fgr.variables['time'].units == 'julian days':
+        t0_unit =2 
 
     # transform the mipas date to MJD and add to dict
-    mjd = []
-    mipas_date0 = datetime(1970,1,1)
-    mjd0 = datetime(1858,11,17)
-    for time_i in data['time']:
-        date_i = mipas_date0 + relativedelta(days = time_i)
-        mjd_i = date_i - datetime(1858,11,17)
-        sec_per_day = 24*60*60.0
-        mjd.append( mjd_i.total_seconds()/sec_per_day )
-    data['MJD'] = N.array(mjd)
+    if t0_unit == 1:
+ 
+        mjd = []
+        mjd0 = datetime(1858,11,17)
+        mipas_date0 = datetime(1970,1,1)
+        for time_i in data['time']:
+            date_i = mipas_date0 + relativedelta(days = time_i)
+            mjd_i = date_i - datetime(1858,11,17)
+            sec_per_day = 24*60*60.0
+            mjd.append( mjd_i.total_seconds()/sec_per_day )
+        data['MJD'] = mjd
+        data['MJD'] = N.array(data['MJD'])
+
+    elif t0_unit == 2:
+
+        data['MJD'] =  N.array(data['time']) - 2400000.5
+
+
+    fgr.close()
+
 
     # select data from the given index
     s1 = data['time'].shape[0]

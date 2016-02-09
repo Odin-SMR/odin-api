@@ -11,7 +11,7 @@ from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
 from odinapi.views.smr_site import ViewFreqmodeInfoPlot
 from odinapi.views.data_info import FileInfo
 from odinapi.views.views import ScanPTZ, ScanAPR
-from odinapi.views.views import VdsInfo, VdsExtData
+from odinapi.views.views import VdsInfo, VdsFreqmodeInfo,VdsScanInfo,VdsInstrumentInfo,VdsDateInfo,VdsExtData
 from os import environ
 
 
@@ -101,11 +101,28 @@ class Odin(Flask):
             view_func=TimelineFreqmodeStatistics.as_view('timefmstatistics')
             )
         self.add_url_rule(
-            '/rest_api/<version>/vds/<backend>/<freqmode>/',
+            '/rest_api/<version>/vds/',
             view_func=VdsInfo.as_view('vdsinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/vds_external/<instrument>/<species>/<file>/'
+            '/rest_api/<version>/vds/<backend>/<freqmode>/',
+            view_func=VdsFreqmodeInfo.as_view('vdsfreqmodeinfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/vds/<backend>/<freqmode>/allscans',
+            view_func=VdsScanInfo.as_view('vdsScaninfo')
+            )
+
+        self.add_url_rule(
+            '/rest_api/<version>/vds/<backend>/<freqmode>/<species>/<instrument>/',
+            view_func=VdsInstrumentInfo.as_view('vdsinstrumentinfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/vds/<backend>/<freqmode>/<species>/<instrument>/<date>/',
+            view_func=VdsDateInfo.as_view('vdsdateinfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/vds_external/<instrument>/<species>/<date>/<file>/'
             '<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
             )

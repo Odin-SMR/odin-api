@@ -13,6 +13,7 @@ from level1b_scanlogdata_exporter import get_scan_logdata
 from read_apriori import get_apriori
 from read_mls import read_mls_file
 from read_mipas import read_mipas_file
+from read_smiles import read_smiles_file
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -440,24 +441,134 @@ class ScanAPR(MethodView):
 
 class VdsInfo(MethodView):
     """verification data set scan info"""
-    def get(self, version, backend, freqmode):
+    def get(self, version):
         """GET-method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        query_string = '''select * from collocations where backend='{0}' and 
-                          freqmode={1}'''.format(*[backend, freqmode])
-        datadict = self.gen_data(query_string, version, backend, freqmode)
+        query_string = '''select backend,freqmode,count(distinct(scanid)) from collocations group by backend,freqmode'''
+        datadict = self.gen_data(query_string, version)
         return jsonify(datadict)
 
-    def gen_data(self, query_string, version, backend, freqmode):
+    def gen_data(self, query_string, version):
 
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
         datadict = {'VDS': []}
-        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart', 
+        for row in result:
+            data = dict()
+            data['Backend'] = row['backend']
+            data['FreqMode'] = row['freqmode']
+            data['NumScan'] = row['count']
+            data['URL-collocation'] = '{0}rest_api/{1}/vds/{2}/{3}'.format(
+                    request.url_root,
+                    version,
+                    row['backend'],
+                    row['freqmode'])
+            data['URL-allscans'] = '{0}rest_api/{1}/vds/{2}/{3}/allscans'.format(
+                    request.url_root,
+                    version,
+                    row['backend'],
+                    row['freqmode'])
+
+            datadict['VDS'].append(data)
+        return datadict            
+
+class VdsFreqmodeInfo(MethodView):
+    """verification data set scan info"""
+    def get(self, version, backend, freqmode):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        query_string = '''  select backend,freqmode,species,instrument,count(*) 
+                            from collocations where backend='{0}' and freqmode={1} 
+                            group by backend,freqmode,species,instrument '''.format(*[backend, freqmode])
+        datadict = self.gen_data(query_string, version)
+        return jsonify(datadict)
+
+    def gen_data(self, query_string, version):
+
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        datadict = {'VDS': []}
+        for row in result:
+            data = dict()
+            data['Backend'] = row['backend']
+            data['FreqMode'] = row['freqmode']
+            data['Species'] = row['species']
+            data['Instrument'] = row['instrument']
+            data['NumScan'] = row['count']
+            data['URL'] = '{0}rest_api/{1}/vds/{2}/{3}/{4}/{5}'.format(
+                    request.url_root,
+                    version,
+                    row['backend'],
+                    row['freqmode'],
+                    row['species'],
+                    row['instrument'],)
+            datadict['VDS'].append(data)
+        return datadict
+
+
+class VdsInstrumentInfo(MethodView):
+    """verification data set scan info"""
+    def get(self, version, backend, freqmode, instrument, species):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        query_string = '''  select date,backend,freqmode,species,instrument,count(*) 
+                            from collocations where backend='{0}' and freqmode={1} and species='{2}' and instrument='{3}' 
+                            group by date,backend,freqmode,species,instrument order by date'''.format(*[backend, freqmode, species, instrument])
+        datadict = self.gen_data(query_string, version)
+        return jsonify(datadict)
+
+    def gen_data(self, query_string, version):
+
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        datadict = {'VDS': []}
+        for row in result:
+            data = dict()
+            data['Date'] = row['date']
+            data['Backend'] = row['backend']
+            data['FreqMode'] = row['freqmode']
+            data['Species'] = row['species']
+            data['Instrument'] = row['instrument']
+            data['NumScan'] = row['count']
+            data['URL'] = '{0}rest_api/{1}/vds/{2}/{3}/{4}/{5}/{6}'.format(
+                    request.url_root,
+                    version,
+                    row['backend'],
+                    row['freqmode'],
+                    row['species'],
+                    row['instrument'],
+                    row['date'],)
+            datadict['VDS'].append(data)
+        return datadict
+
+
+
+class VdsDateInfo(MethodView):
+    """verification data set scan info"""
+    def get(self, version, backend, freqmode, species, instrument, date):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        query_string = '''select * from collocations where backend='{0}' and 
+                          freqmode={1} and species='{2}' and instrument='{3}' and date='{4}' '''.format(*[backend, freqmode, species, instrument, date])
+        datadict = self.gen_data(query_string, version, backend, freqmode, species, instrument, date)
+        return jsonify(datadict)
+
+    def gen_data(self, query_string, version, backend, freqmode, species, instrument,date):
+
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        datadict = {'VDS': []}
+        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart',
                  'LonEnd', 'LonStart', 'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime']
-        lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index', 
+        lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species', 'File', 'File_Index',
                  'DMJD', 'DTheta']
         species_list = [
             'BrO',
@@ -508,7 +619,7 @@ class VdsInfo(MethodView):
             odin = dict()
             for item in lista1:
                 odin[item] = row[item.lower()]
-            collocation = dict()             
+            collocation = dict()
             for item in lista2:
                 collocation[item] = row[item.lower()]
             data['OdinInfo'] = odin
@@ -541,35 +652,141 @@ class VdsInfo(MethodView):
                             row['scanid']
                             )
             data['URLS']['''URL-{0}-{1}'''.format(row['instrument'],row['species'])] = (
-                 '{0}rest_api/{1}/vds_external/{2}/{3}/{4}/{5}').format(
+                 '{0}rest_api/{1}/vds_external/{2}/{3}/{4}/{5}/{6}').format(
                  request.url_root,
                  version,
                  row['instrument'],
                  row['species'],
+                 row['date'],
                  row['file'],
                  row['file_index']
                  )
             datadict['VDS'].append(data)
         con.close()
-        return datadict  
+        return datadict
+
+
+class VdsScanInfo(MethodView):
+    """verification data set scan info"""
+    def get(self, version, backend, freqmode):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        query_string = '''select distinct(scanid),date,freqmode,backend,altend,altstart,latend,latstart,lonend,lonstart,mjdend,mjdstart,numspec,sunzd 
+                          from collocations where backend='{0}' and freqmode={1}'''.format(*[backend, freqmode])
+        datadict = self.gen_data(query_string, version, backend, freqmode)
+        return jsonify(datadict)
+
+    def gen_data(self, query_string, version, backend, freqmode):
+
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        datadict = {'VDS': []}
+        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd', 'AltStart', 'LatEnd', 'LatStart', 
+                 'LonEnd', 'LonStart', 'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD']
+        species_list = [
+            'BrO',
+            'Cl2O2',
+            'CO',
+            'HCl',
+            'HO2',
+            'NO2',
+            'OCS',
+            'C2H2',
+            'ClO',
+            'H2CO',
+            'HCN',
+            'HOBr',
+            'NO',
+            'OH',
+            'C2H6',
+            'ClONO2',
+            'H2O2',
+            'HCOOH',
+            'HOCl',
+            'O2',
+            'SF6',
+            'CH3Cl',
+            'ClOOCl',
+            'H2O',
+            'HF',
+            'N2',
+            'O3',
+            'SO2',
+            'CH3CN',
+            'CO2',
+            'H2S',
+            'HI',
+            'N2O',
+            'OBrO',
+            'CH4',
+            'COF2',
+            'HBr',
+            'HNO3',
+            'NH3',
+            'OClO',
+        ]
+
+        data = dict()
+        for row in result:
+            odin = dict()
+            
+            for item in lista1:
+                odin[item] = row[item.lower()]
+            data['Info'] = odin
+            data['URLS'] = dict()
+            data['URLS']['URL-spectra'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}'.format(
+                    request.url_root,
+                    version,
+                    backend,
+                    freqmode,
+                    row['scanid'])
+            data['URLS']['URL-ptz'] = (
+                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
+                        request.url_root,
+                        version,
+                        row['date'],
+                        backend,
+                        freqmode,
+                        row['scanid']
+                        )
+            for species in species_list:
+                data['URLS']['''URL-apriori-{0}'''.format(species)] = (
+                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
+                            request.url_root,
+                            version,
+                            species,
+                            row['date'],
+                            backend,
+                            freqmode,
+                            row['scanid']
+                            )
+            datadict['VDS'].append(data)
+        con.close()
+        return datadict
+
+
+
 
 
 class VdsExtData(MethodView):
     """display verification data set data from external instruments"""
-    def get(self, version, instrument, species ,file, file_index):
+    def get(self, version, instrument, species , date, file, file_index):
         """GET-method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        datadict = self.gen_data(instrument, species, file, file_index)        
+        datadict = self.gen_data(instrument, species, date, file, file_index)        
         return jsonify(datadict)
 
-    def gen_data(self, instrument, species, file, file_index):
+    def gen_data(self, instrument, species, date, file, file_index):
         
         if instrument == 'mls':
-            data = read_mls_file(file,file_index)
+            data = read_mls_file(file,date,species,file_index)
         elif instrument == 'mipas':
-            data = read_mipas_file(file,file_index)
-  
+            data = read_mipas_file(file,date,species,file_index)
+        elif instrument == 'smiles':
+            data = read_smiles_file(file,date,species,file_index)
         else:
             abort(404)
 
