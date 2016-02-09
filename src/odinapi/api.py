@@ -1,17 +1,16 @@
 """A simple datamodel implementation"""
 
 from flask import Flask
-from odinapi.views.views import DateInfo, DateBackendInfo
-from odinapi.views.views_cached import DateInfoCached, PeriodInfoCached
+from odinapi.views.views import (DateInfo, DateBackendInfo, ScanSpec,
+                                 FreqmodeInfo, ScanPTZ, ScanAPR, VdsInfo,
+                                 VdsExtData)
+from odinapi.views.views_cached import (DateInfoCached, DateBackendInfoCached,
+                                        FreqmodeInfoCached, PeriodInfoCached)
 from odinapi.views.statistics import (FreqmodeStatistics,
                                       TimelineFreqmodeStatistics)
-from odinapi.views.views import ScanSpec, FreqmodeInfo
 from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
-                                    ViewLevel1Stats,)
-from odinapi.views.smr_site import ViewFreqmodeInfoPlot
+                                    ViewLevel1Stats, ViewFreqmodeInfoPlot)
 from odinapi.views.data_info import FileInfo
-from odinapi.views.views import ScanPTZ, ScanAPR
-from odinapi.views.views import VdsInfo, VdsExtData
 from os import environ
 
 
@@ -30,12 +29,12 @@ class Odin(Flask):
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/',
-            view_func=DateBackendInfo.as_view('backendinfo')
+            view_func=DateBackendInfoCached.as_view('backendinfo')
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/'
             '<int:freqmode>/',
-            view_func=FreqmodeInfo.as_view('scaninfo')
+            view_func=FreqmodeInfoCached.as_view('scaninfo')
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/',
