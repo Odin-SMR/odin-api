@@ -15,13 +15,21 @@ do
     then
       for day in {01..31..1}
       do
+        LOCALDIR="${LOCALSTORAGE}/${year}/${month}/"
+        echo ${LOCALDIR}
+        mkdir -p $LOCALDIR
+
         filepath="/SAGE_III/g3assp.004/${year}.${month}.${day}"
         file="g3a.ssp.*v04.00"
         URL="${FTP_SERVER}:${filepath}/${file}"
-        LOCALDIR="${LOCALSTORAGE}/${year}/${month}/"
         echo ${URL}
-        echo ${LOCALDIR}
-        mkdir -p $LOCALDIR
+        wget --user=$USER --password=$PASSWORD --backups=0 \
+             --directory-prefix=$LOCALDIR $URL
+
+        filepath="/SAGE_III/g3alsp.004/${year}.${month}.${day}"
+        file="g3a.lsp.*v04.00"
+        URL="${FTP_SERVER}:${filepath}/${file}"
+        echo ${URL}
         wget --user=$USER --password=$PASSWORD --backups=0 \
              --directory-prefix=$LOCALDIR $URL
       done
