@@ -5,8 +5,6 @@ PASSWORD="bengt.rydberg@molflow.com"
 
 LOCALSTORAGE=$HOME/"Documents/Work/ODIN/vds/data/Meteor3M_SAGEIII_Level2/v04"
 
-shopt -s nullglob
-
 for year in {2002..2005..1}
 do
   for month in {00..12..1}
