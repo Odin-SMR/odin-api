@@ -9,8 +9,8 @@ def nanitize(f):
 
     maximum = 2**31 - 1
 
-    def _decoration():
-        data = f()
+    def _decoration(self):
+        data = f(self)
         return np.where(data >= maximum, np.nan, data)
 
     return _decoration
@@ -22,7 +22,13 @@ class Sage3Data(object):
 
     @property
     def datetimes_iso(self):
-        return [x.isoformat() for x in self.datetimes]
+        iso = []
+        for dt in self.datetimes:
+            try:
+                iso.append(dt.isoformat())
+            except AttributeError:
+                iso.append(dt)
+        return iso
 
     @property
     def datetimes(self):
@@ -110,13 +116,13 @@ class Sage3Data(object):
 
     def _parse_timestamp(self, timestamp):
         date = str(timestamp.astype(np.int)[0])
-        year = date[0: 4]
-        month = date[4: 6]
-        day = date[6: 8]
+        year = int(date[0: 4])
+        month = int(date[4: 6])
+        day = int(date[6: 8])
 
         time = str(timestamp.astype(np.int)[1])
-        hour = time[0: 2]
-        minute = time[2: 4]
-        second = time[4: 6]
+        hour = int(time[0: 2])
+        minute = int(time[2: 4])
+        second = int(time[4: 6])
 
         return datetime(year, month, day, hour, minute, second)
