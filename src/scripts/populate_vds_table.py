@@ -65,7 +65,7 @@ def setup_arguments():
 
 def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
          verbose=False):
-    """Script to populate database with 'cached'info.
+    """Script to populate database with 'cached' info.
 
     Walks backwards from end_date to start_date."""
     max_retries = 3
