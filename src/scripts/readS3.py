@@ -20,6 +20,15 @@ class Sage3Data(object):
     def __init__(self, filename):
         self._hfile = h5py.File(filename)
 
+    def __enter__(self):
+        return self
+
+    def __del__(self):
+        self._hfile.close()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._hfile.close()
+
     @property
     def datetimes_iso(self):
         iso = []
@@ -62,7 +71,7 @@ class Sage3Data(object):
 
     @property
     @nanitize
-    def temperatures(self):
+    def temperature(self):
         return np.array([x[0] for x in self._getTempAndPressureProfiles()])
 
     @property
