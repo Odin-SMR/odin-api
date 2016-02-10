@@ -98,12 +98,6 @@ class Sage3Data(object):
 
     @property
     @nanitize
-    def water_vapour(self):
-        """Water vapour concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getWaterProfiles()])
-
-    @property
-    @nanitize
     def nitrogen_dioxide(self):
         """Nitrogen Dioxide concentration in cm ** -3"""
         return np.array([x[0] for x in self._getNitrogenDioxideProfiles()])
@@ -124,11 +118,6 @@ class Sage3Data(object):
                 ['Section 5.2A - Mesospheric Ozone profiles']
                 ['Mesospheric Ozone profiles'].value)
 
-    def _getWaterProfiles(self):
-        return (self._hfile['Section 5.0 - Altitude-based Data']
-                ['Section 5.3 - Water Vapor profiles']
-                ['Water Vapor profiles'].value)
-
     def _getNitrogenDioxideProfiles(self):
         return (self._hfile['Section 5.0 - Altitude-based Data']
                 ['Section 5.4 - Nitrogen Dioxide profiles']
@@ -146,3 +135,38 @@ class Sage3Data(object):
         second = int(time[4: 6])
 
         return datetime(year, month, day, hour, minute, second)
+
+
+class Sage3Solar(Sage3Data):
+    @property
+    @nanitize
+    def water_vapour(self):
+        """Water vapour concentration in cm ** -3"""
+        return np.array([x[0] for x in self._getWaterProfiles()])
+
+    def _getWaterProfiles(self):
+        return (self._hfile['Section 5.0 - Altitude-based Data']
+                ['Section 5.3 - Water Vapor profiles']
+                ['Water Vapor profiles'].value)
+
+
+class Sage3Lunar(Sage3Data):
+    @property
+    @nanitize
+    def chlorine_dioxide(self):
+        """Chlorine Dioxide concentration in cm ** -3"""
+        return np.array([x[0] for x in self._getChlorineDioxideProfiles()])
+
+    def nitrogen_trioxide(self):
+        """Nitrogen Trioxide concentration in cm ** -3"""
+        return np.array([x[0] for x in self._getNitrogenTrioxideProfiles()])
+
+    def _getChlorineDioxideProfiles(self):
+        return (self._hfile['Section 5.0 - Altitude-based Data']
+                ['Section 5.3 - Chlorine Dioxide profiles']
+                ['Chlorine Dioxide profiles'].value)
+
+    def _getNitrogenTrioxideProfiles(self):
+        return (self._hfile['Section 5.0 - Altitude-based Data']
+                ['Section 5.3 - Nitrogen Trioxide profiles']
+                ['Nitrogen Trioxide profiles'].value)
