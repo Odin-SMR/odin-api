@@ -48,7 +48,7 @@ class Sage3Data(object):
                 mjds.append(mjd.total_seconds() * day_per_sec)
             except TypeError:
                 mjds.append(dt)
-        return mjds
+        return np.array(mjds)
 
     @property
     def datetimes(self):
