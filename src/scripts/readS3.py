@@ -23,9 +23,6 @@ class Sage3Data(object):
     def __enter__(self):
         return self
 
-    def __del__(self):
-        self._hfile.close()
-
     def __exit__(self, exc_type, exc_value, traceback):
         self._hfile.close()
 
