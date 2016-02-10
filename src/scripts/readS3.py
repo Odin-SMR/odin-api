@@ -37,6 +37,20 @@ class Sage3Data(object):
         return iso
 
     @property
+    def datetimes_mjd(self):
+        mjd0 = datetime(1858, 11, 17)
+        sec_per_day = 24 * 60 * 60
+        day_per_sec = 1.0 / sec_per_day
+        mjds = []
+        for dt in self.datetimes:
+            try:
+                mjd = dt - mjd0
+                mjds.append(mjd.total_seconds() * day_per_sec)
+            except TypeError:
+                mjds.append(dt)
+        return mjds
+
+    @property
     def datetimes(self):
         timestamps = self.raw_timestamps
         datetimes = []
