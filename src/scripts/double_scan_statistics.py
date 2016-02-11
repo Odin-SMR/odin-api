@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 """
 Part of odin-api, tools to make it happen
+
+This script is meant to gather data to diagnose the problems with
+"double scans", which occurs when no heat  load measurement is
+carried out between turns.
 """
 
 import json
