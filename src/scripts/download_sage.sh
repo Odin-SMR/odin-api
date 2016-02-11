@@ -15,7 +15,7 @@ do
       echo ${LOCALDIR}
       mkdir -p $LOCALDIR
 
-      filepath="/SAGE_III/g3assp.007/${year}.${month}.${day}"
+      filepath="/SAGE_III/g3assp.003/${year}.${month}.${day}"
       file="g3a.ssp.*v04.00"
       URL="${FTP_SERVER}:${filepath}/${file}"
       echo ${URL}
