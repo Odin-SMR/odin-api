@@ -4,6 +4,7 @@ Part of odin-api, tools to make it happen
 """
 
 import numpy as np
+import json
 from requests import get
 from requests.exceptions import HTTPError
 from datetime import date, timedelta
@@ -125,7 +126,8 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             print current_date, "# OK"
         current_date += step
 
-    save(dataDict)
+    with open("double_scans.json", 'w') as fp:
+        json.dump(dataDict, fp)
 
 if __name__ == '__main__':
     parser = setup_arguments()
