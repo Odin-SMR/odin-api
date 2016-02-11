@@ -157,16 +157,32 @@ class Sage3Lunar(Sage3Data):
         """Chlorine Dioxide concentration in cm ** -3"""
         return np.array([x[0] for x in self._getChlorineDioxideProfiles()])
 
+    @property
+    @nanitize
     def nitrogen_trioxide(self):
         """Nitrogen Trioxide concentration in cm ** -3"""
         return np.array([x[0] for x in self._getNitrogenTrioxideProfiles()])
 
-    def _getChlorineDioxideProfiles(self):
-        return (self._hfile['Section 5.0 - Altitude-based Data']
-                ['Section 5.3 - Chlorine Dioxide profiles']
-                ['Chlorine Dioxide profiles'].value)
+    def _getTempAndPressureProfiles(self):
+        return (self._hfile['Section 6.1 - Temperature_pressure profiles']
+                ['Temperature_pressure profiles'].value)
+
+    def _getOzoneProfiles(self):
+        try:
+            return (self._hfile['Section 6.2 - Ozone profiles ']
+                    ['Ozone profiles'].value)
+        except KeyError:
+            return (self._hfile['Section 6.2 - Ozone profiles']
+                    ['Ozone profiles'].value)
+
+    def _getNitrogenDioxideProfiles(self):
+        return (self._hfile['Section 6.3 - Nitrogen Dioxide profiles']
+                ['Nitrogen Dioxide profiles'].value)
 
     def _getNitrogenTrioxideProfiles(self):
-        return (self._hfile['Section 5.0 - Altitude-based Data']
-                ['Section 5.3 - Nitrogen Trioxide profiles']
-                ['Nitrogen Trioxide profiles'].value)
+        return (self._hfile['Section 6.4 - Nitrogen Trioxide profiles']
+                ['Nitrogen Dioxide profiles'].value)
+
+    def _getChlorineDioxideProfiles(self):
+        return (self._hfile['Section 6.5 - OClO profiles']
+                ['OClO profiles'].value)
