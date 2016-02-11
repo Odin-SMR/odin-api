@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from utils import copyemptydict
 
+
 class Scan_data_exporter():
     def __init__(self,backend,con):
         self.backend=backend
@@ -58,6 +59,42 @@ class Scan_data_exporter():
                and freqmode={2}
                order by stw asc,intmode asc,spectype asc'''.format(*temp))
         result2=query2.dictresult()
+        if result2 == []:
+            query2=self.con.query('''
+               select ac_cal_level1b.stw,ac_cal_level1b.backend,orbit,mjd,lst,intmode,
+               spectra,alevel,version,
+               channels,spectype,skyfreq,lofreq,restfreq,maxsuppression,
+               sourcemode,freqmode,sbpath,latitude,longitude,altitude,tspill,
+               skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,qerror,
+               gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,inttime,
+               ac_cal_level1b.frontend,hotloada,hotloadb,lo,sig_type,
+               ac_cal_level1b.soda,ac_level0.frontend as ac0_frontend
+               from ac_cal_level1b
+               join attitude_level1  using (backend,stw)
+               join ac_level0  using (backend,stw)
+               join shk_level1 on ac_cal_level1b.stw=shk_level1.stw and ac_cal_level1b.backend=shk_level1.backend
+               where ac_cal_level1b.stw={1} and ac_cal_level1b.backend='{0}' and version=8
+               and freqmode={2}
+               order by stw asc,intmode asc,spectype asc'''.format(*temp))
+            result2=query2.dictresult()
+            if result2 == []:
+                query2=self.con.query('''
+                   select ac_cal_level1b.stw,ac_cal_level1b.backend,orbit,mjd,lst,intmode,
+                   spectra,alevel,version,
+                   channels,spectype,skyfreq,lofreq,restfreq,maxsuppression,
+                   sourcemode,freqmode,sbpath,latitude,longitude,altitude,tspill,
+                   skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,qerror,
+                   gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,inttime,
+                   ac_cal_level1b.frontend,hotloada,hotloadb,lo,sig_type,
+                   ac_cal_level1b.soda,ac_level0.frontend as ac0_frontend
+                   from ac_cal_level1b
+                   left join attitude_level1  using (backend,stw)
+                   join ac_level0  using (backend,stw)
+                   join shk_level1 on ac_cal_level1b.stw=shk_level1.stw and ac_cal_level1b.backend=shk_level1.backend
+                   where ac_cal_level1b.stw={1} and ac_cal_level1b.backend='{0}' and version=8
+                   and freqmode={2}
+                   order by stw asc,intmode asc,spectype asc'''.format(*temp))
+                result2=query2.dictresult()
 
         #extract all reference spectrum data for the scan
         if self.backend == 'AC1':
@@ -79,10 +116,9 @@ class Scan_data_exporter():
                              '''.format(*[stw1,stw2,stw_offset]))
 
         self.refdata = query.dictresult()
-         
 
         if result==[] or result2==[] or self.refdata==[]:
-            print '''could not extract all necessary data for '{0}' in scan {1}'''.format(*temp) 
+            print '''1: could not extract all necessary data for '{0}' in scan {1}'''.format(*temp) 
             return 0
 
 
@@ -154,8 +190,11 @@ class Scan_data_exporter():
 
             for item in ['qtarget','qachieved','qerror','gpspos',
                      'gpsvel','sunpos','moonpos']:
-                spec[item]=eval(
+                try:
+                    spec[item]=eval(
                            res[item].replace( '{','(').replace('}',')') )   
+                except:
+                    spec[item]=()
 
             ssb_fq1=eval(res['ssb_fq'].replace('{','(').replace('}',')'))
             spec['ssb_fq']= numpy.array(ssb_fq1)*1e6
@@ -230,8 +269,10 @@ class Scan_data_exporter():
                 'SUMMER','Summer mesosphere').replace(
                 'DYNAM','Transport')+\
                 ' FM='+str(res['freqmode']) 
-                          
-            spec['level'] = res['alevel']+res['version']
+            try:              
+                spec['level'] = res['alevel']+res['version']
+            except:
+                spec['level'] = 0
 
             spec['version'] = 8
             spec['quality'] = 0
@@ -538,10 +579,10 @@ class Quality_control():
          # check if moon is in the main beam
          qual = 0x0200
          MOONMB = 0x0200
-         ind1 = N.nonzero( (self.specdata['skybeamhit'] & MOONMB == MOONMB))[0]
+         ind1 = N.nonzero( (self.specdata['skybeamhit'][2::] & MOONMB == MOONMB))[0]
          if ind1.shape[0]<>0:
-             self.quality[ind] = self.quality[ind] + qual
-
+             self.quality[ind1+2] = self.quality[ind1+2] + qual
+            
     def filter_references(self):
         # identify reference signals that we do not trust,
         # 1. we only trust signals from SK1 (skybeam 1) if the 
@@ -1265,7 +1306,7 @@ def plot_scan(backend,calstw,spectra):
 
     fig = plt.figure(figsize = (15,8))
     mjd0 = datetime(1858,11,17)
-    datei = mjd0 + relativedelta(days = spectra['mjd'][0])
+    datei = mjd0 + relativedelta(days = spectra['mjd'][2])
 
     fig.suptitle('''Scan logdata for {0} : {2} : scan-ID {1} : {3}'''.format(*[backend, calstw, spectra['sourcemode'][0],datei]))
     font = {'family' : 'sans-serif',
@@ -1292,8 +1333,8 @@ def plot_scan(backend,calstw,spectra):
 
     #plot estimated noise
     ax1 = plt.subplot2grid((9,6), (2,0), colspan=2,rowspan=1)
-    noise = spectra['tsys']/numpy.sqrt(spectra['efftime']*1e6)
-    plt.plot(dx,noise[2::],'b.')
+    noise = spectra['tsys'][2::]/numpy.sqrt(spectra['efftime'][2::]*1e6)
+    plt.plot(dx[2::],noise[2::],'b.')
     ax1.grid(True)
     ax1.minorticks_on()
     ax1.yaxis.set_label_text('Noise [K]')
@@ -1302,14 +1343,14 @@ def plot_scan(backend,calstw,spectra):
 
     #plot latitude and longitude
     ax1 = plt.subplot2grid((8,6), (3,0), colspan=2,rowspan=1)
-    plt.plot(spectra['longitude'],spectra['latitude'],'b.')
+    plt.plot(spectra['longitude'][2::],spectra['latitude'][2::],'b.')
     ax1.grid(True)
     ax1.minorticks_on()
-    xmin = numpy.floor(numpy.min(spectra['longitude']))
-    xmax = numpy.ceil(numpy.max(spectra['longitude']))
+    xmin = numpy.floor(numpy.min(spectra['longitude'][2::]))
+    xmax = numpy.ceil(numpy.max(spectra['longitude'][2::]))
     plt.xlim([xmin,xmax])
-    ymin = numpy.floor(numpy.min(spectra['latitude']))
-    ymax = numpy.ceil(numpy.max(spectra['latitude']))
+    ymin = numpy.floor(numpy.min(spectra['latitude'][2::]))
+    ymax = numpy.ceil(numpy.max(spectra['latitude'][2::]))
     plt.ylim([ymin,ymax])
     ax1.yaxis.set_label_text('Lat. [Deg.]')
     ax1.xaxis.set_label_text('Lon. [Deg]')  
@@ -1600,6 +1641,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
 
     #o.spectra is a dictionary containing the relevant data
     return o.spectra
+
 
 
 
