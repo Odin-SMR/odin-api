@@ -3,14 +3,87 @@
 Part of odin-api, tools to make it happen
 """
 
-import numpy as np
 import json
+import numpy as np
 from requests import get
 from requests.exceptions import HTTPError
 from datetime import date, timedelta
 from argparse import ArgumentParser
 from dateutil import parser as date_parser
 from time import sleep
+
+freqmodeColours = {
+    # Websafe colours:
+    '0':  '#101010',  # 'Black',
+    '1':  '#E6E6FA',  # 'Lavender',
+    '2':  '#4169E1',  # 'RoyalBlue',
+    '8':  '#800080',  # 'Purple',
+    '13': '#B22222',  # 'FireBrick',
+    '14': '#228B22',  # 'ForestGreen',
+    '17': '#8B4513',  # 'SaddleBrown',
+    '19': '#C0C0C0',  # 'Silver',
+    '21': '#87CEEB',  # 'SkyBlue',
+    '22': '#000080',  # 'Navy',
+    '23': '#663399',  # 'RebeccaPurple',
+    '24': '#008080',  # 'Teal',
+    '25': '#FFD700',  # 'Gold',
+    '29': '#4682B4',  # 'SteelBlue',
+    '102': '#6495ED',  # 'CornFlowerBlue',
+    '113': '#CD5C5C',  # 'IndianRed',
+    '119': '#DCDCDC',  # 'Gainsboro',
+    '121': '#B0E0E6',  # 'PowderBlue',
+}
+
+
+def make_plots(jsonfile):
+    from matplotlib import pyplot as plt
+    from matplotlib.dates import datestr2num
+
+    with open(jsonfile, 'r') as fp:
+        data = json.load(fp)
+
+    fig1 = plt.figure(1)
+    fig1.clf()
+    ax1 = fig1.gca()
+    ax1.set_title('Number of outliers over time')
+
+    fig2 = plt.figure(2)
+    fig2.clf()
+    ax2 = fig2.gca()
+    ax2.set_title('Fraction of outliers over time')
+
+    outliers_max = 0
+    ratios_max = 0
+    for fm in data.keys():
+        dates = datestr2num(data[fm]['Dates'])
+        numspecs = np.array(data[fm]['NumSpec'])
+        outliers = (np.array(data[fm]['OutliersHiStd']) +
+                    np.array(data[fm]['OutliersLoStd']))
+        ratios = (1.0 * outliers) / numspecs
+
+        n_numspecs = numspecs.sum()
+        n_outliers = outliers.sum()
+        ratio = (1.0 * n_outliers) / n_numspecs
+
+        if outliers.max() > outliers_max:
+            outliers_max = outliers.max()
+
+        if ratios.max() > ratios_max:
+            ratios_max = ratios.max()
+
+        colour = freqmodeColours[fm]
+        ax1.plot(dates, outliers, '.-', color=colour,
+                 label='FM {0}: {1}'.format(fm, n_outliers))
+
+        ax2.plot(dates, ratios, '.-', color=colour,
+                 label='FM {0}: {1:.2g}'.format(fm, ratio))
+
+    ax1.set_ylim(ymax=2*outliers_max)
+    ax2.set_ylim(ymax=2*ratios_max)
+    ax1.legend(ncol=2)
+    ax2.legend(ncol=2)
+
+    return data
 
 
 def setup_arguments():
@@ -61,12 +134,16 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             print "# FAILED:", current_date, url_day
             continue
 
+        if verbose:
+            print "# Got data for {0}".format(current_date.isoformat())
+
         json_data_day = response.json()
         for freqmode in json_data_day['Info']:
+            fm = freqmode["FreqMode"]
             try:
-                dataDict[freqmode]
+                dataDict[fm]
             except KeyError:
-                dataDict[freqmode] = {}
+                dataDict[fm] = {}
 
             url_scan = (
                 'http://odin.rss.chalmers.se/'
@@ -89,6 +166,9 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             if (retries == 0):
                 print "# FAILED:", current_date, url_day
                 continue
+            if verbose:
+                print "# Got data for {0}: FM {1}".format(
+                    current_date.isoformat(), fm)
 
             json_data_scan = response.json()
             numspecs = []
@@ -102,31 +182,31 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             outliers_hi_scale = np.where(numspecs > median * scale)[0]
             outliers_lo_scale = np.where(numspecs < median / scale)[0]
             try:
-                dataDict[freqmode]['Dates'].append(current_date.isoformat())
-                dataDict[freqmode]['NumSpec'].append(numspecs.size)
-                dataDict[freqmode]['OutliersHiStd'].append(
-                    outliers_hi_std.size)
-                dataDict[freqmode]['OutliersLoStd'].append(
-                    outliers_lo_std.size)
-                dataDict[freqmode]['OutliersHiScale'].append(
-                    outliers_hi_scale.size)
-                dataDict[freqmode]['OutliersLoScale'].append(
-                    outliers_lo_scale.size)
+                dataDict[fm]['Dates'].append(current_date.isoformat())
+                dataDict[fm]['NumSpec'].append(numspecs.size)
+                dataDict[fm]['OutliersHiStd'].append(outliers_hi_std.size)
+                dataDict[fm]['OutliersLoStd'].append(outliers_lo_std.size)
+                dataDict[fm]['OutliersHiScale'].append(outliers_hi_scale.size)
+                dataDict[fm]['OutliersLoScale'].append(outliers_lo_scale.size)
             except KeyError:
-                dataDict[freqmode]['Dates'] = [current_date.isoformat()]
-                dataDict[freqmode]['NumSpec'] = [numspecs.size]
-                dataDict[freqmode]['OutliersHiStd'] = [outliers_hi_std.size]
-                dataDict[freqmode]['OutliersLoStd'] = [outliers_lo_std.size]
-                dataDict[freqmode]['OutliersHiScale'] = [
-                    outliers_hi_scale.size]
-                dataDict[freqmode]['OutliersLoScale'] = [
-                    outliers_lo_scale.size]
+                dataDict[fm]['Dates'] = [current_date.isoformat()]
+                dataDict[fm]['NumSpec'] = [numspecs.size]
+                dataDict[fm]['OutliersHiStd'] = [outliers_hi_std.size]
+                dataDict[fm]['OutliersLoStd'] = [outliers_lo_std.size]
+                dataDict[fm]['OutliersHiScale'] = [outliers_hi_scale.size]
+                dataDict[fm]['OutliersLoScale'] = [outliers_lo_scale.size]
 
         if verbose:
-            print current_date, "# OK"
+            print "# {0} OK".format(current_date.isoformat())
+
         current_date += step
 
-    with open("double_scans.json", 'w') as fp:
+    filename = "double_scans_{0}_-_{1}_n{2}.json".format(
+        start_date.isoformat(), end_date.isoformat(), nstd)
+    if verbose:
+        print "# All OK, will now write to file {0}".format(filename)
+
+    with open(filename, 'w') as fp:
         json.dump(dataDict, fp)
 
 if __name__ == '__main__':
