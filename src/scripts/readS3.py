@@ -153,15 +153,15 @@ class Sage3Solar(Sage3Data):
 class Sage3Lunar(Sage3Data):
     @property
     @nanitize
-    def chlorine_dioxide(self):
-        """Chlorine Dioxide concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getChlorineDioxideProfiles()])
-
-    @property
-    @nanitize
     def nitrogen_trioxide(self):
         """Nitrogen Trioxide concentration in cm ** -3"""
         return np.array([x[0] for x in self._getNitrogenTrioxideProfiles()])
+
+    @property
+    @nanitize
+    def chlorine_dioxide(self):
+        """Chlorine Dioxide concentration in cm ** -3"""
+        return np.array([x[0] for x in self._getChlorineDioxideProfiles()])
 
     def _getTempAndPressureProfiles(self):
         return (self._hfile['Section 6.1 - Temperature_pressure profiles']
