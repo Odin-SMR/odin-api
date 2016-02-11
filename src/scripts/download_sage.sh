@@ -4,7 +4,6 @@ USER="anonymous"
 PASSWORD="bengt.rydberg@molflow.com"
 
 LOCALSTORAGE="/odin/external/vds-data/Meteor3M_SAGEIII_Level2/"
-LOCALSTORAGE="/home/skymandr/Documents/Work/ODIN/vds/data/Meteor3M_SAGEIII_Level2/"
 
 for year in {2002..2005..1}
 do
