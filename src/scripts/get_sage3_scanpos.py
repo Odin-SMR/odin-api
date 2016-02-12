@@ -4,6 +4,21 @@ from glob import glob as glob
 from readS3 import Sage3Solar, Sage3Lunar
 
 
+def get_mean_geolocation(latitudes, longitudes):
+    deg2rad = np.pi / 180
+    theta = (-latitudes + 0.5 * np.pi) * deg2rad
+    phi = longitudes * deg2rad
+
+    x = np.nanmean(np.sin(theta) * np.cos(phi))
+    y = np.nanmean(np.sin(theta) * np.sin(phi))
+    z = np.nanmean(np.cos(theta))
+
+    latitude = -(np.arccos(z) - 0.5 * np.pi) / deg2rad
+    longitude = np.atan2(y, x) / deg2rad
+
+    return latitude, longitude
+
+
 if __name__ == "__main__":
     sage_datapath = ("/odin/external/vds-data/Meteor3M_SAGEIII_Level2")
     vdspath = ("/odin/external/vds-data/scanpos")
@@ -32,16 +47,16 @@ if __name__ == "__main__":
 
                 for theFile in event_dict['files']:
                     data = event_dict['data'](theFile)
+                    latitude, longitude = get_mean_geolocation(data.latitudes,
+                                                               data.longitudes)
 
                     for species in event_dict['species']:
                         temp = [
                             species,
                             os.path.basename(theFile),
                             0,
-                            (np.nansum(data.latitudes * data.datetimes_mjd) /
-                             np.nansum(data.datetimes_mjd)),
-                            (np.nansum(data.longitudes * data.datetimes_mjd) /
-                             np.nansum(data.datetimes_mjd)),
+                            latitude,
+                            longitude,
                             np.nanmean(data.datetimes_mjd)
                             ]
                         line = ("{0}\t{1}\t{2}\t{3:7.2f}\t{4:7.2f}\t{5:7.4f}"
