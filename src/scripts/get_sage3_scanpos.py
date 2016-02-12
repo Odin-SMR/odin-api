@@ -14,7 +14,7 @@ def get_mean_geolocation(latitudes, longitudes):
     z = np.nanmean(np.cos(theta))
 
     latitude = -(np.arccos(z) - 0.5 * np.pi) / deg2rad
-    longitude = np.atan2(y, x) / deg2rad
+    longitude = np.arctan2(y, x) / deg2rad
 
     return latitude, longitude
 
