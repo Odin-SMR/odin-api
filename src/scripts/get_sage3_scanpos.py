@@ -6,7 +6,7 @@ from readS3 import Sage3Solar, Sage3Lunar
 
 def get_mean_geolocation(latitudes, longitudes):
     deg2rad = np.pi / 180
-    theta = (-latitudes + 0.5 * np.pi) * deg2rad
+    theta = (-latitudes + 90) * deg2rad
     phi = longitudes * deg2rad
 
     x = np.nanmean(np.sin(theta) * np.cos(phi))
