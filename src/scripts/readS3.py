@@ -129,10 +129,10 @@ class Sage3Data(object):
         month = int(date[4: 6])
         day = int(date[6: 8])
 
-        time = str(timestamp.astype(np.int)[1])
-        hour = int(time[0: 2])
-        minute = int(time[2: 4])
-        second = int(time[4: 6])
+        time = timestamp.astype(np.int)[1]
+        hour = time / 10000
+        minute = (time - hour * 10000) / 100
+        second = time - hour * 10000 - minute * 100
 
         return datetime(year, month, day, hour, minute, second)
 
