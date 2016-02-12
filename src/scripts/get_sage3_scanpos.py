@@ -72,4 +72,4 @@ if __name__ == "__main__":
                                                    species, year, month))
                     print outfile
                     with open(outfile, 'w') as f:
-                        f.writelines(scaninfo)
+                        f.writelines(scaninfo[species])
