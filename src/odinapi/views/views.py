@@ -444,6 +444,40 @@ class ScanAPR(MethodView):
         return jsonify(datadict)
 
 
+class VdsInfo(MethodView):
+    """verification data set scan info"""
+    def get(self, version):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        query_string = '''select backend, freqmode, count(distinct(scanid))
+                          from collocations group by backend,freqmode'''
+        datadict = self.gen_data(query_string, version)
+        return jsonify(datadict)
+
+    def gen_data(self, query_string, version):
+
+        con = DatabaseConnector()
+        query = con.query(query_string)
+        result = query.dictresult()
+        datadict = {'VDS': []}
+        for row in result:
+            data = dict()
+            data['Backend'] = row['backend']
+            data['FreqMode'] = row['freqmode']
+            data['NumScan'] = row['count']
+            data['URL-collocation'] = '{0}rest_api/{1}/vds/{2}/{3}'.format(
+                request.url_root,
+                version,
+                row['backend'],
+                row['freqmode'])
+            data['URL-allscans'] = ('{0}rest_api/{1}/vds/{2}/{3}/allscans'
+                                    ).format(request.url_root, version,
+                                             row['backend'], row['freqmode'])
+            datadict['VDS'].append(data)
+        return datadict
+
+
 class VdsFreqmodeInfo(MethodView):
     """verification data set scan info"""
     def get(self, version, backend, freqmode):
