@@ -759,8 +759,10 @@ class VdsExtData(MethodView):
             data = read_mipas_file(filename, date, species, file_index)
         elif instrument == 'smiles':
             data = read_smiles_file(filename, date, species, file_index)
-        elif instrument == 'sage-III':
-            data = read_sageIII_file(filename, date, species, file_index)
+        elif instrument == 'sage-III_solar':
+            data = read_sageIII_file(filename, date, species, 'solar')
+        elif instrument == 'sage-III_lunar':
+            data = read_sageIII_file(filename, date, species, 'lunar')
         else:
             abort(404)
 

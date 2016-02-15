@@ -1,6 +1,52 @@
+import os
 import h5py
 import numpy as np
 from datetime import datetime
+
+
+def read_sageIII_file(filename, date, species, event_type):
+    """Convenience function for getting all data from a Sage III file"""
+    # Handle case of species -- special case for OClO:
+    species = species.upper()
+    if species == "OCLO":
+        species = "OClO"
+
+    # Construct filename:
+    versions = {'lunar': 'v03', 'solar': 'v04'}
+
+    sageIII_datapath = '/vds-data/Meteor3M_SAGEIII_Level2/'
+
+    year = date[0:4]
+    month = date[5:7]
+    sageIII_datapath = os.path.join(sageIII_datapath, year, month,
+                                    versions[event_type])
+    sageIII_file = os.path.join(sageIII_datapath, filename)
+
+    # Open correct file object:
+    data = object()
+    dataObject = {'lunar': Sage3Lunar, 'solar': Sage3Solar}
+    speciesData = {'O3': data.ozone,
+                   'H2O': data.water_vapour,
+                   'NO2': data.nitrogen_dioxide,
+                   'NO3': data.nitroge_trioxide,
+                   'OClO': data.chlorine_dioxide
+                   }
+
+    data_dict = {}
+    with dataObject[event_type](sageIII_file) as data:
+        # Generate data dict
+        data_dict['FileName'] = filename
+        data_dict['Instrument'] = "Meteor-3M SAGE III"
+        data_dict['EventType'] = event_type
+        data_dict['MJD'] = data.datetimes_mjd
+        data_dict['Latitudes'] = data.latitudes
+        data_dict['Longitudes'] = data.longitudes
+        data_dict['Pressure'] = data.pressure
+        data_dict['Temperature'] = data.temperature
+        data_dict[species] = speciesData[species]
+
+    # Return data
+    return data_dict
 
 
 def nanitize(f):
