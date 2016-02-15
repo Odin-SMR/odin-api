@@ -55,10 +55,10 @@ def nanitize(f):
 
     def _decoration(self):
         data = f(self)
-        try:
-            maximum = np.finfo(data.dtype).max
-        except ValueError:
-            maximum = np.iinfo(data.dtype).max
+        if data.dtype == np.int32:
+            maximum = np.iinfo(np.int32).max
+        else:
+            maximum = np.finfo(np.float32).max
 
         return np.where(data == maximum, np.nan, data)
 
@@ -143,13 +143,14 @@ class Sage3Data(object):
     @nanitize
     def ozone(self):
         """Ozone concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getOzoneProfiles()])
+        return np.array([[x[0], x[1], x[4]] for x in self._getOzoneProfiles()])
 
     @property
     @nanitize
     def nitrogen_dioxide(self):
         """Nitrogen Dioxide concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getNitrogenDioxideProfiles()])
+        return np.array([[x[0], x[1], x[4]] for x in
+                         self._getNitrogenDioxideProfiles()])
 
     def _getGroundTrackSpaceTimeCoordinates(self):
         """Get ground track times, longitudes and latitudes for the event in
@@ -202,7 +203,7 @@ class Sage3Solar(Sage3Data):
     @nanitize
     def water_vapour(self):
         """Water vapour concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getWaterProfiles()])
+        return np.array([[x[0], x[1], x[2]] for x in self._getWaterProfiles()])
 
     def _getWaterProfiles(self):
         return (self._hfile['Section 5.0 - Altitude-based Data']
@@ -213,15 +214,23 @@ class Sage3Solar(Sage3Data):
 class Sage3Lunar(Sage3Data):
     @property
     @nanitize
+    def ozone(self):
+        """Ozone concentration in cm ** -3"""
+        return np.array([[x[0], x[1], x[2]] for x in self._getOzoneProfiles()])
+
+    @property
+    @nanitize
     def nitrogen_trioxide(self):
         """Nitrogen Trioxide concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getNitrogenTrioxideProfiles()])
+        return np.array([[x[0], x[1], x[2]] for x in
+                         self._getNitrogenTrioxideProfiles()])
 
     @property
     @nanitize
     def chlorine_dioxide(self):
         """Chlorine Dioxide concentration in cm ** -3"""
-        return np.array([x[0] for x in self._getChlorineDioxideProfiles()])
+        return np.array([[x[0], x[1], x[2]] for x in
+                         self._getChlorineDioxideProfiles()])
 
     def _getTempAndPressureProfiles(self):
         return (self._hfile['Section 6.1 - Temperature_pressure profiles']
