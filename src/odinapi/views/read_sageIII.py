@@ -53,11 +53,14 @@ def nanitize(f):
     """A decorator function for replacing undefined values in returned
     nd-arrays with nan."""
 
-    maximum = 2**31 - 1
-
     def _decoration(self):
         data = f(self)
-        return np.where(data >= maximum, np.nan, data)
+        try:
+            maximum = np.finfo(data.dtype).max
+        except ValueError:
+            maximum = np.iinfo(data.dtype).max
+
+        return np.where(data == maximum, np.nan, data)
 
     return _decoration
 
