@@ -132,12 +132,14 @@ class Sage3Data(object):
     @property
     @nanitize
     def temperature(self):
-        return np.array([x[0] for x in self._getTempAndPressureProfiles()])
+        return np.array([[x[0], x[1]] for x in
+                         self._getTempAndPressureProfiles()])
 
     @property
     @nanitize
     def pressure(self):
-        return np.array([x[2] for x in self._getTempAndPressureProfiles()])
+        return np.array([[x[2], x[3]] for x in
+                         self._getTempAndPressureProfiles()])
 
     @property
     @nanitize
