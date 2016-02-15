@@ -116,7 +116,7 @@ function updatePlot(date, back, freq) {
         var lon = [];
         var scan = [];
         var opt = {};
-        var currDate = moment(date, 'YYYY-MM-DD');
+        var currDate = moment.utc(date, 'YYYY-MM-DD');
         $.getJSON(
             '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
             function(data) {
@@ -124,7 +124,7 @@ function updatePlot(date, back, freq) {
                 $.each( data.Info, function (index, data) {
                     time_point = moment;
                     datestring = data.DateTime;
-                    var momentDate = moment(datestring);
+                    var momentDate = moment.utc(datestring);
                     sun.push( [momentDate.toDate(), data.SunZD] );
                     lat.push( [momentDate.toDate(), data.LatStart] );
                     lon.push( [momentDate.toDate(), data.LonStart] );
