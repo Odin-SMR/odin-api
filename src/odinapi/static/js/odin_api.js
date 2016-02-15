@@ -308,7 +308,7 @@ function getStartView(date) {
             if (data.Info.length > 0) {
                 startView = date;
             } else if (date.isAfter('2001-02-20')) {
-                startView = getStartView(date.subtract(1, 'months'));
+                startView = getStartView(date.subtract(7, 'days'));
             } else {
                 startView = moment('2001-02-20');
             }
