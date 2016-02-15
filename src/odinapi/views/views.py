@@ -14,6 +14,7 @@ from read_apriori import get_apriori
 from read_mls import read_mls_file
 from read_mipas import read_mipas_file
 from read_smiles import read_smiles_file
+from read_sageIII import read_sageIII_file
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -758,7 +759,8 @@ class VdsExtData(MethodView):
             data = read_mipas_file(filename, date, species, file_index)
         elif instrument == 'smiles':
             data = read_smiles_file(filename, date, species, file_index)
-
+        elif instrument == 'sage-III':
+            data = read_sageIII_file(filename, date, species, file_index)
         else:
             abort(404)
 
