@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from glob import glob as glob
-from readS3 import Sage3Solar, Sage3Lunar
+from read_sageIII import Sage3Solar, Sage3Lunar
 
 
 def get_mean_geolocation(latitudes, longitudes):
