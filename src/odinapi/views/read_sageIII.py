@@ -113,7 +113,7 @@ class Sage3Data(object):
     @property
     @nanitize
     def raw_timestamps(self):
-        timestamps = np.array([[x[0], x[1]] for x in
+        timestamps = np.array([[x[0][0], x[0][1]] for x in
                                self._getSpaceTimeCoordinates()])
         return timestamps
 
@@ -121,13 +121,13 @@ class Sage3Data(object):
     @nanitize
     def latitudes(self):
         """Tangential latitudes for scan in degrees"""
-        return np.array([x[2] for x in self._getSpaceTimeCoordinates()])
+        return np.array([x[0][2] for x in self._getSpaceTimeCoordinates()])
 
     @property
     @nanitize
     def longitudes(self):
         """Tangential longitudes for scan in degrees"""
-        return np.array([x[3] for x in self._getSpaceTimeCoordinates()])
+        return np.array([x[0][3] for x in self._getSpaceTimeCoordinates()])
 
     @property
     @nanitize
@@ -151,11 +151,22 @@ class Sage3Data(object):
         """Nitrogen Dioxide concentration in cm ** -3"""
         return np.array([x[0] for x in self._getNitrogenDioxideProfiles()])
 
-    def _getSpaceTimeCoordinates(self):
-        """Get times, longitudes and latitudes for the event in the file."""
+    def _getGroundTrackSpaceTimeCoordinates(self):
+        """Get ground track times, longitudes and latitudes for the event in
+        the file."""
         return (self._hfile['Section 4.0 - Event Identification']
                 ['Section 4.3 - Ground Track Data Over This Event']
                 ['Section 4.3 - Ground Track Data Over This Event'].value)
+
+    def _getSpaceTimeCoordinates(self):
+        """Get measurement times, longitudes and latitudes for the event in
+        the file."""
+        return (self._hfile['Section 4.0 - Event Identification']
+                ['Section 4.1 - Science Data Start Information']
+                ['Section 4.1 - Science Data Start Information'].value,
+                self._hfile['Section 4.0 - Event Identification']
+                ['Section 4.2 - Science Data End Information']
+                ['Section 4.2 - Science Data End Information'].value)
 
     def _getTempAndPressureProfiles(self):
         return (self._hfile['Section 5.0 - Altitude-based Data']
