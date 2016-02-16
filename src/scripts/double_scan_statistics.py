@@ -111,7 +111,6 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
 
     max_retries = 3
     nstd = 3
-    scale = np.sqrt(2)
     sleep_time = 60
     step = timedelta(days=1)
     current_date = start_date
@@ -183,22 +182,24 @@ def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
             std = np.std(numspecs)
             outliers_hi_std = np.where(numspecs > median + nstd * std)[0]
             outliers_lo_std = np.where(numspecs < median - nstd * std)[0]
-            outliers_hi_scale = np.where(numspecs > median * scale)[0]
-            outliers_lo_scale = np.where(numspecs < median / scale)[0]
+            outliers_hi_std_ids = [json_data_scan["Info"][x]["ScanID"]
+                                   for x in outliers_hi_std]
+            outliers_lo_std_ids = [json_data_scan["Info"][x]["ScanID"]
+                                   for x in outliers_lo_std]
             try:
                 dataDict[fm]['Dates'].append(current_date.isoformat())
                 dataDict[fm]['NumSpec'].append(numspecs.size)
                 dataDict[fm]['OutliersHiStd'].append(outliers_hi_std.size)
                 dataDict[fm]['OutliersLoStd'].append(outliers_lo_std.size)
-                dataDict[fm]['OutliersHiScale'].append(outliers_hi_scale.size)
-                dataDict[fm]['OutliersLoScale'].append(outliers_lo_scale.size)
+                dataDict[fm]['OutliersHiStdIDs'].append(outliers_hi_std_ids)
+                dataDict[fm]['OutliersLoStdIDs'].append(outliers_lo_std_ids)
             except KeyError:
                 dataDict[fm]['Dates'] = [current_date.isoformat()]
                 dataDict[fm]['NumSpec'] = [numspecs.size]
                 dataDict[fm]['OutliersHiStd'] = [outliers_hi_std.size]
                 dataDict[fm]['OutliersLoStd'] = [outliers_lo_std.size]
-                dataDict[fm]['OutliersHiScale'] = [outliers_hi_scale.size]
-                dataDict[fm]['OutliersLoScale'] = [outliers_lo_scale.size]
+                dataDict[fm]['OutliersHiStdIDs'] = [outliers_hi_std_ids]
+                dataDict[fm]['OutliersLoStdIDs'] = [outliers_lo_std_ids]
 
         if verbose:
             print "# {0} OK".format(current_date.isoformat())
