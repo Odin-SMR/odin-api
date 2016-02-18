@@ -28,6 +28,7 @@ class Scan_data_exporter():
               altitude,skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,
               qerror,gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,
               inttime,ac_level1b.frontend,hotloada,hotloadb,lo,sig_type,
+              imageloada,imageloadb,
               ac_level1b.soda,ac_level0.frontend as ac0_frontend
               from ac_level1b
               join attitude_level1  using (backend,stw)
@@ -49,6 +50,7 @@ class Scan_data_exporter():
                skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,qerror,
                gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,inttime,
                ac_cal_level1b.frontend,hotloada,hotloadb,lo,sig_type,
+               imageloada,imageloadb,
                ac_cal_level1b.soda,ac_level0.frontend as ac0_frontend
                from ac_cal_level1b
                join attitude_level1  using (backend,stw)
@@ -68,6 +70,7 @@ class Scan_data_exporter():
                skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,qerror,
                gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,inttime,
                ac_cal_level1b.frontend,hotloada,hotloadb,lo,sig_type,
+               imageloada,imageloadb,
                ac_cal_level1b.soda,ac_level0.frontend as ac0_frontend
                from ac_cal_level1b
                join attitude_level1  using (backend,stw)
@@ -86,6 +89,7 @@ class Scan_data_exporter():
                    skybeamhit,ra2000,dec2000,vsource,qtarget,qachieved,qerror,
                    gpspos,gpsvel,sunpos,moonpos,sunzd,vgeo,vlsr,ssb_fq,inttime,
                    ac_cal_level1b.frontend,hotloada,hotloadb,lo,sig_type,
+                   imageloada,imageloadb,
                    ac_cal_level1b.soda,ac_level0.frontend as ac0_frontend
                    from ac_cal_level1b
                    left join attitude_level1  using (backend,stw)
@@ -182,11 +186,15 @@ class Scan_data_exporter():
                      'maxsuppression','sbpath','latitude','longitude',
                      'altitude','skybeamhit','ra2000','dec2000',
                      'vsource','sunzd','vgeo','vlsr','inttime',
-                     'hotloada','lo','freqmode','soda','ac0_frontend']:
+                     'hotloada','lo','freqmode','soda','ac0_frontend','imageloada']:
                 spec[item] = res[item]
 
             if spec['hotloada']==0:
                 spec['hotloada'] = res['hotloadb']
+
+            if spec['imageloada']==0:
+                spec['imageloada'] = res['imageloadb']
+
 
             for item in ['qtarget','qachieved','qerror','gpspos',
                      'gpsvel','sunpos','moonpos']:
@@ -673,7 +681,7 @@ def specdict():
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
              'pointer', 'tspill','ssb_fq','ac0_frontend', 
-             'calstw','frequency','zerolagvar','ssb',]
+             'calstw','frequency','zerolagvar','ssb','imageloada']
 
     for item in lista:
         spec[item] = []
@@ -1483,7 +1491,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
         return {}
     o.decode_data()
 
- 
+
     #perform calibration step2 for target spectrum
     c = Calibration_step2(con)
     for ind,s in enumerate(o.specdata):
@@ -1569,6 +1577,37 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     q.run_control()    
     o.spectra['quality'] = q.quality
     o.spectra['zerolagvar'] = q.zerolagvar
+
+    # perform a frequency correction
+    # based on Donalds study: 
+    # correction is dependent of frontend
+    C = {  
+       '1' : [-9.77071337e-08, -3.04935334e-10,   1.00004369 ],
+       '2' : [-2.85146234e-08, -6.44075856e-10,   1.00005892 ],
+      '19' : [-4.93032042e-08, -6.11110969e-10,   1.00005802 ],
+      '13' : [-7.20429255e-08, -9.88146910e-10,   1.00007687 ],
+        }
+    C['av'] = []
+    for ind in range(3):
+        C['av'].append( (C['2'][ind] + C['19'][ind])/2.0 )    
+
+    for ind,lofreq in enumerate(o.spectra['lo']):
+        k = 1.0
+        if o.spectra['frontend'][ind] == 1:
+            # 555: use results derived for FM 13
+            fm = '13'
+        elif o.spectra['frontend'][ind] == 2:
+            # 495: use results derived from FM 1
+            fm = '1'
+        elif o.spectra['frontend'][ind] == 4:
+            # 549: use average results derived from FM 2 and 19
+            fm = 'av'
+        else:
+            # do not  do any correction for the non-locked frontends 
+            continue  
+        k = C[fm][0] * o.spectra['imageloada'][ind] + C[fm][1] * o.spectra['mjd'][ind] + C[fm][2]
+        o.spectra['lofreq'][ind] = lofreq * k
+
 
     # add frequency vector to each spectrum in the o.spectra structure
     rm_edge_ch = True
