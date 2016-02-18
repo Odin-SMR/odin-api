@@ -777,26 +777,26 @@ class VdsScanInfo(MethodView):
 
 class VdsExtData(MethodView):
     """display verification data set data from external instruments"""
-    def get(self, version, instrument, species, date, filename, file_index):
+    def get(self, version, instrument, species, date, file, file_index):
         """GET-method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        datadict = self.gen_data(instrument, species, date, filename,
+        datadict = self.gen_data(instrument, species, date, file,
                                  file_index)
         return jsonify(datadict)
 
-    def gen_data(self, instrument, species, date, filename, file_index):
+    def gen_data(self, instrument, species, date, file, file_index):
 
         if instrument == 'mls':
-            data = read_mls_file(filename, date, species, file_index)
+            data = read_mls_file(file, date, species, file_index)
         elif instrument == 'mipas':
-            data = read_mipas_file(filename, date, species, file_index)
+            data = read_mipas_file(file, date, species, file_index)
         elif instrument == 'smiles':
-            data = read_smiles_file(filename, date, species, file_index)
-        elif instrument == 'sage-III_solar':
-            data = read_sageIII_file(filename, date, species, 'solar')
+            data = read_smiles_file(fil, date, species, file_index)
+        elif instrument == 'sageIII':#_solar':
+            data = read_sageIII_file(file, date, species, 'solar')
         elif instrument == 'sage-III_lunar':
-            data = read_sageIII_file(filename, date, species, 'lunar')
+            data = read_sageIII_file(file, date, species, 'lunar')
         else:
             abort(404)
 
