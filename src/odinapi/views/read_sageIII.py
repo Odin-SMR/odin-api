@@ -61,6 +61,10 @@ def nanitize(f):
 class Sage3Data(object):
     def __init__(self, filename):
         self._hfile = h5py.File(filename)
+        self.speciesData = {
+            'O3': self.ozone,
+            'NO2': self.nitrogen_dioxide
+            }
 
     def __enter__(self):
         return self
