@@ -23,14 +23,7 @@ def read_sageIII_file(filename, date, species, event_type):
     sageIII_file = os.path.join(sageIII_datapath, filename)
 
     # Open correct file object:
-    data = object()
     dataObject = {'lunar': Sage3Lunar, 'solar': Sage3Solar}
-    speciesData = {'O3': data.ozone,
-                   'H2O': data.water_vapour,
-                   'NO2': data.nitrogen_dioxide,
-                   'NO3': data.nitroge_trioxide,
-                   'OClO': data.chlorine_dioxide
-                   }
 
     data_dict = {}
     with dataObject[event_type](sageIII_file) as data:
@@ -38,12 +31,12 @@ def read_sageIII_file(filename, date, species, event_type):
         data_dict['FileName'] = filename
         data_dict['Instrument'] = "Meteor-3M SAGE III"
         data_dict['EventType'] = event_type
-        data_dict['MJD'] = data.datetimes_mjd
-        data_dict['Latitudes'] = data.latitudes
-        data_dict['Longitudes'] = data.longitudes
-        data_dict['Pressure'] = data.pressure
-        data_dict['Temperature'] = data.temperature
-        data_dict[species] = speciesData[species]
+        data_dict['MJD'] = data.datetimes_mjd.tolist()
+        data_dict['Latitudes'] = data.latitudes.tolist()
+        data_dict['Longitudes'] = data.longitudes.tolist()
+        data_dict['Pressure'] = data.pressure.tolist()
+        data_dict['Temperature'] = data.temperature.tolist()
+        data_dict[species] = data.speciesData[species].tolist()
 
     # Return data
     return data_dict
@@ -132,14 +125,12 @@ class Sage3Data(object):
     @property
     @nanitize
     def temperature(self):
-        return np.array([[x[0], x[1]] for x in
-                         self._getTempAndPressureProfiles()])
+        return np.array([x[0] for x in self._getTempAndPressureProfiles()])
 
     @property
     @nanitize
     def pressure(self):
-        return np.array([[x[2], x[3]] for x in
-                         self._getTempAndPressureProfiles()])
+        return np.array([x[2] for x in self._getTempAndPressureProfiles()])
 
     @property
     @nanitize
@@ -201,6 +192,14 @@ class Sage3Data(object):
 
 
 class Sage3Solar(Sage3Data):
+    def __init__(self):
+        super(Sage3Solar, self).__init__()
+        self.speciesData = {
+            'O3': self.ozone,
+            'H2O': self.water_vapour,
+            'NO2': self.nitrogen_dioxide
+            }
+
     @property
     @nanitize
     def water_vapour(self):
@@ -214,6 +213,15 @@ class Sage3Solar(Sage3Data):
 
 
 class Sage3Lunar(Sage3Data):
+    def __init__(self):
+        super(Sage3Lunar, self).__init__()
+        self.speciesData = {
+            'O3': self.ozone,
+            'NO2': self.nitrogen_dioxide,
+            'NO3': self.nitroge_trioxide,
+            'OClO': self.chlorine_dioxide
+            }
+
     @property
     @nanitize
     def ozone(self):
