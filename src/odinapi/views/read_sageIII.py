@@ -196,8 +196,8 @@ class Sage3Data(object):
 
 
 class Sage3Solar(Sage3Data):
-    def __init__(self):
-        super(Sage3Solar, self).__init__()
+    def __init__(self, filename):
+        super(Sage3Solar, self).__init__(filename)
         self.speciesData = {
             'O3': self.ozone,
             'H2O': self.water_vapour,
@@ -217,8 +217,8 @@ class Sage3Solar(Sage3Data):
 
 
 class Sage3Lunar(Sage3Data):
-    def __init__(self):
-        super(Sage3Lunar, self).__init__()
+    def __init__(self, filename):
+        super(Sage3Lunar, self).__init__(filename)
         self.speciesData = {
             'O3': self.ozone,
             'NO2': self.nitrogen_dioxide,
