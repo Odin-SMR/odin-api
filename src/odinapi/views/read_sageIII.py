@@ -31,9 +31,12 @@ def read_sageIII_file(filename, date, species, event_type):
         data_dict['FileName'] = filename
         data_dict['Instrument'] = "Meteor-3M SAGE III"
         data_dict['EventType'] = event_type
-        data_dict['MJD'] = data.datetimes_mjd.tolist()
-        data_dict['Latitudes'] = data.latitudes.tolist()
-        data_dict['Longitudes'] = data.longitudes.tolist()
+        data_dict['MJDStart'] = data.datetimes_mjd.tolist()[0]
+        data_dict['MJDEnd'] = data.datetimes_mjd.tolist()[1]
+        data_dict['LatStart'] = data.latitudes.tolist()[0]
+        data_dict['LatEnd'] = data.latitudes.tolist()[1]
+        data_dict['LongStart'] = data.longitudes.tolist()[0]
+        data_dict['LongEnd'] = data.longitudes.tolist()[1]
         data_dict['Pressure'] = data.pressure.tolist()
         data_dict['Temperature'] = data.temperature.tolist()
         data_dict[species] = data.speciesData[species].tolist()
