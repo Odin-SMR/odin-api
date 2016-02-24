@@ -1,0 +1,72 @@
+from pyhdf import VS, HDF
+import os
+from glob import glob as glob
+
+fm_dict = {
+    1: {"dir": "SM_AC2ab", "species": ['ClO', 'O3', 'N2O']},
+    2: {"dir": "SM_AC1e",  "species": ['HNO3', 'O3']},
+    8: {"dir": "IM_AC2ab", "species": ['O3', 'H2O']},
+    13: {"dir": "HM_AC1c", "species": ['O3', 'H2O']},
+    14: {"dir": "HM_AC2c", "species": ['CO', 'O3']},
+    17: {"dir": "IM_AC2c", "species": ['O3', 'H2O']},
+    19: {"dir": "IM_AC1c", "species": ['O3', 'H2O']},
+    21: {"dir": "IM_AC1de", "species": ['NO', 'O3', 'H2O']},
+}
+
+L2P_path = "/odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-1"
+VDS_path = "/odin/external/vds-data/scanpos"
+instrument = "Odin-SMR-Qsmr-2-1"
+
+
+if __name__ == "__main__":
+    for fm in fm_dict.keys():
+        files = glob(os.path.join(L2P_path, fm_dict[fm]['dir']), '*.L2P')
+        for f in files:
+            # Open HDF file:
+            hdf = HDF.HDF(f)
+            vs = VS.VS(hdf)
+
+            # Set up attachments and indexes:
+            gloc = vs.attatch('Geolocation')
+            i_gloc = {x: i for i, x in enumerate(gloc._fields)}
+            retr = vs.attatch('Retrieval')
+            i_retr = {x: i for i, x in enumerate(retr._fields)}
+
+            # Extract meta-data:
+            for r0 in gloc[:]:
+                latitude = r0[i_gloc['Latitude']]
+                longitude = r0[i_gloc['Longitude']]
+                year = r0[i_gloc['Year']]
+                month = r0[i_gloc['Month']]
+                mjd = r0[i_gloc['MJD']]
+                for species in fm_dict[fm]:
+                    index2 = [x[i_retr['ID2']] for x in retr[:]
+                              if (x[i_retr['ID1']] == r0[i_gloc['ID1']] and
+                                  x[i_retr['SpeciesNames']].startswith(species)
+                                  )
+                              ][0]
+
+                    # Construct contents:
+                    temp = [
+                        species,
+                        os.path.basename(f),
+                        index2,
+                        latitude,
+                        longitude,
+                        mjd
+                        ]
+                    line = ("{0}\t{1}\t{2}\t{3:7.2f}\t{4:7.2f}\t{5:7.4f}"
+                            "\n".format(*temp))
+
+                    # Construct filename:
+                    filename = "{0}/{1}_scanpos_{2:02}_{3}_{4}{5:02}".format(
+                        VDS_path, instrument, fm, species, year, month)
+                    # Write to file (append):
+                    with open(filename, 'a') as fp:
+                        fp.write(line)
+
+            # Clean up:
+            gloc.detach()
+            retr.detach()
+            vs.end()
+            hdf.close()
