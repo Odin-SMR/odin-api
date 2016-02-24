@@ -46,7 +46,7 @@ def read_osiris_file(file,date,species,file_index):
     for item in data['data_fields'].keys():
         data['data_fields'][item] = data['data_fields'][item][file_index].tolist()
     for item in data['geolocation_fields'].keys():
-        if item not in ['Altitude']:
+        if item not in ['Altitude','RTModel_Altitude']:
             data['geolocation_fields'][item] = data['geolocation_fields'][item][file_index].tolist()    
         else:
             data['geolocation_fields'][item] = data['geolocation_fields'][item].tolist()
