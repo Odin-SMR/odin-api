@@ -48,8 +48,11 @@ create table collocations(
  DMJD real,
  DTheta real,
  created timestamp default current_timestamp,
- constraint pk_collocations_scan primary key (Backend, Freqmode, ScanID, File, File_Index)
+ constraint pk_collocations_scan primary key (Backend, Freqmode, ScanID, File, Species, File_Index)
 );
+
+ALTER TABLE collocations drop constraint pk_collocations_scan;
+alter table collocations add constraint pk_collocations_scan primary key (Backend, Freqmode, ScanID, File, Species, File_Index);
 
 
 
