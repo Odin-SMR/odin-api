@@ -17,21 +17,25 @@ def read_qsmr(filename, species, index2):
     data = vs.attach('Data')
     i_data = {x: i for i, x in enumerate(data._fields)}
 
-    # Get the index in the geoloc table associate with the scan:
-    index1 = [x[i_retr['ID1']] for x in retr[:]
-              if x[i_retr['ID2']] == index2][0]
+    try:
+        # Get the index in the geoloc table associated with the scan:
+        index1 = [x[i_retr['ID1']] for x in retr[:]
+                  if x[i_retr['ID2']] == index2][0]
 
-    # Extract geolocation data to dictionary:
-    gloc_dict = {}
-    Geolocation = [x for x in gloc[:] if x[i_gloc['ID1']] == index1][0]
-    for key in i_gloc.keys():
-        gloc_dict[key] = Geolocation[i_gloc[key]]
+        # Extract geolocation data to dictionary:
+        gloc_dict = {}
+        Geolocation = [x for x in gloc[:] if x[i_gloc['ID1']] == index1][0]
+        for key in i_gloc.keys():
+            gloc_dict[key] = Geolocation[i_gloc[key]]
 
-    # Extract Data to dictionary:
-    data_dict = {}
-    Data = [x for x in data[:] if x[i_data['ID2']] == index2]
-    for key in i_data.keys():
-        data_dict[key] = [x[i_data[key]] for x in Data]
+        # Extract Data to dictionary:
+        data_dict = {}
+        Data = [x for x in data[:] if x[i_data['ID2']] == index2]
+        for key in i_data.keys():
+            data_dict[key] = [x[i_data[key]] for x in Data]
+    except IndexError:
+        gloc_dict = {}
+        data_dict = {}
 
     # Clean up:
     gloc.detach()
