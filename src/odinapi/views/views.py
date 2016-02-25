@@ -16,6 +16,7 @@ from read_mipas import read_mipas_file
 from read_smiles import read_smiles_file
 from read_sageIII import read_sageIII_file
 from read_osiris import read_osiris_file
+from read_odinsmr2_1 import read_qsmr_file
 from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -800,6 +801,8 @@ class VdsExtData(MethodView):
             data = read_sageIII_file(file, date, species, 'lunar')
         elif instrument == 'osiris':
             data = read_osiris_file(file, date, species, file_index)
+        elif instrument == 'smr':
+            data = read_qsmr_file(file, species, file_index)
         else:
             abort(404)
 
