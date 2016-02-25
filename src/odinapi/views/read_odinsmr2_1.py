@@ -1,12 +1,12 @@
 import os
 from pyhdf import VS, HDF
 
-VDS_path = "/odin/external/vds-data/scanpos"
+L2P_path = "/odin-smr-2-1-data"
 
 
 def read_qsmr(filename, species, index2):
     # Open HDF file:
-    hdf = HDF.HDF(os.path.join(VDS_path, filename))
+    hdf = HDF.HDF(os.path.join(L2P_path, filename))
     vs = VS.VS(hdf)
 
     # Attatch and create indexes:
