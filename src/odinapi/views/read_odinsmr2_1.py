@@ -6,6 +6,7 @@ L2P_path = "/odin-smr-2-1-data"
 
 def read_qsmr_file(filename, species, index2):
     # Open HDF file:
+    filename = os.path.join(*filename.split('-'))
     hdf = HDF.HDF(os.path.join(L2P_path, filename))
     vs = VS.VS(hdf)
 
