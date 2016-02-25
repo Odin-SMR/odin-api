@@ -52,7 +52,8 @@ if __name__ == "__main__":
                     # Construct contents:
                     temp = [
                         species,
-                        os.path.join(fm_dict[fm]['dir'], os.path.basename(f)),
+                        "{0}.{1}".format(fm_dict[fm]['dir'],
+                                         os.path.basename(f)),
                         index2,
                         latitude,
                         longitude,
