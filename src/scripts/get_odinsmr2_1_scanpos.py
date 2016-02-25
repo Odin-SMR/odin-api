@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 from pyhdf import VS, HDF
 import os
 from glob import glob as glob
@@ -20,16 +21,18 @@ instrument = "Odin-SMR-Qsmr-2-1"
 
 if __name__ == "__main__":
     for fm in fm_dict.keys():
-        files = glob(os.path.join(L2P_path, fm_dict[fm]['dir']), '*.L2P')
+        print "Processing FM:", fm
+        files = glob(os.path.join(L2P_path, fm_dict[fm]['dir'], '*.L2P'))
         for f in files:
+            print "Processing file:", f
             # Open HDF file:
             hdf = HDF.HDF(f)
             vs = VS.VS(hdf)
 
             # Set up attachments and indexes:
-            gloc = vs.attatch('Geolocation')
+            gloc = vs.attach('Geolocation')
             i_gloc = {x: i for i, x in enumerate(gloc._fields)}
-            retr = vs.attatch('Retrieval')
+            retr = vs.attach('Retrieval')
             i_retr = {x: i for i, x in enumerate(retr._fields)}
 
             # Extract meta-data:
@@ -39,7 +42,7 @@ if __name__ == "__main__":
                 year = r0[i_gloc['Year']]
                 month = r0[i_gloc['Month']]
                 mjd = r0[i_gloc['MJD']]
-                for species in fm_dict[fm]:
+                for species in fm_dict[fm]['species']:
                     index2 = [x[i_retr['ID2']] for x in retr[:]
                               if (x[i_retr['ID1']] == r0[i_gloc['ID1']] and
                                   x[i_retr['SpeciesNames']].startswith(species)

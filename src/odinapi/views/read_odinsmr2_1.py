@@ -10,11 +10,11 @@ def read_qsmr(filename, species, index2):
     vs = VS.VS(hdf)
 
     # Attatch and create indexes:
-    gloc = vs.attatch('Geolocation')
+    gloc = vs.attach('Geolocation')
     i_gloc = {x: i for i, x in enumerate(gloc._fields)}
-    retr = vs.attatch('Retrieval')
+    retr = vs.attach('Retrieval')
     i_retr = {x: i for i, x in enumerate(retr._fields)}
-    data = vs.attatch('Data')
+    data = vs.attach('Data')
     i_data = {x: i for i, x in enumerate(data._fields)}
 
     # Get the index in the geoloc table associate with the scan:
