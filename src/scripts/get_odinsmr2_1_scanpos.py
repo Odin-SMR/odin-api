@@ -62,8 +62,9 @@ if __name__ == "__main__":
                             "\n".format(*temp))
 
                     # Construct filename:
-                    filename = "{0}/{1}_scanpos_{2:02}_{3}_{4}{5:02}".format(
-                        VDS_path, instrument, fm, species, year, month)
+                    filename = ("{0}/{1}_scanpos_{2:02}_{3}_{4}{5:02}"
+                                ".txt".format(VDS_path, instrument, fm,
+                                              species, year, month))
                     # Write to file (append):
                     with open(filename, 'a') as fp:
                         fp.write(line)
