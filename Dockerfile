@@ -9,6 +9,7 @@ run apt-get update && apt-get install -y \
     python-scipy \
     python-h5py \
     libhdf5-serial-dev \
+    libhdf4-dev \
     git \
     curl \
     m4 \
@@ -17,7 +18,7 @@ run apt-get update && apt-get install -y \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 run pip install flask flask-bootstrap sqlalchemy
-run pip install cython
+run pip install cython python-hdf4
 
 #************* DEPENDENCIES
 ADD dependencies/ /dependencies/
