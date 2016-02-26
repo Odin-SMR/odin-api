@@ -4,17 +4,10 @@ import os
 from glob import glob as glob
 
 fm_dict = {
-    1: {"dir": "SM_AC2ab", "species": ['ClO', 'O3', 'N2O']},
-    # 2: {"dir": "SM_AC1e",  "species": ['HNO3', 'O3']},
-    8: {"dir": "IM_AC2ab", "species": ['O3', 'H2O']},
-    13: {"dir": "HM_AC1c", "species": ['O3', 'H2O']},
-    14: {"dir": "HM_AC2c", "species": ['CO', 'O3']},
-    17: {"dir": "IM_AC2c", "species": ['O3', 'H2O']},
-    19: {"dir": "IM_AC1c", "species": ['O3', 'H2O']},
-    21: {"dir": "IM_AC1de", "species": ['NO', 'O3', 'H2O']},
+    2: {"dir": "SM_AC1e",  "species": ['HNO3', 'O3']},
 }
 
-L2P_path = "/odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-1"
+L2P_path = "/odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-0"
 VDS_path = "/odin/external/vds-data/scanpos"
 instrument = "Odin-SMR-Qsmr-2-old"
 
