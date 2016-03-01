@@ -1,13 +1,19 @@
 import os
 from pyhdf import VS, HDF
 
-L2P_path = "/odin-smr-2-1-data"
+L2P_path_2_1 = "/odin-smr-2-1-data"
+L2P_path_2_0 = "/odin-smr-2-0-data"
 
 
 def read_qsmr_file(filename, species, index2):
     # Open HDF file:
     filename = str(os.path.join(*filename.split('-')))
     index2 = int(index2)
+    # Special case for frequency mode 2:
+    if filename.split('-')[0] == 'SM_AC1e':
+        L2P_path = L2P_path_2_0
+    else:
+        L2P_path = L2P_path_2_1
     hdf = HDF.HDF(os.path.join(L2P_path, filename))
     vs = VS.VS(hdf)
 

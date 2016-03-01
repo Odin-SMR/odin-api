@@ -51,7 +51,7 @@ def setup_arguments():
     return parser
 
 
-def main(start_date=date.today()-timedelta(days=31), end_date=date.today(),
+def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
          verbose=False):
     """Script to populate database with 'cached'info.
 
