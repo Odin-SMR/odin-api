@@ -111,48 +111,49 @@ function addInfo (data, backend, freqmode) {
 }
 
 function updatePlot(date, back, freq) {
-        var sun = [];
-        var lat = [];
-        var lon = [];
-        var scan = [];
-        var opt = {};
-        var currDate = moment.utc(date, 'YYYY-MM-DD');
-        $.getJSON(
-            '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
-            function(data) {
-                xticks =[];
-                $.each( data.Info, function (index, data) {
-                    time_point = moment;
-                    datestring = data.DateTime;
-                    var momentDate = moment.utc(datestring);
-                    sun.push( [momentDate.toDate(), data.SunZD] );
-                    lat.push( [momentDate.toDate(), data.LatStart] );
-                    lon.push( [momentDate.toDate(), data.LonStart] );
-                    scan.push([momentDate.toDate(), data.NumSpec] );
-                });
-                opt={
-                    "series":{
-                        "color": "#2C5AA0",
-                        "points":{
-                            "show":true,
-                        }
-                    },
-                    "xaxis":{
-                        "mode": "time",
-                        "minTickSize": [1, "hour"],
-                        "min": currDate.startOf("day").toDate().getTime(),
-                        "max": currDate.endOf("day").toDate().getTime()
-                    },
-                    "grid": {
-                        "hoverable": true,
-                    },
-                }
-                $.plot("#smart-plot-lat-"+back+'-'+freq, [lat], opt);//{series:{points: {show:true}}})
-                $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt);//{series:{points: {show:true}}})
-                $.plot("#smart-plot-sun-" +back+'-'+freq, [sun], opt);
-                $.plot("#smart-plot-scan-" +back+'-'+freq, [scan], opt);
+    var sun = [];
+    var lat = [];
+    var lon = [];
+    var scan = [];
+    var opt = {};
+    var currDate = moment.utc(date, 'YYYY-MM-DD');
+    $.getJSON(
+        '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
+        function(data) {
+            xticks =[];
+            $.each( data.Info, function (index, data) {
+                time_point = moment;
+                datestring = data.DateTime;
+                var momentDate = moment.utc(datestring);
+                sun.push( [momentDate.toDate(), data.SunZD] );
+                lat.push( [momentDate.toDate(), data.LatStart] );
+                lon.push( [momentDate.toDate(), data.LonStart] );
+                scan.push([momentDate.toDate(), data.NumSpec] );
             });
+            opt={
+                "series":{
+                    "color": "#2C5AA0",
+                    "points":{
+                        "show":true,
+                    }
+                },
+                "xaxis":{
+                    "mode": "time",
+                    "minTickSize": [1, "hour"],
+                    "min": currDate.startOf("day").toDate().getTime(),
+                    "max": currDate.endOf("day").toDate().getTime()
+                },
+                "grid": {
+                    "hoverable": true,
+                },
+            };
+            $.plot("#smart-plot-lat-"+back+'-'+freq, [lat], opt);
+            $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt);
+            $.plot("#smart-plot-sun-" +back+'-'+freq, [sun], opt);
+            $.plot("#smart-plot-scan-" +back+'-'+freq, [scan], opt);
         }
+    );
+}
 
 
 // Functions for updating scan info table and plots:
