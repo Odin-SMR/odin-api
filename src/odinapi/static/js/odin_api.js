@@ -147,14 +147,56 @@ function updatePlot(date, back, freq) {
                     "hoverable": true,
                 },
             };
-            $.plot("#smart-plot-lat-"+back+'-'+freq, [lat], opt);
-            $.plot("#smart-plot-lon-"+back+'-'+freq, [lon], opt);
-            $.plot("#smart-plot-sun-" +back+'-'+freq, [sun], opt);
-            $.plot("#smart-plot-scan-" +back+'-'+freq, [scan], opt);
+            $.plot("#smart-plot-lat-"+back+"-"+freq, [lat], opt);
+            $.plot("#smart-plot-lon-"+back+"-"+freq, [lon], opt);
+            $.plot("#smart-plot-sun-" +back+"-"+freq, [sun], opt);
+            $.plot("#smart-plot-scan-" +back+"-"+freq, [scan], opt);
+        }
+    );
+
+    $("<div id='tooltip'></div>").css({
+        position: "absolute",
+        display: "none",
+        border: "1px solid #002e74",
+        padding: "2px",
+        "background-color": "#8bb9ff",
+        opacity: 0.80
+    }).appendTo("body");
+
+    $("#smart-plot-lat-"+back+"-"+freq+"").bind("plothover",
+        function (event, pos, item) {
+            hoverOverviewPlot(event, pos, item);
+        }
+    );
+    $("#smart-plot-lat-"+back+"-"+freq+"").bind("plothover",
+        function (event, pos, item) {
+            hoverOverviewPlot(event, pos, item);
+        }
+    );
+    $("#smart-plot-sun-"+back+"-"+freq+"").bind("plothover",
+        function (event, pos, item) {
+            hoverOverviewPlot(event, pos, item);
+        }
+    );
+    $("#smart-plot-scan-"+back+"-"+freq+"").bind("plothover",
+        function (event, pos, item) {
+            hoverOverviewPlot(event, pos, item);
         }
     );
 }
 
+function hoverOverviewPlot(event, pos, item) {
+    if (item) {
+        var x = moment.utc(item.datapoint[0]).format("YYYY-MM-DD, HH:MM:SS"),
+            y = item.datapoint[1].toFixed(2);
+
+        $("#tooltip").html(x + "; " + y)
+            .css({top: item.pageY+5, left: item.pageX+5})
+            .fadeIn(200);
+    } else {
+        $("#tooltip").hide();
+    }
+}
 
 // Functions for updating scan info table and plots:
 
