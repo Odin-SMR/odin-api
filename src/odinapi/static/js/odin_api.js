@@ -168,7 +168,7 @@ function updatePlot(date, back, freq) {
             hoverOverviewPlot(event, pos, item);
         }
     );
-    $("#smart-plot-lat-"+back+"-"+freq+"").bind("plothover",
+    $("#smart-plot-lon-"+back+"-"+freq+"").bind("plothover",
         function (event, pos, item) {
             hoverOverviewPlot(event, pos, item);
         }
