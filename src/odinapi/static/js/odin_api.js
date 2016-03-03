@@ -116,6 +116,7 @@ function updatePlot(date, back, freq) {
     var lon = [];
     var scan = [];
     var opt = {};
+    var plots = [];
     var currDate = moment.utc(date, 'YYYY-MM-DD');
     $.getJSON(
         '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
@@ -146,11 +147,14 @@ function updatePlot(date, back, freq) {
                 "grid": {
                     "hoverable": true,
                 },
+                "crosshair": {
+                    "mode": "x"
+                },
             };
-            $.plot("#smart-plot-lat-"+back+"-"+freq, [lat], opt);
-            $.plot("#smart-plot-lon-"+back+"-"+freq, [lon], opt);
-            $.plot("#smart-plot-sun-" +back+"-"+freq, [sun], opt);
-            $.plot("#smart-plot-scan-" +back+"-"+freq, [scan], opt);
+            plots.push($.plot("#smart-plot-lat-"+back+"-"+freq, [lat], opt));
+            plots.push($.plot("#smart-plot-lon-"+back+"-"+freq, [lon], opt));
+            plots.push($.plot("#smart-plot-sun-"+back+"-"+freq, [sun], opt));
+            plots.push($.plot("#smart-plot-scan-"+back+"-"+freq, [scan], opt));
         }
     );
 
@@ -160,41 +164,49 @@ function updatePlot(date, back, freq) {
         border: "1px solid #002e74",
         padding: "2px",
         "background-color": "#8bb9ff",
-        opacity: 0.80
+        opacity: 0.90
     }).appendTo("body");
 
     $("#smart-plot-lat-"+back+"-"+freq+"").bind("plothover",
         function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item);
+            hoverOverviewPlot(event, pos, item, plots);
         }
     );
     $("#smart-plot-lon-"+back+"-"+freq+"").bind("plothover",
         function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item);
+            hoverOverviewPlot(event, pos, item, plots);
         }
     );
     $("#smart-plot-sun-"+back+"-"+freq+"").bind("plothover",
         function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item);
+            hoverOverviewPlot(event, pos, item, plots);
         }
     );
     $("#smart-plot-scan-"+back+"-"+freq+"").bind("plothover",
         function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item);
+            hoverOverviewPlot(event, pos, item, plots);
         }
     );
 }
 
-function hoverOverviewPlot(event, pos, item) {
+function hoverOverviewPlot(event, pos, item, plots) {
+    var plot;
     if (item) {
         var x = moment.utc(item.datapoint[0]).format("YYYY-MM-DD, HH:MM:SS"),
             y = item.datapoint[1].toFixed(2);
+
+        for (plot in plots) {
+            plots[plot].setCrosshair(pos);
+        }
 
         $("#tooltip").html(x + "; " + y)
             .css({top: item.pageY+5, left: item.pageX+5})
             .fadeIn(200);
     } else {
         $("#tooltip").hide();
+        for (plot in plots) {
+            plots[plot].clearCrosshair();
+        }
     }
 }
 
