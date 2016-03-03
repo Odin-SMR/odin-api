@@ -192,7 +192,7 @@ function updatePlot(date, back, freq) {
 function hoverOverviewPlot(event, pos, item, plots) {
     var plot;
     if (item) {
-        var x = moment.utc(item.datapoint[0]).format("YYYY-MM-DD, HH:MM:SS"),
+        var x = moment.utc(item.datapoint[0]).format("YYYY-MM-DD HH:mm:ss"),
             y = item.datapoint[1].toFixed(2);
 
         for (plot in plots) {
