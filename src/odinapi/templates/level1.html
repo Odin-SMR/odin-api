@@ -15,22 +15,25 @@
 
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
           <h1 class="page-header">Level1 data dashboard</h1>
-          <p>The dashboard is a user interface to browse through and look at
-          Level-1B data from the Odin/SMR instrument. The dashboard is
-          currently under development and changes are likely to happen.</p>
-          <p>The dashboard uses the Odin/SMR rest-API to look up data. The
+          <p>This dashboard is the user interface for browsing Level1b data
+          from the Odin/SMR instrument. It is currently under development and
+          changes are likely.</p>
+
+          <p>The dashboard uses the Odin/SMR rest-API to access the data. The
           first version of the API is already available for use, the
           documentation of the API will be published here soon.</p>
-          <p>The site is running on a minimal setup of hardware for
-          demonstration purposes only, please be patient if the performance is
-          slow.</p>
+
+          <p>The site is running on a minimal hardware setup for demonstration
+          purposes only. Please be patient if the performance is slow.</p>
+
           <h2>Instructions</h2>
           <p>
-          Select a date from the calendar or enter date in in the date field
-          in the header. The overview table, containing information of the
-          measurements for the selected day, will automatically update.
+          Select a date from the calendar or enter it directly in the header
+          field. The overview table containing information about the
+          measurements for the selected day will automatically update.
           Click on a row in the table to view an overview of the measurements
           performed in a specific frequency mode (FM) of interest.<p>
+
           <p> At the bottom of the page another table shows scans made for
           the chosen frequency mode and links to the data itself.
           This table is updated automatically when a selection is made in
@@ -42,12 +45,13 @@
               Scan log data: Overview of daily measurements for
               <span id=level1-date></span>
           </h2>
+
           <p>The table below describes log information of the
-          measurements/scans made the selected date.
-          Click on a row to get a graphical overview of this log data, and to
-          load the corresponding Level1B-data in the Scan information-Level1B
-          table below this table.
+          measurements/scans made on the date selected.  Click on a row to get
+          a graphical overview of the log data, and to load the corresponding
+          Level1b-data in the Scan information-Level1b table below this table.
           </p>
+
           <div class="table-responsive">
             <table id="level1-date-table" class="table table-striped">
               <!-- empty table -->
@@ -56,17 +60,17 @@
 
           <div id="smart-plot" class="plotter" ></div>
 
-          <div id="ddata">
+          <div id="ddata"></div>
 
-          </div>
           <h2 class="sub-header">Scan information - Level1B-data</h2>
+
           <p>Scan data can be downloaded directly from our rest-API using the
           links in the URL column. A scan is a group of spectra collected by
           the instrument when sweeping from the top of the atmosphere to the
-          bottom (or reversed).
-          To select a different scan, click on a row in the overview table or
-          in the calendar.
-          Click on a row in this table to show graphical overview.</p>
+          bottom (or vice-versa).  To select a different scan, click on a row
+          in the overview table or in the calendar.  Click on a row in this
+          table to show a graphical overview.</p>
+
           <div class="table-responsive">
             <table id="info-table" class="table table-striped">
               <!-- empty table -->
