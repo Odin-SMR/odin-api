@@ -349,23 +349,112 @@ class Calibration_step2():
                 self.spec = spec
                 return
 
-        query=self.con.query('''
-              select hotload_range,median_fit,channels
-              from ac_cal_level1c where freqmode={0} and 
-              version={1} and intmode={2} and ssb_fq='{3}' and
-              altitude_range='{4}' and hotload_range='{5}'
-                             '''.format(*temp))
 
-        result=query.dictresult()
-
-        if result==[]:
-            medianfit=0.0
-
+        if freqmode == 1:
+            hotload_grid = N.arange(278.5, 294.5)
+        elif freqmode == 2:
+            hotload_grid = N.arange(278.5, 290.5)
+        elif freqmode == 8:
+            hotload_grid = N.arange(284.5, 289.5)
+        elif freqmode == 13:
+            hotload_grid = N.arange(285.5, 290.5)
+        elif freqmode == 17:
+            hotload_grid = N.arange(278.5, 290.5)
+        elif freqmode == 19:
+            hotload_grid = N.arange(278.5, 290.5)
+        elif freqmode == 21:
+            hotload_grid = N.arange(278.5, 290.5)
         else:
-            medianfit=numpy.ndarray(shape=(result[0]['channels'],),
+            hotload_grid = N.arange(278.5, 290.5)
+
+        if hotload <= hotload_grid[0]:
+            hotload = hotload_grid[0]
+        elif hotload >= hotload_grid[-1]:
+            hotload = hotload_grid[-1]
+ 
+        ind1 = N.nonzero( (hotload<=hotload_grid) )[0]
+        ind2 = N.nonzero( (hotload>hotload_grid) )[0]        
+
+        hl_1 = hotload_grid[ind1[-1]]
+        hotload_lower1 = int( N.floor( hl_1 ) )
+        hotload_upper1 = int( N.floor( hl_1 + 1 ) )
+        hotload_range1 = '''{{{0},{1}}}'''.format(*[hotload_lower,hotload_upper])
+
+        if ind2.shape[0] > 0:
+            hl_2 = hotload_grid[ind2[0]]
+        else:
+            hl_2 = 300 # dummy
+        hotload_lower2 = int( N.floor( hl_2 ) )
+        hotload_upper2 = int( N.floor( hl_2 + 1 ) )
+        hotload_range2 = '''{{{0},{1}}}'''.format(*[hotload_lower,hotload_upper])
+
+        search_data = 1
+       
+        if freqmode in [1, 8]:
+            altitude_range = '{70000,120000}'
+        elif freqmode in [2, 13, 17, 19, 21]:
+            altitude_range = '{80000,120000}'
+        elif freqmode in [14,22]:
+            # do not try to correct data from 572 frontend
+            search_data = 0
+        else:
+            search_data = 0
+
+        r1 = 0
+        r2 = 0
+        if search_data == 1:
+
+            temp1 = [freqmode, version, intmode, ssb_fq, altitude_range, hotload_range1]
+            temp2 = [freqmode, version, intmode, ssb_fq, altitude_range, hotload_range2]
+ 
+            query1 = self.con.query('''
+              select hotload_range,altitude_range,median_fit,channels
+              from ac_cal_level1c where freqmode={0} and
+              version={1} and intmode={2} and ssb_fq='{3}'
+              and altitude_range='{4}' and hotload_range='{5}'
+              order by hotload_range
+                             '''.format(*temp1))   
+            result1 = query1.dictresult()
+        
+
+            query2 = self.con.query('''
+              select hotload_range,altitude_range,median_fit,channels
+              from ac_cal_level1c where freqmode={0} and
+              version={1} and intmode={2} and ssb_fq='{3}'
+              and altitude_range='{4}' and hotload_range='{5}'
+              order by hotload_range
+                             '''.format(*temp2))   
+            result2 = query2.dictresult()
+                  
+            r1 = len(result1)
+            r2 = len(result2)
+
+            if r1 > 0:
+                medianfit1 = N.ndarray(shape=(result1[0]['channels'],),
                                 dtype='float64',
                                 buffer=self.con.unescape_bytea(
-                                    result[0]['median_fit']))
+                                result1[0]['median_fit']))
+        
+            if r2 > 0:
+                medianfit2 = N.ndarray(shape=(result2[0]['channels'],),
+                                dtype='float64',
+                                buffer=self.con.unescape_bytea(
+                                result2[0]['median_fit']))
+
+
+
+        if r1 > 0 and r2 > 0:
+            dt = N.abs( hl_2 - hl_1)
+            w1 = 1 - N.abs( hl_1 - hotload) / dt
+            w2 = 1 - w1
+            medianfit = w1 * medianfit1 + w2 * medianfit2
+        elif r1 > 0:
+            medianfit = medianfit1 
+        elif r2 > 0:       
+            medianfit = medianfit2         
+        else:
+            medianfit = 0.0 
+
         self.spec = caldict()
         self.spec['backend'] = backend
         self.spec['frontend'] = frontend
@@ -376,7 +465,7 @@ class Calibration_step2():
         self.spec['ssb_fq'] = ssb_fq
         self.spec['altitude_range'] = altitude_range
         self.spec['hotload_range'] = hotload_range
-        self.spec['spectrum'] = medianfit
+        self.spec['spectrum'] = medianfit 
         self.spectra.append(self.spec)
 
 
@@ -385,13 +474,16 @@ class Calibration_step2():
         t_load = planck(spec['hotloada'][ind],spec['skyfreq'][ind])
         t_sky = planck(2.7,spec['skyfreq'][ind])
         eta = 1-spec['tspill'][ind]/300.0 #main beam efficeiency
-        w = 1/eta*(1- ( spec['spectrum'][ind] )/ ( t_load ))
+        w = 1/eta*(1.0 - ( spec['spectrum'][ind] )/ ( t_load ))
+        #w = 1.0
         if not N.isscalar(self.spec['spectrum']):
             f_ind = N.nonzero( (spec['spectrum'][ind]<>0) )[0]
-            reduce = N.array(w*self.spec['spectrum'])
+            reduce = N.array(w*self.spec['spectrum']) 
             data = N.array(spec['spectrum'][ind])
             data[f_ind] = data[f_ind] - reduce[f_ind]
             spec['spectrum'][ind] = data
+            #spec['spectrum'][ind] = N.array(self.spec['spectrum'])             
+
         return spec
 
 
