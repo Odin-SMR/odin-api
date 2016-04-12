@@ -1508,8 +1508,8 @@ def plot_scan(backend,calstw,spectra):
 
 
     #plot average of high altitude spectra
-    zmax = numpy.max(spectra['altitude'])
-    ind = numpy.nonzero((spectra['altitude'] >= zmax-20e3 ))[0]
+    zmax = numpy.max(spectra['altitude'][2::])
+    ind = numpy.nonzero((spectra['altitude'] >= zmax-20e3 ) )[0]
     ax1 = plt.subplot2grid((7,5), (5,2), colspan=4,rowspan=2)
     data = []
     i = 0
@@ -1521,7 +1521,7 @@ def plot_scan(backend,calstw,spectra):
     data = numpy.array(data)
     data = numpy.mean(data,0)
     zmin = numpy.min(spectra['altitude'][ind])
-    zmax = numpy.max(spectra['altitude'][ind])
+    #zmax = numpy.max(spectra['altitude'][ind])
     zmin = numpy.int(numpy.around(zmin/1e3))
     zmax = numpy.int(numpy.around(zmax/1e3))
     plt.plot(f,data,'k.',markersize=0.5)
