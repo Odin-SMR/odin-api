@@ -276,9 +276,10 @@ class FreqmodeInfoCached(MethodView):
                     freq_mode,
                     scanid)
                 datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}').format(
                         request.url_root,
                         version,
+                        date,
                         backend,
                         freq_mode,
                         scanid)
@@ -334,9 +335,10 @@ class FreqmodeInfoCached(MethodView):
                     freq_mode,
                     scanid)
                 datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}').format(
                         request.url_root,
                         version,
+                        date,
                         backend,
                         freq_mode,
                         scanid)
@@ -387,13 +389,14 @@ class FreqmodeInfoCached(MethodView):
                     for item in itemlist:
                         datadict[item] = loginfo[item][ind]
                     datadict['URLS'] = dict()
-                    datadict['URL-log'] = (
-                        '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
-                            request.url_root,
-                            version,
-                            backend,
-                            freq_mode,
-                            scanid)
+                    datadict['URLS']['URL-log'] = (
+                        '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}'
+                        '').format(request.url_root,
+                                   version,
+                                   date,
+                                   backend,
+                                   freq_mode,
+                                   scanid)
                     datadict['URLS']['URL-spectra'] = (
                         '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
                             request.url_root,

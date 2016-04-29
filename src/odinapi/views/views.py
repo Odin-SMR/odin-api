@@ -212,9 +212,10 @@ class FreqmodeInfo(MethodView):
                     freq_mode,
                     scanid)
                 datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}/{5}').format(
                         request.url_root,
                         version,
+                        date,
                         backend,
                         freq_mode,
                         scanid)
@@ -270,9 +271,10 @@ class FreqmodeInfo(MethodView):
                     freq_mode,
                     scanid)
                 datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}/{5}/').format(
                         request.url_root,
                         version,
+                        date,
                         backend,
                         freq_mode,
                         scanid)
@@ -328,10 +330,11 @@ class FreqmodeInfo(MethodView):
                 for item in itemlist:
                     datadict[item] = loginfo[item][ind]
                 datadict['URLS'] = dict()
-                datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                datadict['URLS']['URL-log'] = (
+                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}/{5}/').format(
                         request.url_root,
                         version,
+                        date,
                         backend,
                         freq_mode,
                         scanid)

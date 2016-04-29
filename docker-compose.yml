@@ -12,5 +12,6 @@ webapi:
   volumes:
     - ./src/:/app
     - ./data/:/var/lib/odindata
+    - /home/skymandr/Documents/Work/ODIN/odin_redo_documents/VDS/QSMR2.1_test:/odin-smr-2-1-data
   links:
     - postgresql
