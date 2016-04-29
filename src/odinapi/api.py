@@ -44,7 +44,7 @@ class Odin(Flask):
             )
         self.add_url_rule(
             '/rest_api/<version>/l1_log/<int:scanno>/',
-            view_func=FreqmodeInfoCached.as_view('scaninfo')
+            view_func=FreqmodeInfoCached.as_view('scanlog')
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/',
@@ -61,7 +61,7 @@ class Odin(Flask):
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/<backend>/'
-            '<int:freqmode>/int:scanno>/',
+            '<int:freqmode>/<int:scanno>/',
             view_func=FreqmodeInfo.as_view('scanraw')
             )
         self.add_url_rule(

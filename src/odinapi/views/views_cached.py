@@ -276,7 +276,7 @@ class FreqmodeInfoCached(MethodView):
                     freq_mode,
                     scanid)
                 datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
                         request.url_root,
                         version,
                         backend,
@@ -334,7 +334,7 @@ class FreqmodeInfoCached(MethodView):
                     freq_mode,
                     scanid)
                 datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
                         request.url_root,
                         version,
                         backend,
@@ -388,7 +388,7 @@ class FreqmodeInfoCached(MethodView):
                         datadict[item] = loginfo[item][ind]
                     datadict['URLS'] = dict()
                     datadict['URL-log'] = (
-                        '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                        '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}').format(
                             request.url_root,
                             version,
                             backend,
