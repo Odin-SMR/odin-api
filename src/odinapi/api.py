@@ -3,7 +3,8 @@
 from flask import Flask
 from odinapi.views.views import (DateInfo, DateBackendInfo, ScanSpec,
                                  FreqmodeInfo, ScanPTZ, ScanAPR, VdsInfo,
-                                 VdsExtData)
+                                 VdsFreqmodeInfo, VdsScanInfo,
+                                 VdsInstrumentInfo, VdsDateInfo, VdsExtData)
 from odinapi.views.views_cached import (DateInfoCached, DateBackendInfoCached,
                                         FreqmodeInfoCached, PeriodInfoCached)
 from odinapi.views.statistics import (FreqmodeStatistics,
@@ -11,8 +12,6 @@ from odinapi.views.statistics import (FreqmodeStatistics,
 from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
                                     ViewLevel1Stats, ViewFreqmodeInfoPlot)
 from odinapi.views.data_info import FileInfo
-from odinapi.views.views import ScanPTZ, ScanAPR
-from odinapi.views.views import VdsInfo, VdsFreqmodeInfo,VdsScanInfo,VdsInstrumentInfo,VdsDateInfo,VdsExtData
 from os import environ
 
 
@@ -36,6 +35,15 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/'
             '<int:freqmode>/',
+            view_func=FreqmodeInfoCached.as_view('scansinfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_info/<date>/<backend>/'
+            '<int:freqmode>/<int:scanno>/',
+            view_func=FreqmodeInfoCached.as_view('scaninfo')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/l1_log/<int:scanno>/',
             view_func=FreqmodeInfoCached.as_view('scaninfo')
             )
         self.add_url_rule(
@@ -49,6 +57,11 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/<backend>/'
             '<int:freqmode>/',
+            view_func=FreqmodeInfo.as_view('scansraw')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_raw/<date>/<backend>/'
+            '<int:freqmode>/int:scanno>/',
             view_func=FreqmodeInfo.as_view('scanraw')
             )
         self.add_url_rule(
@@ -113,18 +126,19 @@ class Odin(Flask):
             '/rest_api/<version>/vds/<backend>/<freqmode>/allscans',
             view_func=VdsScanInfo.as_view('vdsScaninfo')
             )
-
         self.add_url_rule(
-            '/rest_api/<version>/vds/<backend>/<freqmode>/<species>/<instrument>/',
+            '/rest_api/<version>/vds/<backend>/<freqmode>/<species>'
+            '/<instrument>/',
             view_func=VdsInstrumentInfo.as_view('vdsinstrumentinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/vds/<backend>/<freqmode>/<species>/<instrument>/<date>/',
+            '/rest_api/<version>/vds/<backend>/<freqmode>/<species>'
+            '/<instrument>/<date>/',
             view_func=VdsDateInfo.as_view('vdsdateinfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/vds_external/<instrument>/<species>/<date>/<file>/'
-            '<file_index>/',
+            '/rest_api/<version>/vds_external/<instrument>/<species>'
+            '/<date>/<file>/<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
             )
 
@@ -140,4 +154,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -102,7 +102,7 @@ class DateBackendInfo(DateInfo):
 
 class FreqmodeInfo(MethodView):
     """loginfo for all scans from a given date and freqmode"""
-    def get(self, version, date, backend, freqmode):
+    def get(self, version, date, backend, freqmode, scanno=None):
         """GET method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
@@ -211,6 +211,13 @@ class FreqmodeInfo(MethodView):
                     backend,
                     freq_mode,
                     scanid)
+                datadict['URL-log'] = (
+                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                        request.url_root,
+                        version,
+                        backend,
+                        freq_mode,
+                        scanid)
                 datadict['URL-ptz'] = (
                     '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}').format(
                         request.url_root,
@@ -262,6 +269,13 @@ class FreqmodeInfo(MethodView):
                     backend,
                     freq_mode,
                     scanid)
+                datadict['URL-log'] = (
+                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                        request.url_root,
+                        version,
+                        backend,
+                        freq_mode,
+                        scanid)
                 datadict['URL-ptz'] = (
                     '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}').format(
                         request.url_root,
@@ -314,6 +328,13 @@ class FreqmodeInfo(MethodView):
                 for item in itemlist:
                     datadict[item] = loginfo[item][ind]
                 datadict['URLS'] = dict()
+                datadict['URL-log'] = (
+                    '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}').format(
+                        request.url_root,
+                        version,
+                        backend,
+                        freq_mode,
+                        scanid)
                 datadict['URLS']['URL-spectra'] = (
                     '{0}rest_api/{1}/scan/{2}/{3}/{4}').format(
                         request.url_root,
@@ -345,11 +366,23 @@ class FreqmodeInfo(MethodView):
 
         if version == "v1":
 
-            return jsonify(loginfo)
+            if scanno is None:
+                return jsonify(loginfo)
+            else:
+                for s in loginfo['Info']:
+                    if s['ScanID'] == scanno:
+                        return s
 
         elif version in ['v2', 'v3', 'v4']:
+            if scanno is None:
+                return jsonify({'Info': loginfo['Info']})
+            else:
+                for s in loginfo['Info']:
+                    if s['ScanID'] == scanno:
+                        return jsonify({"Info": s})
 
-            return jsonify({'Info': loginfo['Info']})
+        # If we reach this point, something has gone wrong:
+        abort(404)
 
 
 class ScanSpec(MethodView):
