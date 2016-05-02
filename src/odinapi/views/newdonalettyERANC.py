@@ -127,9 +127,9 @@ class Donaletty(dict):
             else:
                 date = self.datetime.date()
                 file_time_index = ind
-
-            ecmwffilename = self.ecmwfpath+date.strftime('%Y/%m/')+'ei_pl_'+date.strftime('%Y-%m-%d')+'.nc'
-            self.ecm.append(NC.NCeraint(ecmwffilename,file_time_index))
+            
+            ecmwffilename = self.ecmwfpath + date.strftime('%Y/%m/')+'ei_pl_' + date.strftime('%Y-%m-%d') + '-' + hourstr + '.nc'
+            self.ecm.append(NC.NCeraint(ecmwffilename,0))
 
         self.minlat = self.ecm[0]['lats'][0]
         self.latstep = np.mean(np.diff(self.ecm[0]['lats']))
@@ -149,13 +149,13 @@ class Donaletty(dict):
             midlon = midlon + 360
         hour = datetime.hour
         ibelow = np.int(np.floor(hour/6)) #index in file w.r.t time
-        iabove = ibelow + 1
-        if iabove==4:
-            iabove = 0
-        T1 = self.ecm[0].extractprofile_on_z('t',latpt,lonpt,ecmz,ibelow)
-        P1 = self.ecm[0].extractprofile_on_z('p',latpt,lonpt,ecmz,ibelow)/100. # to hPa
-        T2 = self.ecm[1].extractprofile_on_z('t',latpt,lonpt,ecmz,iabove)
-        P2 = self.ecm[1].extractprofile_on_z('p',latpt,lonpt,ecmz,iabove)/100. # to hPa
+        #iabove = ibelow + 1 #not needed, files only contain one time index 
+        #if iabove==4:
+        #    iabove = 0
+        T1 = self.ecm[0].extractprofile_on_z('t',latpt,lonpt,ecmz,0)
+        P1 = self.ecm[0].extractprofile_on_z('p',latpt,lonpt,ecmz,0)/100. # to hPa
+        T2 = self.ecm[1].extractprofile_on_z('t',latpt,lonpt,ecmz,0)
+        P2 = self.ecm[1].extractprofile_on_z('p',latpt,lonpt,ecmz,0)/100. # to hPa
         T = (T1*((ibelow+1)*6.-hour)+T2*(hour-ibelow*6.))/6.
         P = (P1*((ibelow+1)*6.-hour)+P2*(hour-ibelow*6.))/6.
         T[np.isnan(T)]=273.0 # tempory fix in case ECMWF make temperatures below the surface nans, P shouldn't matter

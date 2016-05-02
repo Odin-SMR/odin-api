@@ -17,7 +17,7 @@ from read_smiles import read_smiles_file
 from read_sageIII import read_sageIII_file
 from read_osiris import read_osiris_file
 from read_odinsmr2_old import read_qsmr_file
-from newdonalettyEcmwfNC import date2mjd, mjd2stw, run_donaletty
+from newdonalettyERANC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from database import DatabaseConnector
@@ -434,8 +434,11 @@ class ScanPTZ(MethodView):
         url = 'http://' + url_base + url_for('.scaninfo', version='v1',
                                              date=date, backend=backend,
                                              freqmode=freqmode)
-        mjd, _, midlat, midlon = get_geoloc_info(url, scanno)
-        datadict = run_donaletty(mjd, midlat, midlon, scanno)
+        try:
+            mjd, _, midlat, midlon = get_geoloc_info(url, scanno)
+            datadict = run_donaletty(mjd, midlat, midlon, scanno)
+        except:
+            abort(404)
         for item in ['P', 'T', 'Z']:
             if item == 'P' and version in ['v4']:
                 # convert from hPa to Pa
