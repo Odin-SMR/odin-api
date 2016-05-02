@@ -38,7 +38,7 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
             "from scans_cache "
             "where date = '{0}' "
             "and freqmode = {1} "
-            "and backend = {2} "
+            "and backend = '{2}' "
             "order by backend, freqmode "
             ).format(date, freqmode, get_backend(freqmode))
         query = con.query(query_string)
@@ -46,9 +46,9 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
         query_string = (
             "select * "
             "from scans_cache "
-            "where scanid = '{0}' "
+            "where scanid = {0} "
             "and freqmode = {1} "
-            "and backend = {2} "
+            "and backend = '{2}' "
             "order by backend, freqmode "
             ).format(scanid, freqmode, get_backend(freqmode))
         query = con.query(query_string)
