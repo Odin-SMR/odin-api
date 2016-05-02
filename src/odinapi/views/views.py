@@ -431,7 +431,7 @@ class ScanPTZ(MethodView):
             abort(404)
         url_base = request.headers['Host']
         url_base = url_base.replace('webapi', 'localhost')
-        url = 'http://' + url_base + url_for('.scaninfo', version='v1',
+        url = 'http://' + url_base + url_for('.scansinfo', version='v1',
                                              date=date, backend=backend,
                                              freqmode=freqmode)
         try:
@@ -469,7 +469,7 @@ class ScanAPR(MethodView):
             abort(404)
         url_base = request.headers['Host']
         url_base = url_base.replace('webapi', 'localhost')
-        url = 'http://' + url_base + url_for('.scaninfo', version='v1',
+        url = 'http://' + url_base + url_for('.scansinfo', version='v1',
                                              date=date, backend=backend,
                                              freqmode=freqmode)
         _, day_of_year, midlat, _ = get_geoloc_info(url, scanno)
