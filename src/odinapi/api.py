@@ -6,7 +6,8 @@ from odinapi.views.views import (DateInfo, DateBackendInfo, ScanSpec,
                                  VdsFreqmodeInfo, VdsScanInfo,
                                  VdsInstrumentInfo, VdsDateInfo, VdsExtData)
 from odinapi.views.views_cached import (DateInfoCached, DateBackendInfoCached,
-                                        FreqmodeInfoCached, PeriodInfoCached)
+                                        FreqmodeInfoCached, PeriodInfoCached,
+                                        L1LogCached)
 from odinapi.views.statistics import (FreqmodeStatistics,
                                       TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
@@ -43,8 +44,8 @@ class Odin(Flask):
             view_func=FreqmodeInfoCached.as_view('scaninfo')
             )
         self.add_url_rule(
-            '/rest_api/<version>/l1_log/<int:scanno>/',
-            view_func=FreqmodeInfoCached.as_view('scanlog')
+            '/rest_api/<version>/l1_log/<int:freqmode>/<int:scanno>/',
+            view_func=L1LogCached.as_view('scanlog')
             )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/',

@@ -7,16 +7,53 @@ from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
 
 
-def get_scan_logdata_cached(con, date, freqmode):
+def get_backend(freqmode):
+    backends = {
+        1: "AC2",
+        2: "AC1",
+        8: "AC2",
+        13: "AC1",
+        14: "AC2",
+        17: "AC2",
+        19: "AC1",
+        21: "AC1",
+        22: "AC2",
+        23: "AC1",
+        24: "AC1",
+        25: "AC1",
+        29: "AC1",
+        102: "AC2",
+        113: "AC2",
+        119: "AC2",
+        121: "AC2",
+    }
+    return backends[freqmode]
+
+
+def get_scan_logdata_cached(con, date, freqmode, scanid=None):
     # generate query
-    query_string = (
-        "select * "
-        "from scans_cache "
-        "where date = '{0}' "
-        "and freqmode = {1} "
-        "order by backend, freqmode "
-        ).format(date, freqmode)
-    query = con.query(query_string)
+    if date is not None:
+        query_string = (
+            "select * "
+            "from scans_cache "
+            "where date = '{0}' "
+            "and freqmode = {1} "
+            "and backend = {2} "
+            "order by backend, freqmode "
+            ).format(date, freqmode, get_backend(freqmode))
+        query = con.query(query_string)
+    elif scanid is not None:
+        query_string = (
+            "select * "
+            "from scans_cache "
+            "where scanid = '{0}' "
+            "and freqmode = {1} "
+            "and backend = {2} "
+            "order by backend, freqmode "
+            ).format(scanid, freqmode, get_backend(freqmode))
+        query = con.query(query_string)
+    else:
+        abort(404)
 
     # execute query
     result = query.dictresult()
@@ -366,9 +403,6 @@ class FreqmodeInfoCached(MethodView):
 
         elif version in ['v4']:
 
-            # loginfo, _, _ = get_scan_logdata(
-            #     con, backend, date+'T00:00:00', freqmode=int(freqmode),
-            #     dmjd=1, version=version)
             loginfo = get_scan_logdata_cached(con, date,
                                               freqmode=int(freqmode))
 
@@ -446,6 +480,145 @@ class FreqmodeInfoCached(MethodView):
                 for s in loginfo['Info']:
                     if s['ScanID'] == scanno:
                         return jsonify({"Info": s})
+
+        # If we reach this point, something has gone wrong:
+        abort(404)
+
+
+class L1LogCached(MethodView):
+    """L1 log  for all scans from freqmode and scanno"""
+    def get(self, version, freqmode, scanno):
+        """GET method"""
+        if version not in ['v4']:
+            abort(404)
+
+        backend = get_backend(freqmode)
+
+        con = DatabaseConnector()
+        loginfo = {}
+        itemlist = [
+            'DateTime',
+            'FreqMode',
+            'LatStart',
+            'LatEnd',
+            'LonStart',
+            'LonEnd',
+            'SunZD',
+            'AltStart',
+            'AltEnd',
+            'NumSpec',
+            'MJDStart',
+            'MJDEnd',
+            'ScanID',
+        ]
+
+        species_list = [
+            'BrO',
+            'Cl2O2',
+            'CO',
+            'HCl',
+            'HO2',
+            'NO2',
+            'OCS',
+            'C2H2',
+            'ClO',
+            'H2CO',
+            'HCN',
+            'HOBr',
+            'NO',
+            'OH',
+            'C2H6',
+            'ClONO2',
+            'H2O2',
+            'HCOOH',
+            'HOCl',
+            'O2',
+            'SF6',
+            'CH3Cl',
+            'ClOOCl',
+            'H2O',
+            'HF',
+            'N2',
+            'O3',
+            'SO2',
+            'CH3CN',
+            'CO2',
+            'H2S',
+            'HI',
+            'N2O',
+            'OBrO',
+            'CH4',
+            'COF2',
+            'HBr',
+            'HNO3',
+            'NH3',
+            'OClO',
+        ]
+
+        loginfo = get_scan_logdata_cached(con, date=None,
+                                          freqmode=int(freqmode),
+                                          scanid=int(scanno))
+
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except AttributeError:
+                pass
+
+        loginfo['Info'] = []
+        try:
+            for ind in range(len(loginfo['ScanID'])):
+
+                freq_mode = loginfo['FreqMode'][ind]
+                scanid = loginfo['ScanID'][ind]
+
+                datadict = dict()
+                for item in itemlist:
+                    datadict[item] = loginfo[item][ind]
+                datadict['URLS'] = dict()
+                datadict['URLS']['URL-log'] = (
+                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}'
+                    '').format(request.url_root,
+                               version,
+                               date,
+                               backend,
+                               freq_mode,
+                               scanid)
+                datadict['URLS']['URL-spectra'] = (
+                    '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
+                        request.url_root,
+                        version,
+                        backend,
+                        freq_mode,
+                        scanid)
+                datadict['URLS']['URL-ptz'] = (
+                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
+                        request.url_root,
+                        version,
+                        date,
+                        backend,
+                        freq_mode,
+                        scanid
+                        )
+                for species in species_list:
+                    datadict['URLS']['''URL-apriori-{0}'''.format(species)] \
+                        = ('{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/'
+                           ).format(request.url_root,
+                                    version,
+                                    species,
+                                    date,
+                                    backend,
+                                    freq_mode,
+                                    scanid
+                                    )
+                loginfo['Info'].append(datadict)
+        except KeyError:
+            loginfo['Info'] = []
+            return jsonify({'Info': loginfo['Info']})
+
+        for s in loginfo['Info']:
+            if s['ScanID'] == scanno:
+                return jsonify({"Info": s})
 
         # If we reach this point, something has gone wrong:
         abort(404)
