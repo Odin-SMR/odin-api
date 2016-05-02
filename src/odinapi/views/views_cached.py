@@ -571,6 +571,7 @@ class L1LogCached(MethodView):
 
                 freq_mode = loginfo['FreqMode'][ind]
                 scanid = loginfo['ScanID'][ind]
+                date = loginfo['DateTime'][ind].date()
 
                 datadict = dict()
                 for item in itemlist:
