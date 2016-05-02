@@ -2,8 +2,6 @@ postgresql:
   image: docker2.molflow.com/odin_redo/odin_db:latest
   ports:
     - 5432:5432
-#  environment:
-#    - POSTGRES_PASSWORD:test
 
 webapi:
   image: docker2.molflow.com/odin_redo/odin_api:latest
@@ -12,6 +10,7 @@ webapi:
   volumes:
     - ./src/:/app
     - ./data/:/var/lib/odindata
-    - /home/skymandr/Documents/Work/ODIN/odin_redo_documents/VDS/QSMR2.1_test:/odin-smr-2-1-data
+    - ./data/vds-data/:/vds-data
+    - ./data/vds-data/osiris/:/osiris-data
   links:
     - postgresql
