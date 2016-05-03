@@ -29,7 +29,10 @@ class DateInfo(MethodView):
         """GET"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        date1 = datetime.strptime(date, '%Y-%m-%d')
+        try:
+            date1 = datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            abort(404)
         date2 = date1 + relativedelta(days=+1)
         mjd1 = date2mjd(date1)
         mjd2 = date2mjd(date2)

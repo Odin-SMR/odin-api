@@ -102,7 +102,7 @@ class DateInfoCached(MethodView):
         try:
             date1 = datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
-            date1 = datetime(2015, 1, 3)
+            abort(404)
         date_iso_str = date1.date().isoformat()
         query_str = self.gen_query(date_iso_str)
         info_list = self.gen_data(date_iso_str, version, query_str)
