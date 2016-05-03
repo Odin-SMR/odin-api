@@ -90,7 +90,7 @@ class NCeraint(dict):
 		gmh=self['gmh']
                 z=gmh[:,latpt,longpt]
                 if fieldname == 'p':
-                    profile = np.interp(newz,z[-1::-1],self['pres'][-1::-1,latpt,longpt])                   
+                    profile =  np.interp(newz/1e3,z[-1::-1],self['pres'][-1::-1,latpt,longpt] )                   
                 else: 
 		    field = self.readfield(fieldname,ind)
                     profile = np.interp(newz/1e3,z[-1::-1],field[-1::-1,latpt,longpt])
