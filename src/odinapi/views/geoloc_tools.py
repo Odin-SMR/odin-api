@@ -34,19 +34,17 @@ def getscangeoloc(startlat,startlon,endlat,endlon):
     midlat = midlat * rad2deg
     return midlat,midlon
 
-def get_geoloc_info(url_string,scanno):
+def get_geoloc_info(url_string):
     "Get the day of year and mid-latitude of the scan"
 
     specinfo = json.loads(R.get(url_string).text)
-    ScanID = N.array(specinfo['ScanID'])
-    iscan = N.nonzero( (ScanID==int(scanno)))[0][0]
-    startlon = specinfo['StartLon'][iscan]
-    startlat = specinfo['StartLat'][iscan]
-    endlon = specinfo['EndLon'][iscan]
-    endlat = specinfo['EndLat'][iscan]   
+    ScanID = specinfo['Info']['ScanID']
+    startlon = specinfo['Info']['LonStart']
+    startlat = specinfo['Info']['LatStart']
+    endlon = specinfo['Info']['LonEnd']
+    endlat = specinfo['Info']['LatEnd']   
     midlat,midlon = getscangeoloc(startlat,startlon,endlat,endlon)
-
-    MJD = specinfo['MJD'][iscan]
+    MJD = (specinfo['Info']['MJDStart'] + specinfo['Info']['MJDEnd'])/2
     datetime = mjd2datetime(MJD)
     doy = datetime.timetuple().tm_yday    
 

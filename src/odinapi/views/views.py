@@ -4,6 +4,7 @@ from flask import request, url_for
 from flask import jsonify, abort
 from flask.views import MethodView
 from matplotlib import use
+from numpy import around
 use("Agg")
 from geoloc_tools import get_geoloc_info
 from level1b_scandata_exporter import get_scan_data, scan2dictlist
@@ -434,11 +435,11 @@ class ScanPTZ(MethodView):
             abort(404)
         url_base = request.headers['Host']
         url_base = url_base.replace('webapi', 'localhost')
-        url = 'http://' + url_base + url_for('.scansinfo', version='v1',
+        url = 'http://' + url_base + url_for('.scaninfo', version='v4',
                                              date=date, backend=backend,
-                                             freqmode=freqmode)
+                                             freqmode=freqmode,scanno=scanno)
         try:
-            mjd, _, midlat, midlon = get_geoloc_info(url, scanno)
+            mjd, _, midlat, midlon = get_geoloc_info(url)
             datadict = run_donaletty(mjd, midlat, midlon, scanno)
         except:
             abort(404)
@@ -453,8 +454,8 @@ class ScanPTZ(MethodView):
             datadict[item] = datadict[item].tolist()
         if version in ['v4']:
             datadictv4 = dict()
-            datadictv4['Pressure'] = datadict['P']
-            datadictv4['Temperature'] = datadict['T']
+            datadictv4['Pressure'] = around(datadict['P'],decimals=8).tolist()
+            datadictv4['Temperature'] = around(datadict['T'],decimals=3).tolist()
             datadictv4['Altitude'] = datadict['Z']
             datadictv4['Latitude'] = datadict['latitude']
             datadictv4['Longitude'] = datadict['longitude']
@@ -472,17 +473,18 @@ class ScanAPR(MethodView):
             abort(404)
         url_base = request.headers['Host']
         url_base = url_base.replace('webapi', 'localhost')
-        url = 'http://' + url_base + url_for('.scansinfo', version='v1',
+        url = 'http://' + url_base + url_for('.scaninfo', version='v4',
                                              date=date, backend=backend,
-                                             freqmode=freqmode)
-        _, day_of_year, midlat, _ = get_geoloc_info(url, scanno)
+                                             freqmode=freqmode,scanno=scanno)
+        _, day_of_year, midlat, _ = get_geoloc_info(url)
         datadict = get_apriori(species, day_of_year, midlat)
         for item in ['pressure', 'vmr']:
             datadict[item] = datadict[item].tolist()
         if version in ['v4']:
             datadictv4 = dict()
-            datadictv4['Pressure'] = datadict['pressure']
-            datadictv4['VMR'] = datadict['vmr']
+            datadictv4['Pressure'] = around(datadict['pressure'],decimals=8).tolist()
+            datadictv4['VMR'] = datadict['vmr'] # vmr can be very small, 
+            # problematic to decreaese number of digits
             datadictv4['Species'] = datadict['species']
             datadict = datadictv4
         return jsonify(datadict)

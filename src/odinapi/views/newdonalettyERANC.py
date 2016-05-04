@@ -127,8 +127,9 @@ class Donaletty(dict):
             else:
                 date = self.datetime.date()
                 file_time_index = ind
-            
+   
             ecmwffilename = self.ecmwfpath + date.strftime('%Y/%m/')+'ei_pl_' + date.strftime('%Y-%m-%d') + '-' + hourstr + '.nc'
+            print ecmwffilename
             self.ecm.append(NC.NCeraint(ecmwffilename,0))
 
         self.minlat = self.ecm[0]['lats'][0]
