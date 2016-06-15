@@ -18,7 +18,7 @@ run apt-get update && apt-get install -y \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 run pip install flask flask-bootstrap sqlalchemy
-run pip install cython python-hdf4
+run pip install cython python-hdf4 fortranformat
 
 #************* DEPENDENCIES
 ADD dependencies/ /dependencies/
