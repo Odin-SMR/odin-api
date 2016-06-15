@@ -69,8 +69,8 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         response = get(url)
         try:
             response.raise_for_status()
-        except HTTPError, msg:
-            print current_date, msg
+        except HTTPError as msg:
+            print("{0} {1} {2}".format(current_date, msg))
             continue
         json_data = response.json()
         for freqmode in json_data['Info']:
@@ -83,10 +83,11 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                 )
         db_connection.commit()
         if verbose:
-            print current_date, "OK"
+            print("{0} OK".format(current_date))
         current_date = current_date + step
     db_cursor.close()
     db_connection.close()
+
 
 def cli():
     parser = setup_arguments()
@@ -95,20 +96,20 @@ def cli():
     try:
         start_date = date_parser.parse(args.start_date).date()
     except TypeError:
-        print "Could not understand start date {0}".format(args.start_date)
+        print("Could not understand start date {0}".format(args.start_date))
         exit(1)
 
     try:
         end_date = date_parser.parse(args.end_date).date()
     except TypeError:
-        print "Could not understand end date {0}".format(args.end_date)
+        print("Could not understand end date {0}".format(args.end_date))
         exit(1)
 
     try:
         assert(end_date > start_date)
     except AssertionError:
-        print "End date must be after start date!"
-        print "Got: start {0}, end {1}".format(args.start_date, args.end_date)
+        print("End date must be after start date!")
+        print("Got: start {0}, end {1}".format(args.start_date, args.end_date))
         exit(1)
 
     exit(main(start_date, end_date, args.verbose))
