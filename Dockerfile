@@ -67,6 +67,6 @@ RUN git clone https://github.com/Unidata/netcdf4-python.git && \
 #run HDF5_DIR=/dependencies/hdf5-1.8.16/hdf5 pip install h5py
 
 copy src/ /app/
-run cd /app && python setup.py develop
+run cd /app && python setup.py install && python setup.py develop
 expose 5000
 cmd python -m odinapi.api

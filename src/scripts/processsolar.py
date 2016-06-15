@@ -8,8 +8,9 @@ import sys
 
 
 def processsolar():
-    solarfile = '/var/lib/odindata/' + 'sw.txt'
 
+    solarfile = '/var/lib/odindata/' + 'sw.txt'
+    solar=file(solarfile,'r')
     line=solar.readline(-1)
     while line<>"BEGIN OBSERVED\r\n" :
         line=solar.readline(-1)
