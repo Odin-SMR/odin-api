@@ -30,7 +30,7 @@ def get_apriori(species,day_of_year,latitude):
     doy1 = N.float64(datadict['doy'][ind1])
     diff1 = N.abs(doy1-doy)
 
-    ind2 = N.nonzero(datadict['doy']>=doy)[0]
+    ind2 = N.nonzero(datadict['doy']>doy)[0]
     ind2 = ind2[0]
     doy2 = N.float64(datadict['doy'][ind2])
     diff2 = N.abs(doy2-doy)
@@ -72,7 +72,5 @@ def get_apriori(species,day_of_year,latitude):
             'source':filename}
 
     return data
-
-
 
 
