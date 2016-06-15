@@ -150,7 +150,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     db_cursor.close()
     db_connection.close()
 
-if __name__ == '__main__':
+def cli():
     parser = setup_arguments()
     args = parser.parse_args()
 
@@ -174,3 +174,6 @@ if __name__ == '__main__':
         exit(1)
 
     exit(main(start_date, end_date, args.verbose))
+
+if __name__ == '__main__':
+    cli()
