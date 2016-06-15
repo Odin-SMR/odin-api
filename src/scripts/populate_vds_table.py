@@ -51,7 +51,7 @@ def add_to_database(cursor, day, freqmode, backend, altend, altstart, datetime,
 def setup_arguments():
     parser = ArgumentParser(description="Repopulate the cached data table")
     parser.add_argument("-s", "--start", dest="start_date", action="store",
-                        default=(date.today()-timedelta(days=31)).isoformat(),
+                        default=(date.today()-timedelta(days=42)).isoformat(),
                         help="start of period to look for new data "
                         "(default: one month back)")
     parser.add_argument("-e", "--end", dest="end_date", action="store",
