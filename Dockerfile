@@ -19,6 +19,7 @@ run apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 run pip install flask flask-bootstrap sqlalchemy
 run pip install cython python-hdf4 fortranformat
+run pip install pycrypto
 
 #************* DEPENDENCIES
 ADD dependencies/ /dependencies/

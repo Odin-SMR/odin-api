@@ -1,12 +1,14 @@
 """ doc
 """
+import io
+from os import environ
+
 from flask import send_file, render_template
 from flask.views import MethodView
-import io
+
 from date_tools import *
 from level1b_scandata_exporter_v2 import *
 from level1b_scanlogdata_exporter import *
-from os import environ
 from database import DatabaseConnector
 
 

@@ -1,19 +1,22 @@
 """A simple datamodel implementation"""
+from os import environ
 
 from flask import Flask
-from odinapi.views.views import (DateInfo, DateBackendInfo, ScanSpec,
-                                 FreqmodeInfo, ScanPTZ, ScanAPR, VdsInfo,
-                                 VdsFreqmodeInfo, VdsScanInfo,
-                                 VdsInstrumentInfo, VdsDateInfo, VdsExtData)
-from odinapi.views.views_cached import (DateInfoCached, DateBackendInfoCached,
-                                        FreqmodeInfoCached, PeriodInfoCached,
-                                        L1LogCached)
-from odinapi.views.statistics import (FreqmodeStatistics,
-                                      TimelineFreqmodeStatistics)
-from odinapi.views.smr_site import (ViewIndex, ViewScanSpec, ViewLevel1,
-                                    ViewLevel1Stats, ViewFreqmodeInfoPlot)
+
+from odinapi.views.views import (
+    DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
+    ScanPTZ, ScanAPR, VdsInfo, VdsFreqmodeInfo, VdsScanInfo,
+    VdsInstrumentInfo, VdsDateInfo, VdsExtData)
+from odinapi.views.level2 import Level2Data
+from odinapi.views.views_cached import (
+    DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
+    PeriodInfoCached, L1LogCached)
+from odinapi.views.statistics import (
+    FreqmodeStatistics, TimelineFreqmodeStatistics)
+from odinapi.views.smr_site import (
+    ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2,
+    ViewLevel1Stats, ViewFreqmodeInfoPlot)
 from odinapi.views.data_info import FileInfo
-from os import environ
 
 
 class Odin(Flask):
@@ -84,6 +87,10 @@ class Odin(Flask):
             view_func=ScanAPR.as_view('apriori')
             )
         self.add_url_rule(
+            '/rest_api/<version>/level2',
+            view_func=Level2Data.as_view('level2data')
+            )
+        self.add_url_rule(
             '/',
             view_func=ViewIndex.as_view('index')
             )
@@ -97,7 +104,7 @@ class Odin(Flask):
             )
         self.add_url_rule(
             '/level2',
-            view_func=ViewLevel1.as_view('level2')
+            view_func=ViewLevel2.as_view('level2')
             )
         self.add_url_rule(
             '/browse/<backend>/<int:freqmode>/<int:scanno>/',
