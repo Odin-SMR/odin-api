@@ -8,7 +8,6 @@ SECRET_KEY = '***REMOVED***'
 
 def encrypt(msg):
     msg = msg + ' '*(16 - (len(msg) % 16 or 16))
-    print len(msg)
     cipher = AES.new(SECRET_KEY, AES.MODE_ECB)
     return base64.urlsafe_b64encode(cipher.encrypt(msg))
 
