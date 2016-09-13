@@ -28,7 +28,8 @@ def get_collection(database, collection):
         CLIENT = MongoClient(
             environ.get('ODINAPI_MONGODB_HOST', 'level2db'),
             int(environ.get('ODINAPI_MONGODB_PORT', 27017)))
-    return auth(CLIENT[database][collection])
+    db = auth(CLIENT[database])
+    return db[collection]
 
 
 def auth(db):
