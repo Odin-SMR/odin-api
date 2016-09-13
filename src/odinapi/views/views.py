@@ -790,9 +790,8 @@ class VdsScanInfo(MethodView):
             'OClO',
         ]
 
-        data = dict()
         for row in result:
-            odin = dict()
+            data, odin = dict(), dict()
 
             for item in lista1:
                 odin[item] = row[item.lower()]
