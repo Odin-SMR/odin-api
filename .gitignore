@@ -5,3 +5,4 @@
 *.json
 *.h5
 *.png
+!src/odinapi/test/testdata/*.json

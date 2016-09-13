@@ -15,7 +15,7 @@ def encrypt(msg):
 
 def decrypt(msg):
     cipher = AES.new(SECRET_KEY, AES.MODE_ECB)
-    return cipher.decrypt(base64.urlsafe_b64decode(msg)).strip()
+    return cipher.decrypt(base64.urlsafe_b64decode(str(msg))).strip()
 
 
 def encode_level2_target_parameter(scanid, freqmode):

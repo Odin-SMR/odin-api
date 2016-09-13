@@ -14,3 +14,7 @@ webapi:
     - ./data/vds-data/osiris/:/osiris-data
   links:
     - postgresql
+    - level2db
+
+level2db:
+  image: mongo

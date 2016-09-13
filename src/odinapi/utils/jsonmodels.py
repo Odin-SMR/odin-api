@@ -5,20 +5,18 @@ TODO:
         http://json-schema.org/examples.html
 """
 l2i_prototype = {
-    "L2I": {
-        "BLineOffset": [range(12) for _ in range(4)],
-        "ChannelsID": [range(639)],
-        "FitSpectrum": [range(639)],
-        "FreqMode": 0,
-        "FreqOffset": 0.0,
-        "InvMode": "",
-        "LOFreq": [range(12)],
-        "MinLmFactor": 0,
-        "PointOffset": 0.0,
-        "Residual": 0.0,
-        "STW": [range(1) for _ in range(12)],
-        "ScanID": 0,
-    }
+    "BLineOffset": [range(12) for _ in range(4)],
+    "ChannelsID": [range(639)],
+    "FitSpectrum": [range(639)],
+    "FreqMode": 0,
+    "FreqOffset": 0.0,
+    "InvMode": "",
+    "LOFreq": [range(12)],
+    "MinLmFactor": 0,
+    "PointOffset": 0.0,
+    "Residual": 0.0,
+    "STW": [range(1) for _ in range(12)],
+    "ScanID": 0,
 }
 
 l2_prototype = {
