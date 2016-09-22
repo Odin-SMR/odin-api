@@ -6,6 +6,7 @@ import requests
 from odinapi.utils import encrypt_util
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
+PROJECT_NAME = 'testproject'
 
 
 class TestLevel2db(unittest.TestCase):
@@ -22,7 +23,8 @@ class TestLevel2db(unittest.TestCase):
         data = self._get_test_data()
         freq_mode = data['L2I']['FreqMode']
         scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(scan_id, freq_mode)
+        d = encrypt_util.encode_level2_target_parameter(
+            scan_id, freq_mode, PROJECT_NAME)
         url = self.base_url.format(d)
 
         r = requests.delete(url)
@@ -56,7 +58,8 @@ class TestLevel2db(unittest.TestCase):
         data = self._get_test_data()
         freq_mode = data['L2I']['FreqMode']
         scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(scan_id, freq_mode)
+        d = encrypt_util.encode_level2_target_parameter(
+            scan_id, freq_mode, PROJECT_NAME)
         url = self.base_url.format(d)
 
         # Missing data

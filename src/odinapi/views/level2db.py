@@ -3,9 +3,11 @@ from odinapi.database import mongo
 
 class Level2DB(object):
 
-    def __init__(self):
-        self.L2_collection = mongo.get_collection('level2', 'L2')
-        self.L2i_collection = mongo.get_collection('level2', 'L2i')
+    def __init__(self, project):
+        self.L2_collection = mongo.get_collection(
+            'level2', 'L2_%s' % project)
+        self.L2i_collection = mongo.get_collection(
+            'level2', 'L2i_%s' % project)
         self._create_indexes()
 
     def _create_indexes(self):

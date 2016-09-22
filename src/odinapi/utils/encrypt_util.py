@@ -17,11 +17,11 @@ def decrypt(msg):
     return cipher.decrypt(base64.urlsafe_b64decode(str(msg))).strip()
 
 
-def encode_level2_target_parameter(scanid, freqmode):
+def encode_level2_target_parameter(scanid, freqmode, project):
     """Return encrypted string from scanid and freqmode to be used as
     parameter in a level2 post url
     """
-    data = {'ScanID': scanid, 'FreqMode': freqmode}
+    data = {'ScanID': scanid, 'FreqMode': freqmode, 'Project': project}
     return encrypt(json.dumps(data))
 
 
@@ -30,4 +30,4 @@ def decode_level2_target_parameter(param):
     parameter.
     """
     data = json.loads(decrypt(param))
-    return data['ScanID'], data['FreqMode']
+    return data['ScanID'], data['FreqMode'], data['Project']

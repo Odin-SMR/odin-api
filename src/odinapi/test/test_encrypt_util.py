@@ -13,6 +13,6 @@ class TestEncryptUtil(unittest.TestCase):
 
     def test_encode_decode_level2_param(self):
         """Test encode/decode of level2 post url parameter"""
-        args = (7123991206, 1)
+        args = (7123991206, 1, 'myproject')
         s = encrypt_util.encode_level2_target_parameter(*args)
         self.assertEqual(encrypt_util.decode_level2_target_parameter(s), args)

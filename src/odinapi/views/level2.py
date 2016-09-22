@@ -12,16 +12,13 @@ from odinapi.views import level2db
 
 class Level2Data(MethodView):
 
-    def __init__(self):
-        self.level2db = level2db.Level2DB()
-
     def post(self, version):
         """Insert level2 data for a scan id and freq mode"""
         msg = request.args.get('d')
         if not msg:
             abort(400)
         try:
-            scanid, freqmode = decode_level2_target_parameter(msg)
+            scanid, freqmode, project = decode_level2_target_parameter(msg)
         except:
             abort(400)
         data = request.json
@@ -49,8 +46,9 @@ class Level2Data(MethodView):
             return jsonify(
                 {'error': 'FreqMode missmatch (%r != %r)' % (
                     scanid, L2i['FreqMode'])}), 400
+        db = level2db.Level2DB(project)
         try:
-            self.level2db.store(L2, L2i)
+            db.store(L2, L2i)
         except DuplicateKeyError:
             return jsonify(
                 {'error': ('Level2 data for this scan id and freq mode '
@@ -63,8 +61,9 @@ class Level2Data(MethodView):
         if not msg:
             abort(400)
         try:
-            scanid, freqmode = decode_level2_target_parameter(msg)
+            scanid, freqmode, project = decode_level2_target_parameter(msg)
         except:
             abort(400)
-        self.level2db.delete(scanid, freqmode)
+        db = level2db.Level2DB(project)
+        db.delete(scanid, freqmode)
         return '', 204
