@@ -7,7 +7,7 @@ from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
     ScanPTZ, ScanAPR, VdsInfo, VdsFreqmodeInfo, VdsScanInfo,
     VdsInstrumentInfo, VdsDateInfo, VdsExtData)
-from odinapi.views.level2 import Level2Data
+from odinapi.views.level2 import Level2Write, Level2View
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
     PeriodInfoCached, L1LogCached)
@@ -88,7 +88,12 @@ class Odin(Flask):
             )
         self.add_url_rule(
             '/rest_api/<version>/level2',
-            view_func=Level2Data.as_view('level2data')
+            view_func=Level2Write.as_view('level2write')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/<project>'
+             '/<int:freqmode>/<int:scanno>/'),
+            view_func=Level2View.as_view('level2view')
             )
         self.add_url_rule(
             '/',

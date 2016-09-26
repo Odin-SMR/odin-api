@@ -1,33 +1,17 @@
 """ doc
 """
+from datetime import datetime, date, timedelta
+
 from flask import jsonify, abort, request
 from flask.views import MethodView
-from datetime import datetime, date, timedelta
+
+from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
 
 
 def get_backend(freqmode):
-    backends = {
-        1: "AC2",
-        2: "AC1",
-        8: "AC2",
-        13: "AC1",
-        14: "AC2",
-        17: "AC2",
-        19: "AC1",
-        21: "AC1",
-        22: "AC2",
-        23: "AC1",
-        24: "AC1",
-        25: "AC1",
-        29: "AC1",
-        102: "AC2",
-        113: "AC2",
-        119: "AC2",
-        121: "AC2",
-    }
-    return backends[freqmode]
+    return FREQMODE_TO_BACKEND[freqmode]
 
 
 def get_scan_logdata_cached(con, date, freqmode, scanid=None):
@@ -244,49 +228,6 @@ class FreqmodeInfoCached(MethodView):
                 'ScanID',
             ]
 
-        species_list = [
-            'BrO',
-            'Cl2O2',
-            'CO',
-            'HCl',
-            'HO2',
-            'NO2',
-            'OCS',
-            'C2H2',
-            'ClO',
-            'H2CO',
-            'HCN',
-            'HOBr',
-            'NO',
-            'OH',
-            'C2H6',
-            'ClONO2',
-            'H2O2',
-            'HCOOH',
-            'HOCl',
-            'O2',
-            'SF6',
-            'CH3Cl',
-            'ClOOCl',
-            'H2O',
-            'HF',
-            'N2',
-            'O3',
-            'SO2',
-            'CH3CN',
-            'CO2',
-            'H2S',
-            'HI',
-            'N2O',
-            'OBrO',
-            'CH4',
-            'COF2',
-            'HBr',
-            'HNO3',
-            'NH3',
-            'OClO',
-        ]
-
         if version == "v1":
             loginfo, _, _ = get_scan_logdata(
                 con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
@@ -328,7 +269,7 @@ class FreqmodeInfoCached(MethodView):
                         freq_mode,
                         scanid
                         )
-                for species in species_list:
+                for species in SPECIES:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}/').format(
                             request.url_root,
@@ -388,7 +329,7 @@ class FreqmodeInfoCached(MethodView):
                         freq_mode,
                         scanid
                         )
-                for species in species_list:
+                for species in SPECIES:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
                             request.url_root,
@@ -447,8 +388,9 @@ class FreqmodeInfoCached(MethodView):
                             freq_mode,
                             scanid
                             )
-                    for species in species_list:
-                        datadict['URLS']['''URL-apriori-{0}'''.format(species)] \
+                    for species in SPECIES:
+                        url_key = 'URL-apriori-{0}'.format(species)
+                        datadict['URLS'][url_key] \
                             = ('{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/'
                                ).format(
                                 request.url_root,
@@ -512,49 +454,6 @@ class L1LogCached(MethodView):
             'ScanID',
         ]
 
-        species_list = [
-            'BrO',
-            'Cl2O2',
-            'CO',
-            'HCl',
-            'HO2',
-            'NO2',
-            'OCS',
-            'C2H2',
-            'ClO',
-            'H2CO',
-            'HCN',
-            'HOBr',
-            'NO',
-            'OH',
-            'C2H6',
-            'ClONO2',
-            'H2O2',
-            'HCOOH',
-            'HOCl',
-            'O2',
-            'SF6',
-            'CH3Cl',
-            'ClOOCl',
-            'H2O',
-            'HF',
-            'N2',
-            'O3',
-            'SO2',
-            'CH3CN',
-            'CO2',
-            'H2S',
-            'HI',
-            'N2O',
-            'OBrO',
-            'CH4',
-            'COF2',
-            'HBr',
-            'HNO3',
-            'NH3',
-            'OClO',
-        ]
-
         loginfo = get_scan_logdata_cached(con, date=None,
                                           freqmode=int(freqmode),
                                           scanid=int(scanno))
@@ -601,7 +500,7 @@ class L1LogCached(MethodView):
                         freq_mode,
                         scanid
                         )
-                for species in species_list:
+                for species in SPECIES:
                     datadict['URLS']['''URL-apriori-{0}'''.format(species)] \
                         = ('{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/'
                            ).format(request.url_root,

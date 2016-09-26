@@ -32,3 +32,14 @@ class Level2DB(object):
         self.L2_collection.delete_many(
             {'ScanID': scanid,
              'FreqMode': freqmode})
+
+    def get_scan(self, freqmode, scanid):
+        match = {'ScanID': scanid, 'FreqMode': freqmode}
+        L2i = L2 = None
+        L2i = self.L2i_collection.find_one(match)
+        if L2i:
+            L2i.pop('_id')
+            L2 = list(self.L2_collection.find(match))
+            for e in L2:
+                e.pop('_id')
+        return L2i, L2

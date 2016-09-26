@@ -6,11 +6,12 @@ from pymongo.errors import DuplicateKeyError
 from odinapi.utils.encrypt_util import decode_level2_target_parameter
 from odinapi.utils.jsonmodels import (
     l2_prototype, l2i_prototype, check_json, JsonModelError)
+from odinapi.utils.defs import FREQMODE_TO_BACKEND
 
 from odinapi.views import level2db
 
 
-class Level2Data(MethodView):
+class Level2Write(MethodView):
 
     def post(self, version):
         """Insert level2 data for a scan id and freq mode"""
@@ -67,3 +68,22 @@ class Level2Data(MethodView):
         db = level2db.Level2DB(project)
         db.delete(scanid, freqmode)
         return '', 204
+
+
+class Level2View(MethodView):
+
+    def get(self, version, project, freqmode, scanno):
+        db = level2db.Level2DB(project)
+        L2i, L2 = db.get_scan(freqmode, scanno)
+        if not L2i:
+            abort(404)
+        backend = FREQMODE_TO_BACKEND[freqmode]
+        info = {'L2': L2, 'L2i': L2i, 'URLS': {
+            'URL-log': '{0}rest_api/{1}/l1_log/{2}/{3}/'.format(
+                request.url_root, version, freqmode, scanno),
+            'URL-level2': '{0}rest_api/{1}/level2/{2}/{3}/{4}/'.format(
+                request.url_root, version, project, freqmode, scanno),
+            'URL-spectra': '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
+                request.url_root, version, backend, freqmode, scanno)
+        }}
+        return jsonify({'Info': info})

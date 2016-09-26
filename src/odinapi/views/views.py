@@ -22,6 +22,7 @@ from newdonalettyERANC import date2mjd, mjd2stw, run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from database import DatabaseConnector
+from odinapi.utils.defs import SPECIES
 
 
 class DateInfo(MethodView):
@@ -147,48 +148,6 @@ class FreqmodeInfo(MethodView):
                 'ScanID',
             ]
 
-        species_list = [
-            'BrO',
-            'Cl2O2',
-            'CO',
-            'HCl',
-            'HO2',
-            'NO2',
-            'OCS',
-            'C2H2',
-            'ClO',
-            'H2CO',
-            'HCN',
-            'HOBr',
-            'NO',
-            'OH',
-            'C2H6',
-            'ClONO2',
-            'H2O2',
-            'HCOOH',
-            'HOCl',
-            'O2',
-            'SF6',
-            'CH3Cl',
-            'ClOOCl',
-            'H2O',
-            'HF',
-            'N2',
-            'O3',
-            'SO2',
-            'CH3CN',
-            'CO2',
-            'H2S',
-            'HI',
-            'N2O',
-            'OBrO',
-            'CH4',
-            'COF2',
-            'HBr',
-            'HNO3',
-            'NH3',
-            'OClO',
-        ]
 
         if version == "v1":
             loginfo, _, _ = get_scan_logdata(
@@ -231,7 +190,7 @@ class FreqmodeInfo(MethodView):
                         freq_mode,
                         scanid
                         )
-                for species in species_list:
+                for species in SPECIES:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}').format(
                             request.url_root,
@@ -291,7 +250,7 @@ class FreqmodeInfo(MethodView):
                         freq_mode,
                         scanid
                         )
-                for species in species_list:
+                for species in SPECIES:
                     datadict['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
                             request.url_root,
@@ -358,7 +317,7 @@ class FreqmodeInfo(MethodView):
                         freq_mode,
                         scanid
                         )
-                for species in species_list:
+                for species in SPECIES:
                     datadict['URLS']['''URL-apriori-{0}'''.format(species)] = (
                         '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
                             request.url_root,
@@ -636,48 +595,6 @@ class VdsDateInfo(MethodView):
                   'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime']
         lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species',
                   'File', 'File_Index', 'DMJD', 'DTheta']
-        species_list = [
-            'BrO',
-            'Cl2O2',
-            'CO',
-            'HCl',
-            'HO2',
-            'NO2',
-            'OCS',
-            'C2H2',
-            'ClO',
-            'H2CO',
-            'HCN',
-            'HOBr',
-            'NO',
-            'OH',
-            'C2H6',
-            'ClONO2',
-            'H2O2',
-            'HCOOH',
-            'HOCl',
-            'O2',
-            'SF6',
-            'CH3Cl',
-            'ClOOCl',
-            'H2O',
-            'HF',
-            'N2',
-            'O3',
-            'SO2',
-            'CH3CN',
-            'CO2',
-            'H2S',
-            'HI',
-            'N2O',
-            'OBrO',
-            'CH4',
-            'COF2',
-            'HBr',
-            'HNO3',
-            'NH3',
-            'OClO',
-        ]
 
         for row in result:
             data = dict()
@@ -698,7 +615,7 @@ class VdsDateInfo(MethodView):
                                        ).format(request.url_root, version,
                                                 row['date'], backend, freqmode,
                                                 row['scanid'])
-            for species in species_list:
+            for species in SPECIES:
                 data['URLS']['''URL-apriori-{0}'''.format(species)] = (
                     '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
                         request.url_root,
@@ -747,48 +664,6 @@ class VdsScanInfo(MethodView):
         lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
                   'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
                   'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD']
-        species_list = [
-            'BrO',
-            'Cl2O2',
-            'CO',
-            'HCl',
-            'HO2',
-            'NO2',
-            'OCS',
-            'C2H2',
-            'ClO',
-            'H2CO',
-            'HCN',
-            'HOBr',
-            'NO',
-            'OH',
-            'C2H6',
-            'ClONO2',
-            'H2O2',
-            'HCOOH',
-            'HOCl',
-            'O2',
-            'SF6',
-            'CH3Cl',
-            'ClOOCl',
-            'H2O',
-            'HF',
-            'N2',
-            'O3',
-            'SO2',
-            'CH3CN',
-            'CO2',
-            'H2S',
-            'HI',
-            'N2O',
-            'OBrO',
-            'CH4',
-            'COF2',
-            'HBr',
-            'HNO3',
-            'NH3',
-            'OClO',
-        ]
 
         for row in result:
             data, odin = dict(), dict()
@@ -805,7 +680,7 @@ class VdsScanInfo(MethodView):
                                        ).format(request.url_root, version,
                                                 row['date'], backend, freqmode,
                                                 row['scanid'])
-            for species in species_list:
+            for species in SPECIES:
                 data['URLS']['''URL-apriori-{0}'''.format(species)] = (
                     '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}').format(
                         request.url_root,
