@@ -3,6 +3,8 @@ import json
 import unittest
 import requests
 
+from numpy.testing import assert_almost_equal
+
 from odinapi.utils import encrypt_util
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
@@ -123,6 +125,28 @@ class TestReadLevel2(unittest.TestCase):
         info = r.json()['Info']
         print info.keys()
         self.assertTrue('L2i' in info)
+        self.assertTrue('L2' in info)
+
+        test_data = get_test_data()
+        print [p['Product'] for p in test_data['L2']]
+        # Should return the data on the same format as from the qsmr processing
+        self.assertEqual(len(info['L2']), len(test_data['L2']))
+        expected = {}
+        for p in test_data['L2']:
+            expected[p['Product']] = p
+        from_api = {}
+        for p in info['L2']:
+            from_api[p['Product']] = p
+        self.assertEqual(set(from_api.keys()), set(expected.keys()))
+        for p in from_api:
+            api = from_api[p]
+            expect = expected[p]
+            for k, v in api.items():
+                print k
+                if isinstance(v, (list, float)):
+                    assert_almost_equal(v, expect[k])
+                else:
+                    self.assertEqual(v, expect[k])
 
         # Test none existing
         rurl = GET_URL.format(PROJECT_NAME, 2, self.scan_id)
