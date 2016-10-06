@@ -47,7 +47,8 @@ def read_sageIII_file(filename, date, species, event_type):
 
 def nanitize(f):
     """A decorator function for replacing undefined values in returned
-    nd-arrays with nan."""
+    nd-arrays with nan.
+    """
 
     def _decoration(self):
         data = f(self)
@@ -154,14 +155,16 @@ class Sage3Data(object):
 
     def _getGroundTrackSpaceTimeCoordinates(self):
         """Get ground track times, longitudes and latitudes for the event in
-        the file."""
+        the file.
+        """
         return (self._hfile['Section 4.0 - Event Identification']
                 ['Section 4.3 - Ground Track Data Over This Event']
                 ['Section 4.3 - Ground Track Data Over This Event'].value)
 
     def _getSpaceTimeCoordinates(self):
         """Get measurement times, longitudes and latitudes for the event in
-        the file."""
+        the file.
+        """
         return (self._hfile['Section 4.0 - Event Identification']
                 ['Section 4.1 - Science Data Start Information']
                 ['Section 4.1 - Science Data Start Information'].value,

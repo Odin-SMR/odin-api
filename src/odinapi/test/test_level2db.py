@@ -1,6 +1,7 @@
 import os
 import json
 import unittest
+import urllib
 import requests
 
 from numpy.testing import assert_almost_equal
@@ -10,7 +11,11 @@ from odinapi.utils import encrypt_util
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
 PROJECT_NAME = 'testproject'
 WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
-GET_URL = 'http://localhost:5000/rest_api/v4/level2/{}/{}/{}/'
+SCAN_URL = ('http://localhost:5000/rest_api/v4/level2/'
+            '{project}/{freqmode}/{scanid}/')
+AREA_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/area'
+LOCATIONS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/locations'
+DATE_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/{date}'
 
 
 def get_test_data():
@@ -117,18 +122,17 @@ class TestReadLevel2(unittest.TestCase):
         r = requests.delete(self.wurl)
         self.assertEqual(r.status_code, 204)
 
-    def test_get(self):
-        """Test get level2 data"""
-        rurl = GET_URL.format(PROJECT_NAME, self.freq_mode, self.scan_id)
+    def test_get_scan(self):
+        """Test get level2 data for a scan"""
+        rurl = SCAN_URL.format(
+            project=PROJECT_NAME, freqmode=self.freq_mode, scanid=self.scan_id)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 200)
         info = r.json()['Info']
-        print info.keys()
         self.assertTrue('L2i' in info)
         self.assertTrue('L2' in info)
 
         test_data = get_test_data()
-        print [p['Product'] for p in test_data['L2']]
         # Should return the data on the same format as from the qsmr processing
         self.assertEqual(len(info['L2']), len(test_data['L2']))
         expected = {}
@@ -149,6 +153,138 @@ class TestReadLevel2(unittest.TestCase):
                     self.assertEqual(v, expect[k])
 
         # Test none existing
-        rurl = GET_URL.format(PROJECT_NAME, 2, self.scan_id)
+        rurl = SCAN_URL.format(
+            project=PROJECT_NAME, freqmode=2, scanid=self.scan_id)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 404)
+
+    def test_get_locations(self):
+        """Test level2 get locations endpoint"""
+        def test_results(locations, radius, nr_expected, **param):
+            rurl = LOCATIONS_URL.format(project=PROJECT_NAME)
+            uparam = [('location', loc) for loc in locations]
+            uparam += [('radius', radius)]
+            if param:
+                uparam += [(k, str(v)) for k, v in param.items()]
+            rurl += '?%s' % urllib.urlencode(uparam)
+            r = requests.get(rurl)
+            if r.status_code != 200:
+                print r.json()
+            self.assertEqual(r.status_code, 200)
+            res = r.json()['Info']['Results']
+            self.assertEqual(len(res), nr_expected)
+
+        test_results(['-6.0,95.0'], 30, 5)
+
+        # Increase radius
+        test_results(['-6.0,95.0'], 30, 2,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results(['-6.0,95.0'], 100, 7,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results(['-6.0,95.0'], 100, 3, max_altitude=55000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results(['-6.0,95.0'], 1000, 25,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+
+        # Two locations
+        test_results(['-6.0,95.0', '-10,94.3'], 30, 4,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+
+    def test_get_date(self):
+        """Test level2 get date endpoint"""
+        def test_results(date, nr_expected, **param):
+            rurl = DATE_URL.format(project=PROJECT_NAME, date=date)
+            if param:
+                rurl += '?%s' % urllib.urlencode(param)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 200)
+            res = r.json()['Info']['Results']
+            self.assertEqual(len(res), nr_expected)
+
+        test_results('2016-10-06', 0)
+        test_results('2015-04-01', 61)
+
+        # Pressure
+        test_results('2015-04-01', 1, min_pressure=1000, max_pressure=1000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results('2015-04-01', 11, min_pressure=1000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results('2015-04-01', 15, max_pressure=1000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        # Altitude
+        test_results('2015-04-01', 6, min_altitude=20000, max_altitude=30000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results('2015-04-01', 21, min_altitude=20000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results('2015-04-01', 4, max_altitude=20000,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+
+        test_results('2015-04-01', 15, min_altitude=20000, max_altitude=30000)
+
+    def test_get_area(self):
+        """Test level2 get area endpoint"""
+        def test_results(nr_expected, **param):
+            rurl = AREA_URL.format(project=PROJECT_NAME)
+            if param:
+                rurl += '?%s' % urllib.urlencode(param)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 200)
+            res = r.json()['Info']['Results']
+            self.assertEqual(len(res), nr_expected)
+
+        # No param should give everything
+        test_results(61)
+
+        # Start and end time
+        test_results(61, start_time='2015-03-02')
+        test_results(0, start_time='2015-04-02')
+        test_results(61, end_time='2015-04-02')
+        test_results(0, end_time='2015-03-02')
+
+        # Area
+        test_results(6, min_lat=-7, min_lon=95,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results(17, max_lat=-7, max_lon=95,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+        test_results(2, min_lat=-7, max_lat=-6, min_lon=95, max_lon=95.1,
+                     product=u'O3 / 501 GHz / 20 to 50 km')
+
+    def test_bad_requests(self):
+        """Test level2 bad get requests"""
+        def test_bad(rurl, **param):
+            if param:
+                rurl += '?%s' % urllib.urlencode(param)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 400)
+
+        # No locations
+        test_bad(LOCATIONS_URL.format(project=PROJECT_NAME))
+
+        # No radius
+        test_bad(LOCATIONS_URL.format(project=PROJECT_NAME), location='-10,10')
+
+        # Bad locations
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 radius=100, location='-91,100')
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 radius=100, location='91,100')
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 radius=100, location='-10,-1')
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 radius=100, location='-10,361')
+
+        # Bad limits
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 min_pressure=1000, max_pressure=100)
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 min_altitude=50000, max_altitude=10000)
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 start_time='2015-01-01', end_time='2014-01-01')
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 min_lat=-5, max_lat=-10)
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 min_lon=100, max_lon=90)
+
+        # Pressure and altitude not supported at the same time
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 min_pressure=1000, max_altitude=100000)

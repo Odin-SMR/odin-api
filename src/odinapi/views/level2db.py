@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import chain
 
 from odinapi.database import mongo
@@ -5,6 +6,7 @@ from odinapi.database import mongo
 PRODUCT_ARRAY_KEYS = [
     'Altitude', 'Pressure', 'Latitude', 'Longitude', 'Temperature',
     'ErrorTotal', 'ErrorNoise', 'MeasResponse', 'Apriori', 'VMR', 'AVK']
+EARTH_EQ_RADIUS_KM = 6378.1
 
 
 class Level2DB(object):
@@ -43,6 +45,23 @@ class Level2DB(object):
                 ('Longitude', 1)
             ]
         )
+        self.L2_collection.create_index(
+            [
+                ('Product', 1),
+                ('Pressure', 1),
+                ('MJD', 1),
+                ('Location', '2dsphere')
+            ]
+        )
+        self.L2_collection.create_index(
+            [
+                ('Product', 1),
+                ('Pressure', 1),
+                ('MJD', 1),
+                ('Latitude', 1),
+                ('Longitude', 1)
+            ]
+        )
 
     def store(self, L2, L2i):
         """Store the output from the qsmr processing for a freqmode and
@@ -68,19 +87,126 @@ class Level2DB(object):
         """
         match = {'ScanID': scanid, 'FreqMode': freqmode}
         L2i = L2 = None
-        L2i = self.L2i_collection.find_one(match)
+        L2i = self.L2i_collection.find_one(match, {'_id': 0})
         if L2i:
-            L2i.pop('_id')
-            L2 = list(self.L2_collection.find(match))
-            for e in L2:
-                e.pop('_id')
-            L2 = collapse_products(L2)
+            L2 = collapse_products(
+                list(self.L2_collection.find(
+                    match, {'_id': 0, 'Location': 0})))
         return L2i, L2
+
+    def get_product_count(self):
+        """Return count grouped by product"""
+        counts = list(self.L2_collection.aggregate([
+            {'$group': {'_id': '$Product', 'count': {'$sum': 1}}}
+        ]))
+        return {count['_id']: count['count'] for count in counts}
+
+    def get_measurements(self, products,
+                         min_altitude=None, max_altitude=None,
+                         min_pressure=None, max_pressure=None,
+                         start_time=None, end_time=None, areas=None,
+                         fields=None):
+        if not products:
+            products = self.get_product_count().keys()
+        elif isinstance(products, basestring):
+            products = [products]
+        query = {'Product': {'$in': products}}
+
+        if min_altitude or max_altitude:
+            query['Altitude'] = {}
+            if min_altitude:
+                query['Altitude']['$gte'] = min_altitude
+            if max_altitude:
+                query['Altitude']['$lte'] = max_altitude
+
+        if min_pressure or max_pressure:
+            query['Pressure'] = {}
+            if min_pressure:
+                query['Pressure']['$gte'] = min_pressure
+            if max_pressure:
+                query['Pressure']['$lte'] = max_pressure
+
+        if start_time or end_time:
+            query['MJD'] = {}
+            if start_time:
+                query['MJD']['$gte'] = datetime2mjd(start_time)
+            if end_time:
+                query['MJD']['$lt'] = datetime2mjd(end_time)
+
+        if areas:
+            if isinstance(areas, GeographicArea):
+                areas = [areas]
+            query = {'$and': [
+                query, {'$or': [area.query for area in areas]}]}
+
+        # TODO:
+        # Raise if indexes cannot be used proparly?
+        # Examples when indexes are missing:
+        # - No pressure/altitude limits, but start_time/end_time/areas
+        #   provided.
+        # - Longitude limits without latitude limits.
+        # - Pressure and altitude limits at the same time.
+
+        fields = fields or {}
+        if fields:
+            fields = {field: 1 for field in fields}
+        fields['_id'] = 0
+        fields['Location'] = 0
+
+        for conc in self.L2_collection.find(query, fields):
+            yield conc
+
+
+def datetime2mjd(dt):
+    diff = dt - datetime(1858, 11, 17)
+    return diff.days + (
+        diff.seconds + diff.microseconds*1e-6)*datetime2mjd.days_per_second
+datetime2mjd.days_per_second = 1./60/60/24
+
+
+class GeographicArea(object):
+    def __init__(self, min_lat=None, max_lat=None, min_lon=None, max_lon=None):
+        assert any([min_lat, max_lat, min_lon, max_lon])
+        # TODO: Support other lat/lon formats.
+        query = {}
+        if min_lat and max_lat:
+            if float(min_lat) > float(max_lat):
+                raise ValueError(
+                    'Min latitude must not be larger than max latitude')
+        if min_lon and max_lon:
+            if float(min_lon) > float(max_lon):
+                raise ValueError(
+                    'Min longitude must not be larger than max longitude')
+        # TODO: Enforce -90 <= lat <= 90 and 0 <= lon <= 360.
+        #       But we want to be able to find scans with out of bounds
+        #       coordinates for now.
+        if min_lat or max_lat:
+            query['Latitude'] = {}
+            if min_lat:
+                query['Latitude']['$gte'] = float(min_lat)
+            if max_lat:
+                query['Latitude']['$lte'] = float(max_lat)
+        if min_lon or max_lon:
+            query['Longitude'] = {}
+            if min_lon:
+                query['Longitude']['$gte'] = float(min_lon)
+            if max_lon:
+                query['Longitude']['$lte'] = float(max_lon)
+        self.query = query
+
+
+class GeographicCircle(GeographicArea):
+    def __init__(self, lat, lon, radius):
+        lat, lon = float(lat), float(lon)
+        validate_lat_lon(lat, lon)
+        self.query = {'Location': {
+            '$geoWithin': {'$centerSphere': [
+                [to_geojson_longitude(lon), lat], radius/EARTH_EQ_RADIUS_KM]}}}
 
 
 def collapse_products(products):
     """Group the products, this is the inverse of expand_product"""
-    products.sort(key=lambda p: (p['Product'], p['Altitude']))
+    products.sort(key=lambda p: (p['Product'], -p['Pressure']))
     prods = {}
     for product in products:
         pname = product['Product']
@@ -99,7 +225,7 @@ def expand_product(product):
     for (altitude, pressure, lat, lon, temp, errtot, errnoise, measresp,
          apriori, vmr, avk) in zip(
              *[p[array_key] for array_key in PRODUCT_ARRAY_KEYS]):
-        yield {
+        doc = {
             'Product': p['Product'],
             'FreqMode': p['FreqMode'],
             'ScanID': p['ScanID'],
@@ -112,7 +238,6 @@ def expand_product(product):
             'Pressure': pressure,
             'Latitude': lat,
             'Longitude': lon,
-            'Location': {'type': 'Point', 'coordinates': [lon, lat]},
             'Temperature': temp,
             'ErrorTotal': errtot,
             'ErrorNoise': errnoise,
@@ -121,6 +246,10 @@ def expand_product(product):
             'VMR': vmr,
             'AVK': avk
         }
+        location = get_geojson_point(lat, lon)
+        if location:
+            doc['Location'] = location
+        yield doc
 
 
 def get_collapsed_product_dict(product):
@@ -146,3 +275,24 @@ def get_collapsed_product_dict(product):
         'VMR': [p['VMR']],
         'AVK': [p['AVK']]
     }
+
+
+def get_geojson_point(lat, lon):
+    try:
+        validate_lat_lon(lat, lon)
+        return {'type': 'Point', 'coordinates': [
+            to_geojson_longitude(lon), lat]}
+
+    except ValueError:
+        return None
+
+
+def to_geojson_longitude(lon):
+    return (lon + 180) % 360 - 180
+
+
+def validate_lat_lon(lat, lon):
+    if not -90 <= lat <= 90:
+        raise ValueError('Latitude must be between -90 and 90')
+    if not 0 <= lon <= 360:
+        raise ValueError('Latitude must be between 0 and 360')
