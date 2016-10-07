@@ -8,6 +8,8 @@ import matplotlib
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from utils import copyemptydict
+from freq_calibration import FreqCorr_572
+
 
 
 class Scan_data_exporter():
@@ -1400,17 +1402,20 @@ def sort_from_end(f,y):
 
 
 
-
-
 def plot_scan(backend,calstw,spectra):
 
     fig = plt.figure(figsize = (15,8))
     mjd0 = datetime(1858,11,17)
     datei = mjd0 + relativedelta(days = spectra['mjd'][2])
-
-    fig.suptitle('''Scan logdata for {0} : {2} : scan-ID {1} : {3}'''.format(*[backend, calstw, spectra['sourcemode'][0],datei]))
+    if spectra['quality'][0]==0:
+        qualstr = 'ok'
+    else:
+        qualstr = 'limited'
+    titledata = [backend, calstw, spectra['sourcemode'][0], datei, hex(spectra['quality'][0]), qualstr ] 
+    fig.suptitle('''Scan logdata for {0} : {2} : scan-ID {1} : Quality {4} : {3}\n
+                    The Quality of Level1B data for this scan is {5}'''.format(*titledata))
     font = {'family' : 'sans-serif',
-        'size'   : 8}
+        'size'   : 9}
     matplotlib.rc('font', **font)    
 
     #plot tangent altitudes
@@ -1695,7 +1700,11 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
             # 549: use average results derived from FM 2 and 19
             fm = 'av'
         else:
-            # do not  do any correction for the non-locked frontends 
+            # do not  do any main LO correction for the non-locked frontends
+            
+            # but make a specific ssb frequency correction for fm22 data
+            if o.spectra['freqmode'][ind] == 22:
+                o.spectra['ssb_fq'][ind][0] = o.spectra['ssb_fq'][ind][0] - 10.5e6
             continue  
         k = C[fm][0] * o.spectra['imageloada'][ind] + C[fm][1] * o.spectra['mjd'][ind] + C[fm][2]
         o.spectra['lofreq'][ind] = lofreq * k
@@ -1731,13 +1740,14 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
             bad_modules = N.append( bad_modules, badssb_ind + 1 )
     bad_modules = N.unique(bad_modules)
    
+
     for numspec in range( len(o.spectra['stw']) ): 
         f = qsmr_frequency(o.spectra,numspec)
         f = N.array(f)
         f_modules = N.mean(f,1)
         remove_modules = f_modules[bad_modules-1]
         f.shape = (f.shape[0]*f.shape[1],)    
-        y = spectra[numspec]
+        y = N.array(spectra[numspec])
         f,y,ssb,channels_id = smrl1b_ac_freqsort(f, y, remove_modules, rm_edge_ch, sortmeth)  
 
         # -- correcting Doppler in LO
@@ -1751,7 +1761,27 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
             f = (f - lofreq)
         else:
             #f = S.LOFreq - f;
-            f = -(lofreq - f) 
+            f = -(lofreq - f)
+ 
+        if o.spectra['frontend'][0]==3 and (o.spectra['freqmode'][0] == 14
+               or o.spectra['freqmode'][0] == 22 or o.spectra['freqmode'][0] == 24):
+            # make a frequency adjustement according to Julias description in L1ATBD 
+            # of measurements from 572 frontend
+            if numspec == 0:
+                
+                fc = FreqCorr_572( lofreq + f, spectra[2::,channels_id], o.spectra['altitude'][2::] )
+                fc.run_freq_corr()
+                if fc.correction_is_ok:
+                    fdiff = fc.fdiff*1e9
+                    lofreq = lofreq - fdiff
+                else:
+                    # mark that frequency can not be trusted
+                    o.spectra['quality'] = o.spectra['quality'] + 0x0400
+                    fdiff = 0
+            else: 
+                lofreq = lofreq - fdiff 
+            
+
         if numspec == 0:
             #o.spectra['frequency'].append(f.tolist())
             #o.spectra['frequency'].append(f.tolist())
@@ -1769,7 +1799,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     
     o.spectra['frequency'] = freqinfo 
     o.spectra['channels'] = channels
-
+    
     #o.spectra is a dictionary containing the relevant data
     return o.spectra
 
