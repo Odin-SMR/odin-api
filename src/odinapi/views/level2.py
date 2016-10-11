@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+
+import yaml
 from dateutil.parser import parse as parse_datetime
 
 from flask import request, abort, jsonify
@@ -12,6 +14,180 @@ from odinapi.utils.jsonmodels import (
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 
 from odinapi.views import level2db
+
+SWAGGER_DEFINITIONS = yaml.load("""
+ Level2Data:
+   required:
+     - Info
+   properties:
+     Info:
+       required:
+         - Nr
+         - Results
+       properties:
+         Nr:
+           type: integer
+         Results:
+           type: array
+           items:
+             properties:
+               Product:
+                 type: string
+               FreqMode:
+                 type: integer
+               ScanID:
+                 type: integer
+               InvMode:
+                 type: string
+               MJD:
+                 type: number
+               Lat1D:
+                 type: number
+               Lon1D:
+                 type: number
+               Quality:
+                 type: number
+               Altitude:
+                 type: number
+               Pressure:
+                 type: number
+               Latitude:
+                 type: number
+               Longitude:
+                 type: number
+               Temperature:
+                 type: number
+               ErrorTotal:
+                 type: number
+               ErrorNoise:
+                 type: number
+               MeasResponse:
+                 type: number
+               Apriori:
+                 type: number
+               VMR:
+                 type: number
+               AVK:
+                 type: array
+                 items:
+                   type: number""")
+
+SWAGGER_RESPONSES = yaml.load("""
+    Level2BadRequest:
+      description: Unsupported query.
+      schema:
+        required:
+          - Error
+        properties:
+          Error:
+            type: string""")
+
+SWAGGER_PARAMETERS = yaml.load("""
+   version:
+     name: version
+     in: path
+     type: string
+     default: v4
+   project:
+     name: project
+     in: path
+     type: string
+     required: true
+   freqmode:
+     name: freqmode
+     in: path
+     type: integer
+     required: true
+   scanno:
+     name: scanno
+     in: path
+     type: integer
+     required: true
+   date:
+     name: date
+     in: path
+     type: string
+     format: date
+     required: true
+   radius:
+     name: radius
+     required: true
+     in: query
+     description: Return data within this radius from the provided
+                  locations (km).
+     type: number
+   location:
+     name: location
+     required: true
+     in: query
+     description: "Return data close to these locations (lat,lon).
+                   Example location: '-10.1,300.3'."
+     type: array
+     collectionFormat: multi
+     uniqueItems: true
+     items:
+       type: string
+   min_lat:
+     name: min_lat
+     in: query
+     description: Min latitude (-90 to 90).
+     type: number
+   max_lat:
+     name: max_lat
+     in: query
+     description: Max latitude (-90 to 90).
+     type: number
+   min_lon:
+     name: min_lon
+     in: query
+     description: Min longitude (0 to 360).
+     type: number
+   max_lon:
+     name: max_lon
+     in: query
+     description: Max longitude (0 to 360).
+     type: number
+   product:
+     name: product
+     in: query
+     description: Return data only for these products.
+     type: array
+     collectionFormat: multi
+     uniqueItems: true
+     items:
+       type: string
+   min_pressure:
+     name: min_pressure
+     in: query
+     description: Min pressure (Pa).
+     type: number
+   max_pressure:
+     name: max_pressure
+     in: query
+     description: Max pressure (Pa).
+     type: number
+   min_altitude:
+     name: min_altitude
+     in: query
+     description: Min altitude (m).
+     type: number
+   max_altitude:
+     name: max_altitude
+     in: query
+     description: Max altitude (m).
+     type: number
+   start_time:
+     name: start_time
+     in: query
+     description: Return data after this time (inclusive).
+     type: string
+     format: date-time
+   end_time:
+     name: end_time
+     in: query
+     description: Return data before this time (exclusive).
+     type: string
+     format: date-time""")
 
 
 class Level2Write(MethodView):
@@ -77,6 +253,24 @@ class Level2ViewScan(MethodView):
     """GET data for one scan and freqmode"""
 
     def get(self, version, project, freqmode, scanno):
+        """
+        Get data for one scan and freqmode
+
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/freqmode'
+          - $ref: '#/parameters/scanno'
+        responses:
+          200:
+            description: L2i and L2 on the same format as returned by
+                         the processing.
+          404:
+            description: The scan does not exist in this project.
+        """
         db = level2db.Level2DB(project)
         L2i, L2 = db.get_scan(freqmode, scanno)
         if not L2i:
@@ -93,15 +287,79 @@ class Level2ViewScan(MethodView):
         return jsonify({'Info': info})
 
 
-class Level2ViewLocations(MethodView):
-    """
-    Example url parameters:
-
-        product=p1&product=p2&min_pressure=100&max_pressure=1000&
-        start_time=2015-10-11&end_time=2016-02-20&radius=100&
-        location=-24.0,200.0&location=-30.0,210.0
-    """
+class Level2ViewProducts(MethodView):
+    """GET available products"""
     def get(self, version, project):
+        """
+        Get available products
+
+        Return product names and number of occurences of each product.
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+        responses:
+          200:
+            description: Dict with product name as key and count as value.
+            schema:
+              required:
+                - Info
+              properties:
+                Info:
+                  required:
+                    - Products
+                  properties:
+                    Products:
+                      type: object
+                      additionalProperties:
+                        type: integer
+        """
+        db = level2db.Level2DB(project)
+        products = db.get_product_count()
+        return jsonify({'Info': {'Products': products}})
+
+
+class Level2ViewLocations(MethodView):
+    """GET data close to provided locations."""
+    def get(self, version, project):
+        """
+        Get data close to provided locations
+
+        Provide one or more locations and a radius to get data within the
+        resulting circles on the earth surface.
+
+        Choose between min/max altitude and min/max pressure.
+
+        Example query:
+
+            product=p1&product=p2&min_pressure=100&max_pressure=1000&
+            start_time=2015-10-11&end_time=2016-02-20&radius=100&
+            location=-24.0,200.0&location=-30.0,210.0
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/radius'
+          - $ref: '#/parameters/location'
+          - $ref: '#/parameters/product'
+          - $ref: '#/parameters/min_pressure'
+          - $ref: '#/parameters/max_pressure'
+          - $ref: '#/parameters/min_altitude'
+          - $ref: '#/parameters/max_altitude'
+          - $ref: '#/parameters/start_time'
+          - $ref: '#/parameters/end_time'
+        responses:
+          200:
+            description: List of level2 data.
+            schema:
+               $ref: '#/definitions/Level2Data'
+          400:
+            $ref: '#/responses/Level2BadRequest'
+        """
         if not get_list('location'):
             return jsonify({'Error': 'No locations specified'}), 400
         try:
@@ -111,16 +369,41 @@ class Level2ViewLocations(MethodView):
         db = level2db.Level2DB(project)
         meas = db.get_measurements(param.pop('products'), **param)
         # TODO: Limit/paging
-        return jsonify({'Info': {'Results': list(meas)}})
+        results = list(meas)
+        return jsonify({'Info': {'Nr': len(results), 'Results': results}})
 
 
 class Level2ViewDay(MethodView):
-    """
-    Example url parameters:
-
-        product=p1&product=p2&min_pressure=1000&max_pressure=1000
-    """
+    """Get data for a certain day"""
     def get(self, version, project, date):
+        """
+        Get data for a certain day
+
+        Choose between min/max altitude and min/max pressure.
+
+        Example query:
+
+            product=p1&product=p2&min_pressure=1000&max_pressure=1000
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/date'
+          - $ref: '#/parameters/product'
+          - $ref: '#/parameters/min_pressure'
+          - $ref: '#/parameters/max_pressure'
+          - $ref: '#/parameters/min_altitude'
+          - $ref: '#/parameters/max_altitude'
+        responses:
+          200:
+            description: List of level2 data.
+            schema:
+                $ref: '#/definitions/Level2Data'
+          400:
+            $ref: '#/responses/Level2BadRequest'
+        """
         try:
             start_time = get_datetime(val=date)
         except ValueError as e:
@@ -132,18 +415,54 @@ class Level2ViewDay(MethodView):
             return jsonify({'Error': str(e)})
         db = level2db.Level2DB(project)
         meas = db.get_measurements(param.pop('products'), **param)
-        return jsonify({'Info': {'Results': list(meas)}})
+        results = list(meas)
+        return jsonify({'Info': {'Nr': len(results), 'Results': results}})
 
 
 class Level2ViewArea(MethodView):
-    """
-    Example url parameters:
-
-        product=p1&product=p2&min_pressure=100&max_pressure=100&
-        start_time=2015-10-11&end_time=2016-02-20&min_lat=-80&
-        max_lat=-70&min_lon=150&max_lon=200
-    """
+    """GET data for a certain area"""
     def get(self, version, project):
+        """
+        Get data for a certain area
+
+        Provide latitude and/or longitude limits to get data for a certain
+        area of the earth.
+
+        If no latitude or longitude limits are provided, data for the whole
+        earth is returned.
+
+        Choose between min/max altitude and min/max pressure.
+
+        Example url parameters:
+
+            product=p1&product=p2&min_pressure=100&max_pressure=100&
+            start_time=2015-10-11&end_time=2016-02-20&min_lat=-80&
+            max_lat=-70&min_lon=150&max_lon=200
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/min_lat'
+          - $ref: '#/parameters/max_lat'
+          - $ref: '#/parameters/min_lon'
+          - $ref: '#/parameters/max_lon'
+          - $ref: '#/parameters/product'
+          - $ref: '#/parameters/min_pressure'
+          - $ref: '#/parameters/max_pressure'
+          - $ref: '#/parameters/min_altitude'
+          - $ref: '#/parameters/max_altitude'
+          - $ref: '#/parameters/start_time'
+          - $ref: '#/parameters/end_time'
+        responses:
+          200:
+            description: List of level2 data.
+            schema:
+                $ref: '#/definitions/Level2Data'
+          400:
+            $ref: '#/responses/Level2BadRequest'
+        """
         try:
             param = parse_parameters()
         except ValueError as e:
@@ -151,7 +470,8 @@ class Level2ViewArea(MethodView):
         db = level2db.Level2DB(project)
         meas = db.get_measurements(param.pop('products'), **param)
         # TODO: Limit/paging
-        return jsonify({'Info': {'Results': list(meas)}})
+        results = list(meas)
+        return jsonify({'Info': {'Nr': len(results), 'Results': results}})
 
 
 def parse_parameters(**kwargs):

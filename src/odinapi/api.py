@@ -1,7 +1,11 @@
 """A simple datamodel implementation"""
+import json
 from os import environ
 
-from flask import Flask
+from flask import Flask, jsonify
+from flasgger import Swagger, BR_SANITIZER
+from flasgger.base import OutputView
+import flasgger
 
 from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
@@ -9,7 +13,9 @@ from odinapi.views.views import (
     VdsInstrumentInfo, VdsDateInfo, VdsExtData)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
-    Level2ViewArea)
+    Level2ViewArea, Level2ViewProducts,
+    SWAGGER_DEFINITIONS as level2_definitions,
+    SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
     PeriodInfoCached, L1LogCached)
@@ -98,18 +104,19 @@ class Odin(Flask):
             view_func=Level2ViewScan.as_view('level2viewscan')
             )
         self.add_url_rule(
-            ('/rest_api/<version>/level2/<project>'
-             '/locations'),
+            '/rest_api/<version>/level2/<project>/products/',
+            view_func=Level2ViewProducts.as_view('level2viewproducts')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/<project>/locations',
             view_func=Level2ViewLocations.as_view('level2viewlocations')
             )
         self.add_url_rule(
-            ('/rest_api/<version>/level2/<project>'
-             '/<date>/'),
+            '/rest_api/<version>/level2/<project>/<date>/',
             view_func=Level2ViewDay.as_view('level2viewday')
             )
         self.add_url_rule(
-            ('/rest_api/<version>/level2/<project>'
-             '/area'),
+            '/rest_api/<version>/level2/<project>/area',
             view_func=Level2ViewArea.as_view('level2viewarea')
             )
         self.add_url_rule(
@@ -172,10 +179,59 @@ class Odin(Flask):
             view_func=VdsExtData.as_view('vdsextdata')
             )
 
+DESCRIPTION = """Odin level1 and level2 rest api.
+
+Geographic coordinate system:
+
+* Latitude: -90 to 90
+* Longitude: 0 to 360
+"""
+
+OrigOutputView = OutputView
+
+
+class MySwaggerOutput(OrigOutputView):
+    """Extended swagger specification view that makes it possible to add
+    definitions, responses and parameters to the spec.
+    """
+
+    def __init__(self, *args, **kwargs):
+        view_args = kwargs.pop('view_args', {})
+        self.config = view_args.get('config')
+        self.spec = view_args.get('spec')
+        self.process_doc = view_args.get('sanitizer', BR_SANITIZER)
+        self.template = view_args.get('template')
+        super(OrigOutputView, self).__init__(*args, **kwargs)
+
+    def get(self):
+        resp = super(MySwaggerOutput, self).get()
+        data = json.loads(resp.get_data())
+        data['definitions'].update(level2_definitions)
+        data['responses'] = level2_responses
+        data['parameters'] = level2_param
+        return jsonify(data)
+
+flasgger.base.OutputView = MySwaggerOutput
+
 
 def main():
     """Default function"""
     app = Odin(__name__)
+    app.config['SWAGGER'] = {
+        "swagger_version": "2.0",
+        "specs": [
+            {
+                "version": "4.0",
+                "title": "Odin API",
+                "description": DESCRIPTION,
+                "endpoint": 'v4_spec',
+                "route": '/rest_api/v4/spec',
+            }
+        ]
+    }
+    # Swagger ui will be available at /apidocs/index.html
+    Swagger(app)
+
     app.run(
         host='0.0.0.0',
         debug='ODIN_API_PRODUCTION' not in environ,

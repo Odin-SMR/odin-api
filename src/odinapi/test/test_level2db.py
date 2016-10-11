@@ -5,12 +5,14 @@ import urllib
 import requests
 
 from numpy.testing import assert_almost_equal
+from numpy import isnan
 
 from odinapi.utils import encrypt_util
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
 PROJECT_NAME = 'testproject'
 WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
+PRODUCTS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/products/'
 SCAN_URL = ('http://localhost:5000/rest_api/v4/level2/'
             '{project}/{freqmode}/{scanid}/')
 AREA_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/area'
@@ -21,6 +23,28 @@ DATE_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/{date}'
 def get_test_data():
     with open(os.path.join(TEST_DATA_DIR, 'odin_result.json')) as inp:
         return json.load(inp)
+
+
+def get_write_url(data):
+    freq_mode = data['L2I']['FreqMode']
+    scan_id = data['L2I']['ScanID']
+    d = encrypt_util.encode_level2_target_parameter(
+        scan_id, freq_mode, PROJECT_NAME)
+    return WRITE_URL.format(d)
+
+
+def insert_test_data():
+    data = get_test_data()
+    wurl = get_write_url(data)
+    r = requests.post(wurl, json=data)
+    return r
+
+
+def delete_test_data():
+    data = get_test_data()
+    wurl = get_write_url(data)
+    r = requests.delete(wurl, json=data)
+    return r
 
 
 class TestWriteLevel2(unittest.TestCase):
@@ -149,6 +173,8 @@ class TestReadLevel2(unittest.TestCase):
                 print k
                 if isinstance(v, (list, float)):
                     assert_almost_equal(v, expect[k])
+                elif isinstance(expect[k], float) and isnan(expect[k]):
+                    self.assertEqual(v, None)
                 else:
                     self.assertEqual(v, expect[k])
 
@@ -157,6 +183,14 @@ class TestReadLevel2(unittest.TestCase):
             project=PROJECT_NAME, freqmode=2, scanid=self.scan_id)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 404)
+
+    def test_get_products(self):
+        """Test get products"""
+        rurl = PRODUCTS_URL.format(project=PROJECT_NAME)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        res = r.json()['Info']['Products']
+        self.assertEqual(len(res), 3)
 
     def test_get_locations(self):
         """Test level2 get locations endpoint"""

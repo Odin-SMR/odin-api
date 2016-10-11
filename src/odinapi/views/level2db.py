@@ -1,12 +1,18 @@
 from datetime import datetime
 from itertools import chain
 
+import numpy
+
 from odinapi.database import mongo
 
 PRODUCT_ARRAY_KEYS = [
     'Altitude', 'Pressure', 'Latitude', 'Longitude', 'Temperature',
     'ErrorTotal', 'ErrorNoise', 'MeasResponse', 'Apriori', 'VMR', 'AVK']
 EARTH_EQ_RADIUS_KM = 6378.1
+
+# Set a hard limit on the number of L2 documents that can be returned.
+# TODO: Support paging
+HARD_LIMIT = 50000
 
 
 class Level2DB(object):
@@ -153,7 +159,7 @@ class Level2DB(object):
         fields['_id'] = 0
         fields['Location'] = 0
 
-        for conc in self.L2_collection.find(query, fields):
+        for conc in self.L2_collection.find(query, fields, limit=HARD_LIMIT):
             yield conc
 
 
@@ -249,6 +255,11 @@ def expand_product(product):
         location = get_geojson_point(lat, lon)
         if location:
             doc['Location'] = location
+        if numpy.isnan(doc['Quality']):
+            # NaN is not a valid JSON symbol according to the spec and will
+            # break loading of the data in some environments.
+            # TODO: Check for NaN and Infinity in all of the data.
+            doc['Quality'] = None
         yield doc
 
 

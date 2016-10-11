@@ -17,9 +17,8 @@ run apt-get update && apt-get install -y \
     --no-install-recommends && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-run pip install flask flask-bootstrap sqlalchemy
+
 run pip install cython python-hdf4 fortranformat
-run pip install pycrypto pymongo
 
 #************* DEPENDENCIES
 ADD dependencies/ /dependencies/
@@ -66,6 +65,9 @@ RUN git clone https://github.com/Unidata/netcdf4-python.git && \
     cd .. && rm -rf netcdf4-python*
 
 #run HDF5_DIR=/dependencies/hdf5-1.8.16/hdf5 pip install h5py
+
+run pip install flask flasgger flask-bootstrap sqlalchemy
+run pip install pycrypto pymongo
 
 copy src/ /app/
 run cd /app && python setup.py install && python setup.py develop
