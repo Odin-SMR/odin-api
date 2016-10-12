@@ -207,6 +207,8 @@ class Level2Write(MethodView):
         if 'L2' not in data or 'L2I' not in data:
             abort(400)
         L2 = data.pop('L2')
+        if not isinstance(L2, list):
+            abort(400)
         for nr, species in enumerate(L2):
             try:
                 check_json(species, prototype=l2_prototype)
@@ -214,6 +216,8 @@ class Level2Write(MethodView):
                 return jsonify(
                     {'error': 'L2 species %d: %s' % (nr, e)}), 400
         L2i = data.pop('L2I')
+        if not isinstance(L2i, dict):
+            abort(400)
         try:
             check_json(L2i, prototype=l2i_prototype)
         except JsonModelError as e:

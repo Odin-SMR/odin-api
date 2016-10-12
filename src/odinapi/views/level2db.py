@@ -228,6 +228,8 @@ def collapse_products(products):
 def expand_product(product):
     """Generate one document for each altitude"""
     p = product
+    if not isinstance(p['VMR'], list) and numpy.isnan(p['VMR']):
+        p['VMR'] = [None for _ in range(len(p['Altitude']))]
     for (altitude, pressure, lat, lon, temp, errtot, errnoise, measresp,
          apriori, vmr, avk) in zip(
              *[p[array_key] for array_key in PRODUCT_ARRAY_KEYS]):
