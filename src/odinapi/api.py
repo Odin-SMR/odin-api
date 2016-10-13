@@ -22,7 +22,7 @@ from odinapi.views.views_cached import (
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
-    ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2,
+    ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2, ViewLevel2Scan,
     ViewLevel1Stats, ViewFreqmodeInfoPlot)
 from odinapi.views.data_info import FileInfo
 
@@ -134,7 +134,11 @@ class Odin(Flask):
         self.add_url_rule(
             '/level2',
             view_func=ViewLevel2.as_view('level2')
-            )
+        )
+        self.add_url_rule(
+            '/level2/<project>/<freqmode>/<scanno>',
+            view_func=ViewLevel2Scan.as_view('viewlevel2can')
+        )
         self.add_url_rule(
             '/browse/<backend>/<int:freqmode>/<int:scanno>/',
             view_func=ViewScanSpec.as_view('viewscan')

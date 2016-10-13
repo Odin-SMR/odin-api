@@ -208,21 +208,27 @@ class TestReadLevel2(unittest.TestCase):
             res = r.json()['Info']['Results']
             self.assertEqual(len(res), nr_expected)
 
-        test_results(['-6.0,95.0'], 30, 5)
+        test_results(['-6.0,95.0'], 30, 5, min_pressure=1,
+                     start_time='2015-01-01')
 
         # Increase radius
         test_results(['-6.0,95.0'], 30, 2,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
         test_results(['-6.0,95.0'], 100, 7,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
         test_results(['-6.0,95.0'], 100, 3, max_altitude=55000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     start_time='2015-01-01')
         test_results(['-6.0,95.0'], 1000, 25,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
 
         # Two locations
         test_results(['-6.0,95.0', '-10,94.3'], 30, 4,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
 
     def test_get_date(self):
         """Test level2 get date endpoint"""
@@ -235,8 +241,8 @@ class TestReadLevel2(unittest.TestCase):
             res = r.json()['Info']['Results']
             self.assertEqual(len(res), nr_expected)
 
-        test_results('2016-10-06', 0)
-        test_results('2015-04-01', 61)
+        test_results('2016-10-06', 0, min_pressure=1)
+        test_results('2015-04-01', 61, min_pressure=1)
 
         # Pressure
         test_results('2015-04-01', 1, min_pressure=1000, max_pressure=1000,
@@ -253,6 +259,7 @@ class TestReadLevel2(unittest.TestCase):
         test_results('2015-04-01', 4, max_altitude=20000,
                      product=u'O3 / 501 GHz / 20 to 50 km')
 
+        # All products
         test_results('2015-04-01', 15, min_altitude=20000, max_altitude=30000)
 
     def test_get_area(self):
@@ -266,22 +273,22 @@ class TestReadLevel2(unittest.TestCase):
             res = r.json()['Info']['Results']
             self.assertEqual(len(res), nr_expected)
 
-        # No param should give everything
-        test_results(61)
-
         # Start and end time
-        test_results(61, start_time='2015-03-02')
-        test_results(0, start_time='2015-04-02')
-        test_results(61, end_time='2015-04-02')
-        test_results(0, end_time='2015-03-02')
+        test_results(61, start_time='2015-03-02', min_pressure=1)
+        test_results(0, start_time='2015-04-02', min_pressure=1)
+        test_results(61, end_time='2015-04-02', min_pressure=1)
+        test_results(0, end_time='2015-03-02', min_pressure=1)
 
         # Area
         test_results(6, min_lat=-7, min_lon=95,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
         test_results(17, max_lat=-7, max_lon=95,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
         test_results(2, min_lat=-7, max_lat=-6, min_lon=95, max_lon=95.1,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
+                     product=u'O3 / 501 GHz / 20 to 50 km',
+                     min_pressure=1, start_time='2015-01-01')
 
     def test_bad_requests(self):
         """Test level2 bad get requests"""
@@ -322,3 +329,10 @@ class TestReadLevel2(unittest.TestCase):
         # Pressure and altitude not supported at the same time
         test_bad(AREA_URL.format(project=PROJECT_NAME),
                  min_pressure=1000, max_altitude=100000)
+
+        # Too broad query
+        test_bad(AREA_URL.format(project=PROJECT_NAME))
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 max_altitude=20000)
+        test_bad(AREA_URL.format(project=PROJECT_NAME),
+                 start_time='2015-01-01', end_time='2015-12-31')

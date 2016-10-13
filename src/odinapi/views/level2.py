@@ -503,6 +503,13 @@ def parse_parameters(**kwargs):
     if start_time and end_time and start_time > end_time:
         raise ValueError('Start time must not be after end time')
 
+    if not (any([min_pressure, max_pressure, min_altitude, max_altitude]) and
+            any([start_time, end_time])):
+        raise ValueError(
+            'Too broad query, you must provide at least one pressure or '
+            'altitude min/max limit and at least one of start_time and '
+            'end_time.')
+
     # Geographic
     radius = get_float('radius')
     locations = get_list('location') or []
