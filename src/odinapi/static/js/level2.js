@@ -38,15 +38,30 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                 container.appendChild(product_container);
                 
                 var altitude_km = to_kilo(product.Altitude);
-                $.plot('#product' + index + ' #vmr',
-                       [{"data": zip([to_ppm(product.VMR), altitude_km]),
-                         "label": "Odin-SMR-v3"},
-                        {"data": zip([to_ppm(product.Apriori), altitude_km]),
-                         "label": "Odin-SMR-apriori"}],
-                       opt_vmr);
+                var std_times_two = product.ErrorTotal.map(
+                    function(val){return val*2;});
+                var vmr_plot = [{
+                    "data": zip([to_ppm(product.VMR), altitude_km,
+                                 to_ppm(std_times_two)]),
+                    "label": "Odin-SMR-v3",
+                    "color": "blue",
+                    "lines": {"show": true},
+                    "points": {"show": true,
+                               "errorbars": "x",
+                               "xerr": {"show": true,
+                                        "color": 'blue',
+                                        "upperCap": "-",
+                                        "lowerCap": "-"}}},
+                    {"data": zip([to_ppm(product.Apriori), altitude_km]),
+                     "label": "Odin-SMR-apriori",
+                     "color": "yellow"}];
+
+                $.plot('#product' + index + ' #vmr', vmr_plot, opt_vmr);
+
                 var avk = [];
-                for(var i=0; i < product.AVK.length; i++) {
-                    avk.push(zip([product.AVK[i], altitude_km]));
+                var avk_transposed = zip(product.AVK);
+                for(var i=0; i < avk_transposed.length; i++) {
+                    avk.push(zip([avk_transposed[i], altitude_km]));
                 }
                 avk.push({'data': zip([product.MeasResponse, altitude_km]),
                           'color': 'black'});

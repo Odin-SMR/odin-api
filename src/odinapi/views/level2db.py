@@ -102,6 +102,7 @@ class Level2DB(object):
 
     def get_product_count(self):
         """Return count grouped by product"""
+        # TODO: $group does not use the indexes
         counts = list(self.L2_collection.aggregate([
             {'$group': {'_id': '$Product', 'count': {'$sum': 1}}}
         ]))
@@ -113,7 +114,7 @@ class Level2DB(object):
                          start_time=None, end_time=None, areas=None,
                          fields=None):
         if not products:
-            products = self.get_product_count().keys()
+            products = self.L2_collection.distinct('Product')
         elif isinstance(products, basestring):
             products = [products]
         query = {'Product': {'$in': products}}
