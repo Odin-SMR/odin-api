@@ -1,8 +1,16 @@
 #!/usr/bin/env python
+"""
+A script that retrieves era-interim data
+from ECMWF data server. Note that a file
+named .ecmwfapirc, containg a key, should 
+be available in the user home directory.
+"""
+
 import os
 from sys import argv
-from datetime import datetime
-from ecmwfapi import ECMWFDataServer 
+from datetime import datetime,timedelta
+from dateutil.relativedelta import relativedelta
+from ecmwfapi import ECMWFDataServer
 
 # command for retrieving parameters on pressure levels
 #
@@ -61,50 +69,97 @@ cmd_sfc={
 def usage():
     print 'Usage: python testecmwf.py levtype date time'
     print 'Examples:'
-    print 'retrieve data on pressure levels' 
-    print 'python testecmwf.py pl 2015-09-29 00/06/12/18'
+    print 'retrieve data on pressure levels'
+    print 'python get_erainterim_data.py pl 2015-09-29 00/06/12/18'
     print 'retrieve data on surface level'
-    print 'python testecmwf.py sfc 2015-09-29 00/06/12/18'
+    print 'python get_erainterim_data.py sfc 2015-09-29 00/06/12/18'
     exit(0)
 
 if __name__ == "__main__":
-    
-    data_basedir = "/home/bengt/Downloads/"
+
+    #data_basedir = "/misc/pearl/extdata/ERA-Interim/"
+    data_basedir = "/ecmwf-data/"
 
     if len(argv)<4:
         usage()
 
-    levtype = argv[1] 
+    levtype = argv[1]
     if levtype == 'pl':
         cmd = cmd_pl
     elif levtype == 'sfc':
         cmd = cmd_sfc
     else:
         usage()
-  
-    try:
-        date=datetime.strptime(argv[2], '%Y-%m-%d')
+
+    hours = argv[3].split('/')
+    for hour in hours:
+        if not hour in ['00','06','12','18']:
+            usage()
+
+
+    date_start = datetime(2001,8,1).date()
+    # data time delay is three months
+    date_end = datetime.now().date() - relativedelta(months=2)
+    date_end = (datetime(date_end.year,date_end.month,1) - timedelta(days=1)).date()
+    n = 1000    
+
+    dates = []
+    if argv[2]=='?':
+        # retrieve data from n days
+        ni = 0
+        i = 0
+        while ni < n:
+            candidate_date = date_end - timedelta(days=i)
+            # check if file already exists
+            year = "{0}".format(candidate_date.year)
+            month = "{0:02}".format(candidate_date.month)
+            target_dir = os.path.join( data_basedir,year,month )
+            date_string = str(candidate_date)[0:10]
+            file_already_exists = 0
+            for hour in hours:
+                target_file = "{0}_{1}_{2}-{3}.nc".format(*[cmd['class'], cmd['levtype'], date_string, hour])
+                fullfile = os.path.join( target_dir, target_file)
+                if os.path.exists(fullfile):
+                    file_already_exists = 1
+            i = i + 1
+            if candidate_date >= date_start and not file_already_exists:
+                ni = ni + 1
+                dates.append(candidate_date)
+            if candidate_date < date_start:
+                break
+    else:
+        try:
+            dates.append(datetime.strptime(argv[2], '%Y-%m-%d'))
+        except:
+            usage()
+
+    # loop over dates
+    for date in dates:
         year = "{0}".format(date.year)
         month = "{0:02}".format(date.month)
         date_string = str(date)[0:10]
+        cmd['date'] = date_string
+    
+    
+        # create target directory if not exists
+        target_dir = os.path.join( data_basedir,year,month )
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        # loop ove hours 
+        for hour in hours:    
 
-    except:
-        usage()
+            cmd['time'] = hour
+            target_file = "{0}_{1}_{2}-{3}.nc".format(*[cmd['class'], cmd['levtype'], cmd['date'], cmd['time']])
+            cmd['target'] = os.path.join( target_dir, target_file)
+            print cmd['target']
 
-    cmd['date'] = date_string
-    cmd['time'] = argv[3]
+            # check if desired file already exists
+            # retrieve data if file not exists
+            if not os.path.exists( cmd['target'] ):
+                pass
+                server = ECMWFDataServer()
+                server.retrieve(cmd)
 
-    target_dir = os.path.join( data_basedir,year,month )
-    target_file = "{0}_{1}_{2}.nc".format(*[cmd['class'], cmd['levtype'], cmd['date']])   
-    cmd['target'] = os.path.join( target_dir, target_file)
-    print cmd['target'] 
-       
-    # create target directory if not exists
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
 
-    # check if desired file already exists
-    # retrieve data if file not exists
-    if not os.path.exists( cmd['target'] ):
-        server = ECMWFDataServer()
-        server.retrieve(cmd)
+
+
