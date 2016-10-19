@@ -2,6 +2,7 @@ from datetime import datetime
 from itertools import chain
 
 import numpy
+from pymongo.errors import DuplicateKeyError
 
 from odinapi.database import mongo
 
@@ -13,6 +14,27 @@ EARTH_EQ_RADIUS_KM = 6378.1
 # Set a hard limit on the number of L2 documents that can be returned.
 # TODO: Support paging
 HARD_LIMIT = 50000
+
+
+class ProjectsDB(object):
+
+    def __init__(self):
+        self.projects_collection = mongo.get_collection(
+            'level2', 'projects')
+        self._create_indexes()
+
+    def _create_indexes(self):
+        self.projects_collection.create_index(
+            [('name', 1)], unique=True)
+
+    def add_project_if_not_exists(self, project_name):
+        try:
+            self.projects_collection.insert_one({'name': project_name})
+        except DuplicateKeyError:
+            pass
+
+    def get_projects(self):
+        return self.projects_collection.find()
 
 
 class Level2DB(object):

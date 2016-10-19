@@ -11,6 +11,7 @@ from odinapi.utils import encrypt_util
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
 PROJECT_NAME = 'testproject'
+PROJECTS_URL = 'http://localhost:5000/rest_api/v4/level2/projects/'
 WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
 PRODUCTS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/products/'
 SCAN_URL = ('http://localhost:5000/rest_api/v4/level2/'
@@ -45,6 +46,25 @@ def delete_test_data():
     wurl = get_write_url(data)
     r = requests.delete(wurl, json=data)
     return r
+
+
+class TestProjects(unittest.TestCase):
+
+    def test_get_projects(self):
+        """Test get list of projects"""
+        data = get_test_data()
+        freq_mode = data['L2I']['FreqMode']
+        scan_id = data['L2I']['ScanID']
+        d = encrypt_util.encode_level2_target_parameter(
+            scan_id, freq_mode, PROJECT_NAME)
+        url = WRITE_URL.format(d)
+        r = requests.delete(url)
+        self.assertEqual(r.status_code, 204)
+
+        r = requests.get(PROJECTS_URL)
+        self.assertEqual(r.status_code, 200)
+        info = r.json()['Info']
+        self.assertEqual(info['Projects'], [{'Name': PROJECT_NAME}])
 
 
 class TestWriteLevel2(unittest.TestCase):

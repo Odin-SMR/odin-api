@@ -12,6 +12,7 @@ from odinapi.utils.encrypt_util import decode_level2_target_parameter
 from odinapi.utils.jsonmodels import (
     l2_prototype, l2i_prototype, check_json, JsonModelError)
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
+from odinapi.utils.collocations import get_collocations
 
 from odinapi.views import level2db
 
@@ -230,6 +231,8 @@ class Level2Write(MethodView):
             return jsonify(
                 {'error': 'FreqMode missmatch (%r != %r)' % (
                     scanid, L2i['FreqMode'])}), 400
+        projects = level2db.ProjectsDB()
+        projects.add_project_if_not_exists(project)
         db = level2db.Level2DB(project)
         try:
             db.store(L2, L2i)
@@ -253,6 +256,42 @@ class Level2Write(MethodView):
         return '', 204
 
 
+class Level2ViewProjects(MethodView):
+    """Get list of existing projects"""
+
+    def get(self, version):
+        """
+        Get list of existing projects
+
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+        responses:
+          200:
+            description: List of projects.
+            schema:
+              required:
+                - Info
+              properties:
+                Info:
+                  required:
+                    - Projects
+                  properties:
+                    Projects:
+                      type: array
+                      items:
+                        properties:
+                          Name:
+                            type: string
+        """
+        db = level2db.ProjectsDB()
+        projects = db.get_projects()
+        projects = [{'Name': p['name']} for p in projects]
+        return jsonify({'Info': {'Projects': projects}})
+
+
 class Level2ViewScan(MethodView):
     """GET data for one scan and freqmode"""
 
@@ -271,7 +310,8 @@ class Level2ViewScan(MethodView):
         responses:
           200:
             description: L2i and L2 on the same format as returned by
-                         the processing.
+                         the processing, and URLS to log data, spectra and
+                         collocations if there are any for this scan.
           404:
             description: The scan does not exist in this project.
         """
@@ -279,15 +319,31 @@ class Level2ViewScan(MethodView):
         L2i, L2 = db.get_scan(freqmode, scanno)
         if not L2i:
             abort(404)
+        collocations_fields = ['date', 'instrument', 'species', 'file',
+                               'file_index']
+        collocations = get_collocations(
+            freqmode, scanno, fields=collocations_fields)
         backend = FREQMODE_TO_BACKEND[freqmode]
-        info = {'L2': L2, 'L2i': L2i, 'URLS': {
+        urls = {
             'URL-log': '{0}rest_api/{1}/l1_log/{2}/{3}/'.format(
                 request.url_root, version, freqmode, scanno),
             'URL-level2': '{0}rest_api/{1}/level2/{2}/{3}/{4}/'.format(
                 request.url_root, version, project, freqmode, scanno),
             'URL-spectra': '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
                 request.url_root, version, backend, freqmode, scanno)
-        }}
+        }
+        for coll in collocations:
+            key = 'URL-{}-{}'.format(
+                coll['instrument'], coll['species'])
+            url = (
+                '{root}/rest_api/{version}/vds_external/{instrument}/'
+                '{species}/{date}/{file}/{file_index}').format(
+                    root=request.url_root, version=version,
+                    instrument=coll['instrument'], species=coll['species'],
+                    date=coll['date'], file=coll['file'],
+                    file_index=coll['file_index'])
+            urls[key] = url
+        info = {'L2': L2, 'L2i': L2i, 'URLS': urls}
         return jsonify({'Info': info})
 
 

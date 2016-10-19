@@ -21,15 +21,24 @@ from pymongo import MongoClient
 CLIENT = None
 
 
-def get_collection(database, collection):
-    """Return Collection object"""
+def get_connection():
+    """Return MongoClient object"""
     global CLIENT
     if not CLIENT:
         CLIENT = MongoClient(
             environ.get('ODINAPI_MONGODB_HOST', 'level2db'),
             int(environ.get('ODINAPI_MONGODB_PORT', 27017)))
-    db = auth(CLIENT[database])
-    return db[collection]
+    return CLIENT
+
+
+def get_database(db_name):
+    """Return Database object"""
+    return auth(get_connection()[db_name])
+
+
+def get_collection(database, collection):
+    """Return Collection object"""
+    return get_database(database)[collection]
 
 
 def auth(db):

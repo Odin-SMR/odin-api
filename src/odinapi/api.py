@@ -13,7 +13,7 @@ from odinapi.views.views import (
     VdsInstrumentInfo, VdsDateInfo, VdsExtData)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
-    Level2ViewArea, Level2ViewProducts,
+    Level2ViewArea, Level2ViewProducts, Level2ViewProjects,
     SWAGGER_DEFINITIONS as level2_definitions,
     SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
@@ -97,6 +97,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/level2',
             view_func=Level2Write.as_view('level2write')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/projects/',
+            view_func=Level2ViewProjects.as_view('level2viewprojects')
             )
         self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'
