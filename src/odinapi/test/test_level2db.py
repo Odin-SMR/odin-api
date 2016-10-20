@@ -1,3 +1,4 @@
+# pylint: skip-file
 import os
 import json
 import unittest
@@ -12,6 +13,9 @@ from odinapi.utils import encrypt_util
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
 PROJECT_NAME = 'testproject'
 PROJECTS_URL = 'http://localhost:5000/rest_api/v4/level2/projects/'
+PROJECT_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/'
+SCANS_URL = (
+    'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/scans')
 WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
 PRODUCTS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/products/'
 SCAN_URL = ('http://localhost:5000/rest_api/v4/level2/'
@@ -48,23 +52,53 @@ def delete_test_data():
     return r
 
 
-class TestProjects(unittest.TestCase):
+class BaseWithDataInsert(unittest.TestCase):
+
+    def setUp(self):
+        # Insert level2 data
+        data = get_test_data()
+        self.freq_mode = data['L2I']['FreqMode']
+        self.scan_id = data['L2I']['ScanID']
+        d = encrypt_util.encode_level2_target_parameter(
+            self.scan_id, self.freq_mode, PROJECT_NAME)
+        self.wurl = WRITE_URL.format(d)
+
+        r = requests.post(self.wurl, json=data)
+        self.assertEqual(r.status_code, 201)
+
+    def tearDown(self):
+        # Delete level2 data
+        r = requests.delete(self.wurl)
+        self.assertEqual(r.status_code, 204)
+
+
+class TestProjects(BaseWithDataInsert):
 
     def test_get_projects(self):
         """Test get list of projects"""
-        data = get_test_data()
-        freq_mode = data['L2I']['FreqMode']
-        scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(
-            scan_id, freq_mode, PROJECT_NAME)
-        url = WRITE_URL.format(d)
-        r = requests.delete(url)
-        self.assertEqual(r.status_code, 204)
-
         r = requests.get(PROJECTS_URL)
         self.assertEqual(r.status_code, 200)
         info = r.json()['Info']
-        self.assertEqual(info['Projects'], [{'Name': PROJECT_NAME}])
+        self.assertEqual(info['Projects'], [{
+            'Name': PROJECT_NAME,
+            'URLS': {
+                'URL-project': PROJECT_URL.format(project=PROJECT_NAME)}}])
+
+    def test_get_project(self):
+        """Test get project info"""
+        r = requests.get(PROJECT_URL.format(project=PROJECT_NAME))
+        self.assertEqual(r.status_code, 200)
+        info = r.json()['Info']
+        self.assertEqual(info, {
+            'Name': PROJECT_NAME,
+            'FreqModes': [{
+                'FreqMode': 1,
+                'URLS': {
+                    'URL-scans': SCANS_URL.format(
+                        freqmode=self.freq_mode, project=PROJECT_NAME)
+                }
+            }]
+        })
 
 
 class TestWriteLevel2(unittest.TestCase):
@@ -148,23 +182,35 @@ class TestWriteLevel2(unittest.TestCase):
         self.assertEqual(r.status_code, 400)
 
 
-class TestReadLevel2(unittest.TestCase):
-    def setUp(self):
-        # Insert level2 data
-        data = get_test_data()
-        self.freq_mode = data['L2I']['FreqMode']
-        self.scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(
-            self.scan_id, self.freq_mode, PROJECT_NAME)
-        self.wurl = WRITE_URL.format(d)
+class TestReadLevel2(BaseWithDataInsert):
 
-        r = requests.post(self.wurl, json=data)
-        self.assertEqual(r.status_code, 201)
+    def test_get_scans(self):
+        """Test get list of matching scans"""
+        rurl = SCANS_URL.format(project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        scans = r.json()['Info']['Scans']
+        self.assertEqual(len(scans), 1)
+        scan = scans[0]
+        self.assertEqual(scan['ScanID'], self.scan_id)
+        self.assertEqual(set(scan['URLS']), set([
+            'URL-level2', 'URL-log', 'URL-spectra']))
 
-    def tearDown(self):
-        # Delete level2 data
-        r = requests.delete(self.wurl)
-        self.assertEqual(r.status_code, 204)
+        r = requests.get(rurl + '?start_time=2015-04-01')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Info']['Scans']), 1)
+
+        r = requests.get(rurl + '?start_time=2015-04-02')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Info']['Scans']), 0)
+
+        r = requests.get(rurl + '?end_time=2015-04-01')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Info']['Scans']), 0)
+
+        r = requests.get(rurl + '?end_time=2015-04-02')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Info']['Scans']), 1)
 
     def test_get_scan(self):
         """Test get level2 data for a scan"""
@@ -175,6 +221,7 @@ class TestReadLevel2(unittest.TestCase):
         info = r.json()['Info']
         self.assertTrue('L2i' in info)
         self.assertTrue('L2' in info)
+        self.assertTrue('URLS' in info)
 
         test_data = get_test_data()
         # Should return the data on the same format as from the qsmr processing

@@ -1,3 +1,4 @@
+# pylint: skip-file
 from datetime import datetime, timedelta
 
 import yaml
@@ -177,6 +178,12 @@ SWAGGER_PARAMETERS = yaml.load("""
      in: query
      description: Max altitude (m).
      type: number
+   comment:
+     name: comment
+     in: query
+     description: Return scans with this comment (default is to return
+                  all scans that do not have any comment).
+     type: string
    start_time:
      name: start_time
      in: query
@@ -285,11 +292,71 @@ class Level2ViewProjects(MethodView):
                         properties:
                           Name:
                             type: string
+                          URLS:
+                            properties:
+                              URL-project:
+                                 type: string
         """
         db = level2db.ProjectsDB()
         projects = db.get_projects()
-        projects = [{'Name': p['name']} for p in projects]
+        projects = [{
+            'Name': p['name'],
+            'URLS': {
+                'URL-project': '{}rest_api/{}/level2/{}/'.format(
+                    request.url_root, version, p['name'])
+            }} for p in projects]
         return jsonify({'Info': {'Projects': projects}})
+
+
+class Level2ViewProject(MethodView):
+    """Get project information"""
+
+    def get(self, version, project):
+        """
+        Get project information
+
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+        responses:
+          200:
+            description: Project information.
+            schema:
+              required:
+                - Info
+              properties:
+                Info:
+                  required:
+                    - Name
+                    - FreqModes
+                  properties:
+                    Name:
+                      type: string
+                    FreqModes:
+                      type: array
+                      items:
+                        properties:
+                          FreqMode:
+                            type: integer
+                          URLS:
+                            properties:
+                              URL-scans:
+                                 type: string
+        """
+        db = level2db.Level2DB(project)
+        freqmodes = db.get_freqmodes()
+        info = {
+            'Name': project,
+            'FreqModes': [{
+                'FreqMode': freqmode,
+                'URLS': {
+                    'URL-scans': '{}rest_api/{}/level2/{}/{}/scans'.format(
+                        request.url_root, version, project, freqmode)
+                }} for freqmode in freqmodes]}
+        return jsonify({'Info': info})
 
 
 class Level2ViewScan(MethodView):
@@ -323,15 +390,8 @@ class Level2ViewScan(MethodView):
                                'file_index']
         collocations = get_collocations(
             freqmode, scanno, fields=collocations_fields)
-        backend = FREQMODE_TO_BACKEND[freqmode]
-        urls = {
-            'URL-log': '{0}rest_api/{1}/l1_log/{2}/{3}/'.format(
-                request.url_root, version, freqmode, scanno),
-            'URL-level2': '{0}rest_api/{1}/level2/{2}/{3}/{4}/'.format(
-                request.url_root, version, project, freqmode, scanno),
-            'URL-spectra': '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
-                request.url_root, version, backend, freqmode, scanno)
-        }
+        urls = get_scan_urls(
+            request.url_root, version, project, freqmode, scanno)
         for coll in collocations:
             key = 'URL-{}-{}'.format(
                 coll['instrument'], coll['species'])
@@ -345,6 +405,79 @@ class Level2ViewScan(MethodView):
             urls[key] = url
         info = {'L2': L2, 'L2i': L2i, 'URLS': urls}
         return jsonify({'Info': info})
+
+
+class Level2ViewScans(MethodView):
+    """GET list of matching scans"""
+
+    def get(self, version, project, freqmode):
+        """
+        Get list of matching scans
+
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/freqmode'
+          - $ref: '#/parameters/start_time'
+          - $ref: '#/parameters/end_time'
+          - $ref: '#/parameters/comment'
+        responses:
+          200:
+            description: List of scans.
+            schema:
+              required:
+                - Info
+              properties:
+                Info:
+                  required:
+                    - Scans
+                  properties:
+                    Scans:
+                      type: array
+                      items:
+                        properties:
+                          ScanID:
+                            type: integer
+                          URLS:
+                            properties:
+                               URL-level2:
+                                  type: string
+                               URL-spectra:
+                                  type: string
+                               URL-log:
+                                  type: string
+        """
+        start_time = get_datetime('start_time')
+        end_time = get_datetime('end_time')
+        if start_time and end_time and start_time > end_time:
+            return jsonify({
+                'Error': 'Start time must not be after end time'}), 400
+        param = {
+            'start_time': start_time,
+            'end_time': end_time,
+            'comment': get_string('comment')}
+        db = level2db.Level2DB(project)
+        scans = list(db.get_scans(freqmode, **param))
+        for scan in scans:
+            scan['URLS'] = get_scan_urls(
+                request.url_root, version, project, freqmode,
+                scan['ScanID'])
+        return jsonify({'Info': {'Scans': scans}})
+
+
+def get_scan_urls(root, version, project, freqmode, scanno):
+    backend = FREQMODE_TO_BACKEND[freqmode]
+    return {
+        'URL-log': '{0}rest_api/{1}/l1_log/{2}/{3}/'.format(
+            request.url_root, version, freqmode, scanno),
+        'URL-level2': '{0}rest_api/{1}/level2/{2}/{3}/{4}/'.format(
+            request.url_root, version, project, freqmode, scanno),
+        'URL-spectra': '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
+            request.url_root, version, backend, freqmode, scanno)
+    }
 
 
 class Level2ViewProducts(MethodView):
@@ -604,6 +737,16 @@ def parse_parameters(**kwargs):
 
 def get_string(arg):
     return request.args.get(arg)
+
+
+def get_int(arg):
+    val = request.args.get(arg)
+    if not val:
+        return
+    try:
+        return int(val)
+    except ValueError:
+        raise ValueError('Could not convert to integer: %r' % val)
 
 
 def get_float(arg=None, val=None):

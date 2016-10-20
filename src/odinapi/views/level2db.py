@@ -1,9 +1,10 @@
-from datetime import datetime
+# pylint: skip-file
 from itertools import chain
 
 import numpy
 from pymongo.errors import DuplicateKeyError
 
+from odinapi.utils.time_util import datetime2mjd, datetime2stw
 from odinapi.database import mongo
 
 PRODUCT_ARRAY_KEYS = [
@@ -34,7 +35,7 @@ class ProjectsDB(object):
             pass
 
     def get_projects(self):
-        return self.projects_collection.find()
+        return self.projects_collection.find({}, {'_id': 0})
 
 
 class Level2DB(object):
@@ -48,14 +49,14 @@ class Level2DB(object):
 
     def _create_indexes(self):
         """Create indexes if they do not already exist"""
-        self.L2_collection.create_index(
-            [('ScanID', 1),
-             ('FreqMode', 1)
-             ])
         self.L2i_collection.create_index(
-            [('ScanID', 1),
-             ('FreqMode', 1)
+            [('FreqMode', 1),
+             ('ScanID', 1)
              ], unique=True)
+        self.L2_collection.create_index(
+            [('FreqMode', 1),
+             ('ScanID', 1)
+             ])
         self.L2_collection.create_index(
             [
                 ('Product', 1),
@@ -122,6 +123,26 @@ class Level2DB(object):
                     match, {'_id': 0, 'Location': 0})))
         return L2i, L2
 
+    def get_freqmodes(self):
+        return self.L2i_collection.distinct('FreqMode')
+
+    def get_scans(self, freqmode, start_time=None, end_time=None,
+                  comment=None):
+        """Return list of matching scan ids"""
+        query = {'FreqMode': freqmode}
+        if start_time or end_time:
+            query['ScanID'] = {}
+            if start_time:
+                query['ScanID']['$gte'] = datetime2stw(start_time)
+            if end_time:
+                query['ScanID']['$lt'] = datetime2stw(end_time)
+        if comment:
+            query['Comment'] = comment
+        fields = {'ScanID': 1, '_id': 0}
+
+        for scan in self.L2i_collection.find(query, fields, limit=HARD_LIMIT):
+            yield scan
+
     def get_product_count(self):
         """Return count grouped by product"""
         # TODO: $group does not use the indexes
@@ -184,13 +205,6 @@ class Level2DB(object):
 
         for conc in self.L2_collection.find(query, fields, limit=HARD_LIMIT):
             yield conc
-
-
-def datetime2mjd(dt):
-    diff = dt - datetime(1858, 11, 17)
-    return diff.days + (
-        diff.seconds + diff.microseconds*1e-6)*datetime2mjd.days_per_second
-datetime2mjd.days_per_second = 1./60/60/24
 
 
 class GeographicArea(object):

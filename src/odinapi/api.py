@@ -1,3 +1,4 @@
+# pylint: skip-file
 """A simple datamodel implementation"""
 import json
 from os import environ
@@ -13,8 +14,8 @@ from odinapi.views.views import (
     VdsInstrumentInfo, VdsDateInfo, VdsExtData)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
-    Level2ViewArea, Level2ViewProducts, Level2ViewProjects,
-    SWAGGER_DEFINITIONS as level2_definitions,
+    Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
+    Level2ViewScans, SWAGGER_DEFINITIONS as level2_definitions,
     SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
@@ -103,6 +104,14 @@ class Odin(Flask):
             view_func=Level2ViewProjects.as_view('level2viewprojects')
             )
         self.add_url_rule(
+            '/rest_api/<version>/level2/<project>/',
+            view_func=Level2ViewProject.as_view('level2viewproject')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/<project>/<int:freqmode>/scans/',
+            view_func=Level2ViewScans.as_view('level2viewscans')
+            )
+        self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'
              '/<int:freqmode>/<int:scanno>/'),
             view_func=Level2ViewScan.as_view('level2viewscan')
@@ -140,7 +149,7 @@ class Odin(Flask):
             view_func=ViewLevel2.as_view('level2')
         )
         self.add_url_rule(
-            '/level2/<project>/<freqmode>/<scanno>',
+            '/level2/<project>/<freqmode>/<scanno>/',
             view_func=ViewLevel2Scan.as_view('viewlevel2can')
         )
         self.add_url_rule(
