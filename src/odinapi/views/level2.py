@@ -336,7 +336,7 @@ class Level2ViewScan(MethodView):
             key = 'URL-{}-{}'.format(
                 coll['instrument'], coll['species'])
             url = (
-                '{root}/rest_api/{version}/vds_external/{instrument}/'
+                '{root}rest_api/{version}/vds_external/{instrument}/'
                 '{species}/{date}/{file}/{file_index}').format(
                     root=request.url_root, version=version,
                     instrument=coll['instrument'], species=coll['species'],
