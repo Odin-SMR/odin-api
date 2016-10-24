@@ -1,4 +1,5 @@
 # pylint: skip-file
+import urllib
 from datetime import datetime, timedelta
 
 import yaml
@@ -181,8 +182,7 @@ SWAGGER_PARAMETERS = yaml.load("""
    comment:
      name: comment
      in: query
-     description: Return scans with this comment (default is to return
-                  all scans that do not have any comment).
+     description: Return scans with this comment.
      type: string
    start_time:
      name: start_time
@@ -212,9 +212,12 @@ class Level2Write(MethodView):
         data = request.json
         if not data:
             abort(400)
-        if 'L2' not in data or 'L2I' not in data:
+        if any(k not in data for k in ('L2', 'L2I', 'L2C')):
             abort(400)
-        L2 = data.pop('L2')
+        L2c = data.pop('L2C') or ''
+        if not isinstance(L2c, basestring):
+            abort(400)
+        L2 = data.pop('L2') or []
         if not isinstance(L2, list):
             abort(400)
         for nr, species in enumerate(L2):
@@ -223,7 +226,7 @@ class Level2Write(MethodView):
             except JsonModelError as e:
                 return jsonify(
                     {'error': 'L2 species %d: %s' % (nr, e)}), 400
-        L2i = data.pop('L2I')
+        L2i = data.pop('L2I') or {}
         if not isinstance(L2i, dict):
             abort(400)
         try:
@@ -242,7 +245,7 @@ class Level2Write(MethodView):
         projects.add_project_if_not_exists(project)
         db = level2db.Level2DB(project)
         try:
-            db.store(L2, L2i)
+            db.store(L2, L2i, L2c)
         except DuplicateKeyError:
             return jsonify(
                 {'error': ('Level2 data for this scan id and freq mode '
@@ -354,8 +357,60 @@ class Level2ViewProject(MethodView):
                 'FreqMode': freqmode,
                 'URLS': {
                     'URL-scans': '{}rest_api/{}/level2/{}/{}/scans'.format(
-                        request.url_root, version, project, freqmode)
+                        request.url_root, version, project, freqmode),
+                    'URL-comments': (
+                        '{}rest_api/{}/level2/{}/{}/comments'.format(
+                            request.url_root, version, project, freqmode))
                 }} for freqmode in freqmodes]}
+        return jsonify({'Info': info})
+
+
+class Level2ViewComments(MethodView):
+    """GET list of comments for a freqmode"""
+
+    def get(self, version, project, freqmode):
+        """
+        Get list of comments for a freqmode
+
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/freqmode'
+        responses:
+          200:
+            description: List of scans.
+            schema:
+              required:
+                - Info
+              properties:
+                Info:
+                  required:
+                    - Comments
+                  properties:
+                    Comments:
+                      type: array
+                      items:
+                        properties:
+                          Comment:
+                            type: string
+                          URLS:
+                            properties:
+                               URL-scans:
+                                  type: string
+        """
+        db = level2db.Level2DB(project)
+        comments = db.get_comments(freqmode)
+        info = {
+            'Comments': [{
+                'Comment': comment,
+                'URLS': {
+                    'URL-scans': '{}rest_api/{}/level2/{}/{}/scans?{}'.format(
+                        request.url_root, version, project, freqmode,
+                        urllib.urlencode([('comment', comment)]))}}
+                         for comment in comments]}
         return jsonify({'Info': info})
 
 
@@ -376,14 +431,14 @@ class Level2ViewScan(MethodView):
           - $ref: '#/parameters/scanno'
         responses:
           200:
-            description: L2i and L2 on the same format as returned by
-                         the processing, and URLS to log data, spectra and
+            description: L2i, L2 and L2c on the same format as returned by
+                         the processing. URLS to log data, spectra and
                          collocations if there are any for this scan.
           404:
             description: The scan does not exist in this project.
         """
         db = level2db.Level2DB(project)
-        L2i, L2 = db.get_scan(freqmode, scanno)
+        L2i, L2, L2c = db.get_scan(freqmode, scanno)
         if not L2i:
             abort(404)
         collocations_fields = ['date', 'instrument', 'species', 'file',
@@ -403,7 +458,7 @@ class Level2ViewScan(MethodView):
                     date=coll['date'], file=coll['file'],
                     file_index=coll['file_index'])
             urls[key] = url
-        info = {'L2': L2, 'L2i': L2i, 'URLS': urls}
+        info = {'L2': L2, 'L2i': L2i, 'L2c': L2c, 'URLS': urls}
         return jsonify({'Info': info})
 
 

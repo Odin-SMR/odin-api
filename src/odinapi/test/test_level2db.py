@@ -14,6 +14,8 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
 PROJECT_NAME = 'testproject'
 PROJECTS_URL = 'http://localhost:5000/rest_api/v4/level2/projects/'
 PROJECT_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/'
+COMMENTS_URL = (
+    'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/comments')
 SCANS_URL = (
     'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/scans')
 WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
@@ -95,6 +97,8 @@ class TestProjects(BaseWithDataInsert):
                 'FreqMode': 1,
                 'URLS': {
                     'URL-scans': SCANS_URL.format(
+                        freqmode=self.freq_mode, project=PROJECT_NAME),
+                    'URL-comments': COMMENTS_URL.format(
                         freqmode=self.freq_mode, project=PROJECT_NAME)
                 }
             }]
@@ -184,6 +188,16 @@ class TestWriteLevel2(unittest.TestCase):
 
 class TestReadLevel2(BaseWithDataInsert):
 
+    def test_get_comments(self):
+        """Test get list of comments"""
+        rurl = COMMENTS_URL.format(
+            project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        comments = r.json()['Info']['Comments']
+        print comments
+        self.assertEqual(len(comments), 5)
+
     def test_get_scans(self):
         """Test get list of matching scans"""
         rurl = SCANS_URL.format(project=PROJECT_NAME, freqmode=self.freq_mode)
@@ -212,6 +226,16 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(r.json()['Info']['Scans']), 1)
 
+        comment = u'Status: 9 spectra left after quality filtering'
+        r = requests.get(rurl + '?' + urllib.urlencode([('comment', comment)]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Info']['Scans']), 1)
+
+        comment = u'Comment does not exist'
+        r = requests.get(rurl + '?' + urllib.urlencode([('comment', comment)]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Info']['Scans']), 0)
+
     def test_get_scan(self):
         """Test get level2 data for a scan"""
         rurl = SCAN_URL.format(
@@ -221,6 +245,7 @@ class TestReadLevel2(BaseWithDataInsert):
         info = r.json()['Info']
         self.assertTrue('L2i' in info)
         self.assertTrue('L2' in info)
+        self.assertTrue('L2c' in info)
         self.assertTrue('URLS' in info)
 
         test_data = get_test_data()

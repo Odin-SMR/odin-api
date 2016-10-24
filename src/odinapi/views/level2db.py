@@ -53,6 +53,11 @@ class Level2DB(object):
             [('FreqMode', 1),
              ('ScanID', 1)
              ], unique=True)
+        self.L2i_collection.create_index(
+            [('FreqMode', 1),
+             ('Comments', 1),
+             ('ScanID', 1)
+             ])
         self.L2_collection.create_index(
             [('FreqMode', 1),
              ('ScanID', 1)
@@ -92,10 +97,11 @@ class Level2DB(object):
             ]
         )
 
-    def store(self, L2, L2i):
+    def store(self, L2, L2i, L2c):
         """Store the output from the qsmr processing for a freqmode and
         scan id.
         """
+        L2i['Comments'] = L2c.split('\n')
         self.L2i_collection.insert_one(L2i)
         products = chain(*(expand_product(p) for p in L2))
         self.L2_collection.insert_many(list(products))
@@ -115,16 +121,24 @@ class Level2DB(object):
         Use the same format as the output from the qsmr processing.
         """
         match = {'ScanID': scanid, 'FreqMode': freqmode}
-        L2i = L2 = None
+        L2i = L2 = L2c = None
         L2i = self.L2i_collection.find_one(match, {'_id': 0})
         if L2i:
+            L2c = []
+            if 'Comments' in L2i:
+                L2c = L2i.pop('Comments')
             L2 = collapse_products(
                 list(self.L2_collection.find(
                     match, {'_id': 0, 'Location': 0})))
-        return L2i, L2
+        return L2i, L2, L2c
 
     def get_freqmodes(self):
+        """Return list of unique freqmodes in the project"""
         return self.L2i_collection.distinct('FreqMode')
+
+    def get_comments(self, freqmode):
+        """Return list of unique comments for a freqmode"""
+        return self.L2i_collection.distinct('Comments', {'FreqMode': freqmode})
 
     def get_scans(self, freqmode, start_time=None, end_time=None,
                   comment=None):
@@ -137,7 +151,7 @@ class Level2DB(object):
             if end_time:
                 query['ScanID']['$lt'] = datetime2stw(end_time)
         if comment:
-            query['Comment'] = comment
+            query['Comments'] = comment
         fields = {'ScanID': 1, '_id': 0}
 
         for scan in self.L2i_collection.find(query, fields, limit=HARD_LIMIT):
