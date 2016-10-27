@@ -200,7 +200,7 @@ function hoverOverviewPlot(event, pos, item, plots) {
         }
 
         $("#tooltip").html(x + "; " + y)
-            .css({top: item.pageY+5, left: item.pageX+5})
+            .css({top: item.pageY-24, left: item.pageX+8})
             .fadeIn(200);
     } else {
         $("#tooltip").hide();

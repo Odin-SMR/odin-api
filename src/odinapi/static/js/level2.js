@@ -17,13 +17,19 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
         "grid": {
             "hoverable": true,
         },
-        "crosshair": {
-            "mode": "x"
-        },
     };
 
     var container = document.querySelector('#' + container_id);
     var template = document.querySelector('#alt-cross-section-plot-product');
+
+    $("<div id='tooltip'></div>").css({
+        position: "absolute",
+        display: "none",
+        border: "1px solid #002e74",
+        padding: "2px",
+        "background-color": "#8bb9ff",
+        opacity: 0.80
+    }).appendTo("body");
 
     $.getJSON(
         '/rest_api/v4/level2/' + project + '/' + freqmode + '/' + scanid + '/',
@@ -36,25 +42,36 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                 var product_container = document.importNode(
                     template.content, true);
                 container.appendChild(product_container);
-                
+
                 var altitude_km = to_kilo(product.Altitude);
                 var std_times_two = product.ErrorTotal.map(
                     function(val){return val*2;});
-                var vmr_plot = [{
-                    "data": zip([to_ppm(product.VMR), altitude_km,
-                                 to_ppm(std_times_two)]),
+                var vmr_plot = [
+                {
+                    "data": zip([
+                            to_ppm(product.VMR),
+                            altitude_km,
+                            to_ppm(std_times_two)
+                    ]),
                     "label": "Odin-SMR-v3",
-                    "color": "blue",
+                    "color": "#2c5aa0",
                     "lines": {"show": true},
-                    "points": {"show": true,
-                               "errorbars": "x",
-                               "xerr": {"show": true,
-                                        "color": 'blue',
-                                        "upperCap": "-",
-                                        "lowerCap": "-"}}},
-                    {"data": zip([to_ppm(product.Apriori), altitude_km]),
-                     "label": "Odin-SMR-apriori",
-                     "color": "yellow"}];
+                    "points": {
+                        "show": true,
+                        "errorbars": "x",
+                        "xerr": {
+                            "show": true,
+                            "color": "#2c5aa0",
+                            "upperCap": "-",
+                            "lowerCap": "-"
+                        }
+                    }
+                },
+                {
+                    "data": zip([to_ppm(product.Apriori), altitude_km]),
+                    "label": "Odin-SMR-apriori",
+                    "color": "#5aa02c",
+                }];
 
                 $.plot('#product' + index + ' #vmr', vmr_plot, opt_vmr);
 
@@ -66,7 +83,41 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                 avk.push({'data': zip([product.MeasResponse, altitude_km]),
                           'color': 'black'});
                 $.plot('#product' + index + ' #avk', avk, opt_vmr);
+
+                $("#product" + index + " #vmr").bind("plothover",
+                    function (event, pos, item) {
+                        level2tooltip(event, pos, item);
+                    }
+                );
+
+                $("#product" + index + " #avk").bind("plothover",
+                    function (event, pos, item) {
+                        level2tooltip(event, pos, item);
+                    }
+                );
             });
         }
     );
+
+}
+
+
+function level2tooltip(event, pos, item) {
+    if (item) {
+        var x = item.datapoint[0],
+            y = item.datapoint[1],
+            s, tooltip_string;
+        if (item.datapoint.length == 3) {
+            s = item.datapoint[2];
+            tooltip_string = y.toPrecision(4) + ": " + x.toPrecision(4) +
+                "&plusmn; " + s.toPrecision(4);
+        } else {
+            tooltip_string = y.toPrecision(4) + ": " + x.toPrecision(4);
+        }
+        $("#tooltip").html(tooltip_string)
+            .css({top: item.pageY-24, left: item.pageX+8})
+            .fadeIn(200);
+    } else {
+        $("#tooltip").hide();
+    }
 }
