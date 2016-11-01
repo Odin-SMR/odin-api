@@ -103,8 +103,9 @@ class Level2DB(object):
         """
         L2i['Comments'] = L2c.split('\n')
         self.L2i_collection.insert_one(L2i)
-        products = chain(*(expand_product(p) for p in L2))
-        self.L2_collection.insert_many(list(products))
+        if L2:
+            products = chain(*(expand_product(p) for p in L2))
+            self.L2_collection.insert_many(list(products))
 
     def delete(self, scanid, freqmode):
         """Delete info and all products for a freqmode and scanid"""
@@ -127,6 +128,7 @@ class Level2DB(object):
             L2c = []
             if 'Comments' in L2i:
                 L2c = L2i.pop('Comments')
+            L2i.pop('ProcessingError', None)
             L2 = collapse_products(
                 list(self.L2_collection.find(
                     match, {'_id': 0, 'Location': 0})))

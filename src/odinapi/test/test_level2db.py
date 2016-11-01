@@ -135,6 +135,14 @@ class TestWriteLevel2(unittest.TestCase):
         r = requests.delete(url)
         self.assertEqual(r.status_code, 204)
 
+        # When processing fails we only get comments
+        data_failed = {'L2I': [], 'L2': [], 'L2C': data['L2C']}
+        r = requests.post(url, json=data_failed)
+        self.assertEqual(r.status_code, 201)
+
+        r = requests.delete(url)
+        self.assertEqual(r.status_code, 204)
+
     def test_bad_posts(self):
         """Test invalid posts of level2 data"""
         # No url parameter

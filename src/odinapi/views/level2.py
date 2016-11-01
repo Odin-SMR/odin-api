@@ -229,10 +229,18 @@ class Level2Write(MethodView):
         L2i = data.pop('L2I') or {}
         if not isinstance(L2i, dict):
             abort(400)
-        try:
-            check_json(L2i, prototype=l2i_prototype)
-        except JsonModelError as e:
-            return jsonify({'error': 'L2i: %s' % e}), 400
+        if L2i:
+            try:
+                check_json(L2i, prototype=l2i_prototype)
+            except JsonModelError as e:
+                return jsonify({'error': 'L2i: %s' % e}), 400
+            L2i['ProcessingError'] = False
+        else:
+            # Processing error, L2i is empty, we have to trust the provided
+            # scanid and freqmode.
+            L2i['ScanID'] = scanid
+            L2i['FreqMode'] = freqmode
+            L2i['ProcessingError'] = True
         if scanid != L2i['ScanID']:
             return jsonify(
                 {'error': 'ScanID missmatch (%r != %r)' % (
