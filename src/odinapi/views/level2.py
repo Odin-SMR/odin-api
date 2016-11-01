@@ -455,9 +455,8 @@ class Level2ViewScan(MethodView):
             freqmode, scanno, fields=collocations_fields)
         urls = get_scan_urls(
             request.url_root, version, project, freqmode, scanno)
+        collocations = []
         for coll in collocations:
-            key = 'URL-{}-{}'.format(
-                coll['instrument'], coll['species'])
             url = (
                 '{root}rest_api/{version}/vds_external/{instrument}/'
                 '{species}/{date}/{file}/{file_index}').format(
@@ -465,8 +464,12 @@ class Level2ViewScan(MethodView):
                     instrument=coll['instrument'], species=coll['species'],
                     date=coll['date'], file=coll['file'],
                     file_index=coll['file_index'])
-            urls[key] = url
-        info = {'L2': L2, 'L2i': L2i, 'L2c': L2c, 'URLS': urls}
+            collocations.append({
+                'URL': url,
+                'Instrument': coll['instrument'],
+                'Species': coll['species']})
+        info = {'L2': L2, 'L2i': L2i, 'L2c': L2c, 'URLS': urls,
+                'Collocations': collocations}
         return jsonify({'Info': info})
 
 
