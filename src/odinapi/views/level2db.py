@@ -55,6 +55,7 @@ class Level2DB(object):
              ], unique=True)
         self.L2i_collection.create_index(
             [('FreqMode', 1),
+             ('ProcessingError', 1),
              ('Comments', 1),
              ('ScanID', 1)
              ])
@@ -142,10 +143,9 @@ class Level2DB(object):
         """Return list of unique comments for a freqmode"""
         return self.L2i_collection.distinct('Comments', {'FreqMode': freqmode})
 
-    def get_scans(self, freqmode, start_time=None, end_time=None,
-                  comment=None):
-        """Return list of matching scan ids"""
-        query = {'FreqMode': freqmode}
+    def _get_scans(self, freqmode, fields, start_time=None, end_time=None,
+                   comment=None, failed=False):
+        query = {'FreqMode': freqmode, 'ProcessingError': failed}
         if start_time or end_time:
             query['ScanID'] = {}
             if start_time:
@@ -154,10 +154,26 @@ class Level2DB(object):
                 query['ScanID']['$lt'] = datetime2stw(end_time)
         if comment:
             query['Comments'] = comment
-        fields = {'ScanID': 1, '_id': 0}
 
         for scan in self.L2i_collection.find(query, fields, limit=HARD_LIMIT):
             yield scan
+
+    def get_scans(self, freqmode, start_time=None, end_time=None,
+                  comment=None):
+        """Return list of matching scans that succeeded the level2 processing
+        """
+        fields = {'ScanID': 1, '_id': 0}
+        return self._get_scans(
+            freqmode, fields, start_time=start_time, end_time=end_time,
+            comment=comment)
+
+    def get_failed_scans(self, freqmode, start_time=None, end_time=None,
+                         comment=None):
+        """Return list of matching scans that failed the level2 processing"""
+        fields = {'ScanID': 1, 'Comments': {'$slice': -1}, '_id': 0}
+        return self._get_scans(
+            freqmode, fields, start_time=start_time, end_time=end_time,
+            comment=comment, failed=True)
 
     def get_product_count(self):
         """Return count grouped by product"""
@@ -281,8 +297,9 @@ def collapse_products(products):
 def expand_product(product):
     """Generate one document for each altitude"""
     p = product
-    if not isinstance(p['VMR'], list) and numpy.isnan(p['VMR']):
-        p['VMR'] = [None for _ in range(len(p['Altitude']))]
+    if not isinstance(p['VMR'], list):
+        if p['VMR'] is None or numpy.isnan(p['VMR']):
+            p['VMR'] = [None for _ in range(len(p['Altitude']))]
     for (altitude, pressure, lat, lon, temp, errtot, errnoise, measresp,
          apriori, vmr, avk) in zip(
              *[p[array_key] for array_key in PRODUCT_ARRAY_KEYS]):
@@ -310,7 +327,7 @@ def expand_product(product):
         location = get_geojson_point(lat, lon)
         if location:
             doc['Location'] = location
-        if numpy.isnan(doc['Quality']):
+        if doc['Quality'] is not None and numpy.isnan(doc['Quality']):
             # NaN is not a valid JSON symbol according to the spec and will
             # break loading of the data in some environments.
             # TODO: Check for NaN and Infinity in all of the data.

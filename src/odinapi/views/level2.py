@@ -366,6 +366,8 @@ class Level2ViewProject(MethodView):
                 'URLS': {
                     'URL-scans': '{}rest_api/{}/level2/{}/{}/scans'.format(
                         request.url_root, version, project, freqmode),
+                    'URL-failed': '{}rest_api/{}/level2/{}/{}/failed'.format(
+                        request.url_root, version, project, freqmode),
                     'URL-comments': (
                         '{}rest_api/{}/level2/{}/{}/comments'.format(
                             request.url_root, version, project, freqmode))
@@ -530,7 +532,71 @@ class Level2ViewScans(MethodView):
             scan['URLS'] = get_scan_urls(
                 request.url_root, version, project, freqmode,
                 scan['ScanID'])
-        return jsonify({'Info': {'Scans': scans}})
+        return jsonify({'Info': {'Count': len(scans), 'Scans': scans}})
+
+
+class Level2ViewFailedScans(MethodView):
+    """GET list of matching scans that failed the level2 processing"""
+
+    def get(self, version, project, freqmode):
+        """
+        Get list of matching scans that failed the leve2 processing
+
+        ---
+        tags:
+          - level2
+        parameters:
+          - $ref: '#/parameters/version'
+          - $ref: '#/parameters/project'
+          - $ref: '#/parameters/freqmode'
+          - $ref: '#/parameters/start_time'
+          - $ref: '#/parameters/end_time'
+          - $ref: '#/parameters/comment'
+        responses:
+          200:
+            description: List of scans.
+            schema:
+              required:
+                - Info
+              properties:
+                Info:
+                  required:
+                    - Scans
+                  properties:
+                    Scans:
+                      type: array
+                      items:
+                        properties:
+                          ScanID:
+                            type: integer
+                          Error:
+                            type: string
+                          URLS:
+                            properties:
+                               URL-level2:
+                                  type: string
+                               URL-spectra:
+                                  type: string
+                               URL-log:
+                                  type: string
+        """
+        start_time = get_datetime('start_time')
+        end_time = get_datetime('end_time')
+        if start_time and end_time and start_time > end_time:
+            return jsonify({
+                'Error': 'Start time must not be after end time'}), 400
+        param = {
+            'start_time': start_time,
+            'end_time': end_time,
+            'comment': get_string('comment')}
+        db = level2db.Level2DB(project)
+        scans = list(db.get_failed_scans(freqmode, **param))
+        for scan in scans:
+            scan['URLS'] = get_scan_urls(
+                request.url_root, version, project, freqmode,
+                scan['ScanID'])
+            scan['Error'] = scan.pop('Comments')[0]
+        return jsonify({'Info': {'Count': len(scans), 'Scans': scans}})
 
 
 def get_scan_urls(root, version, project, freqmode, scanno):

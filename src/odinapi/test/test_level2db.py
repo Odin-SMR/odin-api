@@ -18,6 +18,8 @@ COMMENTS_URL = (
     'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/comments')
 SCANS_URL = (
     'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/scans')
+FAILED_URL = (
+    'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/failed')
 WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
 PRODUCTS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/products/'
 SCAN_URL = ('http://localhost:5000/rest_api/v4/level2/'
@@ -27,8 +29,8 @@ LOCATIONS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/locations'
 DATE_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/{date}'
 
 
-def get_test_data():
-    with open(os.path.join(TEST_DATA_DIR, 'odin_result.json')) as inp:
+def get_test_data(file_name='odin_result.json'):
+    with open(os.path.join(TEST_DATA_DIR, file_name)) as inp:
         return json.load(inp)
 
 
@@ -40,15 +42,15 @@ def get_write_url(data):
     return WRITE_URL.format(d)
 
 
-def insert_test_data():
-    data = get_test_data()
+def insert_test_data(file_name='odin_result.json'):
+    data = get_test_data(file_name)
     wurl = get_write_url(data)
     r = requests.post(wurl, json=data)
     return r
 
 
-def delete_test_data():
-    data = get_test_data()
+def delete_test_data(file_name='odin_result.json'):
+    data = get_test_data(file_name)
     wurl = get_write_url(data)
     r = requests.delete(wurl, json=data)
     return r
@@ -68,9 +70,23 @@ class BaseWithDataInsert(unittest.TestCase):
         r = requests.post(self.wurl, json=data)
         self.assertEqual(r.status_code, 201)
 
+        # Insert failed level2 scan
+        self.failed_scan_id = self.scan_id + 1
+        self.error_message = u'Error: This scan failed'
+        data_failed = {'L2I': [], 'L2': [],
+                       'L2C': data['L2C'] + '\n' + self.error_message}
+        d = encrypt_util.encode_level2_target_parameter(
+            self.failed_scan_id, self.freq_mode, PROJECT_NAME)
+        self.wurl_failed = WRITE_URL.format(d)
+
+        r = requests.post(self.wurl_failed, json=data_failed)
+        self.assertEqual(r.status_code, 201)
+
     def tearDown(self):
         # Delete level2 data
         r = requests.delete(self.wurl)
+        self.assertEqual(r.status_code, 204)
+        r = requests.delete(self.wurl_failed)
         self.assertEqual(r.status_code, 204)
 
 
@@ -97,6 +113,8 @@ class TestProjects(BaseWithDataInsert):
                 'FreqMode': 1,
                 'URLS': {
                     'URL-scans': SCANS_URL.format(
+                        freqmode=self.freq_mode, project=PROJECT_NAME),
+                    'URL-failed': FAILED_URL.format(
                         freqmode=self.freq_mode, project=PROJECT_NAME),
                     'URL-comments': COMMENTS_URL.format(
                         freqmode=self.freq_mode, project=PROJECT_NAME)
@@ -204,7 +222,7 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(r.status_code, 200)
         comments = r.json()['Info']['Comments']
         print comments
-        self.assertEqual(len(comments), 5)
+        self.assertEqual(len(comments), 6)
 
     def test_get_scans(self):
         """Test get list of matching scans"""
@@ -243,6 +261,19 @@ class TestReadLevel2(BaseWithDataInsert):
         r = requests.get(rurl + '?' + urllib.urlencode([('comment', comment)]))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(r.json()['Info']['Scans']), 0)
+
+    def test_get_failed_scans(self):
+        """Test get list of failed scans"""
+        rurl = FAILED_URL.format(project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        scans = r.json()['Info']['Scans']
+        self.assertEqual(len(scans), 1)
+        scan = scans[0]
+        self.assertEqual(scan['ScanID'], self.failed_scan_id)
+        self.assertEqual(scan['Error'], self.error_message)
+        self.assertEqual(set(scan['URLS']), set([
+            'URL-level2', 'URL-log', 'URL-spectra']))
 
     def test_get_scan(self):
         """Test get level2 data for a scan"""

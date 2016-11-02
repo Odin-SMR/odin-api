@@ -15,7 +15,7 @@ from odinapi.views.views import (
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
-    Level2ViewScans, Level2ViewComments,
+    Level2ViewScans, Level2ViewFailedScans, Level2ViewComments,
     SWAGGER_DEFINITIONS as level2_definitions,
     SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
@@ -115,6 +115,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/<int:freqmode>/scans/',
             view_func=Level2ViewScans.as_view('level2viewscans')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/<project>/<int:freqmode>/failed/',
+            view_func=Level2ViewFailedScans.as_view('level2viewfailed')
             )
         self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'

@@ -46,12 +46,24 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                 var altitude_km = to_kilo(product.Altitude);
                 var std_times_two = product.ErrorTotal.map(
                     function(val){return val*2;});
+
+                var calculated, error, apriori;
+                if (product.Product == 'Temperature') {
+                    calculated = product.Temperature;
+                    error = std_times_two;
+                    apriori = product.Apriori;
+                }
+                else {
+                    calculated = to_ppm(product.VMR);
+                    error = to_ppm(std_times_two);
+                    apriori = to_ppm(product.Apriori);
+                }
                 var vmr_plot = [
                 {
                     "data": zip([
-                            to_ppm(product.VMR),
+                            calculated,
                             altitude_km,
-                            to_ppm(std_times_two)
+                            error
                     ]),
                     "label": "Odin-SMR-v3",
                     "color": "#2c5aa0",
@@ -68,7 +80,7 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                     }
                 },
                 {
-                    "data": zip([to_ppm(product.Apriori), altitude_km]),
+                    "data": zip([apriori, altitude_km]),
                     "label": "Odin-SMR-apriori",
                     "color": "#5aa02c",
                 }];
