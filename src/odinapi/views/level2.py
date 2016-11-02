@@ -451,12 +451,11 @@ class Level2ViewScan(MethodView):
             abort(404)
         collocations_fields = ['date', 'instrument', 'species', 'file',
                                'file_index']
-        collocations = get_collocations(
-            freqmode, scanno, fields=collocations_fields)
         urls = get_scan_urls(
             request.url_root, version, project, freqmode, scanno)
         collocations = []
-        for coll in collocations:
+        for coll in get_collocations(
+                freqmode, scanno, fields=collocations_fields):
             url = (
                 '{root}rest_api/{version}/vds_external/{instrument}/'
                 '{species}/{date}/{file}/{file_index}').format(
