@@ -4,13 +4,34 @@ function zip(arrays) {
     });
 }
 
+
 function to_ppm(array) {
     return array.map(function(val){return val*1000000;});
 }
 
+
 function to_kilo(array) {
     return array.map(function(val){return val/1000;});
 }
+
+
+function find_max(data, error) {
+    var added = [];
+    for (i = 0; i < data.length; i++) {
+        added.push(data[i] + error[i]);
+    }
+    return Math.max.apply(Math, added);
+}
+
+
+function find_min(data, error) {
+    var added = [];
+    for (i = 0; i < data.length; i++) {
+        added.push(data[i] - error[i]);
+    }
+    return Math.min.apply(Math, added);
+}
+
 
 function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
     opt_vmr = {
@@ -85,6 +106,14 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                     "color": "#5aa02c",
                 }];
 
+                var vmr_max = find_max(calculated, error);
+                if (vmr_max < Math.max.apply(Math, apriori)) {
+                    vmr_max = Math.max.apply(Math, apriori);
+                }
+                opt_vmr.xaxis = {
+                    "max": vmr_max * 1.05,
+                };
+
                 $.plot('#product' + index + ' #vmr', vmr_plot, opt_vmr);
 
                 var avk = [];
@@ -94,6 +123,13 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                 }
                 avk.push({'data': zip([product.MeasResponse, altitude_km]),
                           'color': 'black'});
+
+                opt_vmr.xaxis = {
+                    "max": 1.5,
+                    "min": -0.5,
+
+                };
+
                 $.plot('#product' + index + ' #avk', avk, opt_vmr);
 
                 $("#product" + index + " #vmr").bind("plothover",
