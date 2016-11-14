@@ -5,4 +5,6 @@
 *.json
 *.h5
 *.png
+*.coverage
+*.cache
 !src/odinapi/test/testdata/*.json
