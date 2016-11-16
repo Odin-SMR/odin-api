@@ -17,6 +17,8 @@ l2i_prototype = {
     "Residual": 0.0,
     "STW": [range(1) for _ in range(12)],
     "ScanID": 0,
+    "Tsat": 0.0,
+    "SBpath": 0.0,
 }
 
 l2_prototype = {

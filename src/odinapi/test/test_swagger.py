@@ -1,7 +1,10 @@
+# pylint: skip-file
 import unittest
 import requests
+import pytest
 
 
+@pytest.mark.usefixtures('dockercompose')
 class TestSwagger(unittest.TestCase):
 
     def test_spec(self):

@@ -4,6 +4,7 @@ import json
 import unittest
 import urllib
 import requests
+import pytest
 
 from numpy.testing import assert_almost_equal
 from numpy import isnan
@@ -56,6 +57,7 @@ def delete_test_data(file_name='odin_result.json'):
     return r
 
 
+@pytest.mark.usefixtures('dockercompose')
 class BaseWithDataInsert(unittest.TestCase):
 
     def setUp(self):
@@ -90,6 +92,7 @@ class BaseWithDataInsert(unittest.TestCase):
         self.assertEqual(r.status_code, 204)
 
 
+@pytest.mark.usefixtures('dockercompose')
 class TestProjects(BaseWithDataInsert):
 
     def test_get_projects(self):
@@ -123,6 +126,7 @@ class TestProjects(BaseWithDataInsert):
         })
 
 
+@pytest.mark.usefixtures('dockercompose')
 class TestWriteLevel2(unittest.TestCase):
 
     def test_post_and_delete(self):
@@ -212,6 +216,7 @@ class TestWriteLevel2(unittest.TestCase):
         self.assertEqual(r.status_code, 400)
 
 
+@pytest.mark.usefixtures('dockercompose')
 class TestReadLevel2(BaseWithDataInsert):
 
     def test_get_comments(self):
