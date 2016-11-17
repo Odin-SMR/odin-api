@@ -64,6 +64,14 @@ RUN git clone https://github.com/Unidata/netcdf4-python.git && \
     python setup.py install && \
     cd .. && rm -rf netcdf4-python*
 
+#coda
+RUN cd /dependencies && tar -xzf coda-2.17.3.tar.gz && \
+    cd coda-2.17.3 && \
+    ./configure --enable-python PYTHON=/usr/bin/python && \
+    make && \
+    make install && \
+    cd .. && rm -rf coda-2.17.3
+
 #run HDF5_DIR=/dependencies/hdf5-1.8.16/hdf5 pip install h5py
 
 run pip install flask flasgger flask-bootstrap sqlalchemy
