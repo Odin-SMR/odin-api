@@ -1,20 +1,25 @@
 import os
 from pyhdf import VS, HDF
 
-L2P_path_2_1 = "/odin-smr-2-1-data"
-L2P_path_2_0 = "/odin-smr-2-0-data"
+L2P_PATH_2_1 = "/odin-smr-2-1-data"
+L2P_PATH_2_0 = "/odin-smr-2-0-data"
+L2P_PATH_2_3 = "/odin-smr-2-3-data"
+L2P_PATH_2_4 = "/odin-smr-2-4-data"
 
 
 def read_qsmr_file(filename, species, index2):
     # Open HDF file:
     index2 = int(index2)
-    # Special case for frequency mode 2:
-    if filename.split('-')[0] == 'SM_AC1e':
-        L2P_path = L2P_path_2_0
-    else:
-        L2P_path = L2P_path_2_1
+    if filename.split('.')[0].endswith('020'):
+        l2p_path = L2P_PATH_2_0
+    elif filename.split('.')[0].endswith('021'):
+        l2p_path = L2P_PATH_2_1
+    elif filename.split('.')[0].endswith('023'):
+        l2p_path = L2P_PATH_2_3
+    elif filename.split('.')[0].endswith('024'):
+        l2p_path = L2P_PATH_2_4
     filename = str(os.path.join(*filename.split('-')))
-    hdf = HDF.HDF(os.path.join(L2P_path, filename))
+    hdf = HDF.HDF(os.path.join(l2p_path, filename))
     vs = VS.VS(hdf)
 
     # Attatch and create indexes:
