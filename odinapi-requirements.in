@@ -1,0 +1,6 @@
+flask
+flasgger
+flask-bootstrap
+sqlalchemy
+pycrypto
+pymongo

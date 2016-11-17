@@ -74,8 +74,23 @@ RUN cd /dependencies && tar -xzf coda-2.17.3.tar.gz && \
 
 #run HDF5_DIR=/dependencies/hdf5-1.8.16/hdf5 pip install h5py
 
-run pip install flask flasgger flask-bootstrap sqlalchemy
-run pip install pycrypto pymongo
+run pip install click==6.6                # via flask
+run pip install dominate==2.3.0           # via flask-bootstrap
+run pip install flasgger==0.5.13
+run pip install flask-bootstrap==3.3.7.0
+run pip install flask==0.11.1
+run pip install functools32==3.2.3-2      # via jsonschema
+run pip install itsdangerous==0.24        # via flask
+run pip install Jinja2==2.8               # via flask
+run pip install jsonschema==2.5.1         # via flasgger
+run pip install MarkupSafe==0.23          # via jinja2
+run pip install mistune==0.7.3            # via flasgger
+run pip install pycrypto==2.6.1
+run pip install pymongo==3.3.1
+run pip install PyYAML==3.12              # via flasgger
+run pip install sqlalchemy==1.1.4
+run pip install visitor==0.1.3            # via flask-bootstrap
+run pip install Werkzeug==0.11.11         # via flask
 
 copy src/ /app/
 run cd /app && python setup.py install && python setup.py develop

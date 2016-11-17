@@ -69,7 +69,7 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
                     function(val){return val*2;});
 
                 var calculated, error, apriori;
-                if (product.Product == 'Temperature') {
+                if (product.Product.startsWith('Temperature')) {
                     calculated = product.Temperature;
                     error = std_times_two;
                     apriori = product.Apriori;
