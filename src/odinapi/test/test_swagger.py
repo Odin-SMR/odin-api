@@ -16,6 +16,7 @@ class TestSwagger(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         spec = r.json()
         self.assertTrue('paths' in spec)
+        self.assertGreater(len(spec['paths']), 0)
 
     def test_gui(self):
         """Check that swagger ui renders without errors"""

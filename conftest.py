@@ -21,6 +21,16 @@ def pytest_addoption(parser):
 def dockercompose():
     """Set up the full system"""
     root_path = check_output(['git', 'rev-parse', '--show-toplevel'])
+
+    stop = Popen(
+        [
+            'docker-compose',
+            'stop',
+        ],
+        cwd=root_path.strip()
+    )
+    stop.wait()
+
     build = Popen(
         [
             'docker-compose',
@@ -39,11 +49,20 @@ def dockercompose():
     )
     pull.wait()
 
+    remove = Popen(
+        [
+            'docker-compose',
+            'rm',
+            '--force',
+        ],
+        cwd=root_path.strip()
+    )
+    remove.wait()
+
     system = Popen(
         [
             'docker-compose',
             'up',
-            '--no-recreate',
             '--abort-on-container-exit',
             '--remove-orphans',
         ],

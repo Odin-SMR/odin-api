@@ -51,6 +51,16 @@ def insert_test_data(file_name='odin_result.json'):
     return r
 
 
+def insert_failed_scan(scanid=7123991206+1, freqmode=1,
+                       message=u'Error: This scan failed'):
+    data_failed = {'L2I': [], 'L2': [], 'L2C': message}
+    d = encrypt_util.encode_level2_target_parameter(
+        scanid, freqmode, PROJECT_NAME)
+    wurl_failed = WRITE_URL.format(d)
+    r = requests.post(wurl_failed, json=data_failed)
+    return r
+
+
 def delete_test_data(file_name='odin_result.json'):
     data = get_test_data(file_name)
     wurl = get_write_url(data)

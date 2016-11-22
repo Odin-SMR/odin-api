@@ -1,3 +1,139 @@
+var FREQMODE_TO_BACKEND = {
+    "1": "AC2",
+    "2": "AC1",
+    "8": "AC2",
+    "13": "AC1",
+    "14": "AC2",
+    "17": "AC2",
+    "19": "AC1",
+    "21": "AC1",
+    "22": "AC2",
+    "23": "AC1",
+    "24": "AC1",
+    "25": "AC1",
+    "29": "AC1",
+    "102": "AC2",
+    "113": "AC2",
+    "119": "AC2",
+    "121": "AC2",
+};
+
+function initLevel2Dashboard() {
+    fillProjectSelector();
+}
+
+function fillProjectSelector() {
+    $.getJSON(
+        '/rest_api/v4/level2/projects',
+        function(data) {
+            $('#select-project').empty();
+            $('#select-project').append(
+                '<option selected="selected" disabled>Choose project</option>');
+            $.each(data.Info.Projects, function (index, project) {
+                $('#select-project').append(
+                    '<option value="' + project.Name + '">' +
+                        project.Name + '</option>');
+            });
+        });
+}
+
+function fillFreqmodeSelector() {
+    project = $('#select-project').val();
+    $.getJSON(
+        '/rest_api/v4/level2/' + project,
+        function(data) {
+            $('#select-freqmode').empty();
+            $('#select-freqmode').append(
+                '<option selected="selected" disabled>Choose freqmode</option>');
+            $.each(data.Info.FreqModes, function (index, freqmode) {
+                $('#select-freqmode').append(
+                    '<option value="' + freqmode.FreqMode + '">' +
+                        freqmode.FreqMode + '</option>');
+            });
+        });
+}
+
+function searchLevel2Scans(form) {
+    if (!form.freqmode.value || form.freqmode.value == 'Choose freqmode') {
+        alert('Choose freqmode');
+        return;
+    }
+    var param = {};
+    if (form.start_date.value)
+        param.start_time = form.start_date.value;
+    if (form.end_date.value)
+        param.end_time = form.end_date.value;
+    param = $.param(param);
+    var url = '/rest_api/v4/level2/' + form.project.value + '/' +
+        form.freqmode.value + '/' + form.types.value;
+    if (param)
+        url += '?' + param;
+
+    $('#search-results-info').html(
+        '<h2>Project: ' + form.project.value + ', freqmode: ' + form.freqmode.value + ', ' + form.types.value + '</h2>');
+    var table = $('#search-results').DataTable({
+        "ajax":{
+            "url": url,
+            "dataSrc": "Info.Scans",
+        },
+        "columns": [
+            {
+                "data": "ScanID",
+                "title": "Scan ID",
+            },
+            {
+                "data": "Date",
+                "title": "Day",
+            },
+            {
+                "data": "Error",
+                "title": "Message",
+                "defaultContent": "<i>N/A</i>"
+            },
+            {
+                "data": "URLS",
+                "title": "Level1 data",
+                "render": function ( data, type, full, meta ) {
+                    return '<a target="_blank" href="' + data['URL-spectra'] +
+                        '">JSON data</a>';
+                },
+            },
+            {
+                "data": "ScanID",
+                "title": "Level1 plot",
+                "render": function ( data, type, full, meta ) {
+                    return '<a target="_blank" href="/browse/' +
+                        FREQMODE_TO_BACKEND[form.freqmode.value] + '/' +
+                        form.freqmode.value + '/' + data + '/' +
+                        '">Plot</a>';
+                },
+            },
+            {
+                "data": "URLS",
+                "title": "Level2 data",
+                "render": function ( data, type, full, meta ) {
+                    return '<a target="_blank" href="' + data['URL-level2'] +
+                        '">JSON data</a>';
+                },
+            },
+            {
+                "data": "ScanID",
+                "title": "Level2 plot",
+                "render": function ( data, type, full, meta ) {
+                    return '<a target="_blank" href="/level2/' +
+                        form.project.value + '/' + form.freqmode.value + '/' +
+                        data + '">Plot</a>';
+                },
+            },
+        ],
+        "paging":   true,
+        "ordering": true,
+        "info":     false,
+        "destroy": true,
+    });
+
+}
+
 function zip(arrays) {
     return arrays[0].map(function(_,i){
         return arrays.map(function(array){return array[i];});

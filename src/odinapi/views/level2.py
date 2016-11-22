@@ -15,6 +15,7 @@ from odinapi.utils.jsonmodels import (
     l2_prototype, l2i_prototype, check_json, JsonModelError)
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.utils.collocations import get_collocations
+from odinapi.utils import time_util
 
 from odinapi.views import level2db
 
@@ -508,6 +509,9 @@ class Level2ViewScans(MethodView):
                         properties:
                           ScanID:
                             type: integer
+                          Date:
+                            type: string
+                            format: date
                           URLS:
                             properties:
                                URL-level2:
@@ -529,6 +533,8 @@ class Level2ViewScans(MethodView):
         db = level2db.Level2DB(project)
         scans = list(db.get_scans(freqmode, **param))
         for scan in scans:
+            scan['Date'] = time_util.stw2datetime(
+                scan['ScanID']).date().isoformat()
             scan['URLS'] = get_scan_urls(
                 request.url_root, version, project, freqmode,
                 scan['ScanID'])
@@ -569,6 +575,9 @@ class Level2ViewFailedScans(MethodView):
                         properties:
                           ScanID:
                             type: integer
+                          Date:
+                            type: string
+                            format: date
                           Error:
                             type: string
                           URLS:
@@ -596,6 +605,8 @@ class Level2ViewFailedScans(MethodView):
                 request.url_root, version, project, freqmode,
                 scan['ScanID'])
             scan['Error'] = scan.pop('Comments')[0]
+            scan['Date'] = time_util.stw2datetime(
+                scan['ScanID']).date().isoformat()
         return jsonify({'Info': {'Count': len(scans), 'Scans': scans}})
 
 
