@@ -10,8 +10,9 @@ from numpy.testing import assert_almost_equal
 from numpy import isnan
 
 from odinapi.utils import encrypt_util
+from odinapi.test.testdefs import TEST_DATA_DIR
 
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
+
 PROJECT_NAME = 'testproject'
 PROJECTS_URL = 'http://localhost:5000/rest_api/v4/level2/projects/'
 PROJECT_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/'

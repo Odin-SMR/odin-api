@@ -13,6 +13,8 @@ def pytest_addoption(parser):
         "--runslow", action="store_true", help="run slow tests")
     parser.addoption(
         "--runsystem", action="store_true", help="run system tests")
+    parser.addoption(
+        "--rundisabled", action="store_true", help="run disabled tests")
 
 
 @pytest.yield_fixture(scope='session')

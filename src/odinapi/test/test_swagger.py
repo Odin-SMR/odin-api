@@ -3,10 +3,13 @@ import unittest
 import requests
 import pytest
 
+from odinapi.test.testdefs import slow
+
 
 @pytest.mark.usefixtures('dockercompose')
 class TestSwagger(unittest.TestCase):
 
+    @slow
     def test_spec(self):
         """Check that spec is generated without errors"""
         r = requests.get('http://localhost:5000/rest_api/v4/spec')
