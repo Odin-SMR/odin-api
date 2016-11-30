@@ -33,7 +33,7 @@ RUN cd /dependencies && tar -xzf szip-2.1.tar.gz && \
 #hdf5 dependency
 RUN cd /dependencies && tar -xzf hdf5-1.8.16.tar.gz && \
     cd hdf5-1.8.16 && \
-    ./configure && \
+    ./configure --enable-threadsafe --disable-hl && \
     make && \
     make install
 
