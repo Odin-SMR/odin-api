@@ -33,7 +33,7 @@ RUN cd /dependencies && tar -xzf szip-2.1.tar.gz && \
 #hdf5 dependency
 RUN cd /dependencies && tar -xzf hdf5-1.8.16.tar.gz && \
     cd hdf5-1.8.16 && \
-    ./configure --enable-threadsafe --disable-hl && \
+    ./configure && \
     make && \
     make install
 
@@ -59,6 +59,7 @@ RUN export CPPFLAGS=-I/dependencies/hdf5-1.8.16/hdf5/include \
 #netcdf4 python
 RUN git clone https://github.com/Unidata/netcdf4-python.git && \
     cd netcdf4-python && \
+    git checkout v1.2.4rel && \
     cp setup.cfg.template setup.cfg && \
     python setup.py build && \
     python setup.py install && \

@@ -19,12 +19,13 @@ from read_smiles import read_smiles_file
 from read_sageIII import read_sageIII_file
 from read_osiris import read_osiris_file
 from read_odinsmr2_old import read_qsmr_file
+from read_ace import read_ace_file
 from newdonalettyERANC import run_donaletty
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from database import DatabaseConnector
 from odinapi.utils.defs import SPECIES
-
+from get_odinapi_info import get_config_data_files
 
 class DateInfo(MethodView):
     """plots information"""
@@ -148,6 +149,7 @@ class FreqmodeInfo(MethodView):
                 'MJDEnd',
                 'ScanID',
             ]
+
 
         if version == "v1":
             loginfo, _, _ = get_scan_logdata(
@@ -723,7 +725,23 @@ class VdsExtData(MethodView):
             data = read_osiris_file(file, date, species, file_index)
         elif instrument == 'smr':
             data = read_qsmr_file(file, species, file_index)
+        elif instrument == 'ace':
+            data = read_ace_file(file, date, file_index)
         else:
             abort(404)
 
         return data
+
+
+class ConfigDataFiles(MethodView):
+    """display example files available to the system"""
+    def get(self, version):
+        """GET-method"""
+        if version not in ['v1', 'v2', 'v3', 'v4']:
+            abort(404)
+        datadict = self.gen_data()
+        return jsonify(datadict)
+    def gen_data(self):
+        """get the data"""
+        return get_config_data_files()
+

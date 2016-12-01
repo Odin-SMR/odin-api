@@ -31,24 +31,6 @@ def dockercompose():
     )
     stop.wait()
 
-    build = Popen(
-        [
-            'docker-compose',
-            'build',
-        ],
-        cwd=root_path.strip()
-    )
-    build.wait()
-
-    pull = Popen(
-        [
-            'docker-compose',
-            'pull',
-        ],
-        cwd=root_path.strip()
-    )
-    pull.wait()
-
     remove = Popen(
         [
             'docker-compose',
@@ -57,7 +39,17 @@ def dockercompose():
         ],
         cwd=root_path.strip()
     )
+
     remove.wait()
+
+    build = Popen(
+        [
+            'docker-compose',
+            'build',
+        ],
+        cwd=root_path.strip()
+    )
+    build.wait()
 
     system = Popen(
         [

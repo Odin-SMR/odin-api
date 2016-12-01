@@ -4,14 +4,12 @@ postgresql:
     - 5432:5432
 
 webapi:
-  image: docker2.molflow.com/odin_redo/odin_api:latest
+  build: .
   ports:
     - 5000:5000
   volumes:
     - ./src/:/app
-    - ./data/:/var/lib/odindata
     - ./data/vds-data/:/vds-data
-    - ./data/vds-data/osiris/:/osiris-data
   links:
     - postgresql
     - level2db
