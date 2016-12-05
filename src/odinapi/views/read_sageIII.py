@@ -2,6 +2,7 @@ import os
 import h5py
 import numpy as np
 from datetime import datetime
+from odinapi.utils.hdf5_util import HDF5_LOCK
 
 
 def read_sageIII_file(filename, date, species, event_type):
@@ -26,20 +27,21 @@ def read_sageIII_file(filename, date, species, event_type):
     dataObject = {'lunar': Sage3Lunar, 'solar': Sage3Solar}
 
     data_dict = {}
-    with dataObject[event_type](sageIII_file) as data:
-        # Generate data dict
-        data_dict['FileName'] = filename
-        data_dict['Instrument'] = "Meteor-3M SAGE III"
-        data_dict['EventType'] = event_type
-        data_dict['MJDStart'] = data.datetimes_mjd.tolist()[0]
-        data_dict['MJDEnd'] = data.datetimes_mjd.tolist()[1]
-        data_dict['LatStart'] = data.latitudes.tolist()[0]
-        data_dict['LatEnd'] = data.latitudes.tolist()[1]
-        data_dict['LongStart'] = data.longitudes.tolist()[0]
-        data_dict['LongEnd'] = data.longitudes.tolist()[1]
-        data_dict['Pressure'] = data.pressure.tolist()
-        data_dict['Temperature'] = data.temperature.tolist()
-        data_dict[species] = data.speciesData[species].tolist()
+    with HDF5_LOCK:
+        with dataObject[event_type](sageIII_file) as data:
+            # Generate data dict
+            data_dict['FileName'] = filename
+            data_dict['Instrument'] = "Meteor-3M SAGE III"
+            data_dict['EventType'] = event_type
+            data_dict['MJDStart'] = data.datetimes_mjd.tolist()[0]
+            data_dict['MJDEnd'] = data.datetimes_mjd.tolist()[1]
+            data_dict['LatStart'] = data.latitudes.tolist()[0]
+            data_dict['LatEnd'] = data.latitudes.tolist()[1]
+            data_dict['LongStart'] = data.longitudes.tolist()[0]
+            data_dict['LongEnd'] = data.longitudes.tolist()[1]
+            data_dict['Pressure'] = data.pressure.tolist()
+            data_dict['Temperature'] = data.temperature.tolist()
+            data_dict[species] = data.speciesData[species].tolist()
 
     # Return data
     return data_dict

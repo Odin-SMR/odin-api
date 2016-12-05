@@ -1,6 +1,5 @@
 import datetime as DT
 from datetime import datetime
-import threading
 import numpy as np
 import NC4eraint as NC
 from scipy.integrate import odeint
@@ -8,8 +7,7 @@ from scipy.interpolate import splmake, spleval, spline
 import msis90 as M90
 import os
 from date_tools import mjd2datetime, datetime2mjd
-
-WRITELOCK = threading.Lock()
+from odinapi.utils.hdf5_util import HDF5_LOCK
 
 
 class Donaletty(dict):
@@ -142,6 +140,8 @@ class Donaletty(dict):
                 'ei_pl_' + date.strftime('%Y-%m-%d') +
                 '-' + hourstr + '.nc')
             # print ecmwffilename
+            # TODO: Opening more than one netcdf file at the same time
+            #       can result in segfault.
             self.ecm.append(NC.NCeraint(ecmwffilename, 0))
 
         self.minlat = self.ecm[0]['lats'][0]
@@ -281,19 +281,15 @@ def run_donaletty(mjd, midlat, midlon, scanid):
 
     date = mjd2datetime(mjd)
 
-    if check_if_file_exist(zptpath, date, scanid):
-        zpt = load_zptfile(zptpath, date, scanid)
-    else:
-        with WRITELOCK:
-            # check again for existence now when we have the lock
-            if check_if_file_exist(zptpath, date, scanid):
-                zpt = load_zptfile(zptpath, date, scanid)
-            else:
-                # create file
-                a = Donaletty(date, solardatafile, ecmwfpath)
-                a.loadecmwfdata()
-                zpt = a.makeprofile(midlat, midlon, date, scanid)
-                save_zptfile(zptpath, date, scanid, zpt)
+    with HDF5_LOCK:
+        if check_if_file_exist(zptpath, date, scanid):
+            zpt = load_zptfile(zptpath, date, scanid)
+        else:
+            # create file
+            a = Donaletty(date, solardatafile, ecmwfpath)
+            a.loadecmwfdata()
+            zpt = a.makeprofile(midlat, midlon, date, scanid)
+            save_zptfile(zptpath, date, scanid, zpt)
 
     zpt['datetime'] = datetime2mjd(
         datetime.strptime(zpt['datetime'], '%Y-%m-%dT%H:%M:%S'))
