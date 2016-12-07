@@ -839,7 +839,7 @@ def parse_parameters(**kwargs):
             any([start_time, end_time])):
         raise ValueError(
             'Too broad query, you must provide at least one of pressure or '
-            ' altitude max/min, and at least one of start_time and '
+            'altitude max/min, and at least one of start_time and '
             'end_time.')
 
     # Geographic
