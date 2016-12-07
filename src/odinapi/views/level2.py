@@ -810,16 +810,17 @@ class Level2ViewArea(MethodView):
 
 
 def parse_parameters(**kwargs):
+    """Parse parameters coming from the request"""
     products = get_list('product')
 
     # Altitude or pressure
-    min_pressure = get_float('min_pressure')
-    max_pressure = get_float('max_pressure')
+    min_pressure = get_float('min_pressure', kwargs.get('min_pressure'))
+    max_pressure = get_float('max_pressure', kwargs.get('max_pressure'))
     if min_pressure and max_pressure and min_pressure > max_pressure:
         raise ValueError('Min pressure must not be larger than max pressure')
 
-    min_altitude = get_float('min_altitude')
-    max_altitude = get_float('max_altitude')
+    min_altitude = get_float('min_altitude', kwargs.get('min_altitude'))
+    max_altitude = get_float('max_altitude', kwargs.get('max_altitude'))
     if min_altitude and max_altitude and min_altitude > max_altitude:
         raise ValueError('Min altitude must not be larger than max altitude')
 
@@ -837,8 +838,8 @@ def parse_parameters(**kwargs):
     if not (any([min_pressure, max_pressure, min_altitude, max_altitude]) and
             any([start_time, end_time])):
         raise ValueError(
-            'Too broad query, you must provide at least one pressure or '
-            'altitude min/max limit and at least one of start_time and '
+            'Too broad query, you must provide at least one of pressure or '
+            ' altitude max/min, and at least one of start_time and '
             'end_time.')
 
     # Geographic
@@ -852,6 +853,7 @@ def parse_parameters(**kwargs):
 
     area = [get_string(arg) for arg in [
         'min_lat', 'max_lat', 'min_lon', 'max_lon']]
+
     if circles and any(area):
         raise ValueError(
             ('Not supported to filter both by locations and area at the '

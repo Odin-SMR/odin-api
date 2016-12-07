@@ -18,7 +18,8 @@
     },
     "jshint": {
       "type": "jshint",
-      "include": "(\\.js$)"
+      "include": "(\\.js$)",
+      "exclude": "(\\.min.js$)"
     }
   }
 }

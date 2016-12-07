@@ -40,9 +40,11 @@
 
         $(document).ready(function () {
           plotAltitudeCrossSection(
-        'alt-cross-section-plots', '{{ data.project }}',
-        '{{ data.scanno }}', '{{ data.freqmode }}');
-        //'7123991206', '1');
+            'alt-cross-section-plots',
+            '{{ data.project }}',
+            '{{ data.scanno }}',
+            '{{ data.freqmode }}'
+            );
         });
     </script>
 {% endblock %}

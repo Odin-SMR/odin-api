@@ -1,15 +1,18 @@
-""" doc
+""" Human readable views for the SMR site
 """
 import io
 from os import environ
+from datetime import datetime, timedelta
 
-from flask import send_file, render_template
+from flask import send_file, render_template, request
 from flask.views import MethodView
 
-from date_tools import *
-from level1b_scandata_exporter_v2 import *
-from level1b_scanlogdata_exporter import *
-from database import DatabaseConnector
+from odinapi.views.level1b_scandata_exporter_v2 import (
+    get_scan_data_v2, plot_scan)
+from odinapi.views.level1b_scanlogdata_exporter import (
+    get_scan_logdata, plot_loginfo)
+from odinapi.views.database import DatabaseConnector
+from odinapi.views.level2 import parse_parameters
 
 
 class ViewIndex(MethodView):
@@ -52,8 +55,43 @@ class ViewLevel2Scan(MethodView):
         return render_template('level2scan.html', data=data)
 
 
+class ViewLevel2PeriodOverview(MethodView):
+    """View of all scans for period shown on a map"""
+
+    def get(self, project):
+        try:
+            params = parse_parameters(
+                min_lon=0, max_lon=360, min_lat=-90, max_lat=90,
+                min_altitude=0, max_altitude=150000)
+            params['start_time'] = params['start_time'].date().isoformat()
+            params['end_time'] = params['end_time'].date().isoformat()
+        except ValueError:
+            params = {
+                "start_time": (datetime.today() -
+                               timedelta(days=1)).date().isoformat(),
+                "end_time": datetime.today().date().isoformat(),
+                "products": ["O3 / 501 GHz / 20 to 50 km"],
+                "min_altitude": 0,
+                "max_altitude": 150000,
+            }
+        params["product"] = params["products"][0]
+        params.pop("products")
+        params["min_lon"] = request.args.get('min_lon', '0')
+        params["max_lon"] = request.args.get('max_lon', '360')
+        params["min_lat"] = request.args.get('min_lat', '-90')
+        params["max_lat"] = request.args.get('max_lat', '90')
+        params.pop("areas")
+        data = {
+            "project": project,
+            "parameter": "VMR",
+            "parameters": params,
+        }
+        return render_template('level2periodoverview.html', data=data)
+
+
 class ViewScanSpec(MethodView):
     """plots information: data from a given scan"""
+
     def get(self, backend, freqmode, scanno):
         con = DatabaseConnector()
         calstw = int(scanno)
@@ -71,13 +109,13 @@ class ViewScanSpec(MethodView):
 class ViewFreqmodeInfoPlot(MethodView):
     """plots information: loginfo for all scans from a given date and freqmode
     """
+
     def get(self, date, backend, freqmode):
 
         con = DatabaseConnector()
 
-        loginfo, date1, date2 = get_scan_logdata(con, backend,
-                                                 date+'T00:00:00',
-                                                 int(freqmode), 1)
+        loginfo, date1, date2 = get_scan_logdata(
+            con, backend, date+'T00:00:00', int(freqmode), 1)
 
         lista = []
         for ind in range(len(loginfo['ScanID'])):
