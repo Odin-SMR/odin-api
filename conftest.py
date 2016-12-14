@@ -76,6 +76,8 @@ def dockercompose():
         except:
             sleep(1)
         if time() > start_wait + max_wait:
+            system.terminate()
+            system.wait()
             assert False, 'Could not access webapi after %d seconds' % max_wait
 
     yield system.pid
