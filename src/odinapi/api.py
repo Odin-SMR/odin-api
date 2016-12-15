@@ -21,7 +21,7 @@ from odinapi.views.level2 import (
     SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
-    PeriodInfoCached, L1LogCached)
+    PeriodInfoCached, L1LogCached, FreqmodeInfoCachedNoBackend)
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
@@ -59,10 +59,29 @@ class Odin(Flask):
         )
 
     def _add_level1_no_backend_views(self):
+        self._add_level1_no_backend_cached()
+        self._add_level1_no_backend_scan()
+
+    def _add_level1_no_backend_scan(self):
+        self.add_url_rule(
+            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/Log',
+            view_func=L1LogCached.as_view('scanlogv5')
+        )
         self.add_url_rule(
             '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/ptz',
             view_func=ScanPTZNoBackend.as_view('ptznobackend')
         )
+
+    def _add_level1_no_backend_cached(self):
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_info/<date>/<int:freqmode>/',
+            view_func=FreqmodeInfoCachedNoBackend.as_view('scansinfonobackend')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_info/<date>/'
+            '<int:freqmode>/<int:scanno>/',
+            view_func=FreqmodeInfoCachedNoBackend.as_view('scaninfonobackend')
+            )
 
     def _add_level1_cached(self):
         self.add_url_rule(

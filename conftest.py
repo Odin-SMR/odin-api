@@ -15,61 +15,33 @@ def pytest_addoption(parser):
         "--runsystem", action="store_true", help="run system tests")
     parser.addoption(
         "--rundisabled", action="store_true", help="run disabled tests")
+    parser.addoption(
+        "--no-system-restart", action="store_true",
+        help="do not restart the system")
+
+
+def call_docker_compose(cmd, root_path, args=None, wait=True):
+    cmd = ['docker-compose', cmd] + (args or [])
+    popen = Popen(cmd, cwd=root_path)
+    if wait:
+        popen.wait()
+    return popen
 
 
 @pytest.yield_fixture(scope='session')
 def dockercompose():
     """Set up the full system"""
-    root_path = check_output(['git', 'rev-parse', '--show-toplevel'])
+    root_path = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
 
-    stop = Popen(
-        [
-            'docker-compose',
-            'stop',
-        ],
-        cwd=root_path.strip()
-    )
-    stop.wait()
+    if not pytest.config.getoption("--no-system-restart"):
+        call_docker_compose('stop', root_path)
+        call_docker_compose('pull', root_path)
+        call_docker_compose('build', root_path)
+        call_docker_compose('rm', root_path, args=['--force'])
 
-    remove = Popen(
-        [
-            'docker-compose',
-            'rm',
-            '--force',
-        ],
-        cwd=root_path.strip()
-    )
+    args = ['--abort-on-container-exit', '--remove-orphans']
+    system = call_docker_compose('up', root_path, args=args, wait=False)
 
-    remove.wait()
-
-    pull = Popen(
-        [
-            'docker-compose',
-            'pull',
-        ],
-        cwd=root_path.strip()
-    )
-
-    pull.wait()
-
-    build = Popen(
-        [
-            'docker-compose',
-            'build',
-        ],
-        cwd=root_path.strip()
-    )
-    build.wait()
-
-    system = Popen(
-        [
-            'docker-compose',
-            'up',
-            '--abort-on-container-exit',
-            '--remove-orphans',
-        ],
-        cwd=root_path.strip()
-    )
     # Wait for webapi and database
     max_wait = 60*5
     start_wait = time()
@@ -92,5 +64,6 @@ def dockercompose():
 
     yield system.pid
 
-    system.terminate()
-    system.wait()
+    if not pytest.config.getoption("--no-system-restart"):
+        system.terminate()
+        system.wait()

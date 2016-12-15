@@ -1,13 +1,15 @@
-""" doc
+# pylint: skip-file
+"""
+Provide level1 views that extracts data from cache database.
 """
 from datetime import datetime, date, timedelta
 
-from flask import jsonify, abort, request
-from flask.views import MethodView
+from flask import abort, request
 
 from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
+from odinapi.views.baseview import BaseView, register_versions
 
 
 def get_backend(freqmode):
@@ -77,38 +79,57 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
     return infoDict
 
 
-class DateInfoCached(MethodView):
+def generate_freq_mode_data(query_string, root_url, version,
+                            include_date=False, date=None):
+    con = DatabaseConnector()
+    query = con.query(query_string)
+    result = query.dictresult()
+    info_list = []
+    for row in result:
+        info_dict = {}
+        if include_date:
+            info_dict['Date'] = row['date']
+        info_dict['Backend'] = row['backend']
+        info_dict['FreqMode'] = row['freqmode']
+        info_dict['NumScan'] = row['nscans']
+        info_dict['URL'] = get_freqmode_url(
+            root_url, version, date or row['date'], row['backend'],
+            row['freqmode'])
+        info_list.append(info_dict)
+    con.close()
+    return info_list
+
+
+def get_freqmode_url(root_url, version, date, backend, freqmode):
+    if version in {'v1', 'v2', 'v3', 'v4'}:
+        return '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/'.format(
+            root_url, version, date, backend, freqmode)
+    else:
+        return '{0}rest_api/{1}/freqmode_info/{2}/{3}/'.format(
+            root_url, version, date, freqmode)
+
+
+class DateInfoCached(BaseView):
     """DateInfo using a cached table"""
-    def get(self, version, date):
-        """GET"""
-        if version not in ['v1', 'v2', 'v3', 'v4']:
-            abort(404)
+
+    @register_versions('fetch')
+    def _fetch_data(self, version, date):
         try:
-            date1 = datetime.strptime(date, '%Y-%m-%d')
+            datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
             abort(404)
-        date_iso_str = date1.date().isoformat()
-        query_str = self.gen_query(date_iso_str)
-        info_list = self.gen_data(date_iso_str, version, query_str)
-        return jsonify(Date=date_iso_str, Info=info_list)
+        query_str = self.gen_query(date)
+        return generate_freq_mode_data(
+            query_str, request.url_root, version, date=date)
 
-    def gen_data(self, date, version, query_string):
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        info_list = []
-        for row in result:
-            info_dict = {}
-            info_dict['Backend'] = row['backend']
-            info_dict['FreqMode'] = row['freqmode']
-            info_dict['NumScan'] = row['nscans']
-            info_dict['URL'] = (
-                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/').format(
-                    request.url_root, version, date, row['backend'],
-                    row['freqmode'])
-            info_list.append(info_dict)
-        con.close()
-        return info_list
+    @register_versions('return', ['v1', 'v2', 'v3', 'v4'])
+    def _return_data(self, version, data, date):
+        return dict(Date=date, Info=data)
+
+    @register_versions('return', ['v5'])
+    def _return_data_v5(self, version, data, date):
+        return dict(
+            Date=date, Data=data, Type='freqmode_info', Count=len(data))
 
     def gen_query(self, date):
         query_str = (
@@ -120,58 +141,71 @@ class DateInfoCached(MethodView):
         return query_str
 
 
-class PeriodInfoCached(MethodView):
+class PeriodInfoCached(BaseView):
     """Period using a cached table
     This is used to populate the calendar. The standard length of the period
     is six weeks, just enough to fill a Full Calendar view.
     """
-    def get(self, version, year, month, day):
-        """GET"""
-        if version not in ['v4']:
-            abort(404)
+    SUPPORTED_VERSIONS = ['v4', 'v5']
+
+    @register_versions('fetch', SUPPORTED_VERSIONS)
+    def _fetch_data(self, version, year, month, day):
         try:
             date_start = date(year, month, day)
         except ValueError:
             abort(404)
         period_length = request.args.get('length', 42, type=int)
         date_end = date_start + timedelta(days=period_length-1)
-        query_string = (
+        query_str = self.gen_query(date_start, date_end)
+        data = generate_freq_mode_data(query_str, request.url_root, version,
+                                       include_date=True)
+        return data, date_start, date_end
+
+    def gen_query(self, date_start, date_end):
+        return (
             "select date, freqmode, backend, nscans "
             "from measurements_cache "
             "where date between '{0}' and '{1}' "
             "order by backend, freqmode "
             ).format(date_start.isoformat(), date_end.isoformat())
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        info_list = []
-        for row in result:
-            info_dict = {}
-            info_dict['Date'] = row['date']
-            info_dict['Backend'] = row['backend']
-            info_dict['FreqMode'] = row['freqmode']
-            info_dict['NumScan'] = row['nscans']
-            info_dict['URL'] = (
-                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/').format(
-                    request.url_root, version, row['date'], row['backend'],
-                    row['freqmode'])
-            info_list.append(info_dict)
-        con.close()
-        return jsonify(
-            period_start=date_start.isoformat(),
-            period_end=date_end.isoformat(),
-            Info=info_list)
+
+    @register_versions('return', ['v4'])
+    def _return_data(self, version, data, *args, **kwargs):
+        data, start, end = data
+        return dict(
+            period_start=start,
+            period_end=end,
+            Info=data)
+
+    @register_versions('return', ['v5'])
+    def _return_data_v5(self, version, data, *args, **kwargs):
+        data, start, end = data
+        return dict(
+            PeriodStart=start.isoformat(),
+            PeriodEnd=end.isoformat(),
+            Data=data,
+            Type='freqmode_info',
+            Count=len(data))
 
 
 class DateBackendInfoCached(DateInfoCached):
-    """plots information"""
-    def get(self, version, date, backend):
-        """GET"""
-        date1 = datetime.strptime(date, '%Y-%m-%d')
-        date_iso = date1.date().isoformat()
-        query_str = self.gen_query(date_iso, backend)
-        info_list = self.gen_data(date_iso, version, query_str)
-        return jsonify(Date=date, Info=info_list)
+    """DateInfo for a certain backend using a cached table"""
+
+    SUPPORTED_VERSIONS = ['v1', 'v2', 'v3', 'v4']
+
+    @register_versions('fetch', SUPPORTED_VERSIONS)
+    def _fetch_data(self, version, date, backend):
+        try:
+            datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            abort(404)
+        query_str = self.gen_query(date, backend)
+        return generate_freq_mode_data(
+            query_str, request.url_root, version, date=date)
+
+    @register_versions('return', SUPPORTED_VERSIONS)
+    def _return_data(self, version, data, date, backend):
+        return dict(Date=date, Info=data)
 
     def gen_query(self, date, backend):
         query_str = (
@@ -185,278 +219,265 @@ class DateBackendInfoCached(DateInfoCached):
         return query_str
 
 
-class FreqmodeInfoCached(MethodView):
+def make_loginfo_v4(loginfo, itemlist, ind, version, date, backend):
+    freq_mode = loginfo['FreqMode'][ind]
+    scanid = loginfo['ScanID'][ind]
+
+    datadict = dict()
+    for item in itemlist:
+        datadict[item] = loginfo[item][ind]
+    datadict['URLS'] = dict()
+    datadict['URLS']['URL-log'] = (
+        '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}'
+        '').format(request.url_root,
+                   version,
+                   date,
+                   backend,
+                   freq_mode,
+                   scanid)
+    datadict['URLS']['URL-spectra'] = (
+        '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
+            request.url_root,
+            version,
+            backend,
+            freq_mode,
+            scanid)
+    datadict['URLS']['URL-ptz'] = (
+        '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
+            request.url_root,
+            version,
+            date,
+            backend,
+            freq_mode,
+            scanid
+        )
+    for species in SPECIES:
+        url_key = 'URL-apriori-{0}'.format(species)
+        datadict['URLS'][url_key] = (
+            '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
+                request.url_root,
+                version,
+                species,
+                date,
+                backend,
+                freq_mode,
+                scanid
+        )
+    return datadict
+
+
+def make_loginfo_v5(loginfo, itemlist, ind, version):
+    freq_mode = loginfo['FreqMode'][ind]
+    scanid = loginfo['ScanID'][ind]
+
+    datadict = dict()
+    for item in itemlist:
+        datadict[item] = loginfo[item][ind]
+    datadict['URLS'] = dict()
+    datadict['URLS']['URL-log'] = (
+        '{0}rest_api/{1}/level1/{2}/{3}/Log/'
+        '').format(request.url_root,
+                   version,
+                   freq_mode,
+                   scanid)
+    datadict['URLS']['URL-spectra'] = (
+        '{0}rest_api/{1}/level1/{2}/{3}/L1b/').format(
+            request.url_root,
+            version,
+            freq_mode,
+            scanid)
+    datadict['URLS']['URL-ptz'] = (
+        '{0}rest_api/{1}/level1/{2}/{3}/ptz/').format(
+            request.url_root,
+            version,
+            freq_mode,
+            scanid
+        )
+    for species in SPECIES:
+        url_key = 'URL-apriori-{0}'.format(species)
+        datadict['URLS'][url_key] = (
+            '{0}rest_api/{1}/level1/{2}/{3}/apriori/{4}/').format(
+                request.url_root,
+                version,
+                freq_mode,
+                scanid,
+                species
+        )
+    return datadict
+
+
+class FreqmodeInfoCached(BaseView):
     """loginfo for all scans from a given date and freqmode"""
-    def get(self, version, date, backend, freqmode, scanno=None):
-        """GET method"""
-        if version not in ['v1', 'v2', 'v3', 'v4']:
-            abort(404)
+
+    ITEMS_V1 = [
+        'DateTime',
+        'FreqMode',
+        'StartLat',
+        'EndLat',
+        'StartLon',
+        'EndLon',
+        'SunZD',
+        'AltStart',
+        'AltEnd',
+        'NumSpec',
+        'FirstSpectrum',
+        'LastSpectrum',
+        'MJD',
+        'ScanID']
+
+    ITEMS_V4 = [
+        'DateTime',
+        'FreqMode',
+        'LatStart',
+        'LatEnd',
+        'LonStart',
+        'LonEnd',
+        'SunZD',
+        'AltStart',
+        'AltEnd',
+        'NumSpec',
+        'MJDStart',
+        'MJDEnd',
+        'ScanID']
+
+    @register_versions('fetch', ['v1'])
+    def _fetch_data_v1(self, version, date, backend, freqmode, scanno=None):
 
         con = DatabaseConnector()
         loginfo = {}
-        if version in ['v1', 'v2', 'v3']:
-            itemlist = [
-                'DateTime',
-                'FreqMode',
-                'StartLat',
-                'EndLat',
-                'StartLon',
-                'EndLon',
-                'SunZD',
-                'AltStart',
-                'AltEnd',
-                'NumSpec',
-                'FirstSpectrum',
-                'LastSpectrum',
-                'MJD',
-                'ScanID',
-            ]
-        elif version in ['v4']:
-            itemlist = [
-                'DateTime',
-                'FreqMode',
-                'LatStart',
-                'LatEnd',
-                'LonStart',
-                'LonEnd',
-                'SunZD',
-                'AltStart',
-                'AltEnd',
-                'NumSpec',
-                'MJDStart',
-                'MJDEnd',
-                'ScanID',
-            ]
+        itemlist = self.ITEMS_V1
 
-        if version == "v1":
-            loginfo, _, _ = get_scan_logdata(
-                con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
-                version=version)
-            for index in range(len(loginfo['ScanID'])):
-                row = []
-                row.append(loginfo['DateTime'][index].date())
-                for item in itemlist:
-                    row.append(loginfo[item][index])
-            for item in loginfo.keys():
-                try:
-                    loginfo[item] = loginfo[item].tolist()
-                except AttributeError:
-                    pass
-            loginfo['Info'] = []
-            for freq_mode, scanid in zip(
-                    loginfo['FreqMode'],
-                    loginfo['ScanID']):
-                datadict = {'ScanID': [], 'URL': []}
-                datadict['ScanID'] = scanid
-                datadict['URL'] = '{0}rest_api/v1/scan/{1}/{2}/{3}/'.format(
-                    request.url_root,
-                    backend,
-                    freq_mode,
-                    scanid)
-                datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}').format(
-                        request.url_root,
-                        version,
-                        date,
-                        backend,
-                        freq_mode,
-                        scanid)
-                datadict['URL-ptz'] = (
-                    '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}/').format(
-                        request.url_root,
-                        date,
-                        backend,
-                        freq_mode,
-                        scanid
-                        )
-                for species in SPECIES:
-                    datadict['''URL-apriori-{0}'''.format(species)] = (
-                        '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}/').format(
-                            request.url_root,
-                            species,
-                            date,
-                            backend,
-                            freq_mode,
-                            scanid
-                            )
-                loginfo['Info'].append(datadict)
-        elif version in ['v2', 'v3']:
-
-            loginfo, _, _ = get_scan_logdata(
-                con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
-                version=version)
-
-            for index in range(len(loginfo['ScanID'])):
-                row = []
-                row.append(loginfo['DateTime'][index].date())
-                for item in itemlist:
-                    row.append(loginfo[item][index])
-            for item in loginfo.keys():
-                try:
-                    loginfo[item] = loginfo[item].tolist()
-                except AttributeError:
-                    pass
-            loginfo['Info'] = []
-            for ind in range(len(loginfo['ScanID'])):
-
-                freq_mode = loginfo['FreqMode'][ind]
-                scanid = loginfo['ScanID'][ind]
-
-                datadict = dict()
-                for item in itemlist:
-                    datadict[item] = loginfo[item][ind]
-
-                datadict['URL'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
+        loginfo, _, _ = get_scan_logdata(
+            con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
+            version=version)
+        for index in range(len(loginfo['ScanID'])):
+            row = []
+            row.append(loginfo['DateTime'][index].date())
+            for item in itemlist:
+                row.append(loginfo[item][index])
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except AttributeError:
+                pass
+        loginfo['Info'] = []
+        for freq_mode, scanid in zip(
+                loginfo['FreqMode'],
+                loginfo['ScanID']):
+            datadict = {'ScanID': [], 'URL': []}
+            datadict['ScanID'] = scanid
+            datadict['URL'] = '{0}rest_api/v1/scan/{1}/{2}/{3}/'.format(
+                request.url_root,
+                backend,
+                freq_mode,
+                scanid)
+            datadict['URL-log'] = (
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}').format(
                     request.url_root,
                     version,
+                    date,
                     backend,
                     freq_mode,
                     scanid)
-                datadict['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}').format(
+            datadict['URL-ptz'] = (
+                '{0}rest_api/v1/ptz/{1}/{2}/{3}/{4}/').format(
+                    request.url_root,
+                    date,
+                    backend,
+                    freq_mode,
+                    scanid
+                )
+            for species in SPECIES:
+                datadict['''URL-apriori-{0}'''.format(species)] = (
+                    '{0}rest_api/v1/apriori/{1}/{2}/{3}/{4}/{5}/').format(
                         request.url_root,
-                        version,
-                        date,
-                        backend,
-                        freq_mode,
-                        scanid)
-                datadict['URL-ptz'] = (
-                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
-                        request.url_root,
-                        version,
+                        species,
                         date,
                         backend,
                         freq_mode,
                         scanid
-                        )
-                for species in SPECIES:
-                    datadict['''URL-apriori-{0}'''.format(species)] = (
-                        '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
-                            request.url_root,
-                            version,
-                            species,
-                            date,
-                            backend,
-                            freq_mode,
-                            scanid
-                            )
-                loginfo['Info'].append(datadict)
+                    )
+            loginfo['Info'].append(datadict)
 
-        elif version in ['v4']:
+        return loginfo
 
-            loginfo = get_scan_logdata_cached(con, date,
-                                              freqmode=int(freqmode))
-
-            for item in loginfo.keys():
-                try:
-                    loginfo[item] = loginfo[item].tolist()
-                except AttributeError:
-                    pass
-
-            loginfo['Info'] = []
-            try:
-                for ind in range(len(loginfo['ScanID'])):
-
-                    freq_mode = loginfo['FreqMode'][ind]
-                    scanid = loginfo['ScanID'][ind]
-
-                    datadict = dict()
-                    for item in itemlist:
-                        datadict[item] = loginfo[item][ind]
-                    datadict['URLS'] = dict()
-                    datadict['URLS']['URL-log'] = (
-                        '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}'
-                        '').format(request.url_root,
-                                   version,
-                                   date,
-                                   backend,
-                                   freq_mode,
-                                   scanid)
-                    datadict['URLS']['URL-spectra'] = (
-                        '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
-                            request.url_root,
-                            version,
-                            backend,
-                            freq_mode,
-                            scanid)
-                    datadict['URLS']['URL-ptz'] = (
-                        '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
-                            request.url_root,
-                            version,
-                            date,
-                            backend,
-                            freq_mode,
-                            scanid
-                            )
-                    for species in SPECIES:
-                        url_key = 'URL-apriori-{0}'.format(species)
-                        datadict['URLS'][url_key] \
-                            = ('{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/'
-                               ).format(
-                                request.url_root,
-                                version,
-                                species,
-                                date,
-                                backend,
-                                freq_mode,
-                                scanid
-                                )
-                    loginfo['Info'].append(datadict)
-            except KeyError:
-                loginfo['Info'] = []
-                return jsonify({'Info': loginfo['Info']})
-
-        if version == "v1":
-
-            if scanno is None:
-                return jsonify(loginfo)
-            else:
-                for s in loginfo['Info']:
-                    if s['ScanID'] == scanno:
-                        return s
-
-        elif version in ['v2', 'v3', 'v4']:
-            if scanno is None:
-                return jsonify({'Info': loginfo['Info']})
-            else:
-                for s in loginfo['Info']:
-                    if s['ScanID'] == scanno:
-                        return jsonify({"Info": s})
-
-        # If we reach this point, something has gone wrong:
-        abort(404)
-
-
-class L1LogCached(MethodView):
-    """L1 log  for all scans from freqmode and scanno"""
-    def get(self, version, freqmode, scanno):
-        """GET method"""
-        if version not in ['v4']:
-            abort(404)
-
-        backend = get_backend(freqmode)
+    @register_versions('fetch', ['v2', 'v3'])
+    def _fetch_data_v2(self, version, date, backend, freqmode, scanno=None):
 
         con = DatabaseConnector()
         loginfo = {}
-        itemlist = [
-            'DateTime',
-            'FreqMode',
-            'LatStart',
-            'LatEnd',
-            'LonStart',
-            'LonEnd',
-            'SunZD',
-            'AltStart',
-            'AltEnd',
-            'NumSpec',
-            'MJDStart',
-            'MJDEnd',
-            'ScanID',
-        ]
+        itemlist = self.ITEMS_V1
 
-        loginfo = get_scan_logdata_cached(con, date=None,
-                                          freqmode=int(freqmode),
-                                          scanid=int(scanno))
+        loginfo, _, _ = get_scan_logdata(
+            con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
+            version=version)
+
+        for index in range(len(loginfo['ScanID'])):
+            row = []
+            row.append(loginfo['DateTime'][index].date())
+            for item in itemlist:
+                row.append(loginfo[item][index])
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except AttributeError:
+                pass
+        loginfo['Info'] = []
+        for ind in range(len(loginfo['ScanID'])):
+
+            freq_mode = loginfo['FreqMode'][ind]
+            scanid = loginfo['ScanID'][ind]
+
+            datadict = dict()
+            for item in itemlist:
+                datadict[item] = loginfo[item][ind]
+
+            datadict['URL'] = '{0}rest_api/{1}/scan/{2}/{3}/{4}/'.format(
+                request.url_root,
+                version,
+                backend,
+                freq_mode,
+                scanid)
+            datadict['URL-log'] = (
+                '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}').format(
+                    request.url_root,
+                    version,
+                    date,
+                    backend,
+                    freq_mode,
+                    scanid)
+            datadict['URL-ptz'] = (
+                '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
+                    request.url_root,
+                    version,
+                    date,
+                    backend,
+                    freq_mode,
+                    scanid
+                )
+            for species in SPECIES:
+                datadict['''URL-apriori-{0}'''.format(species)] = (
+                    '{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/').format(
+                        request.url_root,
+                        version,
+                        species,
+                        date,
+                        backend,
+                        freq_mode,
+                        scanid
+                    )
+            loginfo['Info'].append(datadict)
+        return loginfo['Info']
+
+    @register_versions('fetch', ['v4'])
+    def _fetch_data_v4(self, version, date, backend, freqmode, scanno=None):
+
+        con = DatabaseConnector()
+        loginfo = {}
+        itemlist = self.ITEMS_V4
+
+        loginfo = get_scan_logdata_cached(
+            con, date, freqmode=int(freqmode), scanid=scanno)
 
         for item in loginfo.keys():
             try:
@@ -467,58 +488,141 @@ class L1LogCached(MethodView):
         loginfo['Info'] = []
         try:
             for ind in range(len(loginfo['ScanID'])):
-
-                freq_mode = loginfo['FreqMode'][ind]
-                scanid = loginfo['ScanID'][ind]
-                date = loginfo['DateTime'][ind].split(' ')[0]
-
-                datadict = dict()
-                for item in itemlist:
-                    datadict[item] = loginfo[item][ind]
-                datadict['URLS'] = dict()
-                datadict['URLS']['URL-log'] = (
-                    '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}'
-                    '').format(request.url_root,
-                               version,
-                               date,
-                               backend,
-                               freq_mode,
-                               scanid)
-                datadict['URLS']['URL-spectra'] = (
-                    '{0}rest_api/{1}/scan/{2}/{3}/{4}/').format(
-                        request.url_root,
-                        version,
-                        backend,
-                        freq_mode,
-                        scanid)
-                datadict['URLS']['URL-ptz'] = (
-                    '{0}rest_api/{1}/ptz/{2}/{3}/{4}/{5}/').format(
-                        request.url_root,
-                        version,
-                        date,
-                        backend,
-                        freq_mode,
-                        scanid
-                        )
-                for species in SPECIES:
-                    datadict['URLS']['''URL-apriori-{0}'''.format(species)] \
-                        = ('{0}rest_api/{1}/apriori/{2}/{3}/{4}/{5}/{6}/'
-                           ).format(request.url_root,
-                                    version,
-                                    species,
-                                    date,
-                                    backend,
-                                    freq_mode,
-                                    scanid
-                                    )
-                loginfo['Info'].append(datadict)
+                loginfo['Info'].append(
+                    make_loginfo_v4(
+                        loginfo, itemlist, ind, version, date, backend))
         except KeyError:
             loginfo['Info'] = []
-            return jsonify({'Info': loginfo['Info']})
 
-        for s in loginfo['Info']:
+        return loginfo['Info']
+
+    @register_versions('return', ['v1'])
+    def _return_data_v1(self, version, data, date, backend, freqmode,
+                        scanno=None):
+        if scanno is None:
+            return data
+        else:
+            for s in data['Info']:
+                if s['ScanID'] == scanno:
+                    return s
+
+    @register_versions('return', ['v2', 'v3', 'v4'])
+    def _return_data_v2(self, version, data, date, backend, freqmode,
+                        scanno=None):
+        if scanno is None:
+            return {'Info': data}
+        else:
+            for s in data:
+                if s['ScanID'] == scanno:
+                    return {"Info": s}
+
+
+class FreqmodeInfoCachedNoBackend(BaseView):
+    SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('fetch')
+    def _fetch_data(self, version, date, freqmode, scanno=None):
+        con = DatabaseConnector()
+        loginfo = {}
+        itemlist = FreqmodeInfoCached.ITEMS_V4
+
+        loginfo = get_scan_logdata_cached(
+            con, date, freqmode=int(freqmode), scanid=scanno)
+
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except AttributeError:
+                pass
+
+        loginfo['Info'] = []
+        try:
+            for ind in range(len(loginfo['ScanID'])):
+                loginfo['Info'].append(
+                    make_loginfo_v5(loginfo, itemlist, ind, version))
+        except KeyError:
+            loginfo['Info'] = []
+
+        return loginfo['Info']
+
+    @register_versions('return')
+    def _return_data(self, version, data, date, freqmode, scanno=None):
+        if scanno is None:
+            return {'Data': data, 'Type': 'Log', 'Count': len(data)}
+        else:
+            for s in data:
+                if s['ScanID'] == scanno:
+                    return {'Data': s, 'Type': 'Log', 'Count': None}
+
+
+class L1LogCached(BaseView):
+    """L1 log for a freqmode and scanno"""
+    SUPPORTED_VERSIONS = ['v4', 'v5']
+
+    @register_versions('fetch', ['v4'])
+    def _fetch_data_v4(self, version, freqmode, scanno):
+        """GET method"""
+
+        backend = get_backend(freqmode)
+
+        con = DatabaseConnector()
+        loginfo = {}
+        itemlist = FreqmodeInfoCached.ITEMS_V4
+
+        loginfo = get_scan_logdata_cached(
+            con, date=None, freqmode=int(freqmode), scanid=int(scanno))
+
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except AttributeError:
+                pass
+
+        loginfo['Info'] = []
+        try:
+            for ind in range(len(loginfo['ScanID'])):
+                date = loginfo['DateTime'][ind].split(' ')[0]
+                loginfo['Info'].append(
+                    make_loginfo_v4(
+                        loginfo, itemlist, ind, version, date, backend))
+        except KeyError:
+            loginfo['Info'] = []
+
+        return loginfo['Info']
+
+    @register_versions('return', ['v4'])
+    def _return_data_v4(self, version, data, freqmode, scanno):
+        for s in data:
             if s['ScanID'] == scanno:
-                return jsonify({"Info": s})
+                return {"Info": s}
 
-        # If we reach this point, something has gone wrong:
-        abort(404)
+    @register_versions('fetch', ['v5'])
+    def _fetch_data(self, version, freqmode, scanno):
+        con = DatabaseConnector()
+        loginfo = {}
+        itemlist = FreqmodeInfoCached.ITEMS_V4
+
+        loginfo = get_scan_logdata_cached(
+            con, date=None, freqmode=int(freqmode), scanid=scanno)
+
+        for item in loginfo.keys():
+            try:
+                loginfo[item] = loginfo[item].tolist()
+            except AttributeError:
+                pass
+
+        loginfo['Info'] = []
+        try:
+            for ind in range(len(loginfo['ScanID'])):
+                loginfo['Info'].append(
+                    make_loginfo_v5(loginfo, itemlist, ind, version))
+        except KeyError:
+            loginfo['Info'] = []
+
+        return loginfo['Info']
+
+    @register_versions('return', ['v5'])
+    def _return_data(self, version, data, freqmode, scanno):
+        for s in data:
+            if s['ScanID'] == scanno:
+                return {'Data': s, 'Type': 'Log', 'Count': None}

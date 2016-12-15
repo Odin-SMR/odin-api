@@ -5,7 +5,7 @@ import requests as R
 import numpy as np
 import os
 from subprocess import check_output
-from testdefs import system
+from testdefs import system, slow
 
 URL_ROOT = 'http://localhost:5000/'
 URL_DATA_FILES = (
@@ -21,6 +21,7 @@ ROOT_PATH = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
 
 
 @system
+@slow
 @pytest.mark.usefixtures('dockercompose')
 class TestPTZ(unittest.TestCase):
 
