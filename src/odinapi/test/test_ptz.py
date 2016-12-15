@@ -14,6 +14,9 @@ URL_DATA_FILES = (
 URL_PTZ = (
     URL_ROOT + 'rest_api/v4/ptz/'
 )
+URL_PTZ_V5 = (
+    URL_ROOT + 'rest_api/v5/level1/{freqmode}/{scanid}/ptz'
+)
 ROOT_PATH = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
 
 
@@ -39,35 +42,55 @@ class TestPTZ(unittest.TestCase):
 
     def test_ptz_file_can_be_created(self):
         """Check that odin-api can create ptz-file"""
+
+        def test_version(url_string, key=None):
+            ptzfile = os.path.join(
+                ROOT_PATH,
+                'data/ptz-data/ZPT/2015/01/',
+                'ZPT_7014836770.nc'
+            )
+            if os.path.isfile(ptzfile):
+                os.remove(ptzfile)
+            data = R.get(url_string).json()
+            if key:
+                data = data[key]
+            t0 = data['Temperature'][0]
+            t0 = np.around(t0, decimals=3).tolist()
+            self.assertTrue(t0 == 275.781)
+
         url_string = (
             URL_PTZ + '2015-01-12/AC1/2/7014836770/'
         )
-        ptzfile = os.path.join(
-            ROOT_PATH,
-            'data/ptz-data/ZPT/2015/01/',
-            'ZPT_7014836770.nc'
+        test_version(url_string)
+        url_string = (
+            URL_PTZ_V5.format(freqmode='2', scanid='7014836770')
         )
-        if os.path.isfile(ptzfile):
-            os.remove(ptzfile)
-        data = R.get(url_string).json()
-        t0 = data['Temperature'][0]
-        t0 = np.around(t0, decimals=3).tolist()
-        self.assertTrue(t0 == 275.781)
+        test_version(url_string, key='Data')
 
     def test_ptz_file_is_readable(self):
         """Check that odin-api can read ptz file"""
+
+        def test_version(url_string, key=None):
+            ptzfile = '/var/lib/odindata/ZPT/2015/01/ZPT_7014836770.nc'
+            data = R.get(url_string).json()
+            if key:
+                data = data[key]
+            t0 = data['Temperature'][0]
+            t0 = np.around(t0, decimals=3).tolist()
+            ptzfile = os.path.join(
+                ROOT_PATH,
+                'data/ptz-data/ZPT/2015/01/',
+                'ZPT_7014836770.nc'
+            )
+            if os.path.isfile(ptzfile):
+                os.remove(ptzfile)
+            self.assertTrue(t0 == 275.781)
+
         url_string = (
             URL_PTZ + '2015-01-12/AC1/2/7014836770/'
         )
-        ptzfile = '/var/lib/odindata/ZPT/2015/01/ZPT_7014836770.nc'
-        data = data = R.get(url_string).json()
-        t0 = data['Temperature'][0]
-        t0 = np.around(t0, decimals=3).tolist()
-        ptzfile = os.path.join(
-            ROOT_PATH,
-            'data/ptz-data/ZPT/2015/01/',
-            'ZPT_7014836770.nc'
+        test_version(url_string)
+        url_string = (
+            URL_PTZ_V5.format(freqmode='2', scanid='7014836770')
         )
-        if os.path.isfile(ptzfile):
-            os.remove(ptzfile)
-        self.assertTrue(t0 == 275.781)
+        test_version(url_string, key='Data')

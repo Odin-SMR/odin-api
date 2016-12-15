@@ -14,8 +14,8 @@ from odinapi.test.testdefs import TEST_DATA_DIR
 
 
 PROJECT_NAME = 'testproject'
-PROJECTS_URL = 'http://localhost:5000/rest_api/v4/level2/projects/'
-PROJECT_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/'
+PROJECTS_URL = 'http://localhost:5000/rest_api/{version}/level2/projects/'
+PROJECT_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/'
 COMMENTS_URL = (
     'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/comments')
 SCANS_URL = (
@@ -108,17 +108,28 @@ class TestProjects(BaseWithDataInsert):
 
     def test_get_projects(self):
         """Test get list of projects"""
-        r = requests.get(PROJECTS_URL)
+        r = requests.get(PROJECTS_URL.format(version='v4'))
         self.assertEqual(r.status_code, 200)
         info = r.json()['Info']
         self.assertEqual(info['Projects'], [{
             'Name': PROJECT_NAME,
             'URLS': {
-                'URL-project': PROJECT_URL.format(project=PROJECT_NAME)}}])
+                'URL-project': PROJECT_URL.format(
+                    version='v4', project=PROJECT_NAME)}}])
+
+        r = requests.get(PROJECTS_URL.format(version='v5'))
+        self.assertEqual(r.status_code, 200)
+        data = r.json()['Data']
+        self.assertEqual(data, [{
+            'Name': PROJECT_NAME,
+            'URLS': {
+                'URL-project': PROJECT_URL.format(
+                    version='v5', project=PROJECT_NAME)}}])
 
     def test_get_project(self):
         """Test get project info"""
-        r = requests.get(PROJECT_URL.format(project=PROJECT_NAME))
+        r = requests.get(PROJECT_URL.format(
+            version='v4', project=PROJECT_NAME))
         self.assertEqual(r.status_code, 200)
         info = r.json()['Info']
         self.assertEqual(info, {

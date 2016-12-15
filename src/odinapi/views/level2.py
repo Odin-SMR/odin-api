@@ -18,6 +18,7 @@ from odinapi.utils.collocations import get_collocations
 from odinapi.utils import time_util
 
 from odinapi.views import level2db
+from odinapi.views.baseview import BaseView, register_versions
 
 SWAGGER_DEFINITIONS = yaml.load("""
  Level2Data:
@@ -275,7 +276,7 @@ class Level2Write(MethodView):
         return '', 204
 
 
-class Level2ViewProjects(MethodView):
+class Level2ViewProjects(BaseView):
     """Get list of existing projects"""
 
     def get(self, version):
@@ -309,15 +310,26 @@ class Level2ViewProjects(MethodView):
                               URL-project:
                                  type: string
         """
+        return super(Level2ViewProjects, self).get(version)
+
+    @register_versions('fetch')
+    def _get_projects(self, version):
         db = level2db.ProjectsDB()
         projects = db.get_projects()
-        projects = [{
+        return [{
             'Name': p['name'],
             'URLS': {
                 'URL-project': '{}rest_api/{}/level2/{}/'.format(
                     request.url_root, version, p['name'])
             }} for p in projects]
-        return jsonify({'Info': {'Projects': projects}})
+
+    @register_versions('return', ['v1', 'v2', 'v3', 'v4'])
+    def _return_data(self, version, projects):
+        return {'Info': {'Projects': projects}}
+
+    @register_versions('return', ['v5'])
+    def _return_data_v5(self, version, projects):
+        return {'Data': projects, 'Type': 'project', 'Count': len(projects)}
 
 
 class Level2ViewProject(MethodView):

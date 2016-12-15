@@ -11,7 +11,8 @@ import flasgger
 from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
     ScanPTZ, ScanAPR, VdsInfo, VdsFreqmodeInfo, VdsScanInfo,
-    VdsInstrumentInfo, VdsDateInfo, VdsExtData, ConfigDataFiles)
+    VdsInstrumentInfo, VdsDateInfo, VdsExtData, ConfigDataFiles,
+    ScanPTZNoBackend)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
@@ -33,6 +34,37 @@ class Odin(Flask):
     """The main app running the odin site"""
     def __init__(self, name):
         super(Odin, self).__init__(name)
+
+        self.add_url_rule(
+            '/rest_api/<version>/config_data/data_files/',
+            view_func=ConfigDataFiles.as_view('configdatafiles')
+        )
+
+        self._add_level1_views()
+        self._add_level2_views()
+        self._add_vds_views()
+        self._add_site_views()
+        self._add_stats_views()
+
+    def _add_level1_views(self):
+        self._add_level1_cached()
+        self._add_level1_raw()
+        self._add_level1_scan()
+
+        self._add_level1_no_backend_views()
+
+        self.add_url_rule(
+            '/rest_api/<version>/file_info/',
+            view_func=FileInfo.as_view('file_info')
+        )
+
+    def _add_level1_no_backend_views(self):
+        self.add_url_rule(
+            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/ptz',
+            view_func=ScanPTZNoBackend.as_view('ptznobackend')
+        )
+
+    def _add_level1_cached(self):
         self.add_url_rule(
             '/rest_api/<version>/period_info/<int:year>/<int:month>/'
             '<int:day>/',
@@ -56,10 +88,8 @@ class Odin(Flask):
             '<int:freqmode>/<int:scanno>/',
             view_func=FreqmodeInfoCached.as_view('scaninfo')
             )
-        self.add_url_rule(
-            '/rest_api/<version>/l1_log/<int:freqmode>/<int:scanno>/',
-            view_func=L1LogCached.as_view('scanlog')
-            )
+
+    def _add_level1_raw(self):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/',
             view_func=DateInfo.as_view('freqmoderaw')
@@ -78,13 +108,15 @@ class Odin(Flask):
             '<int:freqmode>/<int:scanno>/',
             view_func=FreqmodeInfo.as_view('scanraw')
             )
+
+    def _add_level1_scan(self):
+        self.add_url_rule(
+            '/rest_api/<version>/l1_log/<int:freqmode>/<int:scanno>/',
+            view_func=L1LogCached.as_view('scanlog')
+            )
         self.add_url_rule(
             '/rest_api/<version>/scan/<backend>/<int:freqmode>/<int:scanno>/',
             view_func=ScanSpec.as_view('scan')
-            )
-        self.add_url_rule(
-            '/rest_api/<version>/file_info/',
-            view_func=FileInfo.as_view('file_info')
             )
         self.add_url_rule(
             '/rest_api/<version>/ptz/<date>/<backend>/<int:freqmode>/'
@@ -96,6 +128,8 @@ class Odin(Flask):
             '<int:freqmode>/<int:scanno>/',
             view_func=ScanAPR.as_view('apriori')
             )
+
+    def _add_level2_views(self):
         self.add_url_rule(
             '/rest_api/<version>/level2',
             view_func=Level2Write.as_view('level2write')
@@ -141,6 +175,8 @@ class Odin(Flask):
             '/rest_api/<version>/level2/<project>/area',
             view_func=Level2ViewArea.as_view('level2viewarea')
             )
+
+    def _add_site_views(self):
         self.add_url_rule(
             '/',
             view_func=ViewIndex.as_view('index')
@@ -173,6 +209,8 @@ class Odin(Flask):
             '/plot/<date>/<backend>/<int:freqmode>',
             view_func=ViewFreqmodeInfoPlot.as_view('plotscans')
             )
+
+    def _add_stats_views(self):
         self.add_url_rule(
             '/rest_api/<version>/statistics/freqmode/',
             view_func=FreqmodeStatistics.as_view('freqmodestatistics')
@@ -181,6 +219,8 @@ class Odin(Flask):
             '/rest_api/<version>/statistics/freqmode/timeline/',
             view_func=TimelineFreqmodeStatistics.as_view('timefmstatistics')
             )
+
+    def _add_vds_views(self):
         self.add_url_rule(
             '/rest_api/<version>/vds/',
             view_func=VdsInfo.as_view('vdsinfo')
@@ -207,10 +247,6 @@ class Odin(Flask):
             '/rest_api/<version>/vds_external/<instrument>/<species>'
             '/<date>/<file>/<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
-            )
-        self.add_url_rule(
-            '/rest_api/<version>/config_data/data_files/',
-            view_func=ConfigDataFiles.as_view('configdatafiles')
             )
 
 

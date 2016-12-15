@@ -1,3 +1,4 @@
+# pylint: skip-file
 """ doc
 """
 from flask import request, url_for
@@ -26,6 +27,11 @@ from dateutil.relativedelta import relativedelta
 from database import DatabaseConnector
 from odinapi.utils.defs import SPECIES
 from get_odinapi_info import get_config_data_files
+
+from odinapi.views.baseview import register_versions, BaseView
+from odinapi.utils.defs import FREQMODE_TO_BACKEND
+from odinapi.utils import time_util
+
 
 class DateInfo(MethodView):
     """plots information"""
@@ -388,12 +394,13 @@ class ScanSpec(MethodView):
             return jsonify(datadict)
 
 
-class ScanPTZ(MethodView):
-    """plots information: data from a given scan"""
-    def get(self, version, date, backend, freqmode, scanno):
-        """GET-method"""
-        if version not in ['v1', 'v2', 'v3', 'v4']:
-            abort(404)
+class ScanPTZ(BaseView):
+    """Get PTZ data"""
+
+    SUPPORTED_VERSIONS = ['v1', 'v2', 'v3', 'v4']
+
+    @register_versions('fetch', ['v1', 'v2', 'v3'])
+    def _get_ptz(self, version, date, backend, freqmode, scanno):
         url_base = request.headers['Host']
         url_base = url_base.replace('webapi', 'localhost')
         url = 'http://' + url_base + url_for('.scaninfo', version='v4',
@@ -403,28 +410,56 @@ class ScanPTZ(MethodView):
             mjd, _, midlat, midlon = get_geoloc_info(url)
             datadict = run_donaletty(mjd, midlat, midlon, scanno)
         except:
+            # TODO: Separate not found and other exceptions
             abort(404)
+        self._convert_items(datadict, version)
+        return datadict
+
+    def _convert_items(self, datadict, version):
         for item in ['P', 'T', 'Z']:
-            if item == 'P' and version in ['v4']:
-                # convert from hPa to Pa
-                datadict[item] = datadict[item]*100
-            if item == 'Z' and version in ['v4']:
-                # convert from km to m
-                datadict[item] = datadict[item]*1000
-
+            if version == 'v4':
+                if item == 'P':
+                    # convert from hPa to Pa
+                    datadict[item] = datadict[item]*100
+                if item == 'Z':
+                    # convert from km to m
+                    datadict[item] = datadict[item]*1000
             datadict[item] = datadict[item].tolist()
-        if version in ['v4']:
-            datadictv4 = dict()
-            datadictv4['Pressure'] = around(datadict['P'], decimals=8).tolist()
-            datadictv4['Temperature'] = around(
-                datadict['T'], decimals=3).tolist()
-            datadictv4['Altitude'] = datadict['Z']
-            datadictv4['Latitude'] = datadict['latitude']
-            datadictv4['Longitude'] = datadict['longitude']
-            datadictv4['MJD'] = datadict['datetime']
-            datadict = datadictv4
 
-        return jsonify(datadict)
+    @register_versions('fetch', ['v4'])
+    def _get_ptz_v4(self, version, date, backend, freqmode, scanno):
+        datadict = self._get_ptz(version, date, backend, freqmode, scanno)
+
+        datadictv4 = dict()
+        datadictv4['Pressure'] = around(datadict['P'], decimals=8).tolist()
+        datadictv4['Temperature'] = around(
+            datadict['T'], decimals=3).tolist()
+        datadictv4['Altitude'] = datadict['Z']
+        datadictv4['Latitude'] = datadict['latitude']
+        datadictv4['Longitude'] = datadict['longitude']
+        datadictv4['MJD'] = datadict['datetime']
+        return datadictv4
+
+    @register_versions('return', SUPPORTED_VERSIONS)
+    def _to_return_format(self, version, datadict, *args, **kwargs):
+        return datadict
+
+
+class ScanPTZNoBackend(ScanPTZ):
+    """Get PTZ data"""
+
+    SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('fetch', SUPPORTED_VERSIONS)
+    def _get_ptz_v5(self, version, freqmode, scanno):
+        backend = FREQMODE_TO_BACKEND[freqmode]
+        # TODO: Not always correct date?
+        date = time_util.stw2datetime(scanno).strftime('%Y-%m-%d')
+        return self._get_ptz_v4(version, date, backend, freqmode, scanno)
+
+    @register_versions('return', SUPPORTED_VERSIONS)
+    def _return_format(self, version, datadict, *args, **kwargs):
+        return {'Data': datadict, 'Type': 'ptz', 'Count': None}
 
 
 class ScanAPR(MethodView):
@@ -493,11 +528,12 @@ class VdsFreqmodeInfo(MethodView):
         """GET-method"""
         if version not in ['v1', 'v2', 'v3', 'v4']:
             abort(404)
-        query_string = """select backend,freqmode,species,instrument,count(*)
-                          from collocations
-                          where backend='{0}' and freqmode={1}
-                          group by backend, freqmode, species, instrument
-                          """.format(backend, freqmode)
+        query_string = (
+            "select backend,freqmode,species,instrument,count(*) "
+            "from collocations "
+            "where backend='{0}' and freqmode={1} "
+            "group by backend, freqmode, species, instrument"
+            "").format(backend, freqmode)
         datadict = self.gen_data(query_string, version)
         return jsonify(datadict)
 
