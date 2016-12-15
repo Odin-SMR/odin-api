@@ -4,3 +4,5 @@ flask-bootstrap
 sqlalchemy
 pycrypto
 pymongo
+dateutils
+scipy

@@ -42,6 +42,16 @@ def dockercompose():
 
     remove.wait()
 
+    pull = Popen(
+        [
+            'docker-compose',
+            'pull',
+        ],
+        cwd=root_path.strip()
+    )
+
+    pull.wait()
+
     build = Popen(
         [
             'docker-compose',

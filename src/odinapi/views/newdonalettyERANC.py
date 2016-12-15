@@ -204,7 +204,7 @@ def save_zptfile(basedir, date, scanid, zpt):
 
     rootgrp = NC.Dataset(fullfile, 'w', format='NETCDF4')
     datagrp = rootgrp.createGroup('Data')
-    # level = datagrp.createDimension('level', 151)
+    datagrp.createDimension('level', 151)
 
     Z = datagrp.createVariable('Z', 'f4', ('level',))
     Z.units = 'Km'
@@ -235,6 +235,11 @@ def save_zptfile(basedir, date, scanid, zpt):
     rootgrp.geoloc_datetime = "{0}".format(zpt['datetime'])
 
     rootgrp.close()
+
+    debug = 'ODIN_API_PRODUCTION' not in os.environ
+    if debug:
+        os.chmod(fullfile, 0777)
+        os.chmod(os.path.split(fullfile)[0], 0777)
 
 
 def check_if_file_exist(basedir, date, scanid):
