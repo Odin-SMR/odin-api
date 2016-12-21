@@ -86,3 +86,15 @@ class TestLevel1Views(unittest.TestCase):
             version='v5', freqmode=1, scanid=7015092840))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()['Type'], 'apriori')
+
+    def test_get_collocations(self):
+        """Test get collocations for a scan"""
+        # V5
+        base_url = (
+            'http://localhost:5000/rest_api/{version}/level1/{freqmode}'
+            '/{scanid}/collocations/')
+        r = requests.get(base_url.format(
+            version='v5', freqmode=1, scanid=1930998606))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Type'], 'collocation')
+        self.assertEqual(r.json()['Count'], 7)

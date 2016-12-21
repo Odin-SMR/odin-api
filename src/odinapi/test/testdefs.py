@@ -1,10 +1,5 @@
 """Definitions used by tests"""
-import os
-
 import pytest
-
-
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'testdata')
 
 
 slow = pytest.mark.skipif(  # pylint: disable=invalid-name

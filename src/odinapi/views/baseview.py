@@ -39,6 +39,10 @@ def register_versions(role, versions=None):
     return decorator
 
 
+class BadRequest(Exception):
+    pass
+
+
 class BaseView(MethodView):
     """Basic view
 
@@ -112,8 +116,11 @@ class BaseView(MethodView):
                 version not in self.VERSION_TO_RETURNDATA):
             abort(404)
         # TODO: Might want to add more method roles?
-        data = getattr(self, self.VERSION_TO_FETCHDATA[version])(
-            version, *args, **kwargs)
+        try:
+            data = getattr(self, self.VERSION_TO_FETCHDATA[version])(
+                version, *args, **kwargs)
+        except BadRequest as err:
+            return jsonify({'Error': str(err)}), 400
         # Assume that we always want to return json and 200
         return jsonify(
             getattr(self, self.VERSION_TO_RETURNDATA[version])(

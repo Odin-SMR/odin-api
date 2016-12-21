@@ -1,6 +1,4 @@
 # pylint: skip-file
-import os
-import json
 import unittest
 import urllib
 import requests
@@ -10,62 +8,46 @@ from numpy.testing import assert_almost_equal
 from numpy import isnan
 
 from odinapi.utils import encrypt_util
-from odinapi.test.testdefs import TEST_DATA_DIR
+from odinapi.test.level2_test_data import WRITE_URL, VERSION, get_test_data
 
 
 PROJECT_NAME = 'testproject'
+
 PROJECTS_URL = 'http://localhost:5000/rest_api/{version}/level2/projects/'
 PROJECT_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/'
 COMMENTS_URL = (
-    'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/comments')
+    'http://localhost:5000/rest_api/{version}/level2/{project}/{freqmode}/'
+    'comments')
 SCANS_URL = (
-    'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/scans')
+    'http://localhost:5000/rest_api/{version}/level2/{project}/{freqmode}/'
+    'scans')
 FAILED_URL = (
-    'http://localhost:5000/rest_api/v4/level2/{project}/{freqmode}/failed')
-WRITE_URL = 'http://localhost:5000/rest_api/v4/level2?d={}'
-PRODUCTS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/products/'
-SCAN_URL = ('http://localhost:5000/rest_api/v4/level2/'
+    'http://localhost:5000/rest_api/{version}/level2/{project}/{freqmode}/'
+    'failed')
+PRODUCTS_URL = (
+    'http://localhost:5000/rest_api/{version}/level2/{project}/products/')
+SCAN_URL = ('http://localhost:5000/rest_api/{version}/level2/'
             '{project}/{freqmode}/{scanid}/')
-AREA_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/area'
-LOCATIONS_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/locations'
-DATE_URL = 'http://localhost:5000/rest_api/v4/level2/{project}/{date}'
+AREA_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/area'
+LOCATIONS_URL = (
+    'http://localhost:5000/rest_api/{version}/level2/{project}/locations')
+DATE_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/{date}'
 
 
-def get_test_data(file_name='odin_result.json'):
-    with open(os.path.join(TEST_DATA_DIR, file_name)) as inp:
-        return json.load(inp)
+def make_dev_url(url):
+    return url.replace('/level2/', '/level2/development/')
 
 
-def get_write_url(data):
-    freq_mode = data['L2I']['FreqMode']
-    scan_id = data['L2I']['ScanID']
-    d = encrypt_util.encode_level2_target_parameter(
-        scan_id, freq_mode, PROJECT_NAME)
-    return WRITE_URL.format(d)
-
-
-def insert_test_data(file_name='odin_result.json'):
-    data = get_test_data(file_name)
-    wurl = get_write_url(data)
-    r = requests.post(wurl, json=data)
-    return r
-
-
-def insert_failed_scan(scanid=7123991206+1, freqmode=1,
-                       message=u'Error: This scan failed'):
-    data_failed = {'L2I': [], 'L2': [], 'L2C': message}
-    d = encrypt_util.encode_level2_target_parameter(
-        scanid, freqmode, PROJECT_NAME)
-    wurl_failed = WRITE_URL.format(d)
-    r = requests.post(wurl_failed, json=data_failed)
-    return r
-
-
-def delete_test_data(file_name='odin_result.json'):
-    data = get_test_data(file_name)
-    wurl = get_write_url(data)
-    r = requests.delete(wurl, json=data)
-    return r
+PROJECTS_URL_DEV = make_dev_url(PROJECTS_URL)
+PROJECT_URL_DEV = make_dev_url(PROJECT_URL)
+COMMENTS_URL_DEV = make_dev_url(COMMENTS_URL)
+SCANS_URL_DEV = make_dev_url(SCANS_URL)
+FAILED_URL_DEV = make_dev_url(FAILED_URL)
+PRODUCTS_URL_DEV = make_dev_url(PRODUCTS_URL)
+SCAN_URL_DEV = make_dev_url(SCAN_URL)
+AREA_URL_DEV = make_dev_url(AREA_URL)
+LOCATIONS_URL_DEV = make_dev_url(LOCATIONS_URL)
+DATE_URL_DEV = make_dev_url(DATE_URL)
 
 
 @pytest.mark.usefixtures('dockercompose')
@@ -78,7 +60,7 @@ class BaseWithDataInsert(unittest.TestCase):
         self.scan_id = data['L2I']['ScanID']
         d = encrypt_util.encode_level2_target_parameter(
             self.scan_id, self.freq_mode, PROJECT_NAME)
-        self.wurl = WRITE_URL.format(d)
+        self.wurl = WRITE_URL.format(version=VERSION, d=d)
 
         r = requests.post(self.wurl, json=data)
         self.assertEqual(r.status_code, 201)
@@ -90,7 +72,7 @@ class BaseWithDataInsert(unittest.TestCase):
                        'L2C': data['L2C'] + '\n' + self.error_message}
         d = encrypt_util.encode_level2_target_parameter(
             self.failed_scan_id, self.freq_mode, PROJECT_NAME)
-        self.wurl_failed = WRITE_URL.format(d)
+        self.wurl_failed = WRITE_URL.format(version=VERSION, d=d)
 
         r = requests.post(self.wurl_failed, json=data_failed)
         self.assertEqual(r.status_code, 201)
@@ -108,6 +90,7 @@ class TestProjects(BaseWithDataInsert):
 
     def test_get_projects(self):
         """Test get list of projects"""
+        # V4
         r = requests.get(PROJECTS_URL.format(version='v4'))
         self.assertEqual(r.status_code, 200)
         info = r.json()['Info']
@@ -117,35 +100,58 @@ class TestProjects(BaseWithDataInsert):
                 'URL-project': PROJECT_URL.format(
                     version='v4', project=PROJECT_NAME)}}])
 
+        # V5
+        # No production projects added
         r = requests.get(PROJECTS_URL.format(version='v5'))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.json()['Data']), 0)
+
+        r = requests.get(PROJECTS_URL_DEV.format(version='v5'))
         self.assertEqual(r.status_code, 200)
         data = r.json()['Data']
         self.assertEqual(data, [{
             'Name': PROJECT_NAME,
             'URLS': {
-                'URL-project': PROJECT_URL.format(
+                'URL-project': PROJECT_URL_DEV.format(
                     version='v5', project=PROJECT_NAME)}}])
 
     def test_get_project(self):
         """Test get project info"""
-        r = requests.get(PROJECT_URL.format(
-            version='v4', project=PROJECT_NAME))
-        self.assertEqual(r.status_code, 200)
-        info = r.json()['Info']
-        self.assertEqual(info, {
-            'Name': PROJECT_NAME,
-            'FreqModes': [{
-                'FreqMode': 1,
-                'URLS': {
-                    'URL-scans': SCANS_URL.format(
-                        freqmode=self.freq_mode, project=PROJECT_NAME),
-                    'URL-failed': FAILED_URL.format(
-                        freqmode=self.freq_mode, project=PROJECT_NAME),
-                    'URL-comments': COMMENTS_URL.format(
-                        freqmode=self.freq_mode, project=PROJECT_NAME)
-                }
-            }]
-        })
+        def test_version(version, get_data):
+            url = PROJECT_URL if version <= 'v4' else PROJECT_URL_DEV
+            r = requests.get(url.format(version=version, project=PROJECT_NAME))
+            self.assertEqual(r.status_code, 200)
+            info = get_data(r)
+            scans_url = SCANS_URL if version <= 'v4' else SCANS_URL_DEV
+            failed_url = FAILED_URL if version <= 'v4' else FAILED_URL_DEV
+            comments_url = (
+                COMMENTS_URL if version <= 'v4' else COMMENTS_URL_DEV)
+            self.assertEqual(info, {
+                'Name': PROJECT_NAME,
+                'FreqModes': [{
+                    'FreqMode': 1,
+                    'URLS': {
+                        'URL-scans': scans_url.format(
+                            version=version, freqmode=self.freq_mode,
+                            project=PROJECT_NAME),
+                        'URL-failed': failed_url.format(
+                            version=version, freqmode=self.freq_mode,
+                            project=PROJECT_NAME),
+                        'URL-comments': comments_url.format(
+                            version=version, freqmode=self.freq_mode,
+                            project=PROJECT_NAME)
+                    }
+                }]
+            })
+
+        def get_data_v4(resp):
+            return resp.json()['Info']
+
+        def get_data_v5(resp):
+            return resp.json()['Data']
+
+        test_version('v4', get_data_v4)
+        test_version('v5', get_data_v5)
 
 
 @pytest.mark.usefixtures('dockercompose')
@@ -158,7 +164,7 @@ class TestWriteLevel2(unittest.TestCase):
         scan_id = data['L2I']['ScanID']
         d = encrypt_util.encode_level2_target_parameter(
             scan_id, freq_mode, PROJECT_NAME)
-        url = WRITE_URL.format(d)
+        url = WRITE_URL.format(version=VERSION, d=d)
 
         r = requests.delete(url)
         self.assertEqual(r.status_code, 204)
@@ -190,12 +196,12 @@ class TestWriteLevel2(unittest.TestCase):
     def test_bad_posts(self):
         """Test invalid posts of level2 data"""
         # No url parameter
-        url = WRITE_URL.format('')
+        url = WRITE_URL.format(version=VERSION, d='')
         r = requests.post(url)
         self.assertEqual(r.status_code, 400)
 
         # Wrong url parameter
-        url = WRITE_URL.format('bad')
+        url = WRITE_URL.format(version=VERSION, d='bad')
         r = requests.post(url)
         self.assertEqual(r.status_code, 400)
 
@@ -204,7 +210,7 @@ class TestWriteLevel2(unittest.TestCase):
         scan_id = data['L2I']['ScanID']
         d = encrypt_util.encode_level2_target_parameter(
             scan_id, freq_mode, PROJECT_NAME)
-        url = WRITE_URL.format(d)
+        url = WRITE_URL.format(version=VERSION, d=d)
 
         # Missing data
         r = requests.post(url)
@@ -243,55 +249,81 @@ class TestReadLevel2(BaseWithDataInsert):
 
     def test_get_comments(self):
         """Test get list of comments"""
+        # V4
         rurl = COMMENTS_URL.format(
-            project=PROJECT_NAME, freqmode=self.freq_mode)
+            version='v4', project=PROJECT_NAME, freqmode=self.freq_mode)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 200)
         comments = r.json()['Info']['Comments']
-        print comments
+        self.assertEqual(len(comments), 6)
+
+        # V5
+        rurl = COMMENTS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Type'], 'level2_scan_comment')
+        comments = r.json()['Data']
         self.assertEqual(len(comments), 6)
 
     def test_get_scans(self):
         """Test get list of matching scans"""
-        rurl = SCANS_URL.format(project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        scans = r.json()['Info']['Scans']
-        self.assertEqual(len(scans), 1)
-        scan = scans[0]
-        self.assertEqual(scan['ScanID'], self.scan_id)
-        self.assertEqual(set(scan['URLS']), set([
-            'URL-level2', 'URL-log', 'URL-spectra']))
 
-        r = requests.get(rurl + '?start_time=2015-04-01')
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Info']['Scans']), 1)
+        def test_version(version, get_scans):
+            url = SCANS_URL if version <= 'v4' else SCANS_URL_DEV
+            rurl = url.format(
+                version=version, project=PROJECT_NAME, freqmode=self.freq_mode)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 200)
+            scans = get_scans(r)
+            self.assertEqual(len(scans), 1)
+            scan = scans[0]
+            self.assertEqual(scan['ScanID'], self.scan_id)
+            self.assertEqual(set(scan['URLS']), set([
+                'URL-level2', 'URL-log', 'URL-spectra']))
 
-        r = requests.get(rurl + '?start_time=2015-04-02')
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Info']['Scans']), 0)
+            r = requests.get(rurl + '?start_time=2015-04-01')
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(len(get_scans(r)), 1)
 
-        r = requests.get(rurl + '?end_time=2015-04-01')
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Info']['Scans']), 0)
+            r = requests.get(rurl + '?start_time=2015-04-02')
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(len(get_scans(r)), 0)
 
-        r = requests.get(rurl + '?end_time=2015-04-02')
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Info']['Scans']), 1)
+            r = requests.get(rurl + '?end_time=2015-04-01')
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(len(get_scans(r)), 0)
 
-        comment = u'Status: 9 spectra left after quality filtering'
-        r = requests.get(rurl + '?' + urllib.urlencode([('comment', comment)]))
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Info']['Scans']), 1)
+            r = requests.get(rurl + '?end_time=2015-04-02')
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(len(get_scans(r)), 1)
 
-        comment = u'Comment does not exist'
-        r = requests.get(rurl + '?' + urllib.urlencode([('comment', comment)]))
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Info']['Scans']), 0)
+            comment = u'Status: 9 spectra left after quality filtering'
+            r = requests.get(
+                rurl + '?' + urllib.urlencode([('comment', comment)]))
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(len(get_scans(r)), 1)
+
+            comment = u'Comment does not exist'
+            r = requests.get(
+                rurl + '?' + urllib.urlencode([('comment', comment)]))
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(len(get_scans(r)), 0)
+
+        def get_scans_v4(resp):
+            return resp.json()['Info']['Scans']
+
+        def get_scans_v5(resp):
+            return resp.json()['Data']
+
+        test_version('v4', get_scans_v4)
+        test_version('v5', get_scans_v5)
 
     def test_get_failed_scans(self):
         """Test get list of failed scans"""
-        rurl = FAILED_URL.format(project=PROJECT_NAME, freqmode=self.freq_mode)
+        # V4
+        rurl = FAILED_URL.format(
+            version='v4', project=PROJECT_NAME, freqmode=self.freq_mode)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 200)
         scans = r.json()['Info']['Scans']
@@ -302,10 +334,25 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(set(scan['URLS']), set([
             'URL-level2', 'URL-log', 'URL-spectra']))
 
+        # V5
+        rurl = FAILED_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Type'], 'level2_failed_scan_info')
+        scans = r.json()['Data']
+        self.assertEqual(len(scans), 1)
+        scan = scans[0]
+        self.assertEqual(scan['ScanID'], self.failed_scan_id)
+        self.assertEqual(scan['Error'], self.error_message)
+        self.assertEqual(set(scan['URLS']), set([
+            'URL-level2', 'URL-log', 'URL-spectra']))
+
     def test_get_scan(self):
         """Test get level2 data for a scan"""
         rurl = SCAN_URL.format(
-            project=PROJECT_NAME, freqmode=self.freq_mode, scanid=self.scan_id)
+            version='v4', project=PROJECT_NAME, freqmode=self.freq_mode,
+            scanid=self.scan_id)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 200)
         info = r.json()['Info']
@@ -338,22 +385,89 @@ class TestReadLevel2(BaseWithDataInsert):
 
         # Test none existing
         rurl = SCAN_URL.format(
-            project=PROJECT_NAME, freqmode=2, scanid=self.scan_id)
+            version='v4', project=PROJECT_NAME, freqmode=2,
+            scanid=self.scan_id)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 404)
 
+    def test_get_scan_v5(self):
+        """Test v5 get level2 data for a scan"""
+        rurl = SCAN_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode,
+            scanid=self.scan_id)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        mixed = r.json()
+        self.assertEqual(mixed['Type'], 'mixed')
+        info = mixed['Data']
+        self.assertTrue('L2i' in info)
+        self.assertTrue('L2' in info)
+        self.assertTrue('L2c' in info)
+
+        test_data = get_test_data()
+        # Should return the data on the same format as from the qsmr processing
+        self.assertEqual(info['L2']['Count'], len(test_data['L2']))
+        expected = {}
+        for p in test_data['L2']:
+            expected[p['Product']] = p
+        from_api = {}
+        for p in info['L2']['Data']:
+            from_api[p['Product']] = p
+        self.assertEqual(set(from_api.keys()), set(expected.keys()))
+        for p in from_api:
+            api = from_api[p]
+            expect = expected[p]
+            for k, v in api.items():
+                print k
+                if isinstance(v, (list, float)):
+                    assert_almost_equal(v, expect[k])
+                elif isinstance(expect[k], float) and isnan(expect[k]):
+                    self.assertEqual(v, None)
+                else:
+                    self.assertEqual(v, expect[k])
+
+        l2i_url = rurl + 'L2i/'
+        r = requests.get(l2i_url)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Data'], info['L2i']['Data'])
+
+        l2c_url = rurl + 'L2c/'
+        r = requests.get(l2c_url)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Data'], info['L2c']['Data'])
+
+        l2_url = rurl + 'L2/'
+        r = requests.get(l2_url)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Data'], info['L2']['Data'])
+
+        l2_product_url = l2_url + '?product=O3 / 501 GHz / 20 to 50 km'
+        r = requests.get(l2_product_url)
+        self.assertEqual(r.status_code, 200)
+        for prod in info['L2']['Data']:
+            if prod['Product'] == 'O3 / 501 GHz / 20 to 50 km':
+                self.assertEqual(prod, r.json()['Data'])
+
     def test_get_products(self):
         """Test get products"""
-        rurl = PRODUCTS_URL.format(project=PROJECT_NAME)
+        # V4
+        rurl = PRODUCTS_URL.format(version='v4', project=PROJECT_NAME)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 200)
         res = r.json()['Info']['Products']
         self.assertEqual(len(res), 3)
 
+        # V5
+        rurl = PRODUCTS_URL_DEV.format(version='v5', project=PROJECT_NAME)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        res = r.json()['Data']
+        self.assertEqual(len(res), 3)
+
     def test_get_locations(self):
         """Test level2 get locations endpoint"""
-        def test_results(locations, radius, nr_expected, **param):
-            rurl = LOCATIONS_URL.format(project=PROJECT_NAME)
+        def test_results_v4(locations, radius, nr_expected, **param):
+            rurl = LOCATIONS_URL.format(version='v4', project=PROJECT_NAME)
             uparam = [('location', loc) for loc in locations]
             uparam += [('radius', radius)]
             if param:
@@ -365,6 +479,32 @@ class TestReadLevel2(BaseWithDataInsert):
             self.assertEqual(r.status_code, 200)
             res = r.json()['Info']['Results']
             self.assertEqual(len(res), nr_expected)
+
+        def test_results_v5(locations, radius, nr_expected, **param):
+            rurl = LOCATIONS_URL_DEV.format(version='v5', project=PROJECT_NAME)
+            uparam = [('location', loc) for loc in locations]
+            uparam += [('radius', radius)]
+            nr_expected_L2 = 3  # Nr products in the test scan
+            if not nr_expected:
+                nr_expected_L2 = 0
+            if param:
+                if 'product' in param:
+                    nr_expected_L2 = 1
+                uparam += [(k, str(v)) for k, v in param.items()]
+            rurl += '?%s' % urllib.urlencode(uparam)
+            r = requests.get(rurl)
+            if r.status_code != 200:
+                print r.json()
+            self.assertEqual(r.status_code, 200)
+            res = r.json()['Data']
+            # Results are grouped by scan and product
+            self.assertEqual(len(res), nr_expected_L2)
+            inversions = sum([L2['VMR'] for L2 in res], [])
+            self.assertEqual(len(inversions), nr_expected)
+
+        def test_results(locations, radius, nr_expected, **param):
+            test_results_v4(locations, radius, nr_expected, **param)
+            test_results_v5(locations, radius, nr_expected, **param)
 
         test_results(['-6.0,95.0'], 30, 5, min_pressure=1,
                      start_time='2015-01-01')
@@ -390,14 +530,37 @@ class TestReadLevel2(BaseWithDataInsert):
 
     def test_get_date(self):
         """Test level2 get date endpoint"""
-        def test_results(date, nr_expected, **param):
-            rurl = DATE_URL.format(project=PROJECT_NAME, date=date)
+        def test_results_v4(date, nr_expected, **param):
+            rurl = DATE_URL.format(
+                version='v4', project=PROJECT_NAME, date=date)
             if param:
                 rurl += '?%s' % urllib.urlencode(param)
             r = requests.get(rurl)
             self.assertEqual(r.status_code, 200)
             res = r.json()['Info']['Results']
             self.assertEqual(len(res), nr_expected)
+
+        def test_results_v5(date, nr_expected, **param):
+            rurl = DATE_URL_DEV.format(
+                version='v5', project=PROJECT_NAME, date=date)
+            nr_expected_L2 = 3  # Nr products in the test scan
+            if not nr_expected:
+                nr_expected_L2 = 0
+            if param:
+                if 'product' in param:
+                    nr_expected_L2 = 1
+                rurl += '?%s' % urllib.urlencode(param)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 200)
+            res = r.json()['Data']
+            # Results are grouped by scan and product
+            self.assertEqual(len(res), nr_expected_L2)
+            inversions = sum([L2['VMR'] for L2 in res], [])
+            self.assertEqual(len(inversions), nr_expected)
+
+        def test_results(date, nr_expected, **param):
+            test_results_v4(date, nr_expected, **param)
+            test_results_v5(date, nr_expected, **param)
 
         test_results('2016-10-06', 0, min_pressure=1)
         test_results('2015-04-01', 61, min_pressure=1)
@@ -422,14 +585,35 @@ class TestReadLevel2(BaseWithDataInsert):
 
     def test_get_area(self):
         """Test level2 get area endpoint"""
-        def test_results(nr_expected, **param):
-            rurl = AREA_URL.format(project=PROJECT_NAME)
+        def test_results_v4(nr_expected, **param):
+            rurl = AREA_URL.format(version='v4', project=PROJECT_NAME)
             if param:
                 rurl += '?%s' % urllib.urlencode(param)
             r = requests.get(rurl)
             self.assertEqual(r.status_code, 200)
             res = r.json()['Info']['Results']
             self.assertEqual(len(res), nr_expected)
+
+        def test_results_v5(nr_expected, **param):
+            rurl = AREA_URL_DEV.format(version='v5', project=PROJECT_NAME)
+            nr_expected_L2 = 3  # Nr products in the test scan
+            if not nr_expected:
+                nr_expected_L2 = 0
+            if param:
+                if 'product' in param:
+                    nr_expected_L2 = 1
+                rurl += '?%s' % urllib.urlencode(param)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 200)
+            res = r.json()['Data']
+            # Results are grouped by scan and product
+            self.assertEqual(len(res), nr_expected_L2)
+            inversions = sum([L2['VMR'] for L2 in res], [])
+            self.assertEqual(len(inversions), nr_expected)
+
+        def test_results(nr_expected, **param):
+            test_results_v4(nr_expected, **param)
+            test_results_v5(nr_expected, **param)
 
         # Start and end time
         test_results(61, start_time='2015-03-02', min_pressure=1)
@@ -455,6 +639,27 @@ class TestReadLevel2(BaseWithDataInsert):
                 rurl += '?%s' % urllib.urlencode(param)
             r = requests.get(rurl)
             self.assertEqual(r.status_code, 400)
+
+        def test_not_found(rurl, **param):
+            if param:
+                rurl += '?%s' % urllib.urlencode(param)
+            r = requests.get(rurl)
+            self.assertEqual(r.status_code, 404)
+
+        AREA_URL = 'http://localhost:5000/rest_api/v5/level2/{project}/area'
+        LOCATIONS_URL = (
+            'http://localhost:5000/rest_api/v5/level2/{project}/locations')
+
+        # No production projects added
+        test_not_found(LOCATIONS_URL.format(project=PROJECT_NAME))
+        test_not_found(AREA_URL.format(project=PROJECT_NAME))
+
+        AREA_URL = (
+            'http://localhost:5000/rest_api/v5/level2/development/{project}'
+            '/area')
+        LOCATIONS_URL = (
+            'http://localhost:5000/rest_api/v5/level2/development/{project}'
+            '/locations')
 
         # No locations
         test_bad(LOCATIONS_URL.format(project=PROJECT_NAME))

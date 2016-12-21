@@ -15,9 +15,6 @@ def get_collocations(freqmode, scanid, fields=None):
         "freqmode={freqmode} and scanid={scanid}").format(
             columns=columns, backend=backend, freqmode=freqmode, scanid=scanid)
     con = DatabaseConnector()
-    if not collocations_table_exist(con):
-        # TODO: collocations table does not exist in the test data.
-        return []
     query = con.query(query_string)
     return query.dictresult()
 

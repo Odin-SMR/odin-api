@@ -34,6 +34,10 @@ from odinapi.views.baseview import register_versions, BaseView
 from odinapi.views.urlgen import get_freqmode_raw_url
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.utils import time_util
+from odinapi.utils.collocations import get_collocations
+
+# Make linter happy
+use_agg
 
 
 class DateInfo(BaseView):
@@ -638,6 +642,40 @@ class ScanAPRNoBackend(ScanAPR):
     @register_versions('return')
     def _return_format(self, version, datadict, *args, **kwargs):
         return {'Data': datadict, 'Type': 'apriori', 'Count': None}
+
+
+class CollocationsView(BaseView):
+    SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('fetch')
+    def _get(self, version, freqmode, scanno):
+        return get_L2_collocations(
+            request.url_root, version, freqmode, scanno)
+
+    @register_versions('return')
+    def _return(self, version, collocations, freqmode, scanno):
+        return {'Data': collocations, 'Type': 'collocation',
+                'Count': len(collocations)}
+
+
+def get_L2_collocations(root_url, version, freqmode, scanno):
+    collocations_fields = ['date', 'instrument', 'species', 'file',
+                           'file_index']
+    collocations = []
+    for coll in get_collocations(
+            freqmode, scanno, fields=collocations_fields):
+        url = (
+            '{root}rest_api/{version}/vds_external/{instrument}/'
+            '{species}/{date}/{file}/{file_index}').format(
+                root=root_url, version=version,
+                instrument=coll['instrument'], species=coll['species'],
+                date=coll['date'], file=coll['file'],
+                file_index=coll['file_index'])
+        collocations.append({
+            'URL': url,
+            'Instrument': coll['instrument'],
+            'Species': coll['species']})
+    return collocations
 
 
 class VdsInfo(MethodView):

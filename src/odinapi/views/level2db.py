@@ -3,6 +3,7 @@ from itertools import chain
 
 import numpy
 from pymongo.errors import DuplicateKeyError
+from pymongo import ASCENDING
 
 from odinapi.utils.time_util import datetime2mjd, datetime2stw
 from odinapi.database import mongo
@@ -30,12 +31,23 @@ class ProjectsDB(object):
 
     def add_project_if_not_exists(self, project_name):
         try:
-            self.projects_collection.insert_one({'name': project_name})
+            self.projects_collection.insert_one(
+                {'name': project_name,
+                 'development': True})
         except DuplicateKeyError:
             pass
 
-    def get_projects(self):
-        return self.projects_collection.find({}, {'_id': 0})
+    def get_project(self, project_name):
+        return self.projects_collection.find_one(
+            {'name': project_name}, {'_id': 0})
+
+    def get_projects(self, development=True):
+        if development is None:
+            # Return both development and production projects
+            return self.projects_collection.find({}, {'_id': 0})
+        else:
+            return self.projects_collection.find(
+                {'development': development}, {'_id': 0})
 
 
 class Level2DB(object):
@@ -124,20 +136,43 @@ class Level2DB(object):
         """
         match = {'ScanID': scanid, 'FreqMode': freqmode}
         L2i = L2 = L2c = None
-        L2i = self.L2i_collection.find_one(match, {'_id': 0})
+        L2i = self.L2i_collection.find_one(
+            match, {'_id': 0, 'ProcessingError': 0})
         if L2i:
-            L2c = []
-            if 'Comments' in L2i:
-                L2c = L2i.pop('Comments')
-            L2i.pop('ProcessingError', None)
+            L2c = L2i.pop('Comments', [])
             L2 = collapse_products(
                 list(self.L2_collection.find(
                     match, {'_id': 0, 'Location': 0})))
         return L2i, L2, L2c
 
+    def get_L2i(self, freqmode, scanid):
+        match = {'ScanID': scanid, 'FreqMode': freqmode}
+        return self.L2i_collection.find_one(match, {
+            '_id': 0, 'Comments': 0, 'ProcessingError': 0})
+
+    def get_L2c(self, freqmode, scanid):
+        match = {'ScanID': scanid, 'FreqMode': freqmode}
+        obj = self.L2i_collection.find_one(match, {'_id': 0, 'Comments': 1})
+        return obj['Comments']
+
+    def get_L2(self, freqmode, scanid, product=None):
+        match = {'ScanID': scanid, 'FreqMode': freqmode}
+        if product:
+            match['Product'] = product
+        return collapse_products(
+            list(self.L2_collection.find(
+                match, {'_id': 0, 'Location': 0})))
+
     def get_freqmodes(self):
         """Return list of unique freqmodes in the project"""
         return self.L2i_collection.distinct('FreqMode')
+
+    def get_products(self, freqmode=None):
+        """Return list of unique products in the project"""
+        match = {}
+        if freqmode:
+            match['FreqMode'] = freqmode
+        return self.L2_collection.distinct('Product', filter=match)
 
     def get_comments(self, freqmode):
         """Return list of unique comments for a freqmode"""
@@ -234,8 +269,10 @@ class Level2DB(object):
             fields = {field: 1 for field in fields}
         fields['_id'] = 0
         fields['Location'] = 0
+        sort = [('FreqMode', ASCENDING), ('ScanID', ASCENDING)]
 
-        for conc in self.L2_collection.find(query, fields, limit=HARD_LIMIT):
+        for conc in self.L2_collection.find(
+                query, fields, sort=sort, limit=HARD_LIMIT):
             yield conc
 
 

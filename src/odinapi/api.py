@@ -13,11 +13,12 @@ from odinapi.views.views import (
     ScanPTZ, ScanAPR, VdsInfo, VdsFreqmodeInfo, VdsScanInfo,
     VdsInstrumentInfo, VdsDateInfo, VdsExtData, ConfigDataFiles,
     ScanPTZNoBackend, ScanAPRNoBackend, ScanSpecNoBackend,
-    FreqmodeInfoNoBackend)
+    FreqmodeInfoNoBackend, CollocationsView)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
-    Level2ViewScans, Level2ViewFailedScans, Level2ViewComments,
+    Level2ViewScans, Level2ViewFailedScans, Level2ViewComments, L2iView,
+    L2cView, L2View,
     SWAGGER_DEFINITIONS as level2_definitions,
     SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
@@ -43,6 +44,7 @@ class Odin(Flask):
 
         self._add_level1_views()
         self._add_level2_views()
+        self._add_level2_development_views()
         self._add_vds_views()
         self._add_site_views()
         self._add_stats_views()
@@ -81,6 +83,11 @@ class Odin(Flask):
             '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/'
             'apriori/<species>/',
             view_func=ScanAPRNoBackend.as_view('apriorinobackend')
+        )
+        self.add_url_rule(
+            ('/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/'
+             'collocations/'),
+            view_func=CollocationsView.as_view('collocations')
         )
 
     def _add_level1_no_backend_cached(self):
@@ -173,6 +180,7 @@ class Odin(Flask):
             )
 
     def _add_level2_views(self):
+        # TODO: These urls should later only show data from official projects
         self.add_url_rule(
             '/rest_api/<version>/level2',
             view_func=Level2Write.as_view('level2write')
@@ -203,6 +211,21 @@ class Odin(Flask):
             view_func=Level2ViewScan.as_view('level2viewscan')
             )
         self.add_url_rule(
+            ('/rest_api/<version>/level2/<project>'
+             '/<int:freqmode>/<int:scanno>/L2i/'),
+            view_func=L2iView.as_view('level2L2i')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/<project>'
+             '/<int:freqmode>/<int:scanno>/L2c/'),
+            view_func=L2cView.as_view('level2L2c')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/<project>'
+             '/<int:freqmode>/<int:scanno>/L2/'),
+            view_func=L2View.as_view('level2L2')
+            )
+        self.add_url_rule(
             '/rest_api/<version>/level2/<project>/products/',
             view_func=Level2ViewProducts.as_view('level2viewproducts')
             )
@@ -217,6 +240,73 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/area',
             view_func=Level2ViewArea.as_view('level2viewarea')
+            )
+
+    def _add_level2_development_views(self):
+        """Add views for browsing development projects"""
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/projects/',
+            view_func=Level2ViewProjects.as_view('level2devviewprojects')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/',
+            view_func=Level2ViewProject.as_view('level2devviewproject')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
+            'comments/',
+            view_func=Level2ViewComments.as_view('level2devviewcomments')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
+            'scans/',
+            view_func=Level2ViewScans.as_view('level2devviewscans')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
+            'failed/',
+            view_func=Level2ViewFailedScans.as_view('level2devviewfailed')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/development/<project>'
+             '/<int:freqmode>/<int:scanno>/'),
+            view_func=Level2ViewScan.as_view('level2devviewscan')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/products/',
+            view_func=Level2ViewProducts.as_view('level2devviewproducts')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/<freqmode>/'
+            'products/',
+            view_func=Level2ViewProducts.as_view('level2devviewfmproducts')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/development/<project>'
+             '/<int:freqmode>/<int:scanno>/L2i/'),
+            view_func=L2iView.as_view('level2devL2i')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/development/<project>'
+             '/<int:freqmode>/<int:scanno>/L2c/'),
+            view_func=L2cView.as_view('level2devL2c')
+            )
+        self.add_url_rule(
+            ('/rest_api/<version>/level2/development/<project>'
+             '/<int:freqmode>/<int:scanno>/L2/'),
+            view_func=L2View.as_view('level2devL2')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/locations',
+            view_func=Level2ViewLocations.as_view('level2devviewlocations')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/<date>/',
+            view_func=Level2ViewDay.as_view('level2devviewday')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/level2/development/<project>/area',
+            view_func=Level2ViewArea.as_view('level2devviewarea')
             )
 
     def _add_site_views(self):
