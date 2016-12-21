@@ -34,7 +34,7 @@ def register_versions(role, versions=None):
     """
     def decorator(method):
         method._role = role
-        method._versions = versions or VERSIONS
+        method._versions = versions
         return method
     return decorator
 
@@ -94,12 +94,14 @@ class BaseView(MethodView):
                 else:
                     raise ValueError(
                         'Unsupported method role: %r' % method._role)
-                for version in method._versions:
+                for version in method._versions or cls.SUPPORTED_VERSIONS:
                     if version in lookup:
                         raise ValueError((
-                            'Version {} has already been registered for '
+                            'Could not register version {} to method {}, '
+                            'it has already been registered for '
                             'role {} in method {}').format(
-                                version, repr(method._role), lookup[version]))
+                                version, method_name, repr(method._role),
+                                lookup[version]))
                     lookup[version] = method_name
         return MethodView.__new__(cls)
 

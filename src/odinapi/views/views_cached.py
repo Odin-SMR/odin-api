@@ -10,6 +10,7 @@ from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
 from odinapi.views.baseview import BaseView, register_versions
+from odinapi.views.urlgen import get_freqmode_info_url
 
 
 def get_backend(freqmode):
@@ -92,21 +93,12 @@ def generate_freq_mode_data(query_string, root_url, version,
         info_dict['Backend'] = row['backend']
         info_dict['FreqMode'] = row['freqmode']
         info_dict['NumScan'] = row['nscans']
-        info_dict['URL'] = get_freqmode_url(
+        info_dict['URL'] = get_freqmode_info_url(
             root_url, version, date or row['date'], row['backend'],
             row['freqmode'])
         info_list.append(info_dict)
     con.close()
     return info_list
-
-
-def get_freqmode_url(root_url, version, date, backend, freqmode):
-    if version in {'v1', 'v2', 'v3', 'v4'}:
-        return '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/'.format(
-            root_url, version, date, backend, freqmode)
-    else:
-        return '{0}rest_api/{1}/freqmode_info/{2}/{3}/'.format(
-            root_url, version, date, freqmode)
 
 
 class DateInfoCached(BaseView):
@@ -148,7 +140,7 @@ class PeriodInfoCached(BaseView):
     """
     SUPPORTED_VERSIONS = ['v4', 'v5']
 
-    @register_versions('fetch', SUPPORTED_VERSIONS)
+    @register_versions('fetch')
     def _fetch_data(self, version, year, month, day):
         try:
             date_start = date(year, month, day)
@@ -193,7 +185,7 @@ class DateBackendInfoCached(DateInfoCached):
 
     SUPPORTED_VERSIONS = ['v1', 'v2', 'v3', 'v4']
 
-    @register_versions('fetch', SUPPORTED_VERSIONS)
+    @register_versions('fetch')
     def _fetch_data(self, version, date, backend):
         try:
             datetime.strptime(date, '%Y-%m-%d')
@@ -203,7 +195,7 @@ class DateBackendInfoCached(DateInfoCached):
         return generate_freq_mode_data(
             query_str, request.url_root, version, date=date)
 
-    @register_versions('return', SUPPORTED_VERSIONS)
+    @register_versions('return')
     def _return_data(self, version, data, date, backend):
         return dict(Date=date, Info=data)
 

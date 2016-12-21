@@ -15,7 +15,7 @@ URL_PTZ = (
     URL_ROOT + 'rest_api/v4/ptz/'
 )
 URL_PTZ_V5 = (
-    URL_ROOT + 'rest_api/v5/level1/{freqmode}/{scanid}/ptz'
+    URL_ROOT + 'rest_api/v5/level1/{freqmode}/{scanid}/ptz/'
 )
 ROOT_PATH = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
 

@@ -12,7 +12,8 @@ from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
     ScanPTZ, ScanAPR, VdsInfo, VdsFreqmodeInfo, VdsScanInfo,
     VdsInstrumentInfo, VdsDateInfo, VdsExtData, ConfigDataFiles,
-    ScanPTZNoBackend)
+    ScanPTZNoBackend, ScanAPRNoBackend, ScanSpecNoBackend,
+    FreqmodeInfoNoBackend)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
@@ -60,16 +61,26 @@ class Odin(Flask):
 
     def _add_level1_no_backend_views(self):
         self._add_level1_no_backend_cached()
+        self._add_level1_no_backend_raw()
         self._add_level1_no_backend_scan()
 
     def _add_level1_no_backend_scan(self):
         self.add_url_rule(
-            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/Log',
+            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/Log/',
             view_func=L1LogCached.as_view('scanlogv5')
         )
         self.add_url_rule(
-            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/ptz',
+            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/L1b/',
+            view_func=ScanSpecNoBackend.as_view('l1bv5')
+        )
+        self.add_url_rule(
+            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/ptz/',
             view_func=ScanPTZNoBackend.as_view('ptznobackend')
+        )
+        self.add_url_rule(
+            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/'
+            'apriori/<species>/',
+            view_func=ScanAPRNoBackend.as_view('apriorinobackend')
         )
 
     def _add_level1_no_backend_cached(self):
@@ -81,6 +92,19 @@ class Odin(Flask):
             '/rest_api/<version>/freqmode_info/<date>/'
             '<int:freqmode>/<int:scanno>/',
             view_func=FreqmodeInfoCachedNoBackend.as_view('scaninfonobackend')
+            )
+
+    def _add_level1_no_backend_raw(self):
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_raw/<date>/<int:freqmode>/',
+            view_func=FreqmodeInfoNoBackend.as_view(
+                'scansinforawnobackend')
+            )
+        self.add_url_rule(
+            '/rest_api/<version>/freqmode_info/<date>/'
+            '<int:freqmode>/<int:scanno>/',
+            view_func=FreqmodeInfoNoBackend.as_view(
+                'scaninforawnobackend')
             )
 
     def _add_level1_cached(self):
