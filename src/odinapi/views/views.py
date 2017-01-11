@@ -35,13 +35,32 @@ from odinapi.views.urlgen import get_freqmode_raw_url
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.utils import time_util
 from odinapi.utils.collocations import get_collocations
+from odinapi.utils.swagger import SWAGGER
 
 # Make linter happy
 use_agg
 
+SWAGGER.add_parameter('date', 'path', str, string_format='date')
+SWAGGER.add_type('freqmode_info', {
+    'Backend': str,
+    'FreqMode': int,
+    'NumScan': int,
+    'URL': str
+})
+
 
 class DateInfo(BaseView):
     """Get scan counts for a day"""
+
+    @register_versions('swagger', ['v5'])
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'date'],
+            {"200": SWAGGER.get_type_response(
+                'freqmode_info', is_list=True, Date=str)},
+            summary="Get scan counts for a day"
+        )
 
     @register_versions('fetch')
     def _get(self, version, date):
@@ -138,6 +157,8 @@ class DateBackendInfo(DateInfo):
 
 class FreqmodeInfo(BaseView):
     """loginfo for all scans from a given date and freqmode"""
+
+    SUPPORTED_VERSIONS = ['v1', 'v2', 'v3', 'v4']
 
     ITEMS_V1 = [
         'DateTime',
@@ -395,11 +416,40 @@ class FreqmodeInfo(BaseView):
                     return {"Info": s}
 
 
+SWAGGER.add_type('Log', {
+    "AltEnd": float,
+    "AltStart": float,
+    "DateTime": str,
+    "FreqMode": int,
+    "LatEnd": float,
+    "LatStart": float,
+    "LonEnd": float,
+    "LonStart": float,
+    "MJDEnd": float,
+    "MJDStart": float,
+    "NumSpec": int,
+    "ScanID": int,
+    "SunZD": float,
+    "URLS": {url_key: str for url_key in [
+        'URL-apriori-%s' % species for species in SPECIES] +
+             ['URL-log', 'URL-ptz', 'URL-spectra']}
+})
+
+
 class FreqmodeInfoNoBackend(BaseView):
     SUPPORTED_VERSIONS = ['v5']
 
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'date', 'freqmode'],
+            {"200": SWAGGER.get_type_response('Log', is_list=True)},
+            summary="Get log info for scans in a day and freqmode"
+        )
+
     @register_versions('fetch')
-    def _fetch_data(self, version, date, freqmode, scanno=None):
+    def _fetch_data(self, version, date, freqmode):
 
         backend = FREQMODE_TO_BACKEND[freqmode]
         con = DatabaseConnector()
@@ -467,13 +517,32 @@ class FreqmodeInfoNoBackend(BaseView):
         return loginfo['Info']
 
     @register_versions('return')
-    def _return_data_v5(self, version, data, date, freqmode, scanno=None):
-        if scanno is None:
-            return {'Data': data, 'Type': 'Log', 'Count': len(data)}
-        else:
-            for s in data:
-                if s['ScanID'] == scanno:
-                    return {'Data': s, 'Type': 'Log', 'Count': None}
+    def _return_data_v5(self, version, data, date, freqmode):
+        return {'Data': data, 'Type': 'Log', 'Count': len(data)}
+
+
+class ScanInfoNoBackend(FreqmodeInfoNoBackend):
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'date', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('Log')},
+            summary="Get log info for a scan"
+        )
+
+    @register_versions('fetch')
+    def _fetch_data(self, version, date, freqmode, scanno):
+        return super(ScanInfoNoBackend, self)._fetch_data(
+            version, date, freqmode)
+
+    @register_versions('return')
+    def _return_data_v5(self, version, data, date, freqmode, scanno):
+        for s in data:
+            if s['ScanID'] == scanno:
+                return {'Data': s, 'Type': 'Log', 'Count': None}
+        abort(404)
 
 
 class ScanSpec(BaseView):
@@ -510,9 +579,63 @@ class ScanSpec(BaseView):
         return datadict
 
 
+SWAGGER.add_type('L1b', {
+    "Altitude": [float],
+    "Apodization": [int],
+    "AttitudeVersion": [int],
+    "Backend": [int],
+    "Channels": [int],
+    "Dec2000": [float],
+    "Efftime": [float],
+    "FreqCal": [[float]],
+    "FreqMode": [int],
+    "FreqRes": [float],
+    "Frequency": {
+        "AppliedDopplerCorr": [float],
+        "ChannelsID": [int],
+        "IFreqGrid": [float],
+        "LOFreq": [float],
+        "SubBandIndex": [[int]],
+    },
+    "Frontend": [int],
+    "GPSpos": [[float]],
+    "GPSvel": [[float]],
+    "IntTime": [float],
+    "Latitude": [float],
+    "Longitude": [float],
+    "MJD": [float],
+    "MoonPos": [[float]],
+    "Orbit": [float],
+    "Quality": [float],
+    "RA2000": [float],
+    "SBpath": [float],
+    "STW": [int],
+    "ScanID": [int],
+    "Spectrum": [[float]],
+    "SunPos": [[float]],
+    "SunZD": [float],
+    "TSpill": [float],
+    "Tcal": [float],
+    "Trec": [float],
+    "TrecSpectrum": [float],
+    "Version": [int],
+    "Vgeo": [float],
+    "ZeroLagVar": [[float]],
+})
+
+
 class ScanSpecNoBackend(ScanSpec):
     """Get L1b data"""
     SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('L1b')},
+            summary="Get level1 data for a scan"
+        )
 
     @register_versions('fetch')
     def _get_v5(self, version, freqmode, scanno):
@@ -575,10 +698,29 @@ class ScanPTZ(BaseView):
         return datadict
 
 
+SWAGGER.add_type('ptz', {
+    "Altitude": [float],
+    "Latitude": float,
+    "Longitude": float,
+    "MJD": float,
+    "Pressure": [float],
+    "Temperature": [float],
+})
+
+
 class ScanPTZNoBackend(ScanPTZ):
     """Get PTZ data"""
 
     SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('ptz')},
+            summary="Get ptz data for a scan"
+        )
 
     @register_versions('fetch')
     def _get_ptz_v5(self, version, freqmode, scanno):
@@ -627,10 +769,27 @@ class ScanAPR(BaseView):
         return data
 
 
+SWAGGER.add_parameter('species', 'path', str)
+SWAGGER.add_type('apriori', {
+    "Pressure": [float],
+    "Species": str,
+    "VMR": [float],
+})
+
+
 class ScanAPRNoBackend(ScanAPR):
     """Get apriori data for a certain species"""
 
     SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'freqmode', 'scanno', 'species'],
+            {"200": SWAGGER.get_type_response('apriori')},
+            summary="Get apriori data for a scan and species"
+        )
 
     @register_versions('fetch')
     def _get_v5(self, version, freqmode, scanno, species):
@@ -644,8 +803,24 @@ class ScanAPRNoBackend(ScanAPR):
         return {'Data': datadict, 'Type': 'apriori', 'Count': None}
 
 
+SWAGGER.add_type('collocation', {
+    "Instrument": str,
+    "Species": str,
+    "URL": str
+})
+
+
 class CollocationsView(BaseView):
     SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('collocation', is_list=True)},
+            summary="Get collocations for a scan"
+        )
 
     @register_versions('fetch')
     def _get(self, version, freqmode, scanno):

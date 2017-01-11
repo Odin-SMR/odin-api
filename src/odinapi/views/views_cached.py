@@ -7,6 +7,7 @@ from datetime import datetime, date, timedelta
 from flask import abort, request
 
 from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
+from odinapi.utils.swagger import SWAGGER
 from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
 from odinapi.views.baseview import BaseView, register_versions
@@ -104,6 +105,16 @@ def generate_freq_mode_data(query_string, root_url, version,
 class DateInfoCached(BaseView):
     """DateInfo using a cached table"""
 
+    @register_versions('swagger', ['v5'])
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'date'],
+            {"200": SWAGGER.get_type_response(
+                'freqmode_info', is_list=True, Date=str)},
+            summary="Get scan counts for a day from cached table"
+        )
+
     @register_versions('fetch')
     def _fetch_data(self, version, date):
         try:
@@ -133,12 +144,34 @@ class DateInfoCached(BaseView):
         return query_str
 
 
+SWAGGER.add_parameter('year', 'path', str, description="yyyy")
+SWAGGER.add_parameter('month', 'path', str, description="mm")
+SWAGGER.add_parameter('day', 'path', str, description="dd")
+SWAGGER.add_parameter(
+    'length', 'query', int, description="Period length in number of days")
+
+
 class PeriodInfoCached(BaseView):
     """Period using a cached table
     This is used to populate the calendar. The standard length of the period
     is six weeks, just enough to fill a Full Calendar view.
     """
     SUPPORTED_VERSIONS = ['v4', 'v5']
+
+    @register_versions('swagger', ['v5'])
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'year', 'month', 'day', 'length'],
+            {"200": SWAGGER.get_type_response(
+                'freqmode_info', is_list=True, PeriodStart=str,
+                PeriodEnd=str)},
+            summary="Get scan counts per day for a period",
+            description=(
+                "This is used to populate the calendar. "
+                "The default length of the period is six weeks, "
+                "just enough to fill a full calendar view."
+            ))
 
     @register_versions('fetch')
     def _fetch_data(self, version, year, month, day):
@@ -512,6 +545,17 @@ class FreqmodeInfoCached(BaseView):
 class FreqmodeInfoCachedNoBackend(BaseView):
     SUPPORTED_VERSIONS = ['v5']
 
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'date', 'freqmode'],
+            {"200": SWAGGER.get_type_response('Log', is_list=True)},
+            summary=(
+                "Get log info for scans in a day and freqmode from "
+                "cached table")
+        )
+
     @register_versions('fetch')
     def _fetch_data(self, version, date, freqmode, scanno=None):
         con = DatabaseConnector()
@@ -538,18 +582,46 @@ class FreqmodeInfoCachedNoBackend(BaseView):
         return loginfo['Info']
 
     @register_versions('return')
-    def _return_data(self, version, data, date, freqmode, scanno=None):
-        if scanno is None:
-            return {'Data': data, 'Type': 'Log', 'Count': len(data)}
-        else:
-            for s in data:
-                if s['ScanID'] == scanno:
-                    return {'Data': s, 'Type': 'Log', 'Count': None}
+    def _return_data(self, version, data, date, freqmode):
+        return {'Data': data, 'Type': 'Log', 'Count': len(data)}
+
+
+class ScanInfoCachedNoBackend(FreqmodeInfoCachedNoBackend):
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'date', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('Log')},
+            summary="Get log info for a scan from cached table"
+        )
+
+    @register_versions('fetch')
+    def _fetch_data(self, version, date, freqmode, scanno):
+        return super(ScanInfoCachedNoBackend, self)._fetch_data(
+            version, date, freqmode, scanno=scanno)
+
+    @register_versions('return')
+    def _return_data(self, version, data, date, freqmode, scanno):
+        for s in data:
+            if s['ScanID'] == scanno:
+                return {'Data': s, 'Type': 'Log', 'Count': None}
+        abort(404)
 
 
 class L1LogCached(BaseView):
     """L1 log for a freqmode and scanno"""
     SUPPORTED_VERSIONS = ['v4', 'v5']
+
+    @register_versions('swagger', ['v5'])
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('Log')},
+            summary="Get log info for a scan from cached table"
+        )
 
     @register_versions('fetch', ['v4'])
     def _fetch_data_v4(self, version, freqmode, scanno):

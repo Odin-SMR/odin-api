@@ -1,13 +1,15 @@
-# pylint: skip-file
+# pylint: disable=protected-access
 """Provide BaseView class and register_versions decorator for easier
 handling of different api versions.
 """
 
 import inspect
+from threading import Lock
 
 from flask import jsonify, abort
 from flask.views import MethodView
 
+NEW_BASEVIEW_LOCK = Lock()
 VERSIONS = ['v1', 'v2', 'v3', 'v4', 'v5']
 
 
@@ -86,28 +88,32 @@ class BaseView(MethodView):
 
     def __new__(cls, *args, **kwargs):
         """Class constructor, map api versions to view methods."""
-        cls.VERSION_TO_FETCHDATA = {}
-        cls.VERSION_TO_RETURNDATA = {}
-        for method_name, method in inspect.getmembers(
-                cls, predicate=inspect.ismethod):
-            if hasattr(method, '_role'):
-                if method._role == 'fetch':
-                    lookup = cls.VERSION_TO_FETCHDATA
-                elif method._role == 'return':
-                    lookup = cls.VERSION_TO_RETURNDATA
-                else:
-                    raise ValueError(
-                        'Unsupported method role: %r' % method._role)
-                for version in method._versions or cls.SUPPORTED_VERSIONS:
-                    if version in lookup:
-                        raise ValueError((
-                            'Could not register version {} to method {}, '
-                            'it has already been registered for '
-                            'role {} in method {}').format(
-                                version, method_name, repr(method._role),
-                                lookup[version]))
-                    lookup[version] = method_name
-        return MethodView.__new__(cls)
+        with NEW_BASEVIEW_LOCK:
+            cls.VERSION_TO_FETCHDATA = {}
+            cls.VERSION_TO_RETURNDATA = {}
+            cls.VERSION_TO_SWAGGERSPEC = {}
+            for method_name, method in inspect.getmembers(
+                    cls, predicate=inspect.ismethod):
+                if hasattr(method, '_role'):
+                    if method._role == 'fetch':
+                        lookup = cls.VERSION_TO_FETCHDATA
+                    elif method._role == 'return':
+                        lookup = cls.VERSION_TO_RETURNDATA
+                    elif method._role == 'swagger':
+                        lookup = cls.VERSION_TO_SWAGGERSPEC
+                    else:
+                        raise ValueError(
+                            'Unsupported method role: %r' % method._role)
+                    for version in method._versions or cls.SUPPORTED_VERSIONS:
+                        if version in lookup:
+                            raise ValueError((
+                                'Could not register version {} to method {} '
+                                'in class {}, it has already been registered '
+                                'for role {} in method {}').format(
+                                    version, method_name, cls.__name__,
+                                    repr(method._role), lookup[version]))
+                        lookup[version] = method_name
+            return MethodView.__new__(cls)
 
     def get(self, version, *args, **kwargs):
         if version not in self.SUPPORTED_VERSIONS:
@@ -125,3 +131,17 @@ class BaseView(MethodView):
         return jsonify(
             getattr(self, self.VERSION_TO_RETURNDATA[version])(
                 version, data, *args, **kwargs))
+
+    def swagger_spec(self, version):
+        """Return GET swagger spec for this view.
+
+        Register the method to use like this:
+
+            @register_versions('swagger', ['v5'])
+            def _swagger_spec(self, version):
+               ...
+        """
+        if version not in self.SUPPORTED_VERSIONS:
+            return
+        if version in self.VERSION_TO_SWAGGERSPEC:
+            return getattr(self, self.VERSION_TO_SWAGGERSPEC[version])(version)

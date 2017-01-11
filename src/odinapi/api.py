@@ -8,12 +8,13 @@ from flasgger import Swagger, BR_SANITIZER
 from flasgger.base import OutputView
 import flasgger
 
+from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
     ScanPTZ, ScanAPR, VdsInfo, VdsFreqmodeInfo, VdsScanInfo,
     VdsInstrumentInfo, VdsDateInfo, VdsExtData, ConfigDataFiles,
     ScanPTZNoBackend, ScanAPRNoBackend, ScanSpecNoBackend,
-    FreqmodeInfoNoBackend, CollocationsView)
+    FreqmodeInfoNoBackend, ScanInfoNoBackend, CollocationsView)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
@@ -23,13 +24,24 @@ from odinapi.views.level2 import (
     SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
-    PeriodInfoCached, L1LogCached, FreqmodeInfoCachedNoBackend)
+    PeriodInfoCached, L1LogCached, FreqmodeInfoCachedNoBackend,
+    ScanInfoCachedNoBackend)
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
     ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2, ViewLevel2Scan,
     ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot)
 from odinapi.views.data_info import FileInfo
+
+SWAGGER.add_parameter('version', 'path', str)
+SWAGGER.add_parameter('freqmode', 'path', int)
+SWAGGER.add_parameter('scanno', 'path', int)
+
+DESCRIPTION = (
+    "Odin rest api.\n\n"
+    "Geographic coordinate system:\n\n"
+    "* Latitude: -90 to 90\n"
+    "* Longitude: 0 to 360")
 
 
 class Odin(Flask):
@@ -40,6 +52,12 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/config_data/data_files/',
             view_func=ConfigDataFiles.as_view('configdatafiles')
+        )
+
+        self.add_url_rule(
+            '/rest_api/<version>/spec',
+            view_func=SwaggerSpecView.as_view(
+                'swagger', 'Odin API', description=DESCRIPTION)
         )
 
         self._add_level1_views()
@@ -98,7 +116,7 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/'
             '<int:freqmode>/<int:scanno>/',
-            view_func=FreqmodeInfoCachedNoBackend.as_view('scaninfonobackend')
+            view_func=ScanInfoCachedNoBackend.as_view('scaninfonobackend')
             )
 
     def _add_level1_no_backend_raw(self):
@@ -108,9 +126,9 @@ class Odin(Flask):
                 'scansinforawnobackend')
             )
         self.add_url_rule(
-            '/rest_api/<version>/freqmode_info/<date>/'
+            '/rest_api/<version>/freqmode_raw/<date>/'
             '<int:freqmode>/<int:scanno>/',
-            view_func=FreqmodeInfoNoBackend.as_view(
+            view_func=ScanInfoNoBackend.as_view(
                 'scaninforawnobackend')
             )
 
@@ -383,14 +401,6 @@ class Odin(Flask):
             )
 
 
-DESCRIPTION = """Odin level1 and level2 rest api.
-
-Geographic coordinate system:
-
-* Latitude: -90 to 90
-* Longitude: 0 to 360
-"""
-
 OrigOutputView = OutputView
 
 
@@ -441,6 +451,7 @@ def main():
         debug='ODIN_API_PRODUCTION' not in environ,
         threaded=True
         )
+
 
 if __name__ == "__main__":
     main()

@@ -211,7 +211,8 @@ def is_development_request(version):
 
 class Level2ProjectBaseView(BaseView):
     """With version v5 and above development projects should only be
-    accessible from endpoints that have '/development/' in the path."""
+    accessible from endpoints that have '/development/' in the path.
+    """
 
     def get(self, version, project, *args, **kwargs):
         is_dev = is_development_request(version)
