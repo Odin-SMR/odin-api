@@ -47,23 +47,28 @@ def dockercompose():
     start_wait = time()
     while True:
         exit_code = system.poll()
-        assert exit_code is None, 'docker-compose exited with code {}'.format(
-            exit_code)
+        if exit_code is not None:
+            call_docker_compose('stop', root_path)
+            assert False, 'docker-compose exit code {}'.format(exit_code)
         try:
             r = requests.get(
                 'http://localhost:5000/rest_api/v4/freqmode_info/2010-10-01/',
-                timeout=1)
+                timeout=5)
             if r.status_code == 200:
                 break
         except:
             sleep(1)
         if time() > start_wait + max_wait:
-            system.terminate()
-            system.wait()
+            call_docker_compose('stop', root_path)
+            if system.poll() is None:
+                system.kill()
+                system.wait()
             assert False, 'Could not access webapi after %d seconds' % max_wait
 
     yield system.pid
 
     if not pytest.config.getoption("--no-system-restart"):
-        system.terminate()
-        system.wait()
+        call_docker_compose('stop', root_path)
+        if system.poll() is None:
+            system.kill()
+            system.wait()
