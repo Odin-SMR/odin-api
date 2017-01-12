@@ -12,9 +12,9 @@ coverage==4.2
 flask==0.12
 isort==4.2.5              # via pylint
 itsdangerous==0.24        # via flask
-Jinja2==2.9.4             # via flask
+jinja2==2.9.4             # via flask
 lazy-object-proxy==1.2.2  # via astroid
-MarkupSafe==0.23          # via jinja2
+markupsafe==0.23          # via jinja2
 mccabe==0.5.2             # via pylint
 numpy==1.11.2
 py==1.4.31                # via pytest
@@ -22,6 +22,7 @@ pycrypto==2.6.1
 pylint==1.6.4
 pytest==3.0.3
 requests==2.11.1
+selenium==3.0.2
 six==1.10.0               # via astroid, pylint
-Werkzeug==0.11.15         # via flask
+werkzeug==0.11.15         # via flask
 wrapt==1.10.8             # via astroid
