@@ -1,9 +1,12 @@
 
 """ doc
 """
+import os.path
 from flask import jsonify
 from flask.views import MethodView
 from database import DatabaseConnector
+from odinapi.views import newdonalettyERANC
+
 
 class FileInfo(MethodView):
     """plots information"""
@@ -21,3 +24,11 @@ class FileInfo(MethodView):
             result_dict[file_ending] = db_result.getresult()[0][0]
         return jsonify(**result_dict)
 
+
+class LatestECMF(MethodView):
+    """GET the date of the latest available ecmf file"""
+    def get(self, version):
+        file_name = newdonalettyERANC.get_latest_ecmf_file()
+        date = newdonalettyERANC.get_ecmf_file_date(file_name)
+        return jsonify(dict(
+            File=os.path.basename(file_name), Date=date))

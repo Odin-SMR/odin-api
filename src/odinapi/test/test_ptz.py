@@ -11,6 +11,7 @@ URL_ROOT = 'http://localhost:5000/'
 URL_DATA_FILES = (
     URL_ROOT + 'rest_api/v4/config_data/data_files/'
 )
+URL_LATEST_ECMF_FILE = URL_ROOT + 'rest_api/v4/config_data/latest_ecmf_file/'
 URL_PTZ = (
     URL_ROOT + 'rest_api/v4/ptz/'
 )
@@ -95,3 +96,9 @@ class TestPTZ(unittest.TestCase):
             URL_PTZ_V5.format(freqmode='2', scanid='7014836770')
         )
         test_version(url_string, key='Data')
+
+
+def test_latest_ecmf_file():
+    """Test GET latest ecmf file"""
+    data = R.get(URL_LATEST_ECMF_FILE).json()
+    assert data == {u'Date': u'2015-01-12', u'File': u'ei_pl_2015-01-12-18.nc'}

@@ -1,11 +1,14 @@
+import os
+import re
 import datetime as DT
 from datetime import datetime
+
 import numpy as np
 import NC4eraint as NC
 from scipy.integrate import odeint
 from scipy.interpolate import splmake, spleval, spline
 import msis90 as M90
-import os
+
 from date_tools import mjd2datetime, datetime2mjd
 from odinapi.utils.hdf5_util import HDF5_LOCK
 
@@ -299,6 +302,35 @@ def run_donaletty(mjd, midlat, midlon, scanid):
     zpt['datetime'] = datetime2mjd(
         datetime.strptime(zpt['datetime'], '%Y-%m-%dT%H:%M:%S'))
     return zpt
+
+
+def get_latest_ecmf_file():
+    """Return the file name of the latest ecmf file"""
+    basedir = '/var/lib/odindata/ECMWF'
+    latest_year = sorted(os.listdir(basedir))
+    if not latest_year:
+        return None
+    latest_year = latest_year[-1]
+    latest_month = sorted(
+        os.listdir(os.path.join(basedir, latest_year)))[-1]
+    latest_file = sorted(
+        os.listdir(os.path.join(basedir, latest_year, latest_month)))[-1]
+    return latest_file
+
+
+def get_latest_ecmf_date():
+    return get_ecmf_file_date(get_latest_ecmf_file())
+
+
+def get_ecmf_file_date(file_name):
+    if not file_name:
+        return
+    ecmf_pattern = r'\w+_\w+_(?P<date>\d\d\d\d-\d\d-\d\d)-\d\d.nc$'
+    match = re.match(ecmf_pattern, file_name)
+    if not match:
+        raise ValueError('Could not recognize ecmf file: %r' % file_name)
+    return match.group('date')
+
 
 # midlat = -33.0
 # midlon = 275.0

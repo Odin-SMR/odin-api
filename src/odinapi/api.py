@@ -31,7 +31,7 @@ from odinapi.views.statistics import (
 from odinapi.views.smr_site import (
     ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2, ViewLevel2Scan,
     ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot)
-from odinapi.views.data_info import FileInfo
+from odinapi.views.data_info import FileInfo, LatestECMF
 
 SWAGGER.add_parameter('version', 'path', str)
 SWAGGER.add_parameter('freqmode', 'path', int)
@@ -52,6 +52,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/config_data/data_files/',
             view_func=ConfigDataFiles.as_view('configdatafiles')
+        )
+        self.add_url_rule(
+            '/rest_api/<version>/config_data/latest_ecmf_file/',
+            view_func=LatestECMF.as_view('latestecmf')
         )
 
         self.add_url_rule(
