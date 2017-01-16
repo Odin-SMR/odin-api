@@ -307,7 +307,15 @@ def run_donaletty(mjd, midlat, midlon, scanid):
 def get_latest_ecmf_file():
     """Return the file name of the latest ecmf file"""
     basedir = '/var/lib/odindata/ECMWF'
-    latest_year = sorted(os.listdir(basedir))
+
+    def is_digit_dir(name):
+        if not os.path.isdir(os.path.join(basedir, name)):
+            return False
+        if not name.isdigit():
+            return False
+        return True
+
+    latest_year = filter(is_digit_dir, sorted(os.listdir(basedir)))
     if not latest_year:
         return None
     latest_year = latest_year[-1]
