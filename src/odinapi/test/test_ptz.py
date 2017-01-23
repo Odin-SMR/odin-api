@@ -6,6 +6,8 @@ import numpy as np
 import os
 from subprocess import check_output
 from testdefs import system, slow
+from scripts.ptz_util import PrecalcPTZ
+from datetime import datetime
 
 URL_ROOT = 'http://localhost:5000/'
 URL_DATA_FILES = (
@@ -19,6 +21,9 @@ URL_PTZ_V5 = (
     URL_ROOT + 'rest_api/v5/level1/{freqmode}/{scanid}/ptz/'
 )
 ROOT_PATH = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
+URL_BATCHCALC = (
+   URL_ROOT + 'rest_api/v5'
+)
 
 
 @system
@@ -96,6 +101,20 @@ class TestPTZ(unittest.TestCase):
             URL_PTZ_V5.format(freqmode='2', scanid='7014836770')
         )
         test_version(url_string, key='Data')
+
+    def test_ptz_batchcalc(self):
+        """Test that correct scans are selected to be processed"""
+        date_start = datetime(2015, 1, 12)
+        date_end = datetime(2015, 1, 13)
+        fmode = 1
+        scanid = 7014769645
+        fptz = PrecalcPTZ(URL_BATCHCALC, fmode, date_start, date_end)
+        fptz.get_date_range()
+        fptz.get_scandata4dateandfreqmode(date_start, fmode)
+        test1 = fptz.date_range[0] == date_start
+        test2 = fptz.date_range[-1] == date_end
+        test3 = fptz.scanlist[0][3] == scanid
+        self.assertTrue(test1 and test2 and test3)
 
 
 @system
