@@ -4,9 +4,10 @@ import requests
 import pytest
 
 from odinapi.utils.swagger import Swagger
-from odinapi.test.testdefs import slow
+from odinapi.test.testdefs import slow, system
 
 
+@system
 @pytest.mark.usefixtures('dockercompose')
 class TestSwaggerViews(unittest.TestCase):
 

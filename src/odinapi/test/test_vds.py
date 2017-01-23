@@ -1,8 +1,11 @@
 # pylint: skip-file
 import unittest
+
 import pytest
 import requests as R
+
 import numpy as np
+from odinapi.test.testdefs import system
 
 
 URL_ROOT = 'http://localhost:5000/'
@@ -14,6 +17,7 @@ URL_VDS_EXTERNAL = (
 )
 
 
+@system
 @pytest.mark.usefixtures('dockercompose')
 class TestVds(unittest.TestCase):
 

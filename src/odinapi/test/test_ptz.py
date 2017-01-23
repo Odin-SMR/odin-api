@@ -98,6 +98,8 @@ class TestPTZ(unittest.TestCase):
         test_version(url_string, key='Data')
 
 
+@system
+@pytest.mark.usefixtures('dockercompose')
 def test_latest_ecmf_file():
     """Test GET latest ecmf file"""
     data = R.get(URL_LATEST_ECMF_FILE).json()

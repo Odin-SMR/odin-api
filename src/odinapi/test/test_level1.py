@@ -3,7 +3,10 @@ import unittest
 import pytest
 import requests
 
+from odinapi.test.testdefs import system
 
+
+@system
 @pytest.mark.usefixtures('dockercompose')
 class TestLevel1Views(unittest.TestCase):
 
