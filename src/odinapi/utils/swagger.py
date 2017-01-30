@@ -187,7 +187,8 @@ class Swagger(object):
         self.types[name] = self.make_properties(properties)
 
     def add_parameter(self, name, location, typ, required=False,
-                      string_format=None, default=None, description=None):
+                      string_format=None, default=None, description=None,
+                      collection_format=None):
         """Add an endpoint parameter.
 
         Args:
@@ -198,10 +199,12 @@ class Swagger(object):
           string_format (str): Format if the type is string. Example: 'date'.
           default (?): The default value of the parameter.
           description (string): Parameter description.
+          collection_format (string): Format used for adding elements in query.
 
         The swagger definition will look like this:
 
             {
+              "collectionFormat": <collection_format>,
               "default": <default>,
               "description": <description>,
               "format": <string_format>,
@@ -226,6 +229,10 @@ class Swagger(object):
             self.parameters[name]['format'] = string_format
         if description:
             self.parameters[name]['description'] = description
+        if isinstance(typ, list):
+            if collection_format:
+                self.parameters[name]['collectionFormat'] = collection_format
+            self.parameters[name]['items'] = self.make_properties(typ[0])
 
     def add_response(self, name, description, properties):
         """Add a swagger response with custom schema.
@@ -303,7 +310,10 @@ class Swagger(object):
 
     @staticmethod
     def get_swagger_type(typ):
-        return Swagger.TYPE2SWAGGER[typ]
+        if isinstance(typ, list):
+            return Swagger.TYPE2SWAGGER[list]
+        else:
+            return Swagger.TYPE2SWAGGER[typ]
 
 
 SWAGGER = Swagger()

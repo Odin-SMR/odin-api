@@ -4,9 +4,7 @@ import json
 from os import environ
 
 from flask import Flask, jsonify
-from flasgger import Swagger, BR_SANITIZER
-from flasgger.base import OutputView
-import flasgger
+from flasgger import Swagger
 
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
@@ -19,9 +17,7 @@ from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
     Level2ViewScans, Level2ViewFailedScans, Level2ViewComments, L2iView,
-    L2cView, L2View,
-    SWAGGER_DEFINITIONS as level2_definitions,
-    SWAGGER_RESPONSES as level2_responses, SWAGGER_PARAMETERS as level2_param)
+    L2cView, L2View)
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
     PeriodInfoCached, L1LogCached, FreqmodeInfoCachedNoBackend,
@@ -403,33 +399,6 @@ class Odin(Flask):
             '/<date>/<file>/<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
             )
-
-
-OrigOutputView = OutputView
-
-
-class MySwaggerOutput(OrigOutputView):
-    """Extended swagger specification view that makes it possible to add
-    definitions, responses and parameters to the spec.
-    """
-
-    def __init__(self, *args, **kwargs):
-        view_args = kwargs.pop('view_args', {})
-        self.config = view_args.get('config')
-        self.spec = view_args.get('spec')
-        self.process_doc = view_args.get('sanitizer', BR_SANITIZER)
-        self.template = view_args.get('template')
-        super(OrigOutputView, self).__init__(*args, **kwargs)
-
-    def get(self):
-        resp = super(MySwaggerOutput, self).get()
-        data = json.loads(resp.get_data())
-        data['definitions'].update(level2_definitions)
-        data['responses'] = level2_responses
-        data['parameters'] = level2_param
-        return jsonify(data)
-
-flasgger.base.OutputView = MySwaggerOutput
 
 
 def main():

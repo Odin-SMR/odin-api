@@ -12,15 +12,6 @@ from odinapi.test.testdefs import slow, system
 class TestSwaggerViews(unittest.TestCase):
 
     @slow
-    def test_spec(self):
-        """Check that spec is generated without errors"""
-        r = requests.get('http://localhost:5000/rest_api/v4/spec')
-        self.assertEqual(r.status_code, 200)
-        spec = r.json()
-        self.assertTrue('paths' in spec)
-        self.assertGreater(len(spec['paths']), 0)
-
-    @slow
     def test_spec_v5(self):
         """Check that v5 spec is generated without errors"""
         r = requests.get('http://localhost:5000/rest_api/v5/spec')

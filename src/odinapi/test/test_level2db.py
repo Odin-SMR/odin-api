@@ -129,9 +129,26 @@ class TestProjects(BaseWithDataInsert):
             failed_url = FAILED_URL if version <= 'v4' else FAILED_URL_DEV
             comments_url = (
                 COMMENTS_URL if version <= 'v4' else COMMENTS_URL_DEV)
-            self.assertEqual(info, {
-                'Name': PROJECT_NAME,
-                'FreqModes': [{
+            if version <= 'v4':
+                self.assertEqual(info, {
+                    'Name': PROJECT_NAME,
+                    'FreqModes': [{
+                        'FreqMode': 1,
+                        'URLS': {
+                            'URL-scans': scans_url.format(
+                                version=version, freqmode=self.freq_mode,
+                                project=PROJECT_NAME),
+                            'URL-failed': failed_url.format(
+                                version=version, freqmode=self.freq_mode,
+                                project=PROJECT_NAME),
+                            'URL-comments': comments_url.format(
+                                version=version, freqmode=self.freq_mode,
+                                project=PROJECT_NAME)
+                        }
+                    }]
+                })
+            else:
+                self.assertEqual(info, [{
                     'FreqMode': 1,
                     'URLS': {
                         'URL-scans': scans_url.format(
@@ -144,8 +161,7 @@ class TestProjects(BaseWithDataInsert):
                             version=version, freqmode=self.freq_mode,
                             project=PROJECT_NAME)
                     }
-                }]
-            })
+                }])
 
         def get_data_v4(resp):
             return resp.json()['Info']
@@ -448,10 +464,16 @@ class TestReadLevel2(BaseWithDataInsert):
 
         l2_product_url = l2_url + '?product=O3 / 501 GHz / 20 to 50 km'
         r = requests.get(l2_product_url)
+        l2_data = r.json()['Data']
         self.assertEqual(r.status_code, 200)
         for prod in info['L2']['Data']:
             if prod['Product'] == 'O3 / 501 GHz / 20 to 50 km':
-                self.assertEqual(prod, r.json()['Data'])
+                for k, v in l2_data[0].items():
+                    print k
+                    if isinstance(v, (list, float)):
+                        assert_almost_equal(v, prod[k])
+                    else:
+                        self.assertEqual(v, prod[k])
 
     def test_get_products(self):
         """Test get products"""
