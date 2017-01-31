@@ -1,10 +1,8 @@
 # pylint: skip-file
 """A simple datamodel implementation"""
-import json
 from os import environ
 
-from flask import Flask, jsonify
-from flasgger import Swagger
+from flask import Flask, Blueprint
 
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
@@ -404,26 +402,18 @@ class Odin(Flask):
 def main():
     """Default function"""
     app = Odin(__name__)
-    app.config['SWAGGER'] = {
-        "swagger_version": "2.0",
-        "specs": [
-            {
-                "version": "4.0",
-                "title": "Odin API",
-                "description": DESCRIPTION,
-                "endpoint": 'v4_spec',
-                "route": '/rest_api/v4/spec',
-            }
-        ]
-    }
+
     # Swagger ui will be available at /apidocs/index.html
-    Swagger(app)
+    blueprint = Blueprint(
+        'swagger', __name__, static_url_path='/apidocs',
+        static_folder='/swagger-ui')
+    app.register_blueprint(blueprint)
 
     app.run(
         host='0.0.0.0',
         debug='ODIN_API_PRODUCTION' not in environ,
         threaded=True
-        )
+    )
 
 
 if __name__ == "__main__":

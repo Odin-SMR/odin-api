@@ -13,5 +13,12 @@ setup(
     packages=['odinapi', 'odinapi.views', 'scripts'],
     include_package_data=True,
     zip_safe=False,
-    install_requires=['Flask']
+    install_requires=[
+        'Flask',
+        'flask-bootstrap',
+        'sqlalchemy',
+        'pycrypto',
+        'pymongo',
+        'dateutils'
+    ]
 )

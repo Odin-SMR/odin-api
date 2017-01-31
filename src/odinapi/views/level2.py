@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from operator import itemgetter
 from itertools import groupby
 
-import yaml
 from dateutil.parser import parse as parse_datetime
 
 from flask import request, abort, jsonify

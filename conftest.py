@@ -1,8 +1,9 @@
 # pylint: skip-file
-"""Unitttests"""
+"""Unittests"""
 
 from time import sleep, time
 from subprocess import check_output, Popen
+
 import pytest
 import requests
 

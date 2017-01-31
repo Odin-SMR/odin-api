@@ -368,6 +368,7 @@ class SwaggerSpecView(MethodView):
                 "description": self.description,
                 "termsOfService": self.terms_of_service,
             },
+            "basePath": '/rest_api/{}/'.format(version),
             "paths": self.collect_path_specifications(version),
             "definitions": SWAGGER.get_definitions(),
             "parameters": param,
