@@ -9,11 +9,13 @@ from dateutil.relativedelta import relativedelta
 from odinapi.views.utils import copyemptydict
 from odinapi.views.freq_calibration import Freqcorr572
 from odinapi.views.smr_quality import QualityControl
-from odinapi.views.smr_frequency import (Smrl1bFreqspec,
-                                         Smrl1bFreqsort,
-                                         freqfunc,
-                                         get_bad_ssb_modules,
-                                         doppler_corr)
+from odinapi.views.smr_frequency import (
+    Smrl1bFreqspec,
+    Smrl1bFreqsort,
+    freqfunc,
+    get_bad_ssb_modules,
+    doppler_corr
+)
 
 
 class ScandataExporter(object):
@@ -840,14 +842,26 @@ def unsplit_normalmode(scangr):
             spec1i = 0
             spec2i = 0
             for indi in np.argsort(np.array(freqi)):
-                if indi < 2:
-                    spectrum = np.append(
-                        spectrum, part1[spec1i * 224:(spec1i + 1) * 224])
-                    spec1i = spec1i + 1
+                if tempdata['skyfreq'] < tempdata['lofreq']:
+                    # Lower sideband mode, e.g. FM 8:
+                    if indi >= 2:
+                        spectrum = np.append(
+                            spectrum, part1[spec1i * 224:(spec1i + 1) * 224])
+                        spec1i = spec1i + 1
+                    else:
+                        spectrum = np.append(
+                            spectrum, part2[spec2i * 224:(spec2i + 1) * 224])
+                        spec2i = spec2i + 1
                 else:
-                    spectrum = np.append(
-                        spectrum, part2[spec2i * 224:(spec2i + 1) * 224])
-                    spec2i = spec2i + 1
+                    # Upper sideband mode, e.g. FM 1:
+                    if indi < 2:
+                        spectrum = np.append(
+                            spectrum, part1[spec1i * 224:(spec1i + 1) * 224])
+                        spec1i = spec1i + 1
+                    else:
+                        spectrum = np.append(
+                            spectrum, part2[spec2i * 224:(spec2i + 1) * 224])
+                        spec2i = spec2i + 1
             tempdata['spectrum'] = spectrum
             tempdata['intmode'] = 511
             for item in tempdata:
