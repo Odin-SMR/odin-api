@@ -6,3 +6,4 @@ coverage
 pytest
 pylint
 selenium
+dateutils
