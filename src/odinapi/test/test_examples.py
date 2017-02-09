@@ -39,7 +39,7 @@ class TestLevel1Examples(unittest.TestCase):
         # V5
         spectra = get_l1b_for_period.get_spectra_for_period(
             1, "2015-01-12", None, self.API_ROOT)
-        assert len(spectra) == 35
+        assert len(spectra) == 34
         assert len(spectra["Spectrum"]) == 8935
         with self.assertRaises(ValueError):
             get_l1b_for_period.get_scans_for_period(
@@ -52,7 +52,7 @@ class TestLevel1Examples(unittest.TestCase):
         # V5
         spectra = get_l1b_for_period.get_spectra_for_period(
             1, "2015-01-12", "2015-01-13", self.API_ROOT)
-        assert len(spectra) == 35
+        assert len(spectra) == 34
         assert len(spectra["Spectrum"]) == 8935
 
     def test_filter_by_param(self):
