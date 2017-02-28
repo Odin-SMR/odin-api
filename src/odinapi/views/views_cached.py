@@ -64,6 +64,7 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
         'numspec':  'NumSpec',
         'sunzd':    'SunZD',
         'datetime': 'DateTime',
+        'quality': 'Quality',
     }
 
     for key in itemDict.keys():
@@ -363,7 +364,8 @@ class FreqmodeInfoCached(BaseView):
         'NumSpec',
         'MJDStart',
         'MJDEnd',
-        'ScanID']
+        'ScanID',
+        'Quality']
 
     @register_versions('fetch', ['v1'])
     def _fetch_data_v1(self, version, date, backend, freqmode, scanno=None):

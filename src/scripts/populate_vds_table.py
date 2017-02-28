@@ -1,24 +1,34 @@
 #! /usr/bin/env python
+# pylint: disable=E0401
 """
 Part of odin-api, tools to make it happen
 """
 
+from os import environ
+from time import sleep
+from datetime import date, timedelta, datetime
+from argparse import ArgumentParser
 from requests import get
 from requests.exceptions import HTTPError
-from datetime import date, timedelta
-from psycopg2 import connect
-from argparse import ArgumentParser
 from dateutil import parser as date_parser
-from time import sleep
+from psycopg2 import connect
 
 
 def odin_connection():
     """Connects to the database, returns a connection"""
-    connection_string = (
-        "host='malachite.rss.chalmers.se' "
-        "dbname='odin' "
-        "user='odinop' "
-        "password='***REMOVED***'"
+    if 'ODIN_API_PRODUCTION' not in environ:
+        connection_string = (
+            "host='postgresql' "
+            "dbname='odin' "
+            "user='odinop' "
+            "password='***REMOVED***'"
+        )
+    else:
+        connection_string = (
+            "host='malachite.rss.chalmers.se' "
+            "dbname='odin' "
+            "user='odinop' "
+            "password='***REMOVED***'"
         )
     connection = connect(connection_string)
     return connection
@@ -34,21 +44,23 @@ def delete_day_from_database(cursor, day):
         (day,))
 
 
-def add_to_database(cursor, day, freqmode, backend, altend, altstart, datetime,
-                    latend, latstart, lonend, lonstart, mjdend, mjdstart,
-                    numspec, scanid, sunzd):
+def add_to_database(cursor, day, freqmode, backend, altend, altstart,
+                    datetime_i, latend, latstart, lonend, lonstart, mjdend,
+                    mjdstart, numspec, scanid, sunzd, quality):
     """Add an entry to the database.
 
     To avoid conflicts, make sure to delete the old ones first, e.g. by calling
     delete_day_from_database()!"""
     cursor.execute(
         'insert into scans_cache values(%s,%s,%s,%s,%s,%s,%s,%s,'
-        '%s,%s,%s,%s,%s,%s,%s)',
+        '%s,%s,%s,%s,%s,%s,%s,%s,%s)',
         (day, freqmode, backend, scanid, altend, altstart, latend, latstart,
-         lonend, lonstart, mjdend, mjdstart, numspec, sunzd, datetime))
+         lonend, lonstart, mjdend, mjdstart, numspec, sunzd, datetime_i,
+         datetime.now(), quality))
 
 
 def setup_arguments():
+    """setup command line arguments"""
     parser = ArgumentParser(description="Repopulate the cached data table")
     parser.add_argument("-s", "--start", dest="start_date", action="store",
                         default=(date.today()-timedelta(days=42)).isoformat(),
@@ -75,54 +87,58 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     earliest_date = start_date
     db_connection = odin_connection()
     db_cursor = db_connection.cursor()
+    if 'ODIN_API_PRODUCTION' not in environ:
+        url_base = 'http://localhost:5000'
+    else:
+        url_base = 'http://odin.rss.chalmers.se'
     while current_date >= earliest_date:
         url_day = (
-            'http://odin.rss.chalmers.se/'
-            'rest_api/v4/freqmode_info/{}/'.format(current_date.isoformat())
+            '{0}/rest_api/v5/freqmode_info/{1}/'.format(
+                url_base,
+                current_date.isoformat())
             )
         response = get(url_day, timeout=666)
         retries = max_retries
-        while (retries > 0):
+        while retries > 0:
             try:
                 response.raise_for_status()
                 break
             except HTTPError as msg:
-                print("{0} {1} {2}".format(current_date, msg, url_day))
+                print "{0} {1} {2}".format(current_date, msg, url_day)
                 retries -= 1
-                print("Retries left {0}".format(retries))
+                print "Retries left {0}".format(retries)
                 sleep(sleep_time * 2 ** (max_retries - retries - 1))
-        if (retries == 0):
+        if retries == 0:
             print("* FAILED:", current_date, url_day)
             continue
 
         delete_day_from_database(db_cursor, current_date.isoformat())
         db_connection.commit()
         json_data_day = response.json()
-        for freqmode in json_data_day['Info']:
+        for freqmode in json_data_day['Data']:
             url_scan = (
-                'http://odin.rss.chalmers.se/'
-                'rest_api/v4/freqmode_raw/{0}/{1}/{2}/'.format(
+                '{0}/rest_api/v5/freqmode_raw/{1}/{2}/'.format(
+                    url_base,
                     current_date.isoformat(),
-                    freqmode['Backend'],
                     freqmode['FreqMode'])
                 )
             retries = max_retries
-            while (retries > 0):
+            while retries > 0:
                 response = get(url_scan, timeout=666)
                 try:
                     response.raise_for_status()
                     break
                 except HTTPError as msg:
-                    print("{0} {1} {2}".format(current_date, msg, url_scan))
+                    print "{0} {1} {2}".format(current_date, msg, url_scan)
                     retries -= 1
-                    print("Retries left {0}".format(retries))
+                    print "Retries left {0}".format(retries)
                     sleep(sleep_time * 2 ** (max_retries - retries - 1))
-            if (retries == 0):
+            if retries == 0:
                 print("* FAILED:", current_date, url_day)
                 continue
 
             json_data_scan = response.json()
-            for scan in json_data_scan['Info']:
+            for scan in json_data_scan['Data']:
                 add_to_database(
                     db_cursor,
                     json_data_day['Date'],
@@ -140,11 +156,11 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                     scan["NumSpec"],
                     scan["ScanID"],
                     scan["SunZD"],
+                    scan["Quality"],
                     )
-
-        db_connection.commit()
+            db_connection.commit()
         if verbose:
-            print("{0} OK".format(current_date))
+            print "{0} OK".format(current_date)
         current_date += step
 
     db_cursor.close()
@@ -152,26 +168,27 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
 
 
 def cli():
+    """run the main application"""
     parser = setup_arguments()
     args = parser.parse_args()
 
     try:
         start_date = date_parser.parse(args.start_date).date()
     except TypeError:
-        print("Could not understand start date {0}".format(args.start_date))
+        print "Could not understand start date {0}".format(args.start_date)
         exit(1)
 
     try:
         end_date = date_parser.parse(args.end_date).date()
     except TypeError:
-        print("Could not understand end date {0}".format(args.end_date))
+        print "Could not understand end date {0}".format(args.end_date)
         exit(1)
 
     try:
-        assert(end_date > start_date)
+        assert end_date > start_date
     except AssertionError:
-        print("End date must be after start date!")
-        print("Got: start {0}, end {1}".format(args.start_date, args.end_date))
+        print "End date must be after start date!"
+        print "Got: start {0}, end {1}".format(args.start_date, args.end_date)
         exit(1)
 
     exit(main(start_date, end_date, args.verbose))

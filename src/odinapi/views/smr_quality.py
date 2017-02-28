@@ -260,3 +260,53 @@ class QualityControl(object):
             index = np.nonzero((gain > 0))[0]
             frac[index] = gaindiff[index] / gain[index] * 100.0
             self.zerolagvar.append(np.around(frac, decimals=4).tolist())
+
+
+class QualityDisplay(object):
+    '''class derived to extract information from
+       odin level1b quality flag
+    '''
+    def __init__(self, quality):
+        self.quality = quality
+        self.qualdict = {
+            'Tspill': [0x1, 'Tspill is outside of valid range. '],
+            'Trec': [0x2, 'Trec is outside of valid range. '],
+            'Noise': [0x4, 'Noise is outside of valid range. '],
+            'Scanning': [0x8, 'Tangent altitude is not decreasing or ' +
+                         'increasing as expected. '],
+            'nr of spectra': [0x10, 'The scan consists of less than ' +
+                              'five spectra. '],
+            'Tb': [0x20, 'Tb is outside of valid range. '],
+            'Tint': [0x40, 'Integration time is outside valid range. '],
+            'Ref1': [0x80, 'At least one atmospheric spectrum is not ' +
+                     'collected between two sky beam 1 references. '],
+            'Ref2': [0x100, 'Surrounding references have different ' +
+                     'integration times. '],
+            'Moon': [0x200, 'The moon is within the main beam. '],
+        }
+
+    def get_flaglist(self):
+        '''identify which bits are non zero
+        '''
+        flaglist = []
+        for item in self.qualdict:
+            if self.quality & self.qualdict[item][0] != 0:
+                flaglist.append(item)
+        return flaglist
+
+    def get_flaginfo(self):
+        '''create a message that summarises
+           the qualiy
+        '''
+        flaglist = self.get_flaglist()
+        message = ''
+        if flaglist != []:
+            for item in flaglist:
+                if message == '':
+                    message = ('The Quality of Level1B data ' +
+                               'for this scan is limited: ')
+                message = message + self.qualdict[item][1]
+        for ind in range(0, len(message) / 180):
+            message = (message[0: 1 + 180 * (ind + 1) + 3*ind] + '-\n' +
+                       message[1 + 180 * (ind + 1) + 3*ind::])
+        return message

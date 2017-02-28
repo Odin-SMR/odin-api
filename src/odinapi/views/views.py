@@ -177,6 +177,7 @@ class FreqmodeInfo(BaseView):
         'ScanID']
 
     ITEMS_V4 = [
+        'Quality',
         'DateTime',
         'FreqMode',
         'LatStart',
@@ -330,7 +331,7 @@ class FreqmodeInfo(BaseView):
 
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
-            version=version)
+            )
 
         try:
             for index in range(len(loginfo['ScanID'])):
@@ -409,7 +410,10 @@ class FreqmodeInfo(BaseView):
     def _return_data_v2(self, version, loginfo, date, backend, freqmode,
                         scanno=None):
         if scanno is None:
-            return {'Info': loginfo['Info']}
+            try:
+                return {'Info': loginfo['Info']}
+            except TypeError:
+                return {'Info': []}
         else:
             for s in loginfo['Info']:
                 if s['ScanID'] == scanno:
@@ -428,6 +432,7 @@ SWAGGER.add_type('Log', {
     "MJDEnd": float,
     "MJDStart": float,
     "NumSpec": int,
+    "Quality": int,
     "ScanID": int,
     "SunZD": float,
     "URLS": {url_key: str for url_key in [
@@ -518,6 +523,10 @@ class FreqmodeInfoNoBackend(BaseView):
 
     @register_versions('return')
     def _return_data_v5(self, version, data, date, freqmode):
+        try:
+            count = len(data)
+        except TypeError:
+            data = []
         return {'Data': data, 'Type': 'Log', 'Count': len(data)}
 
 

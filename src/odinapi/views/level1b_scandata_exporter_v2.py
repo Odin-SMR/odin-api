@@ -1,3 +1,4 @@
+# pylint: disable=E0401
 '''extract scan data from odin database and display on webapi'''
 
 
@@ -8,7 +9,10 @@ import matplotlib
 from dateutil.relativedelta import relativedelta
 from odinapi.views.utils import copyemptydict
 from odinapi.views.freq_calibration import Freqcorr572
-from odinapi.views.smr_quality import QualityControl
+from odinapi.views.smr_quality import (
+    QualityControl,
+    QualityDisplay
+)
 from odinapi.views.smr_frequency import (
     Smrl1bFreqspec,
     Smrl1bFreqsort,
@@ -280,8 +284,6 @@ class CalibrationStep2(object):
 
     def get_hotload_range(self, hotload):
         '''get hotload ranges'''
-        hotload_lower = int(np.floor(hotload))
-        hotload_upper = int(np.ceil(hotload))
         if self.freqmode == 1:
             hotload_grid = np.arange(278.5, 294.5)
         elif self.freqmode == 2:
@@ -302,6 +304,8 @@ class CalibrationStep2(object):
             hotload = hotload_grid[0]
         elif hotload >= hotload_grid[-1]:
             hotload = hotload_grid[-1]
+        hotload_lower = int(np.floor(hotload))
+        hotload_upper = hotload_lower + 1
         ind1 = np.nonzero((hotload <= hotload_grid))[0]
         ind2 = np.nonzero((hotload > hotload_grid))[0]
         hl_1 = hotload_grid[ind1[-1]]
@@ -583,13 +587,16 @@ def plot_scan(backend, calstw, spectra):
     mjd0 = datetime(1858, 11, 17)
     datei = mjd0 + relativedelta(days=spectra['mjd'][2])
     if spectra['quality'][0] == 0:
-        qualstr = 'ok'
+        qualstr = 'The Quality of Level1B data for this scan is ok.'
     else:
-        qualstr = 'limited'
+        qdgr = QualityDisplay(spectra['quality'][0])
+        qualstr = qdgr.get_flaginfo()
     titledata = [backend, calstw, spectra['sourcemode'][0],
                  datei, hex(spectra['quality'][0]), qualstr]
-    fig.suptitle('''Scan logdata for {0} : {2} : scan-ID {1} : Quality {4} : {3}\n
-        The Quality of Level1B data for this scan is {5}'''.format(*titledata))
+    fig.suptitle(
+        '''Scan logdata for {0} : {2} : scan-ID {1} : Quality {4} : {3}
+        {5}'''.format(*titledata), fontsize=9
+    )
     font = {'family': 'sans-serif',
             'size': 9}
     matplotlib.rc('font', **font)

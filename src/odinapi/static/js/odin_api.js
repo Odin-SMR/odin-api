@@ -107,7 +107,18 @@ function addInfo (data, backend, freqmode) {
             '<td colspan="4" id="smart-plot-scan-' + backend + '-' + freqmode +
                 '" class="plotter"></td>' +
         '</tr>' +
+        '<tr class="foldablePlot">' +
+            '<td colspan="4">Quality of spectra in scans:</td>' +
+        '</tr>' +
+        '<tr class="foldablePlot" height=128>' +
+            '<td colspan="4" id="smart-plot-quality-' + backend + '-' + freqmode +
+                '" class="plotter"></td>' +
+        '</tr>' +
         '</table>';
+}
+
+function log2(val) {
+  return Math.log(val) / Math.LN2;
 }
 
 function updatePlot(date, back, freq) {
@@ -115,8 +126,10 @@ function updatePlot(date, back, freq) {
     var lat = [];
     var lon = [];
     var scan = [];
+    var qual = [];
     var opt = {};
     var plots = [];
+    var quality = [];
     var currDate = moment.utc(date, 'YYYY-MM-DD');
     $.getJSON(
         '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
@@ -130,6 +143,8 @@ function updatePlot(date, back, freq) {
                 lat.push( [momentDate.toDate(), data.LatStart] );
                 lon.push( [momentDate.toDate(), data.LonStart] );
                 scan.push([momentDate.toDate(), data.NumSpec] );
+                // quality = log2(data.Quality)
+                qual.push([momentDate.toDate(), data.Quality] );
             });
             opt={
                 "series":{
@@ -155,6 +170,7 @@ function updatePlot(date, back, freq) {
             plots.push($.plot("#smart-plot-lon-"+back+"-"+freq, [lon], opt));
             plots.push($.plot("#smart-plot-sun-"+back+"-"+freq, [sun], opt));
             plots.push($.plot("#smart-plot-scan-"+back+"-"+freq, [scan], opt));
+            plots.push($.plot("#smart-plot-quality-"+back+"-"+freq, [qual], opt));
         }
     );
 
@@ -183,6 +199,11 @@ function updatePlot(date, back, freq) {
         }
     );
     $("#smart-plot-scan-"+back+"-"+freq+"").bind("plothover",
+        function (event, pos, item) {
+            hoverOverviewPlot(event, pos, item, plots);
+        }
+    );
+    $("#smart-plot-quality-"+back+"-"+freq+"").bind("plothover",
         function (event, pos, item) {
             hoverOverviewPlot(event, pos, item, plots);
         }
@@ -244,6 +265,10 @@ function initDataTable(date, back, freq) {
                     "title": "FreqMode",
                 },
                 {
+                    "data":"Quality",
+                    "title": "Quality",
+                },
+                {
                     "data": "SunZD",
                     "title": "SunZD",
                     "render": function ( data, type, full, meta ) {
@@ -263,7 +288,7 @@ function initDataTable(date, back, freq) {
     $('#info-table tbody').on( 'click', 'tr', function () {
         var tr = $(this).closest('tr');
         var row = table.row(tr);
-        var url = $(this).children().eq(5).find('a').attr("href");
+        var url = $(this).children().eq(6).find('a').attr("href");
         var url_array = url.split('/');
         var id = url_array[url_array.length - 2];
         if (row.child.isShown()) {
@@ -462,7 +487,7 @@ function drawStatistics(year) {
                 shortLabel: "FM " + val.freqmode,
                 longLabel: "Frequency mode " + val.freqmode + ": " +
                     val.sum + " scans",
-            }
+            };
             sum += val.sum;
         });
 
