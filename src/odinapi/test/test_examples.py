@@ -46,9 +46,8 @@ class TestLevel1Examples(unittest.TestCase):
                 1, "2016-01-01", "2015-12-30", self.API_ROOT)
 
     @slow
-    @disable
     def test_break_postgresql(self):
-        """This test breaks postgresql because 2015-01-13 has no spectra"""
+        """This test used to break psql because 2015-01-13 has no spectra"""
         # V5
         spectra = get_l1b_for_period.get_spectra_for_period(
             1, "2015-01-12", "2015-01-13", self.API_ROOT)

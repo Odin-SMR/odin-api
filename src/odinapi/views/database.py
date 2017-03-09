@@ -1,5 +1,6 @@
 from pg import DB
 
+
 class DatabaseConnector(DB):
     def __init__(self):
         super(DatabaseConnector, self).__init__(
@@ -8,4 +9,3 @@ class DatabaseConnector(DB):
             host='postgresql',
             passwd='***REMOVED***'
             )
-

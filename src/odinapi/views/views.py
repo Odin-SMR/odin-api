@@ -92,6 +92,7 @@ class DateInfo(BaseView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
+        con.close()
         info_list = []
         for row in result:
             info_dict = {}
@@ -102,7 +103,6 @@ class DateInfo(BaseView):
                 request.url_root, version, date, row['backend'],
                 row['freqmode'])
             info_list.append(info_dict)
-        con.close()
         return info_list
 
     def gen_query(self, stw1, stw2, mjd1, mjd2):
@@ -202,6 +202,7 @@ class FreqmodeInfo(BaseView):
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             version=version)
+        con.close()
         for index in range(len(loginfo['ScanID'])):
             row = []
             row.append(loginfo['DateTime'][index].date())
@@ -250,7 +251,6 @@ class FreqmodeInfo(BaseView):
                         scanid
                     )
             loginfo['Info'].append(datadict)
-
         return loginfo
 
     @register_versions('fetch', ['v2', 'v3'])
@@ -263,6 +263,7 @@ class FreqmodeInfo(BaseView):
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             version=version)
+        con.close()
 
         for index in range(len(loginfo['ScanID'])):
             row = []
@@ -332,6 +333,7 @@ class FreqmodeInfo(BaseView):
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             )
+        con.close()
 
         try:
             for index in range(len(loginfo['ScanID'])):
@@ -464,6 +466,7 @@ class FreqmodeInfoNoBackend(BaseView):
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             version='v4')
+        con.close()
 
         try:
             for index in range(len(loginfo['ScanID'])):
@@ -562,6 +565,7 @@ class ScanSpec(BaseView):
     def _get(self, version, backend, freqmode, scanno):
         con = DatabaseConnector()
         spectra = get_scan_data(con, backend, freqmode, scanno)
+        con.close()
         # spectra is a dictionary containing the relevant data
         return scan2dictlist(spectra)
 
@@ -569,6 +573,7 @@ class ScanSpec(BaseView):
     def _get_v2(self, version, backend, freqmode, scanno):
         con = DatabaseConnector()
         spectra = get_scan_data_v2(con, backend, freqmode, scanno)
+        con.close()
         # spectra is a dictionary containing the relevant data
         if spectra == {}:
             abort(404)
@@ -578,6 +583,7 @@ class ScanSpec(BaseView):
     def _get_v4(self, version, backend, freqmode, scanno):
         con = DatabaseConnector()
         spectra = get_scan_data_v2(con, backend, freqmode, scanno)
+        con.close()
         if spectra == {}:
             abort(404)
         # spectra is a dictionary containing the relevant data
@@ -878,6 +884,7 @@ class VdsInfo(MethodView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
+        con.close()
         datadict = {'VDS': []}
         for row in result:
             data = dict()
@@ -916,6 +923,7 @@ class VdsFreqmodeInfo(MethodView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
+        con.close()
         datadict = {'VDS': []}
         for row in result:
             data = dict()
@@ -958,6 +966,7 @@ class VdsInstrumentInfo(MethodView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
+        con.close()
         datadict = {'VDS': []}
         for row in result:
             data = dict()
@@ -1003,6 +1012,7 @@ class VdsDateInfo(MethodView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
+        con.close()
         datadict = {'VDS': []}
         lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
                   'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
@@ -1050,7 +1060,6 @@ class VdsDateInfo(MethodView):
                 row['file'],
                 row['file_index'])
             datadict['VDS'].append(data)
-        con.close()
         return datadict
 
 
@@ -1074,6 +1083,7 @@ class VdsScanInfo(MethodView):
         con = DatabaseConnector()
         query = con.query(query_string)
         result = query.dictresult()
+        con.close()
         datadict = {'VDS': []}
         lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
                   'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
@@ -1105,7 +1115,6 @@ class VdsScanInfo(MethodView):
                         freqmode,
                         row['scanid'])
             datadict['VDS'].append(data)
-        con.close()
         return datadict
 
 

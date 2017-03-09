@@ -87,6 +87,7 @@ def generate_freq_mode_data(query_string, root_url, version,
     con = DatabaseConnector()
     query = con.query(query_string)
     result = query.dictresult()
+    con.close()
     info_list = []
     for row in result:
         info_dict = {}
@@ -99,7 +100,6 @@ def generate_freq_mode_data(query_string, root_url, version,
             root_url, version, date or row['date'], row['backend'],
             row['freqmode'])
         info_list.append(info_dict)
-    con.close()
     return info_list
 
 
@@ -377,6 +377,7 @@ class FreqmodeInfoCached(BaseView):
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             version=version)
+        con.close()
         for index in range(len(loginfo['ScanID'])):
             row = []
             row.append(loginfo['DateTime'][index].date())
@@ -438,6 +439,7 @@ class FreqmodeInfoCached(BaseView):
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             version=version)
+        con.close()
 
         for index in range(len(loginfo['ScanID'])):
             row = []
@@ -505,6 +507,7 @@ class FreqmodeInfoCached(BaseView):
 
         loginfo = get_scan_logdata_cached(
             con, date, freqmode=int(freqmode), scanid=scanno)
+        con.close()
 
         for item in loginfo.keys():
             try:
@@ -566,6 +569,7 @@ class FreqmodeInfoCachedNoBackend(BaseView):
 
         loginfo = get_scan_logdata_cached(
             con, date, freqmode=int(freqmode), scanid=scanno)
+        con.close()
 
         for item in loginfo.keys():
             try:
@@ -637,6 +641,7 @@ class L1LogCached(BaseView):
 
         loginfo = get_scan_logdata_cached(
             con, date=None, freqmode=int(freqmode), scanid=int(scanno))
+        con.close()
 
         for item in loginfo.keys():
             try:
@@ -670,6 +675,7 @@ class L1LogCached(BaseView):
 
         loginfo = get_scan_logdata_cached(
             con, date=None, freqmode=int(freqmode), scanid=scanno)
+        con.close()
 
         for item in loginfo.keys():
             try:

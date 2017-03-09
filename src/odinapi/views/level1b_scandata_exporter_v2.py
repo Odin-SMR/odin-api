@@ -970,7 +970,10 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     '''get scan data'''
     calstw = int(scanno)
     scangr = ScandataExporter(backend, con)
-    isok = scangr.get_db_data(freqmode, calstw)
+    try:
+        isok = scangr.get_db_data(freqmode, calstw)
+    except IndexError:
+        isok = 0
     if isok == 0:
         print 'data for scan {0} not found'.format(calstw)
         return {}
