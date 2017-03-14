@@ -22,6 +22,7 @@ class FileInfo(MethodView):
                 ).format(file_ending)
             db_result = db_connection.query(query)
             result_dict[file_ending] = db_result.getresult()[0][0]
+        db_connection.close()
         return jsonify(**result_dict)
 
 

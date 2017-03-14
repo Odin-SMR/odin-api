@@ -113,9 +113,9 @@ class ViewFreqmodeInfoPlot(MethodView):
     def get(self, date, backend, freqmode):
 
         con = DatabaseConnector()
-
         loginfo, date1, date2 = get_scan_logdata(
             con, backend, date+'T00:00:00', int(freqmode), 1)
+        con.close()
 
         lista = []
         for ind in range(len(loginfo['ScanID'])):
