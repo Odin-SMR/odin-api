@@ -20,6 +20,34 @@ class TestLevel1Views(unittest.TestCase):
             version='v4', date='2015-01-12', backend='AC2'))
         self.assertEqual(r.status_code, 200)
 
+    def test_faulty_freqmode(self):
+        """Test calling API with non-existent freqmode"""
+        # class FreqmodeInfoNoBackend(BaseView):
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/freqmode_raw/2015-01-12/0/')
+        self.assertEqual(r.status_code, 404)
+
+        # class ScanSpecNoBackend(ScanSpec):
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/level1/0/7015092840/L1b/')
+        self.assertEqual(r.status_code, 404)
+
+        # class ScanPTZNoBackend(ScanPTZ):
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/level1/0/7015092840/ptz/')
+        self.assertEqual(r.status_code, 404)
+
+        # class ScanAPRNoBackend(ScanAPR):
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/level1/0/7015092840/apriori/O3')
+        self.assertEqual(r.status_code, 404)
+
+        # class CollocationsView(BaseView):
+        r = requests.get(
+            ('http://localhost:5000/rest_api/v5/level1/0/7015092840/'
+             'collocations/'))
+        self.assertEqual(r.status_code, 404)
+
     def test_freqmode_raw_hierarchy(self):
         """Test freqmode raw hierarchy flow"""
         base_url = (

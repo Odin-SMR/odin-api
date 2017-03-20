@@ -458,7 +458,11 @@ class FreqmodeInfoNoBackend(BaseView):
     @register_versions('fetch')
     def _fetch_data(self, version, date, freqmode):
 
-        backend = FREQMODE_TO_BACKEND[freqmode]
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
+
         con = DatabaseConnector()
         loginfo = {}
         itemlist = FreqmodeInfo.ITEMS_V4
@@ -654,7 +658,11 @@ class ScanSpecNoBackend(ScanSpec):
 
     @register_versions('fetch')
     def _get_v5(self, version, freqmode, scanno):
-        backend = FREQMODE_TO_BACKEND[freqmode]
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
+
         return self._get_v4(version, backend, freqmode, scanno)
 
     @register_versions('return')
@@ -739,7 +747,11 @@ class ScanPTZNoBackend(ScanPTZ):
 
     @register_versions('fetch')
     def _get_ptz_v5(self, version, freqmode, scanno):
-        backend = FREQMODE_TO_BACKEND[freqmode]
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
+
         # TODO: Not always correct date?
         date = time_util.stw2datetime(scanno).strftime('%Y-%m-%d')
         return self._get_ptz_v4(version, date, backend, freqmode, scanno)
@@ -808,7 +820,11 @@ class ScanAPRNoBackend(ScanAPR):
 
     @register_versions('fetch')
     def _get_v5(self, version, freqmode, scanno, species):
-        backend = FREQMODE_TO_BACKEND[freqmode]
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
+
         # TODO: Not always correct date?
         date = time_util.stw2datetime(scanno).strftime('%Y-%m-%d')
         return self._get_v4(version, species, date, backend, freqmode, scanno)
@@ -839,8 +855,11 @@ class CollocationsView(BaseView):
 
     @register_versions('fetch')
     def _get(self, version, freqmode, scanno):
-        return get_L2_collocations(
-            request.url_root, version, freqmode, scanno)
+        try:
+            return get_L2_collocations(
+                request.url_root, version, freqmode, scanno)
+        except KeyError:
+            abort(404)
 
     @register_versions('return')
     def _return(self, version, collocations, freqmode, scanno):

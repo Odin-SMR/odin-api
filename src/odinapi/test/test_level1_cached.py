@@ -20,6 +20,24 @@ class TestLevel1CachedViews(unittest.TestCase):
             version='v4', date='2015-01-15', backend='AC2'))
         self.assertEqual(r.status_code, 200)
 
+    def test_faulty_freqmode(self):
+        """Test calling API with non-existent freqmode"""
+        # V4
+        r = requests.get(
+            'http://localhost:5000/rest_api/v4/l1_log/0/7019446353')
+        self.assertEqual(r.status_code, 404)
+        r = requests.get(
+            'http://localhost:5000/rest_api/v4/freqmode_info/2015-01-15/AC1/0')
+        self.assertEqual(r.status_code, 404)
+
+        # V5
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/level1/0/7019446353/Log')
+        self.assertEqual(r.status_code, 404)
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/freqmode_info/2015-01-15/0')
+        self.assertEqual(r.status_code, 404)
+
     def test_freqmode_info_hierarchy(self):
         """Test cached freqmode info hierarchy flow"""
         base_url = (

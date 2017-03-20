@@ -612,8 +612,11 @@ class L2View(Level2ProjectBaseView):
 
 
 def get_scan_urls(version, project, freqmode, scanno):
-    if version <= 'v4':
+    try:
         backend = FREQMODE_TO_BACKEND[freqmode]
+    except KeyError:
+        abort(404)
+    if version <= 'v4':
         return {
             'URL-log': '{0}rest_api/{1}/l1_log/{2}/{3}/'.format(
                 request.url_root, version, freqmode, scanno),

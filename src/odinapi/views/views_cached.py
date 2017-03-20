@@ -14,12 +14,13 @@ from odinapi.views.baseview import BaseView, register_versions
 from odinapi.views.urlgen import get_freqmode_info_url
 
 
-def get_backend(freqmode):
-    return FREQMODE_TO_BACKEND[freqmode]
-
-
 def get_scan_logdata_cached(con, date, freqmode, scanid=None):
     # generate query
+    try:
+        backend = FREQMODE_TO_BACKEND[freqmode]
+    except KeyError:
+        abort(404)
+
     if date is not None:
         query_string = (
             "select * "
@@ -28,7 +29,7 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
             "and freqmode = {1} "
             "and backend = '{2}' "
             "order by backend, freqmode "
-            ).format(date, freqmode, get_backend(freqmode))
+            ).format(date, freqmode, backend)
         query = con.query(query_string)
     elif scanid is not None:
         query_string = (
@@ -38,7 +39,7 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
             "and freqmode = {1} "
             "and backend = '{2}' "
             "order by backend, freqmode "
-            ).format(scanid, freqmode, get_backend(freqmode))
+            ).format(scanid, freqmode, backend)
         query = con.query(query_string)
     else:
         abort(404)
@@ -633,7 +634,10 @@ class L1LogCached(BaseView):
     def _fetch_data_v4(self, version, freqmode, scanno):
         """GET method"""
 
-        backend = get_backend(freqmode)
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
 
         con = DatabaseConnector()
         loginfo = {}

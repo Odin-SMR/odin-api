@@ -410,6 +410,11 @@ class TestReadLevel2(BaseWithDataInsert):
             scanid=self.scan_id)
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 404)
+        rurl = SCAN_URL.format(
+            version='v4', project=PROJECT_NAME, freqmode=0,
+            scanid=self.scan_id)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 404)
 
     def test_get_scan_v5(self):
         """Test v5 get level2 data for a scan"""
