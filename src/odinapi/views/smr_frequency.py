@@ -377,12 +377,16 @@ class Smrl1bFreqsort(object):
         self.channels_id = self.channels_id[index]
 
 
-def get_bad_ssb_modules(backend, spectra, freqvec):
+def get_bad_ssb_modules(backend, spectra, freqvec, debug=False):
     '''get bad ssb modules'''
-    if backend == 1:
-        bad_modules = np.array([1, 2])
-    elif backend == 2:
-        bad_modules = np.array([3])
+    if debug:
+        bad_modules = np.array([], dtype=np.int)
+    else:
+        if backend == 1:
+            bad_modules = np.array([1, 2])
+        elif backend == 2:
+            bad_modules = np.array([3])
+
     for numspec in range(spectra.shape[0]):
         tempspec = np.array(spectra[numspec])
         tempspec.shape = (8, 112)

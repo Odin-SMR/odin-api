@@ -36,6 +36,7 @@ from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.utils import time_util
 from odinapi.utils.collocations import get_collocations
 from odinapi.utils.swagger import SWAGGER
+import odinapi.utils.get_args as get_args
 
 # Make linter happy
 use_agg
@@ -584,9 +585,9 @@ class ScanSpec(BaseView):
         return scan2dictlist_v2(spectra)
 
     @register_versions('fetch', ['v4'])
-    def _get_v4(self, version, backend, freqmode, scanno):
+    def _get_v4(self, version, backend, freqmode, scanno, debug=False):
         con = DatabaseConnector()
-        spectra = get_scan_data_v2(con, backend, freqmode, scanno)
+        spectra = get_scan_data_v2(con, backend, freqmode, scanno, debug)
         con.close()
         if spectra == {}:
             abort(404)
@@ -641,6 +642,7 @@ SWAGGER.add_type('L1b', {
     "Vgeo": [float],
     "ZeroLagVar": [[float]],
 })
+SWAGGER.add_parameter('debug', 'query', bool)
 
 
 class ScanSpecNoBackend(ScanSpec):
@@ -651,7 +653,7 @@ class ScanSpecNoBackend(ScanSpec):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'scanno'],
+            ['version', 'freqmode', 'scanno', 'debug'],
             {"200": SWAGGER.get_type_response('L1b')},
             summary="Get level1 data for a scan"
         )
@@ -663,7 +665,12 @@ class ScanSpecNoBackend(ScanSpec):
         except KeyError:
             abort(404)
 
-        return self._get_v4(version, backend, freqmode, scanno)
+        try:
+            debug = get_args.get_bool('debug')
+        except ValueError:
+            abort(400)
+
+        return self._get_v4(version, backend, freqmode, scanno, debug)
 
     @register_versions('return')
     def _to_return_format(self, version, data, *args, **kwargs):

@@ -897,7 +897,7 @@ def apply_calibration_step2(con, scangr):
     return scangr
 
 
-def get_freqinfo(scangr):
+def get_freqinfo(scangr, debug=False):
     '''add frequency info for each spectrum in scan'''
     spectra = np.array(scangr.spectra['spectrum'])
     scangr.spectra['spectrum'] = []
@@ -916,7 +916,7 @@ def get_freqinfo(scangr):
     for numspec, _ in enumerate(scangr.spectra['stw']):
         freqvec = freqgr.get_frequency(scangr.spectra, numspec)
         bad_modules = get_bad_ssb_modules(
-            scangr.spectra['backend'][numspec], spectra, freqvec
+            scangr.spectra['backend'][numspec], spectra, freqvec, debug
         )
         freqvec.shape = (freqvec.shape[0] * freqvec.shape[1],)
         freqvec, tempspec, ssb, channels_id = (
@@ -966,7 +966,7 @@ def get_freqinfo(scangr):
     return scangr
 
 
-def get_scan_data_v2(con, backend, freqmode, scanno):
+def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
     '''get scan data'''
     calstw = int(scanno)
     scangr = ScandataExporter(backend, con)
@@ -991,7 +991,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno):
     # perform a frequency correction based on Donals study:
     smr_lofreqcorr(scangr)
     # add frequency vector to each spectrum in the scangr.spectra structure
-    scangr = get_freqinfo(scangr)
+    scangr = get_freqinfo(scangr, debug)
     # scangr.spectra is a dictionary containing the relevant data
     # quality control of data
     qualgr = QualityControl(scangr.spectra, scangr.refdata)

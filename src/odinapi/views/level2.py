@@ -1,10 +1,9 @@
 # pylint: skip-file
+"""Views for getting Level 2 data"""
 import urllib
-from datetime import datetime, timedelta
+from datetime import timedelta
 from operator import itemgetter
 from itertools import groupby
-
-from dateutil.parser import parse as parse_datetime
 
 from flask import request, abort, jsonify
 from flask.views import MethodView
@@ -21,6 +20,7 @@ from odinapi.views import level2db
 from odinapi.views.views import get_L2_collocations
 from odinapi.views.baseview import BaseView, register_versions, BadRequest
 from odinapi.utils.swagger import SWAGGER
+import odinapi.utils.get_args as get_args
 
 SWAGGER.add_response('Level2BadQuery', "Unsupported query", {"Error": str})
 
@@ -354,15 +354,15 @@ class Level2ViewScans(Level2ProjectBaseView):
 
     @register_versions('fetch')
     def _fetch(self, version, project, freqmode):
-        start_time = get_datetime('start_time')
-        end_time = get_datetime('end_time')
+        start_time = get_args.get_datetime('start_time')
+        end_time = get_args.get_datetime('end_time')
         if start_time and end_time and start_time > end_time:
             return jsonify({
                 'Error': 'Start time must not be after end time'}), 400
         param = {
             'start_time': start_time,
             'end_time': end_time,
-            'comment': get_string('comment')}
+            'comment': get_args.get_string('comment')}
         db = level2db.Level2DB(project)
         scans = list(db.get_scans(freqmode, **param))
         for scan in scans:
@@ -410,15 +410,15 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
 
     @register_versions('fetch')
     def _fetch(self, version, project, freqmode):
-        start_time = get_datetime('start_time')
-        end_time = get_datetime('end_time')
+        start_time = get_args.get_datetime('start_time')
+        end_time = get_args.get_datetime('end_time')
         if start_time and end_time and start_time > end_time:
             return jsonify({
                 'Error': 'Start time must not be after end time'}), 400
         param = {
             'start_time': start_time,
             'end_time': end_time,
-            'comment': get_string('comment')}
+            'comment': get_args.get_string('comment')}
         db = level2db.Level2DB(project)
         scans = list(db.get_failed_scans(freqmode, **param))
         for scan in scans:
@@ -599,7 +599,7 @@ class L2View(Level2ProjectBaseView):
 
     @register_versions('fetch')
     def _get(self, version, project, freqmode, scanno):
-        product = get_string('product')
+        product = get_args.get_string('product')
         db = level2db.Level2DB(project)
         L2 = db.get_L2(freqmode, scanno, product=product)
         if not L2:
@@ -719,7 +719,7 @@ class Level2ViewLocations(Level2ProjectBaseView):
 
     @register_versions('fetch')
     def _fetch(self, version, project):
-        if not get_list('location'):
+        if not get_args.get_list('location'):
             raise BadRequest('No locations specified')
         try:
             param = parse_parameters()
@@ -778,7 +778,7 @@ class Level2ViewDay(Level2ProjectBaseView):
     @register_versions('fetch')
     def _fetch(self, version, project, date):
         try:
-            start_time = get_datetime(val=date)
+            start_time = get_args.get_datetime(val=date)
         except ValueError as e:
             return jsonify({'Error': str(e)}), 400
         end_time = start_time + timedelta(hours=24)
@@ -878,16 +878,20 @@ class Level2ViewArea(Level2ProjectBaseView):
 
 def parse_parameters(**kwargs):
     """Parse parameters coming from the request"""
-    products = get_list('product')
+    products = get_args.get_list('product')
 
     # Altitude or pressure
-    min_pressure = get_float('min_pressure', kwargs.get('min_pressure'))
-    max_pressure = get_float('max_pressure', kwargs.get('max_pressure'))
+    min_pressure = get_args.get_float(
+        'min_pressure', kwargs.get('min_pressure'))
+    max_pressure = get_args.get_float(
+        'max_pressure', kwargs.get('max_pressure'))
     if min_pressure and max_pressure and min_pressure > max_pressure:
         raise ValueError('Min pressure must not be larger than max pressure')
 
-    min_altitude = get_float('min_altitude', kwargs.get('min_altitude'))
-    max_altitude = get_float('max_altitude', kwargs.get('max_altitude'))
+    min_altitude = get_args.get_float(
+        'min_altitude', kwargs.get('min_altitude'))
+    max_altitude = get_args.get_float(
+        'max_altitude', kwargs.get('max_altitude'))
     if min_altitude and max_altitude and min_altitude > max_altitude:
         raise ValueError('Min altitude must not be larger than max altitude')
 
@@ -897,8 +901,8 @@ def parse_parameters(**kwargs):
         )
 
     # Time
-    start_time = get_datetime('start_time', kwargs.get('start_time'))
-    end_time = get_datetime('end_time', kwargs.get('end_time'))
+    start_time = get_args.get_datetime('start_time', kwargs.get('start_time'))
+    end_time = get_args.get_datetime('end_time', kwargs.get('end_time'))
     if start_time and end_time and start_time > end_time:
         raise ValueError('Start time must not be after end time')
 
@@ -910,15 +914,15 @@ def parse_parameters(**kwargs):
             'end_time.')
 
     # Geographic
-    radius = get_float('radius')
-    locations = get_list('location') or []
+    radius = get_args.get_float('radius')
+    locations = get_args.get_list('location') or []
     if locations and not radius:
         raise ValueError('Missing parameter radius')
     circles = [
         loc.split(',') + [radius] for loc in locations]
     circles = [level2db.GeographicCircle(*c) for c in circles]
 
-    area = [get_string(arg) for arg in [
+    area = [get_args.get_string(arg) for arg in [
         'min_lat', 'max_lat', 'min_lon', 'max_lon']]
 
     if circles and any(area):
@@ -931,7 +935,7 @@ def parse_parameters(**kwargs):
         area = None
 
     # Fields to return
-    fields = get_list('field')
+    fields = get_args.get_list('field')
 
     return {
         'products': products,
@@ -944,45 +948,3 @@ def parse_parameters(**kwargs):
         'areas': circles or area,
         'fields': fields
     }
-
-
-def get_string(arg):
-    return request.args.get(arg)
-
-
-def get_int(arg):
-    val = request.args.get(arg)
-    if not val:
-        return
-    try:
-        return int(val)
-    except ValueError:
-        raise ValueError('Could not convert to integer: %r' % val)
-
-
-def get_float(arg=None, val=None):
-    if not val:
-        val = request.args.get(arg)
-    if not val:
-        return
-    try:
-        return float(val)
-    except ValueError:
-        raise ValueError('Could not convert to number: %r' % val)
-
-
-def get_list(arg):
-    return request.args.getlist(arg) or None
-
-
-def get_datetime(arg=None, val=None):
-    if not val:
-        val = request.args.get(arg)
-    if not val:
-        return
-    if isinstance(val, datetime):
-        return val
-    try:
-        return parse_datetime(val)
-    except ValueError:
-        raise ValueError('Bad time format: %r' % val)

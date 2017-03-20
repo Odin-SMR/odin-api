@@ -3,7 +3,7 @@ import unittest
 import pytest
 import requests
 
-from odinapi.test.testdefs import system
+from odinapi.test.testdefs import system, slow
 
 
 @system
@@ -48,6 +48,7 @@ class TestLevel1Views(unittest.TestCase):
              'collocations/'))
         self.assertEqual(r.status_code, 404)
 
+    @slow
     def test_freqmode_raw_hierarchy(self):
         """Test freqmode raw hierarchy flow"""
         base_url = (
@@ -95,6 +96,36 @@ class TestLevel1Views(unittest.TestCase):
             version='v5', freqmode=1, scanid=7015092840))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()['Type'], 'L1b')
+
+    def test_get_scan_debug(self):
+        """Test that get scan data debug option works"""
+        # Only V5
+        base_url = (
+            'http://localhost:5000/rest_api/{version}/level1/{freqmode}'
+            '/{scanid}/L1b/{debug}')
+        r = requests.get(base_url.format(
+            version='v5', freqmode=2, scanid=7014771917, debug="?debug=false"))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Type'], 'L1b')
+        # First two subbands should be discarded in production mode:
+        self.assertEqual(
+            r.json()['Data']["Frequency"]["SubBandIndex"][0][0], -1)
+        self.assertEqual(
+            r.json()['Data']["Frequency"]["SubBandIndex"][0][1], -1)
+
+        r = requests.get(base_url.format(
+            version='v5', freqmode=2, scanid=7014771917, debug="?debug=true"))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Type'], 'L1b')
+        # Only the first suband should be discarded in debug mode:
+        self.assertEqual(
+            r.json()['Data']["Frequency"]["SubBandIndex"][0][0], -1)
+        self.assertEqual(
+            r.json()['Data']["Frequency"]["SubBandIndex"][0][1], 1)
+
+        r = requests.get(base_url.format(
+            version='v5', freqmode=2, scanid=7014771917, debug="?debug=foo"))
+        self.assertEqual(r.status_code, 400)
 
     def test_get_apriori(self):
         """Test get apriori data"""

@@ -52,7 +52,8 @@ class Swagger(object):
         basestring: 'string',
         unicode: 'string',
         str: 'string',
-        list: 'array'
+        list: 'array',
+        bool: 'boolean'
     }
 
     def __init__(self):
