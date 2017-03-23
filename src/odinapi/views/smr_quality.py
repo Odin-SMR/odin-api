@@ -49,8 +49,8 @@ class QualityControl(object):
     def check_tspill(self):
         '''check tspill is ok'''
         qual = 0x0001
-        tspill_min = 3
-        tspill_max = 12
+        tspill_min = 2
+        tspill_max = 16
         if not (self.specdata['tspill'][0] >= tspill_min and
                 self.specdata['tspill'][0] <= tspill_max):
             self.quality = self.quality + qual
@@ -59,7 +59,7 @@ class QualityControl(object):
         '''check trec is ok'''
         qual = 0x0002
         trec_min = 2000
-        trec_max = 4000
+        trec_max = 8000
         if not (self.specdata['tsys'][3] >= trec_min and
                 self.specdata['tsys'][3] <= trec_max):
             self.quality = self.quality + qual
