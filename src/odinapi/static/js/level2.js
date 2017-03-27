@@ -1,23 +1,3 @@
-var FREQMODE_TO_BACKEND = {
-    "1": "AC2",
-    "2": "AC1",
-    "8": "AC2",
-    "13": "AC1",
-    "14": "AC2",
-    "17": "AC2",
-    "19": "AC1",
-    "21": "AC1",
-    "22": "AC2",
-    "23": "AC1",
-    "24": "AC1",
-    "25": "AC1",
-    "29": "AC1",
-    "102": "AC2",
-    "113": "AC2",
-    "119": "AC2",
-    "121": "AC2",
-};
-
 function initLevel2Dashboard() {
     fillProjectSelector();
 }
