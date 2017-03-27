@@ -102,20 +102,3 @@ MONTH_NAMES = {
     12: "December",
     13: "Undecimber"
 };
-
-
-// A Molflow inspired rainbow colour scale from red to blue:
-function molour_scale() {
-    var blue = "#2c5aa0";
-    var cyan = "#02c5aa";
-    var red = "#a02c5a";
-    var magenta = "#aa02c5";
-    var green = "#5aa02c";
-    var yellow = "#c5aa02";
-    return [blue, cyan, green, yellow, red, magenta];
-}
-
-
-function log2(val) {
-  return Math.log(val) / Math.LN2;
-}

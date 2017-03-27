@@ -5,8 +5,8 @@ function initLevel1(date) {
 
     var table = $('#level1-date-table').DataTable({
         "ajax": {
-            "url": '/rest_api/v4/freqmode_info/' + date + '/',
-            "dataSrc": "Info",
+            "url": '/rest_api/v5/freqmode_info/' + date + '/',
+            "dataSrc": "Data",
             },
         "columns": [
             {
@@ -35,30 +35,31 @@ function initLevel1(date) {
     });
 
     $('#level1-date-table tbody').on( 'click', 'tr', function () {
-        var tr = $(this).closest('tr');
-        var row = table.row(tr);
-        var date = $('#level1-date').text();
-        var backend = tr.children().eq(0).text();
-        var freqmode = tr.children().eq(1).text();
+        var tr = $(this).closest('tr'),
+            row = table.row(tr),
+            date = $('#level1-date').text(),
+            backend = tr.children().eq(0).text(),
+            freqmode = tr.children().eq(1).text();
+
         if (row.child.isShown()) {
             row.child.hide();
             tr.removeClass('shown');
-        }else {
-            row.child( addInfo( row.data(), backend, freqmode )).show();
+        } else {
+            row.child(addInfo(freqmode)).show();
             tr.addClass('shown');
         }
         // The plot rows don't have the necessary attributes, so don't try to
         // update when those are clicked:
         if ((backend == "AC1") || (backend == "AC2")) {
             clearDataTable();
-            updateDataTable(date, backend, freqmode);
-            updatePlot(date, backend, freqmode);
+            updateDataTable(date, freqmode);
+            updatePlot(date, freqmode);
         } else if (!tr.hasClass("foldablePlot")) {
             backend = tr.prev().children().eq(0).text();
             freqmode = tr.prev().children().eq(1).text();
             clearDataTable();
-            updateDataTable(date, backend, freqmode);
-            updatePlot(date, backend, freqmode);
+            updateDataTable(date, freqmode);
+            updatePlot(date, freqmode);
         }
     });
 }
@@ -66,7 +67,7 @@ function initLevel1(date) {
 function updateLevel1(date) {
     var table;
     table = $('#level1-date-table').DataTable();
-    table.ajax.url('/rest_api/v4/freqmode_info/' + date + '/').load();
+    table.ajax.url('/rest_api/v5/freqmode_info/' + date + '/').load();
     $('#level1-date').html(date);
 }
 
@@ -79,48 +80,25 @@ function clearLevel1Table() {
 }
 
 
-function addInfo (data, backend, freqmode) {
+function addInfo(freqmode) {
+    function tableRow(id, description) {
+        return '<tr class="foldablePlot"><td colspan="4">' +
+            description + ':</td></tr>' +
+            '<tr class="foldablePlot" height=128>' +
+            '<td colspan="4" id="smart-plot-' + id + '-' + freqmode +
+            '" class="plotter"></td></tr>';
+    }
     return '<table width="100%">' +
-        '<tr class="foldablePlot">' +
-            '<td colspan="4">Latitudes of first spectra in scans:</td>' +
-        '</tr>' +
-        '<tr class="foldablePlot" height=128>' +
-            '<td colspan="4" id="smart-plot-lat-' + backend + '-' + freqmode +
-                '" class="plotter"></td>' +
-        '</tr>' +
-        '<tr class="foldablePlot">' +
-            '<td colspan="4">Longitudes of first spectra in scans:</td>' +
-        '</tr>' +
-        '<tr class="foldablePlot" height=128>' +
-            '<td colspan="4" id="smart-plot-lon-' + backend + '-' + freqmode +
-                '" class="plotter"></td>' +
-        '</tr>' +
-        '<tr class="foldablePlot">' +
-            '<td colspan="4">Solar zenith angles (ZD) of scans:</td>' +
-        '</tr>' +
-        '<tr class="foldablePlot" height=128>' +
-            '<td colspan="4" id="smart-plot-sun-' + backend + '-' + freqmode +
-                '" class="plotter"></td>' +
-        '</tr>' +
-        '<tr class="foldablePlot">' +
-            '<td colspan="4">Number of spectra in scans:</td>' +
-        '</tr>' +
-        '<tr class="foldablePlot" height=128>' +
-            '<td colspan="4" id="smart-plot-scan-' + backend + '-' + freqmode +
-                '" class="plotter"></td>' +
-        '</tr>' +
-        '<tr class="foldablePlot">' +
-            '<td colspan="4">Quality of spectra in scans:</td>' +
-        '</tr>' +
-        '<tr class="foldablePlot" height=128>' +
-            '<td colspan="4" id="smart-plot-quality-' + backend + '-' + freqmode +
-                '" class="plotter"></td>' +
-        '</tr>' +
+        tableRow("lat", "Latitudes of first spectra in scans") +
+        tableRow("lon", "Longitudes of first spectra in scans") +
+        tableRow("sun", "Solar zenith angles (ZD) of scans") +
+        tableRow("scan", "Number of spectra in scans") +
+        tableRow("quality", "Quality of spectra in scans") +
         '</table>';
 }
 
 
-function updatePlot(date, back, freq) {
+function updatePlot(date, freq) {
     var sun = [];
     var lat = [];
     var lon = [];
@@ -131,10 +109,10 @@ function updatePlot(date, back, freq) {
     var quality = [];
     var currDate = moment.utc(date, 'YYYY-MM-DD');
     $.getJSON(
-        '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' + freq + '/',
+        '/rest_api/v5/freqmode_info/' + date + '/' + freq + '/',
         function(data) {
             xticks =[];
-            $.each( data.Info, function (index, data) {
+            $.each(data.Data, function (index, data) {
                 time_point = moment;
                 datestring = data.DateTime;
                 var momentDate = moment.utc(datestring);
@@ -142,7 +120,6 @@ function updatePlot(date, back, freq) {
                 lat.push( [momentDate.toDate(), data.LatStart] );
                 lon.push( [momentDate.toDate(), data.LonStart] );
                 scan.push([momentDate.toDate(), data.NumSpec] );
-                // quality = log2(data.Quality)
                 qual.push([momentDate.toDate(), data.Quality] );
             });
             opt={
@@ -165,11 +142,11 @@ function updatePlot(date, back, freq) {
                     "mode": "x"
                 },
             };
-            plots.push($.plot("#smart-plot-lat-"+back+"-"+freq, [lat], opt));
-            plots.push($.plot("#smart-plot-lon-"+back+"-"+freq, [lon], opt));
-            plots.push($.plot("#smart-plot-sun-"+back+"-"+freq, [sun], opt));
-            plots.push($.plot("#smart-plot-scan-"+back+"-"+freq, [scan], opt));
-            plots.push($.plot("#smart-plot-quality-"+back+"-"+freq, [qual], opt));
+            plots.push($.plot("#smart-plot-lat-"+freq, [lat], opt));
+            plots.push($.plot("#smart-plot-lon-"+freq, [lon], opt));
+            plots.push($.plot("#smart-plot-sun-"+freq, [sun], opt));
+            plots.push($.plot("#smart-plot-scan-"+freq, [scan], opt));
+            plots.push($.plot("#smart-plot-quality-"+freq, [qual], opt));
         }
     );
 
@@ -182,31 +159,12 @@ function updatePlot(date, back, freq) {
         opacity: 0.90
     }).appendTo("body");
 
-    $("#smart-plot-lat-"+back+"-"+freq+"").bind("plothover",
+    $(".plotter").bind("plothover",
         function (event, pos, item) {
             hoverOverviewPlot(event, pos, item, plots);
         }
     );
-    $("#smart-plot-lon-"+back+"-"+freq+"").bind("plothover",
-        function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item, plots);
-        }
-    );
-    $("#smart-plot-sun-"+back+"-"+freq+"").bind("plothover",
-        function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item, plots);
-        }
-    );
-    $("#smart-plot-scan-"+back+"-"+freq+"").bind("plothover",
-        function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item, plots);
-        }
-    );
-    $("#smart-plot-quality-"+back+"-"+freq+"").bind("plothover",
-        function (event, pos, item) {
-            hoverOverviewPlot(event, pos, item, plots);
-        }
-    );
+
 }
 
 

@@ -4,7 +4,7 @@ import io
 from os import environ
 from datetime import datetime, timedelta
 
-from flask import send_file, render_template, request
+from flask import send_file, render_template, request, abort
 from flask.views import MethodView
 
 from odinapi.views.level1b_scandata_exporter_v2 import (
@@ -13,6 +13,7 @@ from odinapi.views.level1b_scanlogdata_exporter import (
     get_scan_logdata, plot_loginfo)
 from odinapi.views.database import DatabaseConnector
 from odinapi.views.level2 import parse_parameters
+from odinapi.utils.defs import FREQMODE_TO_BACKEND
 
 
 class ViewIndex(MethodView):
@@ -92,7 +93,12 @@ class ViewLevel2PeriodOverview(MethodView):
 class ViewScanSpec(MethodView):
     """plots information: data from a given scan"""
 
-    def get(self, backend, freqmode, scanno):
+    def get(self, freqmode, scanno):
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
+
         con = DatabaseConnector()
         calstw = int(scanno)
         spectra = get_scan_data_v2(con, backend, freqmode, scanno)
@@ -110,7 +116,11 @@ class ViewFreqmodeInfoPlot(MethodView):
     """plots information: loginfo for all scans from a given date and freqmode
     """
 
-    def get(self, date, backend, freqmode):
+    def get(self, date, freqmode):
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
 
         con = DatabaseConnector()
         loginfo, date1, date2 = get_scan_logdata(

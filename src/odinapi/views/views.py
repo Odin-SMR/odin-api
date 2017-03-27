@@ -1,8 +1,7 @@
 # pylint: skip-file
 """ doc
 """
-from flask import request, url_for
-from flask import jsonify, abort
+from flask import request, url_for, jsonify, abort
 from flask.views import MethodView
 from numpy import around
 

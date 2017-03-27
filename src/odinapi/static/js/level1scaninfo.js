@@ -1,17 +1,13 @@
 // Functions for updating scan info table and plots:
 
-function initDataTable(date, back, freq) {
-    if (back === '') {
-        back = "AC1";
-    }
+function initDataTable(date, freq) {
     if (freq === '') {
         freq = "2";
     }
     var table = $('#info-table').DataTable( {
         "ajax": {
-            "dataSrc": "Info",
-            "url": '/rest_api/v4/freqmode_info/' + date + '/' + back + '/' +
-                freq + '/',
+            "dataSrc": "Data",
+            "url": '/rest_api/v5/freqmode_info/' + date + '/' + freq + '/',
             },
         "data": [],
         "columns": [
@@ -72,8 +68,9 @@ function initDataTable(date, back, freq) {
 
 
 function updateOverview(url, id) {
-    $('#info-image-' + id).attr('src', url.replace("rest_api/v4/scan",
-                                                   "browse"));
+    var img_url = url.replace("rest_api/v5/level1", "browse");
+    img_url = img_url.replace("L1b/", "");
+    $('#info-image-' + id).attr('src', img_url);
 }
 
 
@@ -83,11 +80,11 @@ function addOverview(url, id) {
 }
 
 
-function updateDataTable(date, back, freq) {
+function updateDataTable(date, freq) {
     var table;
     table = $('#info-table').DataTable();
-    table.ajax.url('/rest_api/v4/freqmode_info/' + date + '/' + back + '/' +
-            freq + '/').load();
+    table.ajax.url(
+        '/rest_api/v5/freqmode_info/' + date + '/' + freq + '/').load();
 }
 
 

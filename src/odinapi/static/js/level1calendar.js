@@ -9,10 +9,10 @@ function getStartView(date) {
     $.ajax({
         type: 'GET',
         async: false,
-        url: '/rest_api/v4/period_info/' + date.format('YYYY/MM/DD/'),
+        url: '/rest_api/v5/period_info/' + date.format('YYYY/MM/DD/'),
         dataType: "json",
         success: function(data) {
-            if (data.Info.length > 0) {
+            if (data.Data.length > 0) {
                 startView = date;
             } else if (date.isAfter('2001-02-20')) {
                 startView = getStartView(date.subtract(7, 'days'));
@@ -32,27 +32,27 @@ function updateCalendar(start) {
                 theDate.format()).length === 0) {
         $.ajax({
             type: 'GET',
-            url: '/rest_api/v4/period_info/' +
+            url: '/rest_api/v5/period_info/' +
                 start.format('YYYY/MM/DD/'),
             dataType: "json",
             success: function(data) {
                 var events = [];
-                // Loop over the elements under Info and create event:
-                $.each(data.Info, function(index, theInfo) {
+                // Loop over the elements under Data and create event:
+                $.each(data.Data, function(index, theData) {
                     theEvent = {
-                        title: "FM: " + theInfo.FreqMode + " (" +
-                            theInfo.Backend +  "): " +
-                            theInfo.NumScan + " scans",
-                        start: theInfo.Date,
-                        id: theInfo.Date,
+                        title: "FM: " + theData.FreqMode + " (" +
+                            theData.Backend +  "): " +
+                            theData.NumScan + " scans",
+                        start: theData.Date,
+                        id: theData.Date,
                         // This should link to the report for the day:
                         url: "#level1-date",
                         // Add color and textColor based on freqmode:
-                        color: FREQMODE_COLOURS[theInfo.FreqMode],
-                        textColor: FREQMODE_TEXT_COLOURS[theInfo.FreqMode],
+                        color: FREQMODE_COLOURS[theData.FreqMode],
+                        textColor: FREQMODE_TEXT_COLOURS[theData.FreqMode],
                         // Save some metadata:
-                        FreqMode: theInfo.FreqMode,
-                        Backend: theInfo.Backend,
+                        FreqMode: theData.FreqMode,
+                        Backend: theData.Backend,
                     };
                     events.push(theEvent);
                     // Push event to calendar:

@@ -23,7 +23,7 @@ function drawStatistics(year) {
     // Generate freqmode statistics plot:
     data = [];
     sum = 0;
-    $.getJSON('/rest_api/v4/statistics/freqmode/?year=' + year,
+    $.getJSON('/rest_api/v5/statistics/freqmode/?year=' + year,
             function(rawdata) {
         $.each( rawdata.Data, function (ind, val) {
             data[ind] = {
@@ -104,7 +104,7 @@ function drawStatistics(year) {
     // Generate yearly statistics plot:
     data = [];
     xticks = [];
-    $.getJSON('/rest_api/v4/statistics/freqmode/timeline/?year=' + year,
+    $.getJSON('/rest_api/v5/statistics/freqmode/timeline/?year=' + year,
             function(rawdata) {
         $.each( rawdata.Data, function (key, val) {
             data.push({

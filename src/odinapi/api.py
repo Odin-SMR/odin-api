@@ -110,234 +110,234 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<int:freqmode>/',
             view_func=FreqmodeInfoCachedNoBackend.as_view('scansinfonobackend')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/'
             '<int:freqmode>/<int:scanno>/',
             view_func=ScanInfoCachedNoBackend.as_view('scaninfonobackend')
-            )
+        )
 
     def _add_level1_no_backend_raw(self):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/<int:freqmode>/',
             view_func=FreqmodeInfoNoBackend.as_view(
                 'scansinforawnobackend')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/'
             '<int:freqmode>/<int:scanno>/',
             view_func=ScanInfoNoBackend.as_view(
                 'scaninforawnobackend')
-            )
+        )
 
     def _add_level1_cached(self):
         self.add_url_rule(
             '/rest_api/<version>/period_info/<int:year>/<int:month>/'
             '<int:day>/',
             view_func=PeriodInfoCached.as_view('periodinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/',
             view_func=DateInfoCached.as_view('freqmodeinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/',
             view_func=DateBackendInfoCached.as_view('backendinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/'
             '<int:freqmode>/',
             view_func=FreqmodeInfoCached.as_view('scansinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_info/<date>/<backend>/'
             '<int:freqmode>/<int:scanno>/',
             view_func=FreqmodeInfoCached.as_view('scaninfo')
-            )
+        )
 
     def _add_level1_raw(self):
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/',
             view_func=DateInfo.as_view('freqmoderaw')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/<backend>/',
             view_func=DateBackendInfo.as_view('backendraw')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/<backend>/'
             '<int:freqmode>/',
             view_func=FreqmodeInfo.as_view('scansraw')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/freqmode_raw/<date>/<backend>/'
             '<int:freqmode>/<int:scanno>/',
             view_func=FreqmodeInfo.as_view('scanraw')
-            )
+        )
 
     def _add_level1_scan(self):
         self.add_url_rule(
             '/rest_api/<version>/l1_log/<int:freqmode>/<int:scanno>/',
             view_func=L1LogCached.as_view('scanlog')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/scan/<backend>/<int:freqmode>/<int:scanno>/',
             view_func=ScanSpec.as_view('scan')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/ptz/<date>/<backend>/<int:freqmode>/'
             '<int:scanno>/',
             view_func=ScanPTZ.as_view('ptz')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/apriori/<species>/<date>/<backend>/'
             '<int:freqmode>/<int:scanno>/',
             view_func=ScanAPR.as_view('apriori')
-            )
+        )
 
     def _add_level2_views(self):
         # TODO: These urls should later only show data from official projects
         self.add_url_rule(
             '/rest_api/<version>/level2',
             view_func=Level2Write.as_view('level2write')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/projects/',
             view_func=Level2ViewProjects.as_view('level2viewprojects')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/',
             view_func=Level2ViewProject.as_view('level2viewproject')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/<int:freqmode>/comments/',
             view_func=Level2ViewComments.as_view('level2viewcomments')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/<int:freqmode>/scans/',
             view_func=Level2ViewScans.as_view('level2viewscans')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/<int:freqmode>/failed/',
             view_func=Level2ViewFailedScans.as_view('level2viewfailed')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'
              '/<int:freqmode>/<int:scanno>/'),
             view_func=Level2ViewScan.as_view('level2viewscan')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'
              '/<int:freqmode>/<int:scanno>/L2i/'),
             view_func=L2iView.as_view('level2L2i')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'
              '/<int:freqmode>/<int:scanno>/L2c/'),
             view_func=L2cView.as_view('level2L2c')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/<project>'
              '/<int:freqmode>/<int:scanno>/L2/'),
             view_func=L2View.as_view('level2L2')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/products/',
             view_func=Level2ViewProducts.as_view('level2viewproducts')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/locations',
             view_func=Level2ViewLocations.as_view('level2viewlocations')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/<date>/',
             view_func=Level2ViewDay.as_view('level2viewday')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/<project>/area',
             view_func=Level2ViewArea.as_view('level2viewarea')
-            )
+        )
 
     def _add_level2_development_views(self):
         """Add views for browsing development projects"""
         self.add_url_rule(
             '/rest_api/<version>/level2/development/projects/',
             view_func=Level2ViewProjects.as_view('level2devviewprojects')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/',
             view_func=Level2ViewProject.as_view('level2devviewproject')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'comments/',
             view_func=Level2ViewComments.as_view('level2devviewcomments')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'scans/',
             view_func=Level2ViewScans.as_view('level2devviewscans')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'failed/',
             view_func=Level2ViewFailedScans.as_view('level2devviewfailed')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/'),
             view_func=Level2ViewScan.as_view('level2devviewscan')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/products/',
             view_func=Level2ViewProducts.as_view('level2devviewproducts')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<freqmode>/'
             'products/',
             view_func=Level2ViewProducts.as_view('level2devviewfmproducts')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/L2i/'),
             view_func=L2iView.as_view('level2devL2i')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/L2c/'),
             view_func=L2cView.as_view('level2devL2c')
-            )
+        )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/L2/'),
             view_func=L2View.as_view('level2devL2')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/locations',
             view_func=Level2ViewLocations.as_view('level2devviewlocations')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<date>/',
             view_func=Level2ViewDay.as_view('level2devviewday')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/area',
             view_func=Level2ViewArea.as_view('level2devviewarea')
-            )
+        )
 
     def _add_site_views(self):
         self.add_url_rule(
             '/',
             view_func=ViewIndex.as_view('index')
-            )
+        )
         self.add_url_rule(
             '/level1',
             view_func=ViewLevel1.as_view('level1')
-            )
+        )
         self.add_url_rule(
             '/level1statistics',
             view_func=ViewLevel1Stats.as_view('level1statistics')
-            )
+        )
         self.add_url_rule(
             '/level2',
             view_func=ViewLevel2.as_view('level2')
@@ -351,52 +351,52 @@ class Odin(Flask):
             view_func=ViewLevel2PeriodOverview.as_view('level2periodoverview')
         )
         self.add_url_rule(
-            '/browse/<backend>/<int:freqmode>/<int:scanno>/',
+            '/browse/<int:freqmode>/<int:scanno>/',
             view_func=ViewScanSpec.as_view('viewscan')
-            )
+        )
         self.add_url_rule(
-            '/plot/<date>/<backend>/<int:freqmode>',
+            '/plot/<date>/<int:freqmode>',
             view_func=ViewFreqmodeInfoPlot.as_view('plotscans')
-            )
+        )
 
     def _add_stats_views(self):
         self.add_url_rule(
             '/rest_api/<version>/statistics/freqmode/',
             view_func=FreqmodeStatistics.as_view('freqmodestatistics')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/statistics/freqmode/timeline/',
             view_func=TimelineFreqmodeStatistics.as_view('timefmstatistics')
-            )
+        )
 
     def _add_vds_views(self):
         self.add_url_rule(
             '/rest_api/<version>/vds/',
             view_func=VdsInfo.as_view('vdsinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/vds/<backend>/<freqmode>/',
             view_func=VdsFreqmodeInfo.as_view('vdsfreqmodeinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/vds/<backend>/<freqmode>/allscans',
             view_func=VdsScanInfo.as_view('vdsScaninfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/vds/<backend>/<freqmode>/<species>'
             '/<instrument>/',
             view_func=VdsInstrumentInfo.as_view('vdsinstrumentinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/vds/<backend>/<freqmode>/<species>'
             '/<instrument>/<date>/',
             view_func=VdsDateInfo.as_view('vdsdateinfo')
-            )
+        )
         self.add_url_rule(
             '/rest_api/<version>/vds_external/<instrument>/<species>'
             '/<date>/<file>/<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
-            )
+        )
 
 
 def main():

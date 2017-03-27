@@ -4,14 +4,27 @@ function initLevel2Dashboard() {
 
 function fillProjectSelector() {
     $.getJSON(
-        '/rest_api/v4/level2/projects',
+        '/rest_api/v5/level2/projects',
         function(data) {
             $('#select-project').empty();
             $('#select-project').append(
                 '<option selected="selected" disabled>Choose project</option>');
-            $.each(data.Info.Projects, function (index, project) {
+            $('#select-project').append(
+                '<option disabled>-- Production --</option>');
+            $.each(data.Data, function (index, project) {
                 $('#select-project').append(
                     '<option value="' + project.Name + '">' +
+                        project.Name + '</option>');
+            });
+        });
+    $.getJSON(
+        '/rest_api/v5/level2/development/projects',
+        function(data) {
+            $('#select-project').append(
+                '<option disabled>-- Development --</option>');
+            $.each(data.Data, function (index, project) {
+                $('#select-project').append(
+                    '<option value="development/' + project.Name + '">' +
                         project.Name + '</option>');
             });
         });
@@ -20,12 +33,12 @@ function fillProjectSelector() {
 function fillFreqmodeSelector() {
     project = $('#select-project').val();
     $.getJSON(
-        '/rest_api/v4/level2/' + project,
+        '/rest_api/v5/level2/' + project,
         function(data) {
             $('#select-freqmode').empty();
             $('#select-freqmode').append(
                 '<option selected="selected" disabled>Choose freqmode</option>');
-            $.each(data.Info.FreqModes, function (index, freqmode) {
+            $.each(data.Data, function (index, freqmode) {
                 $('#select-freqmode').append(
                     '<option value="' + freqmode.FreqMode + '">' +
                         freqmode.FreqMode + '</option>');
@@ -44,17 +57,18 @@ function searchLevel2Scans(form) {
     if (form.end_date.value)
         param.end_time = form.end_date.value;
     param = $.param(param);
-    var url = '/rest_api/v4/level2/' + form.project.value + '/' +
+    var url = '/rest_api/v5/level2/' + form.project.value + '/' +
         form.freqmode.value + '/' + form.types.value;
     if (param)
         url += '?' + param;
 
     $('#search-results-info').html(
-        '<h2>Project: ' + form.project.value + ', freqmode: ' + form.freqmode.value + ', ' + form.types.value + '</h2>');
+        '<h2>Project: ' + form.project.value + ', freqmode: ' +
+        form.freqmode.value + ', ' + form.types.value + '</h2>');
     var table = $('#search-results').DataTable({
         "ajax":{
             "url": url,
-            "dataSrc": "Info.Scans",
+            "dataSrc": "Data",
         },
         "columns": [
             {
@@ -169,9 +183,9 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
     }).appendTo("body");
 
     $.getJSON(
-        '/rest_api/v4/level2/' + project + '/' + freqmode + '/' + scanid + '/',
+        '/rest_api/v5/level2/' + project + '/' + freqmode + '/' + scanid + '/',
         function(data) {
-            $.each(data.Info.L2, function (index, product) {
+            $.each(data.Data.L2, function (index, product) {
                 template.content.querySelector('h2').textContent = product.Product;
                 template.content.querySelector(
                     '.alt-cross-section-plot-product').setAttribute(
