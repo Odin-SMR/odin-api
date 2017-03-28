@@ -19,7 +19,7 @@ class FreqmodeStatistics(MethodView):
     def get(self, version):
         """GET"""
         year = request.args.get('year')
-        if version not in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v4', 'v5']:
             abort(404)
         if year is None or year == '':
             return self.get_all()
@@ -65,7 +65,7 @@ class TimelineFreqmodeStatistics(MethodView):
     def get(self, version):
         """GET"""
         year = request.args.get('year')
-        if version not in ['v1', 'v2', 'v3', 'v4']:
+        if version not in ['v4', 'v5']:
             abort(404)
         if year is None or year == '':
             return self.get_years()

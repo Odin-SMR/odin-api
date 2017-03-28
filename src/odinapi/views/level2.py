@@ -209,7 +209,7 @@ class Level2ViewProjects(BaseView):
                 'URL-project': '{}/{}/'.format(base_url, p['name'])
             }} for p in projects]
 
-    @register_versions('return', ['v1', 'v2', 'v3', 'v4'])
+    @register_versions('return', ['v4'])
     def _return_data(self, version, projects):
         return {'Info': {'Projects': projects}}
 

@@ -10,7 +10,7 @@ from flask import jsonify, abort
 from flask.views import MethodView
 
 NEW_BASEVIEW_LOCK = Lock()
-VERSIONS = ['v1', 'v2', 'v3', 'v4', 'v5']
+VERSIONS = ['v4', 'v5']
 
 
 def register_versions(role, versions=None):
@@ -20,12 +20,12 @@ def register_versions(role, versions=None):
 
         class MyView(BaseView):
 
-            @register_versions('fetch', ['v1', 'v2', 'v3'])
+            @register_versions('fetch', ['v4', 'v5'])
             def _get_data(self, param1, param2):
                 ...
 
-            @register_versions('return', ['v1', 'v2', 'v3'])
-            def _reurn_data(self, data, param1, param2):
+            @register_versions('return', ['v4', 'v5'])
+            def _return_data(self, data, param1, param2):
                 ...
 
     Args:
@@ -54,9 +54,9 @@ class BaseView(MethodView):
     Example:
 
         class ScanData(BaseView):
-            SUPPORTED_VERSIONS = ['v1', 'v2', 'v3', 'v4']
+            SUPPORTED_VERSIONS = ['v4', 'v5']
 
-            @register_versions('fetch', ['v1', 'v2', 'v3'])
+            @register_versions('fetch', ['v5'])
             def _get_data(self, version, date, backend, freqmode, scanno):
                 print('In _get_data')
 
