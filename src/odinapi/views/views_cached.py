@@ -545,3 +545,8 @@ class L1LogCached(BaseView):
         for s in data:
             if s['ScanID'] == scanno:
                 return {'Data': s, 'Type': 'Log', 'Count': None}
+
+
+class L1LogCached_v4(L1LogCached):
+    """Support class for L1 log endpoint in v4"""
+    SUPPORTED_VERSIONS = ['v4']

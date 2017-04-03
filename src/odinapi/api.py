@@ -18,7 +18,7 @@ from odinapi.views.level2 import (
     L2cView, L2View)
 from odinapi.views.views_cached import (
     DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
-    PeriodInfoCached, L1LogCached, FreqmodeInfoCachedNoBackend,
+    PeriodInfoCached, L1LogCached, L1LogCached_v4, FreqmodeInfoCachedNoBackend,
     ScanInfoCachedNoBackend)
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
@@ -178,7 +178,7 @@ class Odin(Flask):
     def _add_level1_scan(self):
         self.add_url_rule(
             '/rest_api/<version>/l1_log/<int:freqmode>/<int:scanno>/',
-            view_func=L1LogCached.as_view('scanlog')
+            view_func=L1LogCached_v4.as_view('scanlog')
         )
         self.add_url_rule(
             '/rest_api/<version>/scan/<backend>/<int:freqmode>/<int:scanno>/',
