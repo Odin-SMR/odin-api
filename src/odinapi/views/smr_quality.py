@@ -60,8 +60,8 @@ class QualityControl(object):
         qual = 0x0002
         trec_min = 2000
         trec_max = 8000
-        if not (self.specdata['tsys'][3] >= trec_min and
-                self.specdata['tsys'][3] <= trec_max):
+        if not (self.specdata['tsys'][2] >= trec_min and
+                self.specdata['tsys'][2] <= trec_max):
             self.quality = self.quality + qual
 
     def check_noise(self):
@@ -77,7 +77,7 @@ class QualityControl(object):
             # estimated noise is suspicious
             # low or high, make a new estimate
             self.estimate_efftime(bandwidth)
-        noise = self.specdata['tsys'][3] / (
+        noise = self.specdata['tsys'][2] / (
             self.specdata['efftime'][2::] * bandwidth)**0.5
         test = np.nonzero((noise <= noise_min) |
                           (noise >= noise_max))[0]

@@ -97,6 +97,8 @@ class TestLevel1Views(unittest.TestCase):
             version='v5', freqmode=1, scanid=7015092840))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()['Type'], 'L1b')
+        self.assertEqual(r.json()['Data']['Tcal'][0], 287.655)
+        self.assertAlmostEqual(r.json()['Data']['MJD'][0], 57034.2339189)
 
     def test_get_scan_debug(self):
         """Test that get scan data debug option works"""

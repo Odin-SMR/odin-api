@@ -17,7 +17,7 @@ class Smrl1bFreqspec(object):
         self.freqres = []
         self.restfreq = []
 
-    def get_frequency(self, scan_h, ispec, numspec=3):
+    def get_frequency(self, scan_h, ispec, numspec=2):
         ''' text
         '''
         self.channels = scan_h['channels'][numspec]

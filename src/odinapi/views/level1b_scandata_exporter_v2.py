@@ -198,18 +198,20 @@ class ScandataExporter(object):
         for ind, res in enumerate(self.specdata):
             spec = specdict()
             spec['calstw'] = self.calstw
-            for item in ['stw', 'mjd', 'orbit', 'lst', 'intmode',
+            for item in ['stw', 'orbit', 'lst', 'intmode',
                          'channels', 'skyfreq', 'lofreq', 'restfreq',
                          'maxsuppression', 'sbpath', 'latitude', 'longitude',
                          'altitude', 'skybeamhit', 'ra2000', 'dec2000',
                          'vsource', 'sunzd', 'vgeo', 'vlsr', 'inttime',
-                         'hotloada', 'lo', 'freqmode', 'soda', 'ac0_frontend',
-                         'imageloada']:
+                         'lo', 'freqmode', 'soda', 'ac0_frontend']:
                 spec[item] = res[item]
-            if spec['hotloada'] == 0:
-                spec['hotloada'] = res['hotloadb']
-            if spec['imageloada'] == 0:
-                spec['imageloada'] = res['imageloadb']
+            spec['mjd'] = self.get_mjd(res)
+            spec['hotloada'] = choose_nonzero(
+                res['hotloada'], res['hotloadb']
+            )
+            spec['imageloada'] = choose_nonzero(
+                res['imageloada'], res['imageloadb']
+            )
             for item in ['qtarget', 'qachieved', 'qerror', 'gpspos',
                          'gpsvel', 'sunpos', 'moonpos']:
                 try:
@@ -269,6 +271,18 @@ class ScandataExporter(object):
             spec['frequency'] = 0
             for item in spec:
                 self.spectra[item].append(spec[item])
+
+    def get_mjd(self, data):
+        '''decode mjd data'''
+        if data['mjd'] is not None:
+            return data['mjd']
+        else:
+            if data['spectype'] in ['SSB', 'CAL']:
+                # field MJD is missing for some calibration spectra:
+                # use MJD of the first target spectrum in scan
+                for row in self.specdata:
+                    if row['mjd'] is not None:
+                        return row['mjd']
 
 
 class CalibrationStep2(object):
@@ -430,6 +444,14 @@ class CalibrationStep2(object):
             data[f_ind] = data[f_ind] - reducespec[f_ind]
             spec['spectrum'][ind] = data
         return spec
+
+
+def choose_nonzero(value1, value2):
+    '''choose value1 if non-zero'''
+    if value1 > 0:
+        return value1
+    else:
+        return value2
 
 
 def caldict():
@@ -882,8 +904,8 @@ def unsplit_normalmode(scangr):
 def apply_calibration_step2(con, scangr):
     '''apply correction'''
     calgr = CalibrationStep2(con,
-                             scangr.spectra['freqmode'][3],
-                             scangr.spectra['version'][3])
+                             scangr.spectra['freqmode'][2],
+                             scangr.spectra['version'][2])
     for index, speci in enumerate(scangr.specdata):
         if scangr.spectra['type'][index] == 8:
             # load calibration (high-altitude) spectrum
