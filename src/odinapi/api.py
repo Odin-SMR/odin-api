@@ -11,15 +11,15 @@ from odinapi.views.views import (
     VdsInstrumentInfo, VdsDateInfo, VdsExtData, ConfigDataFiles,
     ScanPTZNoBackend, ScanAPRNoBackend, ScanSpecNoBackend,
     FreqmodeInfoNoBackend, ScanInfoNoBackend, CollocationsView)
+from odinapi.views.views_cached import (
+    DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
+    PeriodInfoCached, L1LogCached, L1LogCached_v4, L1LogCachedList,
+    FreqmodeInfoCachedNoBackend, ScanInfoCachedNoBackend)
 from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
     Level2ViewScans, Level2ViewFailedScans, Level2ViewComments, L2iView,
     L2cView, L2View)
-from odinapi.views.views_cached import (
-    DateInfoCached, DateBackendInfoCached, FreqmodeInfoCached,
-    PeriodInfoCached, L1LogCached, L1LogCached_v4, FreqmodeInfoCachedNoBackend,
-    ScanInfoCachedNoBackend)
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
@@ -104,6 +104,10 @@ class Odin(Flask):
             ('/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/'
              'collocations/'),
             view_func=CollocationsView.as_view('collocations')
+        )
+        self.add_url_rule(
+            ('/rest_api/<version>/level1/<int:freqmode>/scans/'),
+            view_func=L1LogCachedList.as_view('scanslist')
         )
 
     def _add_level1_no_backend_cached(self):

@@ -8,6 +8,7 @@ from flask import abort, request
 
 from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from odinapi.utils.swagger import SWAGGER
+from odinapi.utils import get_args
 from database import DatabaseConnector
 from level1b_scanlogdata_exporter import get_scan_logdata
 from odinapi.views.baseview import BaseView, register_versions
@@ -50,7 +51,6 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
     # translate keys
     infoDict = {}
     itemDict = {
-        'datetime': 'DateTime',
         'freqmode': 'FreqMode',
         'backend':  'BackEnd',
         'scanid':   'ScanID',
@@ -293,7 +293,7 @@ def make_loginfo_v4(loginfo, itemlist, ind, version, date, backend):
     return datadict
 
 
-def make_loginfo_v5(loginfo, itemlist, ind, version):
+def make_loginfo_v5(loginfo, itemlist, ind, version, apriori=SPECIES):
     freq_mode = loginfo['FreqMode'][ind]
     scanid = loginfo['ScanID'][ind]
 
@@ -320,7 +320,7 @@ def make_loginfo_v5(loginfo, itemlist, ind, version):
             freq_mode,
             scanid
         )
-    for species in SPECIES:
+    for species in apriori.intersection(SPECIES):
         url_key = 'URL-apriori-{0}'.format(species)
         datadict['URLS'][url_key] = (
             '{0}rest_api/{1}/level1/{2}/{3}/apriori/{4}/').format(
@@ -406,7 +406,8 @@ class FreqmodeInfoCachedNoBackend(BaseView):
         )
 
     @register_versions('fetch')
-    def _fetch_data(self, version, date, freqmode, scanno=None):
+    def _fetch_data(
+            self, version, date, freqmode, scanno=None, apriori=SPECIES):
         con = DatabaseConnector()
         loginfo = {}
         itemlist = FreqmodeInfoCached.ITEMS_V4
@@ -425,7 +426,7 @@ class FreqmodeInfoCachedNoBackend(BaseView):
         try:
             for ind in range(len(loginfo['ScanID'])):
                 loginfo['Info'].append(
-                    make_loginfo_v5(loginfo, itemlist, ind, version))
+                    make_loginfo_v5(loginfo, itemlist, ind, version, apriori))
         except KeyError:
             loginfo['Info'] = []
 
@@ -550,3 +551,71 @@ class L1LogCached(BaseView):
 class L1LogCached_v4(L1LogCached):
     """Support class for L1 log endpoint in v4"""
     SUPPORTED_VERSIONS = ['v4']
+
+
+SWAGGER.add_parameter(
+    'start_time', 'query', str, string_format='date',
+    description="Return data after this time (inclusive).")
+SWAGGER.add_parameter(
+    'end_time', 'query', str, string_format='date',
+    description="Return data before this time (exclusive).")
+SWAGGER.add_parameter(
+    'apriori', 'query', [str], collection_format='multi',
+    description=(
+        "Return apriori data only for these species, or use 'all' for "
+        "all apriori data.")
+)
+
+
+class L1LogCachedList(FreqmodeInfoCachedNoBackend):
+    """Get a list of L1 Logs for a certain period"""
+    SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level1'],
+            ['version', 'freqmode', 'start_time', 'end_time', 'apriori'],
+            {"200": SWAGGER.get_type_response('Log', is_list=True)},
+            summary=(
+                "Get log info for scans in period and freqmode from "
+                "cached table"),
+            description=(
+                "Get log info for scans in period and freqmode from "
+                "cached table. Apriori URLs are by default only "
+                "returned for requested species, use 'apriori=all' to "
+                "override this. Species names are case sensitive, "
+                "invalid species names will be ignored - see data "
+                "documentation for information on available apriori "
+                "data."),
+        )
+
+    @register_versions('fetch')
+    def _fetch_data(self, version, freqmode):
+        start_time = get_args.get_datetime('start_time')
+        end_time = get_args.get_datetime('end_time')
+        if start_time and end_time and start_time > end_time:
+            abort(400)
+
+        apriori = get_args.get_list('apriori')
+        if apriori is None:
+            apriori = set()
+        elif "all" in apriori or "ALL" in apriori:
+            apriori = SPECIES
+        else:
+            apriori = set(apriori)
+
+        log_list = []
+        the_date = start_time
+        while the_date < end_time:
+            loginfo = super(L1LogCachedList, self)._fetch_data(
+                version, the_date, freqmode, scanno=None, apriori=apriori)
+            if len(loginfo) > 0:
+                log_list.extend(loginfo)
+            the_date += timedelta(days=1)
+
+        return log_list
+
+    @register_versions('return')
+    def _return_data(self, version, data, freqmode):
+        return {'Data': data, 'Type': 'Log', 'Count': len(data)}

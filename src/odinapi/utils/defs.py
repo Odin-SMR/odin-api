@@ -35,7 +35,7 @@ FREQMODE_TO_BACKEND = {
 }
 
 
-SPECIES = [
+SPECIES = {
     'BrO',
     'Cl2O2',
     'CO',
@@ -76,4 +76,4 @@ SPECIES = [
     'HNO3',
     'NH3',
     'OClO',
-]
+}

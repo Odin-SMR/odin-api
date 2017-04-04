@@ -57,12 +57,6 @@ SWAGGER.add_parameter(
     'max_altitude', 'query', float, description="Max altitude (m).")
 SWAGGER.add_parameter(
     'comment', 'query', str, description="Return scans with this comment.")
-SWAGGER.add_parameter(
-    'start_time', 'query', str, string_format='date',
-    description="Return data after this time (inclusive).")
-SWAGGER.add_parameter(
-    'end_time', 'query', str, string_format='date',
-    description="Return data before this time (exclusive).")
 
 
 def is_development_request(version):
@@ -357,8 +351,7 @@ class Level2ViewScans(Level2ProjectBaseView):
         start_time = get_args.get_datetime('start_time')
         end_time = get_args.get_datetime('end_time')
         if start_time and end_time and start_time > end_time:
-            return jsonify({
-                'Error': 'Start time must not be after end time'}), 400
+            abort(400)
         param = {
             'start_time': start_time,
             'end_time': end_time,
@@ -413,8 +406,7 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
         start_time = get_args.get_datetime('start_time')
         end_time = get_args.get_datetime('end_time')
         if start_time and end_time and start_time > end_time:
-            return jsonify({
-                'Error': 'Start time must not be after end time'}), 400
+            abort(400)
         param = {
             'start_time': start_time,
             'end_time': end_time,
@@ -763,7 +755,7 @@ class Level2ViewDay(Level2ProjectBaseView):
                 "400": SWAGGER.get_response('Level2BadQuery')
             },
             summary=(
-                "Get data close to provided location"),
+                "Get data for provided day"),
             description=(
                 "Get data for a certain day\n"
                 "\n"
@@ -780,7 +772,7 @@ class Level2ViewDay(Level2ProjectBaseView):
         try:
             start_time = get_args.get_datetime(val=date)
         except ValueError as e:
-            return jsonify({'Error': str(e)}), 400
+            abort(400)
         end_time = start_time + timedelta(hours=24)
         try:
             param = parse_parameters(start_time=start_time, end_time=end_time)
@@ -833,7 +825,7 @@ class Level2ViewArea(Level2ProjectBaseView):
                 "400": SWAGGER.get_response('Level2BadQuery')
             },
             summary=(
-                "Get data close to provided location"),
+                "Get data in provided area"),
             description=(
                 "Get data for a certain area\n"
                 "\n"

@@ -38,6 +38,10 @@ class TestLevel1CachedViews(unittest.TestCase):
         r = requests.get(
             'http://localhost:5000/rest_api/v5/freqmode_info/2015-01-15/42')
         self.assertEqual(r.status_code, 404)
+        r = requests.get(
+            'http://localhost:5000/rest_api/v5/level1/42/scans/'
+            '?start_time=2015-01-11&end_time=2015-01-13')
+        self.assertEqual(r.status_code, 404)
 
     def test_freqmode_info_hierarchy(self):
         """Test cached freqmode info hierarchy flow"""
@@ -109,3 +113,44 @@ class TestLevel1CachedViews(unittest.TestCase):
         self.assertEqual(r.json()['PeriodStart'], '2015-01-15')
 
         self.assertEqual(nr_freqmodes_v4, nr_freqmodes_v5)
+
+    def test_scan_list(self):
+        """Test getting list of scans for period"""
+        # V5 only
+
+        base_url = (
+            'http://localhost:5000/rest_api/{version}/level1/1/scans/?'
+            'start_time={start_time}&end_time={end_time}{apriori}')
+
+        r = requests.get(base_url.format(
+            version='v5', start_time="2015-01-11", end_time="2015-01-12",
+            apriori=''))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Count'], 489)
+        self.assertEqual(len(r.json()['Data'][0]["URLS"]), 3)
+
+        r = requests.get(base_url.format(
+            version='v5', start_time="2015-01-11", end_time="2015-01-13",
+            apriori=''))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Count'], 805)
+        self.assertEqual(len(r.json()['Data'][0]["URLS"]), 3)
+
+        r = requests.get(base_url.format(
+            version='v5', start_time="2015-01-13", end_time="2015-01-11",
+            apriori=''))
+        self.assertEqual(r.status_code, 400)
+
+        r = requests.get(base_url.format(
+            version='v5', start_time="2015-01-11", end_time="2015-01-12",
+            apriori="&apriori=BrO&apriori=O3"))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Count'], 489)
+        self.assertEqual(len(r.json()['Data'][0]["URLS"]), 5)
+
+        r = requests.get(base_url.format(
+            version='v5', start_time="2015-01-11", end_time="2015-01-12",
+            apriori="&apriori=all"))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()['Count'], 489)
+        self.assertEqual(len(r.json()['Data'][0]["URLS"]), 43)
