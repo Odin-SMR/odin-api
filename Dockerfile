@@ -1,5 +1,6 @@
 from ubuntu:14.04
 run apt-get update && apt-get install -y \
+    gfortran \
     python-numpy \
     python-psycopg2 \
     python-matplotlib \
@@ -19,6 +20,8 @@ run apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 run pip install cython python-hdf4 fortranformat
+
+run pip install pyephem spacepy pyproj
 
 #************* DEPENDENCIES
 ADD dependencies/ /dependencies/

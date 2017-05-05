@@ -15,6 +15,7 @@ webapi:
     - ./data/ptz-data/:/var/lib/odindata
     - ./data/vds-data/OSIRIS_Level2/:/osiris-data
     - ./data/ptz-data/ERA-Interim:/var/lib/odindata/ECMWF
+    - ./data/odin-l2-data:/data/odin-l2-data    
   links:
     - postgresql
     - level2db
