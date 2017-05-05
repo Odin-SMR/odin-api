@@ -186,7 +186,7 @@ class PeriodInfoCached(BaseView):
         query_str = self.gen_query(date_start, date_end)
         data = generate_freq_mode_data(query_str, request.url_root, version,
                                        include_date=True)
-        return data, date_start, date_end
+        return (data, date_start, date_end), 200, {}
 
     def gen_query(self, date_start, date_end):
         return (

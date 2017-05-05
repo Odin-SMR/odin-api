@@ -57,15 +57,17 @@ class BaseWithDataInsert(unittest.TestCase):
 
     def setUp(self):
         # Insert level2 data
+        self.scans_to_delete = []
         data = get_test_data()
         self.freq_mode = data['L2I']['FreqMode']
         self.scan_id = data['L2I']['ScanID']
         d = encrypt_util.encode_level2_target_parameter(
             self.scan_id, self.freq_mode, PROJECT_NAME)
-        self.wurl = WRITE_URL.format(version=VERSION, d=d)
+        wurl = WRITE_URL.format(version=VERSION, d=d)
 
-        r = requests.post(self.wurl, json=data)
+        r = requests.post(wurl, json=data)
         self.assertEqual(r.status_code, 201)
+        self.scans_to_delete.append(wurl)
 
         # Insert failed level2 scan
         self.failed_scan_id = self.scan_id + 1
@@ -74,17 +76,15 @@ class BaseWithDataInsert(unittest.TestCase):
                        'L2C': data['L2C'] + '\n' + self.error_message}
         d = encrypt_util.encode_level2_target_parameter(
             self.failed_scan_id, self.freq_mode, PROJECT_NAME)
-        self.wurl_failed = WRITE_URL.format(version=VERSION, d=d)
+        wurl_failed = WRITE_URL.format(version=VERSION, d=d)
 
-        r = requests.post(self.wurl_failed, json=data_failed)
+        r = requests.post(wurl_failed, json=data_failed)
         self.assertEqual(r.status_code, 201)
+        self.scans_to_delete.append(wurl_failed)
 
     def tearDown(self):
-        # Delete level2 data
-        r = requests.delete(self.wurl)
-        self.assertEqual(r.status_code, 204)
-        r = requests.delete(self.wurl_failed)
-        self.assertEqual(r.status_code, 204)
+        for url in self.scans_to_delete:
+            requests.delete(url).raise_for_status()
 
 
 @system
@@ -268,7 +268,7 @@ class TestWriteLevel2(unittest.TestCase):
 @pytest.mark.usefixtures('dockercompose')
 class TestReadLevel2(BaseWithDataInsert):
 
-    def test_get_comments(self):
+    def test_get_comments_v4(self):
         """Test get list of comments"""
         # V4
         rurl = COMMENTS_URL.format(
@@ -276,8 +276,9 @@ class TestReadLevel2(BaseWithDataInsert):
         r = requests.get(rurl)
         self.assertEqual(r.status_code, 200)
         comments = r.json()['Info']['Comments']
-        self.assertEqual(len(comments), 6)
+        assert len(comments) == 6
 
+    def test_get_comments_v5(self):
         # V5
         rurl = COMMENTS_URL_DEV.format(
             version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
@@ -285,7 +286,41 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()['Type'], 'level2_scan_comment')
         comments = r.json()['Data']
-        self.assertEqual(len(comments), 6)
+        assert len(comments) == 6
+
+    def test_get_comments_v5_respects_limit(self):
+        rurl = COMMENTS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl + '?limit=1')
+        self.assertEqual(r.status_code, 200)
+        comments = r.json()['Data']
+        assert len(comments) == 1
+        assert comments[0]['Comment'] == 'Error: This scan failed'
+
+    def test_get_comments_v5_respects_offset(self):
+        rurl = COMMENTS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl + '?offset=5')
+        self.assertEqual(r.status_code, 200)
+        comments = r.json()['Data']
+        assert len(comments) == 1
+        expected = 'Status: 9 spectra left after quality filtering'
+        assert comments[0]['Comment'] == expected
+
+    def test_get_comments_v5_empty_if_offset_gt_count(self):
+        rurl = COMMENTS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(rurl + '?offset=10')
+        r.raise_for_status()
+        comments = r.json()['Data']
+        assert len(comments) == 0
+
+    def test_get_comments_v5_has_link_header(self):
+        url = COMMENTS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=2&limit=2')
+        assert r.links['prev']['url'] == url + '/?limit=2&offset=0'
+        assert r.links['next']['url'] == url + '/?limit=2&offset=4'
 
     def test_get_scans(self):
         """Test get list of matching scans"""
@@ -340,6 +375,55 @@ class TestReadLevel2(BaseWithDataInsert):
         test_version('v4', get_scans_v4)
         test_version('v5', get_scans_v5)
 
+    def test_get_scans_respects_limit(self):
+        self.add_additional_scan(self.scan_id + 42)
+        url = SCANS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?limit=1')
+        r.raise_for_status()
+        scans = r.json()['Data']
+        assert len(scans) == 1
+        assert scans[0]['ScanID'] == self.scan_id
+
+    def test_get_scans_respects_offset(self):
+        self.add_additional_scan(self.scan_id + 42)
+        url = SCANS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=1')
+        r.raise_for_status()
+        scans = r.json()['Data']
+        assert len(scans) == 1
+        assert scans[0]['ScanID'] == self.scan_id + 42
+
+    def test_get_scans_empty_if_offset_gt_count(self):
+        self.add_additional_scan(self.scan_id + 42)
+        url = SCANS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=10')
+        r.raise_for_status()
+        scans = r.json()['Data']
+        assert len(scans) == 0
+
+    def test_get_scans_has_link_header(self):
+        self.add_additional_scan(self.scan_id + 42)
+        self.add_additional_scan(self.scan_id + 43)
+        url = SCANS_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=1&limit=1')
+        r.raise_for_status()
+        assert r.links['prev']['url'] == url + '/?limit=1&offset=0'
+        assert r.links['next']['url'] == url + '/?limit=1&offset=2'
+
+    def add_additional_scan(self, scan_id):
+        data = get_test_data()
+        freq_mode = data['L2I']['FreqMode']
+        data['L2I']['ScanID'] = scan_id
+        d = encrypt_util.encode_level2_target_parameter(
+            scan_id, freq_mode, PROJECT_NAME)
+        wurl = WRITE_URL.format(version=VERSION, d=d)
+        requests.post(wurl, json=data).raise_for_status()
+        self.scans_to_delete.append(wurl)
+
     def test_get_failed_scans(self):
         """Test get list of failed scans"""
         # V4
@@ -368,6 +452,56 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(scan['Error'], self.error_message)
         self.assertEqual(set(scan['URLS']), set([
             'URL-level2', 'URL-log', 'URL-spectra']))
+
+    def test_get_failed_scans_respects_limit(self):
+        self.add_additional_failed_scan(self.failed_scan_id + 42)
+        url = FAILED_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?limit=1')
+        r.raise_for_status()
+        scans = r.json()['Data']
+        assert len(scans) == 1
+        assert scans[0]['ScanID'] == self.failed_scan_id
+
+    def test_get_failed_scans_respects_offset(self):
+        self.add_additional_failed_scan(self.failed_scan_id + 42)
+        url = FAILED_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=1')
+        r.raise_for_status()
+        scans = r.json()['Data']
+        assert len(scans) == 1
+        assert scans[0]['ScanID'] == self.failed_scan_id + 42
+
+    def test_get_failed_scans_empty_if_offset_gt_count(self):
+        self.add_additional_failed_scan(self.failed_scan_id + 42)
+        url = FAILED_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=10')
+        r.raise_for_status()
+        scans = r.json()['Data']
+        assert len(scans) == 0
+
+    def test_get_failed_scans_has_link_header(self):
+        self.add_additional_failed_scan(self.failed_scan_id + 42)
+        self.add_additional_failed_scan(self.failed_scan_id + 43)
+        url = FAILED_URL_DEV.format(
+            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+        r = requests.get(url + '?offset=1&limit=1')
+        r.raise_for_status()
+        assert r.links['prev']['url'] == url + '/?limit=1&offset=0'
+        assert r.links['next']['url'] == url + '/?limit=1&offset=2'
+
+    def add_additional_failed_scan(self, scan_id):
+        self.error_message = u'Error: This scan failed'
+        data = get_test_data()
+        data_failed = {'L2I': [], 'L2': [],
+                       'L2C': data['L2C'] + '\n' + self.error_message}
+        d = encrypt_util.encode_level2_target_parameter(
+            scan_id, self.freq_mode, PROJECT_NAME)
+        wurl_failed = WRITE_URL.format(version=VERSION, d=d)
+        requests.post(wurl_failed, json=data_failed).raise_for_status()
+        self.scans_to_delete.append(wurl_failed)
 
     def test_get_scan(self):
         """Test get level2 data for a scan"""

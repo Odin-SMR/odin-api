@@ -1,11 +1,10 @@
+-rodinapi-requirements.in
 dateutils
-flask
 requests
 numpy
-pycrypto
 coverage
 pytest
+pytest-mongo
 pylint
 selenium
-dateutils
 jasmine

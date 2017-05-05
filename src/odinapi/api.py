@@ -266,67 +266,78 @@ class Odin(Flask):
         """Add views for browsing development projects"""
         self.add_url_rule(
             '/rest_api/<version>/level2/development/projects/',
-            view_func=Level2ViewProjects.as_view('level2devviewprojects')
+            view_func=Level2ViewProjects.as_view(
+                'level2devviewprojects', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/',
-            view_func=Level2ViewProject.as_view('level2devviewproject')
+            view_func=Level2ViewProject.as_view(
+                'level2devviewproject', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'comments/',
-            view_func=Level2ViewComments.as_view('level2devviewcomments')
+            view_func=Level2ViewComments.as_view(
+                'level2devviewcomments', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'scans/',
-            view_func=Level2ViewScans.as_view('level2devviewscans')
+            view_func=Level2ViewScans.as_view(
+                'level2devviewscans', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'failed/',
-            view_func=Level2ViewFailedScans.as_view('level2devviewfailed')
+            view_func=Level2ViewFailedScans.as_view(
+                'level2devviewfailed', development=True)
         )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/'),
-            view_func=Level2ViewScan.as_view('level2devviewscan')
+            view_func=Level2ViewScan.as_view(
+                'level2devviewscan', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/products/',
-            view_func=Level2ViewProducts.as_view('level2devviewproducts')
+            view_func=Level2ViewProducts.as_view(
+                'level2devviewproducts', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<freqmode>/'
             'products/',
-            view_func=Level2ViewProducts.as_view('level2devviewfmproducts')
+            view_func=Level2ViewProducts.as_view(
+                'level2devviewfmproducts', development=True)
         )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/L2i/'),
-            view_func=L2iView.as_view('level2devL2i')
+            view_func=L2iView.as_view('level2devL2i', development=True)
         )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/L2c/'),
-            view_func=L2cView.as_view('level2devL2c')
+            view_func=L2cView.as_view('level2devL2c', development=True)
         )
         self.add_url_rule(
             ('/rest_api/<version>/level2/development/<project>'
              '/<int:freqmode>/<int:scanno>/L2/'),
-            view_func=L2View.as_view('level2devL2')
+            view_func=L2View.as_view('level2devL2', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/locations',
-            view_func=Level2ViewLocations.as_view('level2devviewlocations')
+            view_func=Level2ViewLocations.as_view(
+                'level2devviewlocations', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<date>/',
-            view_func=Level2ViewDay.as_view('level2devviewday')
+            view_func=Level2ViewDay.as_view(
+                'level2devviewday', development=True)
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/area',
-            view_func=Level2ViewArea.as_view('level2devviewarea')
+            view_func=Level2ViewArea.as_view(
+                'level2devviewarea', development=True)
         )
 
     def _add_site_views(self):

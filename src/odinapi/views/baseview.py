@@ -127,10 +127,14 @@ class BaseView(MethodView):
                 version, *args, **kwargs)
         except BadRequest as err:
             return jsonify({'Error': str(err)}), 400
+        if isinstance(data, tuple):
+            data, status, headers = data
+        else:
+            status, headers = 200, {}
         # Assume that we always want to return json and 200
         return jsonify(
             getattr(self, self.VERSION_TO_RETURNDATA[version])(
-                version, data, *args, **kwargs))
+                version, data, *args, **kwargs)), status, headers
 
     def swagger_spec(self, version):
         """Return GET swagger spec for this view.

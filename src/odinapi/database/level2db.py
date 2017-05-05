@@ -52,11 +52,11 @@ class ProjectsDB(object):
 
 class Level2DB(object):
 
-    def __init__(self, project):
-        self.L2_collection = mongo.get_collection(
-            'level2', 'L2_%s' % project)
-        self.L2i_collection = mongo.get_collection(
-            'level2', 'L2i_%s' % project)
+    def __init__(self, project, mongo_db=None):
+        if mongo_db is None:
+            mongo_db = mongo.get_database('level2')
+        self.L2_collection = mongo_db['L2_%s' % project]
+        self.L2i_collection = mongo_db['L2i_%s' % project]
         self._create_indexes()
 
     def _create_indexes(self):
@@ -174,12 +174,34 @@ class Level2DB(object):
             match['FreqMode'] = freqmode
         return self.L2_collection.distinct('Product', filter=match)
 
-    def get_comments(self, freqmode):
-        """Return list of unique comments for a freqmode"""
-        return self.L2i_collection.distinct('Comments', {'FreqMode': freqmode})
+    def get_comments(self, freqmode, offset=None, limit=None):
+        """Return unique comments for a freqmode"""
+        pipeline = [
+            {'$match': {'FreqMode': freqmode}},
+            {'$unwind': "$Comments"},
+            {'$group': {'_id': '$Comments'}},
+            {'$sort': {'_id': 1}},
+        ]
+        if offset is not None:
+            pipeline.append({'$skip': offset})
+        if limit is not None:
+            pipeline.append({'$limit': limit})
+        for group in self.L2i_collection.aggregate(pipeline):
+            yield group['_id']
+
+    def count_comments(self, freqmode):
+        pipeline = [
+            {'$match': {'FreqMode': freqmode}},
+            {'$unwind': "$Comments"},
+            {'$group': {'_id': '$Comments'}},
+            {'$count': 'count'},
+        ]
+        return self.L2i_collection.aggregate(pipeline).next()['count']
 
     def _get_scans(self, freqmode, fields, start_time=None, end_time=None,
-                   comment=None, failed=False):
+                   comment=None, failed=False, limit=None, offset=None):
+        limit = HARD_LIMIT if limit is None else limit
+        offset = 0 if offset is None else offset
         query = {'FreqMode': freqmode, 'ProcessingError': failed}
         if start_time or end_time:
             query['ScanID'] = {}
@@ -190,25 +212,30 @@ class Level2DB(object):
         if comment:
             query['Comments'] = comment
 
-        for scan in self.L2i_collection.find(query, fields, limit=HARD_LIMIT):
-            yield scan
+        return (
+            self.L2i_collection.find(query, fields).skip(offset).limit(limit)
+        )
 
-    def get_scans(self, freqmode, start_time=None, end_time=None,
-                  comment=None):
-        """Return list of matching scans that succeeded the level2 processing
+    def get_scans(self, freqmode, **kwargs):
+        """Return matching scans that succeeded the level2 processing
         """
         fields = {'ScanID': 1, '_id': 0}
-        return self._get_scans(
-            freqmode, fields, start_time=start_time, end_time=end_time,
-            comment=comment)
+        for scan in self._get_scans(freqmode, fields, **kwargs):
+            yield scan
 
-    def get_failed_scans(self, freqmode, start_time=None, end_time=None,
-                         comment=None):
-        """Return list of matching scans that failed the level2 processing"""
+    def count_scans(self, freqmode, **kwargs):
+        scans = self._get_scans(freqmode, {'ScanID': 1}, **kwargs)
+        return scans.count()
+
+    def get_failed_scans(self, freqmode, **kwargs):
+        """Return matching scans that failed the level2 processing"""
         fields = {'ScanID': 1, 'Comments': {'$slice': -1}, '_id': 0}
-        return self._get_scans(
-            freqmode, fields, start_time=start_time, end_time=end_time,
-            comment=comment, failed=True)
+        for scan in self._get_scans(freqmode, fields, failed=True, **kwargs):
+            yield scan
+
+    def count_failed_scans(self, freqmode, **kwargs):
+        scans = self._get_scans(freqmode, {'ScanID': 1}, failed=True, **kwargs)
+        return scans.count()
 
     def get_product_count(self):
         """Return count grouped by product"""

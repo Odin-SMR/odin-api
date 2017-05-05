@@ -16,11 +16,16 @@ from odinapi.utils.jsonmodels import (
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.utils import time_util
 
-from odinapi.views import level2db
+from odinapi.database import level2db
 from odinapi.views.views import get_L2_collocations
 from odinapi.views.baseview import BaseView, register_versions, BadRequest
+from odinapi.views.utils import make_rfc5988_pagination_header
 from odinapi.utils.swagger import SWAGGER
 import odinapi.utils.get_args as get_args
+
+
+DEFAULT_LIMIT = 1000
+DEFAULT_OFFSET = 0
 
 SWAGGER.add_response('Level2BadQuery', "Unsupported query", {"Error": str})
 
@@ -57,6 +62,12 @@ SWAGGER.add_parameter(
     'max_altitude', 'query', float, description="Max altitude (m).")
 SWAGGER.add_parameter(
     'comment', 'query', str, description="Return scans with this comment.")
+SWAGGER.add_parameter(
+    'limit', 'query', int, default=DEFAULT_LIMIT,
+    description="Number of scans to return.")
+SWAGGER.add_parameter(
+    'offset', 'query', int, default=DEFAULT_OFFSET,
+    description="Skip scans before returning.")
 
 
 def is_development_request(version):
@@ -70,6 +81,9 @@ class Level2ProjectBaseView(BaseView):
     """With version v5 and above development projects should only be
     accessible from endpoints that have '/development/' in the path.
     """
+
+    def __init__(self, development=False):
+        self.development = development
 
     def get(self, version, project, *args, **kwargs):
         is_dev = is_development_request(version)
@@ -283,7 +297,7 @@ class Level2ViewComments(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode'],
+            ['version', 'project', 'freqmode', 'offset', 'limit'],
             {"200": SWAGGER.get_type_response(
                 'level2_scan_comment', is_list=True)},
             summary="Get list of comments for a freqmode"
@@ -291,8 +305,10 @@ class Level2ViewComments(Level2ProjectBaseView):
 
     @register_versions('fetch')
     def _fetch(self, version, project, freqmode):
+        limit = get_args.get_int('limit') or DEFAULT_LIMIT
+        offset = get_args.get_int('offset') or DEFAULT_OFFSET
         db = level2db.Level2DB(project)
-        comments = db.get_comments(freqmode)
+        comments = db.get_comments(freqmode, offset=offset, limit=limit)
         base_url = get_base_url(version)
         info = {
             'Comments': [{
@@ -307,18 +323,36 @@ class Level2ViewComments(Level2ProjectBaseView):
                 }
             } for comment in comments]
         }
-        return info
+        count = db.count_comments(freqmode)
+        data = {
+            'info': info,
+            'count': count,
+        }
+        headers = {
+            'Link': make_rfc5988_pagination_header(
+                offset, limit, count,
+                self._get_endpoint(),
+                version=version, project=project, freqmode=freqmode
+            ),
+        }
+        return data, 200, headers
+
+    def _get_endpoint(self):
+        return (
+            'level2devviewcomments' if self.development
+            else 'level2viewcomments'
+        )
 
     @register_versions('return', ['v4'])
-    def _return(self, version, info, project, freqmode):
-        return {'Info': info}
+    def _return(self, version, data, project, freqmode):
+        return {'Info': data['info']}
 
     @register_versions('return', ['v5'])
-    def _return_v5(self, version, info, project, freqmode):
+    def _return_v5(self, version, data, project, freqmode):
         return {
-            'Data': info['Comments'],
+            'Data': data['info']['Comments'],
             'Type': 'level2_scan_comment',
-            'Count': len(info['Comments'])}
+            'Count': data['count']}
 
 
 SWAGGER.add_type('level2_scan_info', {
@@ -340,7 +374,7 @@ class Level2ViewScans(Level2ProjectBaseView):
         return SWAGGER.get_path_definition(
             ['level2'],
             ['version', 'project', 'freqmode', 'start_time', 'end_time',
-             'comment'],
+             'comment', 'limit', 'offset'],
             {"200": SWAGGER.get_type_response(
                 'level2_scan_info', is_list=True)},
             summary="Get list of matching scans"
@@ -350,6 +384,8 @@ class Level2ViewScans(Level2ProjectBaseView):
     def _fetch(self, version, project, freqmode):
         start_time = get_args.get_datetime('start_time')
         end_time = get_args.get_datetime('end_time')
+        limit = get_args.get_int('limit') or DEFAULT_LIMIT
+        offset = get_args.get_int('offset') or DEFAULT_OFFSET
         if start_time and end_time and start_time > end_time:
             abort(400)
         param = {
@@ -357,21 +393,44 @@ class Level2ViewScans(Level2ProjectBaseView):
             'end_time': end_time,
             'comment': get_args.get_string('comment')}
         db = level2db.Level2DB(project)
-        scans = list(db.get_scans(freqmode, **param))
+        scans = list(
+            db.get_scans(freqmode, limit=limit, offset=offset, **param))
         for scan in scans:
             scan['Date'] = time_util.stw2datetime(
                 scan['ScanID']).date().isoformat()
             scan['URLS'] = get_scan_urls(
                 version, project, freqmode, scan['ScanID'])
-        return scans
+        count = db.count_scans(freqmode, **param)
+        data = {
+            'scans': scans,
+            'count': count,
+        }
+        headers = {
+            'Link': make_rfc5988_pagination_header(
+                offset, limit, count,
+                self._get_endpoint(),
+                version=version, project=project, freqmode=freqmode, **param
+            )
+        }
+        return data, 200, headers
+
+    def _get_endpoint(self):
+        return (
+            'level2devviewscans' if self.development
+            else 'level2viewscans'
+        )
 
     @register_versions('return', ['v4'])
-    def _return(self, version, scans, project, freqmode):
-        return {'Info': {'Count': len(scans), 'Scans': scans}}
+    def _return(self, version, data, project, freqmode):
+        return {'Info': {'Count': data['count'], 'Scans': data['scans']}}
 
     @register_versions('return', ['v5'])
-    def _return_v5(self, version, scans, project, freqmode):
-        return {'Data': scans, 'Type': 'level2_scan_info', 'Count': len(scans)}
+    def _return_v5(self, version, data, project, freqmode):
+        return {
+            'Data': data['scans'],
+            'Type': 'level2_scan_info',
+            'Count': data['count'],
+        }
 
 
 SWAGGER.add_type('level2_failed_scan_info', {
@@ -394,7 +453,7 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
         return SWAGGER.get_path_definition(
             ['level2'],
             ['version', 'project', 'freqmode', 'start_time', 'end_time',
-             'comment'],
+             'comment', 'offset', 'limit'],
             {"200": SWAGGER.get_type_response(
                 'level2_failed_scan_info', is_list=True)},
             summary=(
@@ -405,6 +464,8 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
     def _fetch(self, version, project, freqmode):
         start_time = get_args.get_datetime('start_time')
         end_time = get_args.get_datetime('end_time')
+        limit = get_args.get_int('limit') or DEFAULT_LIMIT
+        offset = get_args.get_int('offset') or DEFAULT_OFFSET
         if start_time and end_time and start_time > end_time:
             abort(400)
         param = {
@@ -412,23 +473,41 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
             'end_time': end_time,
             'comment': get_args.get_string('comment')}
         db = level2db.Level2DB(project)
-        scans = list(db.get_failed_scans(freqmode, **param))
+        scans = list(
+            db.get_failed_scans(freqmode, offset=offset, limit=limit, **param))
         for scan in scans:
             scan['URLS'] = get_scan_urls(
                 version, project, freqmode, scan['ScanID'])
             scan['Error'] = scan.pop('Comments')[0]
             scan['Date'] = time_util.stw2datetime(
                 scan['ScanID']).date().isoformat()
-        return scans
+        count = db.count_failed_scans(freqmode, **param)
+        data = {
+            'scans': scans,
+            'count': count,
+        }
+        headers = {
+            'Link': make_rfc5988_pagination_header(
+                offset, limit, count,
+                self._get_endpoint(),
+                version=version, project=project, freqmode=freqmode, **param
+            ),
+        }
+        return data, 200, headers
+
+    def _get_endpoint(self):
+        return (
+            'level2devviewfailed' if self.development else 'level2viewfailed'
+        )
 
     @register_versions('return', ['v4'])
-    def _return(self, version, scans, project, freqmode):
-        return {'Info': {'Count': len(scans), 'Scans': scans}}
+    def _return(self, version, data, project, freqmode):
+        return {'Info': {'Count': data['count'], 'Scans': data['scans']}}
 
     @register_versions('return', ['v5'])
-    def _return_v5(self, version, scans, project, freqmode):
-        return {'Data': scans, 'Type': 'level2_failed_scan_info',
-                'Count': len(scans)}
+    def _return_v5(self, version, data, project, freqmode):
+        return {'Data': data['scans'], 'Type': 'level2_failed_scan_info',
+                'Count': data['count']}
 
 
 class Level2ViewScan(Level2ProjectBaseView):

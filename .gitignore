@@ -9,3 +9,4 @@
 *.cache
 !src/odinapi/test/testdata/*.json
 env
+result.xml
