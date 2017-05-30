@@ -84,7 +84,7 @@ def get_products(args):
         'rest_api/v5/level2/development/' +
         '{0}/products/'.format(args.project)
     )
-    products = requests.get(url).json().values()
+    products = requests.get(url).json()['Data']
     if args.product == 'all':
         return products
     else:
@@ -92,7 +92,7 @@ def get_products(args):
             return [args.product]
         else:
             print(
-                "Specified product not found, picke one of "
+                "Specified product not found, pick one of "
                 "\n{products}\n"
                 "or 'all'!".format(products=products)
             )
