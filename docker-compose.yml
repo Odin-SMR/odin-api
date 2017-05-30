@@ -3,10 +3,16 @@ postgresql:
   ports:
     - 5432:5432
 
+httpd:
+  build: ./services/proxy
+  ports:
+    - 5000:80
+  links:
+    - webapi
+    
+
 webapi:
   build: .
-  ports:
-    - 5000:5000
   volumes:
     - ./src/:/app
     - ./data/vds-data:/vds-data
