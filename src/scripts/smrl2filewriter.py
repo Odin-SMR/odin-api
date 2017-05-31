@@ -435,82 +435,101 @@ class Smrl2filewriter(object):
            - name and email of the person responsible for the dataset
              within the project
         '''
-        self.rootgrp.title = (
-            'ESA MesosphEO / ESA Odin reprocessing ' +
-            '{0} {1} product level 2'.format(*[self.project, self.l2item])
-        )
-        self.rootgrp.institution = 'Chalmers University of Technology'
-        self.rootgrp.source = 'Odin/SMR L2 version {0}'.format(l2version)
-        #  self.rootgrp.history = '?' skip this?
-        self.rootgrp.platform = 'Odin'
-        self.rootgrp.sensor = 'SMR'
-        self.rootgrp.affiliation = (
-            'Chalmers University of Technology, ' +
-            'Department of Earth and Space Sciences'
-        )
-        self.rootgrp.date_created = (
-            'Created ' + DT.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-        )
-        self.rootgrp.creator_name = 'Donal Murtagh'
-        self.rootgrp.creator_url = 'odin.rss.chalmers.se'
-        self.rootgrp.creator_email = 'donal.murtagh@chalmers.se'
-        self.rootgrp.address = '412 96 Gothenburg, Sweden'
-        self.rootgrp.naming_authority = 'Chalmers University of Technology'
-        self.rootgrp.product_version = prodversion
-        self.rootgrp.level_1_data_version = l1version
-        self.rootgrp.level_2_data_version = l2version
-        self.rootgrp.level_2_data_product = self.l2data['Product']
-        self.rootgrp.file_id = self.odinl2file
-        self.rootgrp.comment = (
-            'These data were created at Chalmers as part of the ' +
-            'ESA MesosphEO / ESA Odin reprocessing projects'
-        )
-        self.rootgrp.summary = (
-            'This dataset contains screened level-2 limb ' +
-            '{0} profiles from Odin/SMR'.format(self.l2item)
-        )
-        self.rootgrp.keywords = (
-            '{0}, remote sensing, atmosphere, Odin, SMR'.format(self.l2item)
-        )
-        self.rootgrp.value_for_nodata = 'NaN'
-        #  self.rootgrp.Conventions = 'CF-1.5' skip this?
-        self.rootgrp.standard_name_vocabulary = (
-            'NetCDF Climate and Forecast(CF) Metadata Convention version 18'
-        )
-        self.rootgrp.license = (
-            'ESA MesosphEO / ESA Odin reprocessing guidelines'
-        )
-        self.rootgrp.restriction = (
-            'Restricted under the use of ESA MesosphEO / ' +
-            'ESA Odin reprocessing guidelines'
-        )
-        self.rootgrp.geospatial_lat_min = '-90.0'
-        self.rootgrp.geospatial_lat_max = '+90.0'
-        self.rootgrp.geospatial_lon_min = '-180.0'
-        self.rootgrp.geospatial_lon_max = '+180.0'
-        self.rootgrp.geospatial_vertical_max = get_geospatial_vertical_max(
-            self.rootgrp['Geolocation']['pressure']
-        )
-        self.rootgrp.geospatial_vertical_min = get_geospatial_vertical_min(
-            self.rootgrp['Geolocation']['pressure']
-        )
-        self.rootgrp.string_date_format = 'YYYYMMDDThhmmssZ'
-        self.rootgrp.time_coverage_start = get_time_coverage_start(
-            self.rootgrp['Geolocation']['time']
-        )
-        self.rootgrp.time_coverage_end = get_time_coverage_end(
-            self.rootgrp['Geolocation']['time']
-        )
-        self.rootgrp.number_of_press_levels = get_number_of_pressure_levels(
-            self.rootgrp['Geolocation']['pressure']
-        )
-        self.rootgrp.number_of_profiles = get_number_of_profiles(
-            self.rootgrp['Geolocation']['time']
-        )
-        self.rootgrp.file_version = '''fv-{0}'''.format(*[prodversion])
-        self.rootgrp.file_version_description = '''fv-{0}: {1}'''.format(
-            *[prodversion, file_vers_description]
-        )
+        if not hasattr(self.rootgrp, 'title'):
+            # write all attributes
+            self.rootgrp.title = (
+                'ESA MesosphEO / ESA Odin reprocessing ' +
+                '{0} {1} product level 2'.format(*[self.project, self.l2item])
+            )
+            self.rootgrp.institution = 'Chalmers University of Technology'
+            self.rootgrp.source = 'Odin/SMR L2 version {0}'.format(l2version)
+            #  self.rootgrp.history = '?' skip this?
+            self.rootgrp.platform = 'Odin'
+            self.rootgrp.sensor = 'SMR'
+            self.rootgrp.affiliation = (
+                'Chalmers University of Technology, ' +
+                'Department of Earth and Space Sciences'
+            )
+            self.rootgrp.date_created = (
+                'Created ' + DT.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            )
+            self.rootgrp.creator_name = 'Donal Murtagh'
+            self.rootgrp.creator_url = 'odin.rss.chalmers.se'
+            self.rootgrp.creator_email = 'donal.murtagh@chalmers.se'
+            self.rootgrp.address = '412 96 Gothenburg, Sweden'
+            self.rootgrp.naming_authority = 'Chalmers University of Technology'
+            self.rootgrp.product_version = prodversion
+            self.rootgrp.level_1_data_version = l1version
+            self.rootgrp.level_2_data_version = l2version
+            self.rootgrp.level_2_data_product = self.l2data['Product']
+            self.rootgrp.file_id = self.odinl2file
+            self.rootgrp.comment = (
+                'These data were created at Chalmers as part of the ' +
+                'ESA MesosphEO / ESA Odin reprocessing projects'
+            )
+            self.rootgrp.summary = (
+                'This dataset contains screened level-2 limb ' +
+                '{0} profiles from Odin/SMR'.format(self.l2item)
+            )
+            self.rootgrp.keywords = (
+                '{0}, remote sensing, atmosphere, Odin, SMR'.format(
+                    self.l2item
+                )
+            )
+            self.rootgrp.value_for_nodata = 'NaN'
+            #  self.rootgrp.Conventions = 'CF-1.5' skip this?
+            self.rootgrp.standard_name_vocabulary = (
+                'NetCDF Climate and Forecast(CF) Metadata ' +
+                'Convention version 18'
+            )
+            self.rootgrp.license = (
+                'ESA MesosphEO / ESA Odin reprocessing guidelines'
+            )
+            self.rootgrp.restriction = (
+                'Restricted under the use of ESA MesosphEO / ' +
+                'ESA Odin reprocessing guidelines'
+            )
+            self.rootgrp.geospatial_lat_min = '-90.0'
+            self.rootgrp.geospatial_lat_max = '+90.0'
+            self.rootgrp.geospatial_lon_min = '-180.0'
+            self.rootgrp.geospatial_lon_max = '+180.0'
+            self.rootgrp.geospatial_vertical_max = get_geospatial_vertical_max(
+                self.rootgrp['Geolocation']['pressure']
+            )
+            self.rootgrp.geospatial_vertical_min = get_geospatial_vertical_min(
+                self.rootgrp['Geolocation']['pressure']
+            )
+            self.rootgrp.string_date_format = 'YYYYMMDDThhmmssZ'
+            self.rootgrp.time_coverage_start = get_time_coverage_start(
+                self.rootgrp['Geolocation']['time']
+            )
+            self.rootgrp.time_coverage_end = get_time_coverage_end(
+                self.rootgrp['Geolocation']['time']
+            )
+            self.rootgrp.number_of_press_levels = get_number_of_pres_levels(
+                self.rootgrp['Geolocation']['pressure']
+            )
+            self.rootgrp.number_of_profiles = get_number_of_profiles(
+                self.rootgrp['Geolocation']['time']
+            )
+            self.rootgrp.file_version = '''fv-{0}'''.format(*[prodversion])
+            self.rootgrp.file_version_description = '''fv-{0}: {1}'''.format(
+                *[prodversion, file_vers_description]
+            )
+        else:
+            #  only update attribute that needs to be updated
+            self.rootgrp.date_created = (
+                'Created ' + DT.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            )
+            self.rootgrp.time_coverage_start = get_time_coverage_start(
+                self.rootgrp['Geolocation']['time']
+            )
+            self.rootgrp.time_coverage_end = get_time_coverage_end(
+                self.rootgrp['Geolocation']['time']
+            )
+            self.rootgrp.number_of_profiles = get_number_of_profiles(
+                self.rootgrp['Geolocation']['time']
+            )
 
 
 def get_valid_range(pressure_grid, meas_resp, min_resp=0.7):
@@ -555,7 +574,7 @@ def get_time_coverage_end(time):
         )).strftime("%Y%m%dT%H%M%SZ")
 
 
-def get_number_of_pressure_levels(pressure):
+def get_number_of_pres_levels(pressure):
     '''get number of pressure levels'''
     return np.array(pressure).shape[0]
 
