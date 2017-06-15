@@ -14,12 +14,12 @@ run apt-get update && apt-get install -y \
     git \
     curl \
     m4 \
-    build-essential \
-    --no-install-recommends && \
+    build-essential && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 run pip install cython python-hdf4 fortranformat
+RUN pip install setuptools --upgrade
 
 run pip install pyephem spacepy pyproj
 
@@ -60,13 +60,7 @@ RUN export CPPFLAGS=-I/dependencies/hdf5-1.8.16/hdf5/include \
     cd .. && rm -rf netcdf-c-4.3.3.1*
 
 #netcdf4 python
-RUN git clone https://github.com/Unidata/netcdf4-python.git && \
-    cd netcdf4-python && \
-    git checkout v1.2.4rel && \
-    cp setup.cfg.template setup.cfg && \
-    python setup.py build && \
-    python setup.py install && \
-    cd .. && rm -rf netcdf4-python*
+RUN pip install git+https://github.com/Unidata/netcdf4-python.git
 
 #coda
 RUN cd /dependencies && tar -xzf coda-2.17.3.tar.gz && \
@@ -103,8 +97,10 @@ run pip install six==1.10.0               # via python-dateutil
 run pip install sqlalchemy==1.1.4
 run pip install visitor==0.1.3            # via flask-bootstrap
 run pip install werkzeug==0.11.11         # via flask
+run pip install gunicorn==19.7.1
 
 copy src/ /app/
 run cd /app && python setup.py install && python setup.py develop
 expose 5000
-cmd python -m odinapi.api
+workdir /app
+cmd gunicorn -w 4 -b 0.0.0.0:5000 --timeout 180 odinapi.api:app

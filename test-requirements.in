@@ -8,3 +8,5 @@ pytest-mongo
 pylint
 selenium
 jasmine
+pep8
+pyflakes

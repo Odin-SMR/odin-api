@@ -9,4 +9,5 @@
 *.cache
 !src/odinapi/test/testdata/*.json
 env
+ghostdriver.log
 result.xml

@@ -414,22 +414,10 @@ class Odin(Flask):
         )
 
 
-def main():
-    """Default function"""
-    app = Odin(__name__)
+app = Odin(__name__)
 
-    # Swagger ui will be available at /apidocs/index.html
-    blueprint = Blueprint(
-        'swagger', __name__, static_url_path='/apidocs',
-        static_folder='/swagger-ui')
-    app.register_blueprint(blueprint)
-
-    app.run(
-        host='0.0.0.0',
-        debug='ODIN_API_PRODUCTION' not in environ,
-        threaded=True
-    )
-
-
-if __name__ == "__main__":
-    main()
+# Swagger ui will be available at /apidocs/index.html
+blueprint = Blueprint(
+    'swagger', __name__, static_url_path='/apidocs',
+    static_folder='/swagger-ui')
+app.register_blueprint(blueprint)

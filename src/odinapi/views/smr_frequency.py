@@ -112,7 +112,7 @@ class Smrl1bFreqspec(object):
             else:
                 freq = self.ac_intmode_other()
         if freq == []:
-            print 'no frequencies, spectrum not frequency sorted!'
+            print('no frequencies, spectrum not frequency sorted!')
             return []
         return freq
 

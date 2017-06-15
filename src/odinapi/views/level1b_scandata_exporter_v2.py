@@ -1,19 +1,21 @@
-# pylint: disable=E0401
+# pylint: disable=E0401,C0413
 '''extract scan data from odin database and display on webapi'''
 
 
 from datetime import datetime
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
 from dateutil.relativedelta import relativedelta
-from odinapi.views.utils import copyemptydict
-from odinapi.views.freq_calibration import Freqcorr572
-from odinapi.views.smr_quality import (
+import matplotlib
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt  # nopep8
+from odinapi.views.utils import copyemptydict  # nopep8
+from odinapi.views.freq_calibration import Freqcorr572  # nopep8
+from odinapi.views.smr_quality import (  # nopep8
     QualityControl,
     QualityDisplay
 )
-from odinapi.views.smr_frequency import (
+from odinapi.views.smr_frequency import (  # nopep8
     Smrl1bFreqspec,
     Smrl1bFreqsort,
     freqfunc,
@@ -142,8 +144,8 @@ class ScandataExporter(object):
                              '''.format(*[stw1, stw2, stw_offset]))
         self.refdata = query.dictresult()
         if result == [] or result2 == [] or self.refdata == []:
-            print '''1: could not extract all necessary data
-                     for '{0}' in scan {1}'''.format(*temp)
+            print('''1: could not extract all necessary data
+                     for '{0}' in scan {1}'''.format(*temp))
             return 0
         # combine target and calibration data
         self.specdata = []  # list of both target and calibration spectrum data
@@ -997,7 +999,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
     except IndexError:
         isok = 0
     if isok == 0:
-        print 'data for scan {0} not found'.format(calstw)
+        print('data for scan {0} not found'.format(calstw))
         return {}
     scangr.decode_refdata()
     scangr.decode_specdata()

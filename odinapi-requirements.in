@@ -5,3 +5,5 @@ pycrypto
 pymongo
 dateutils
 scipy
+gunicorn
+
