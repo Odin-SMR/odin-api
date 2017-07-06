@@ -46,28 +46,47 @@
                     <option selected="selected">development</option>
                     <option>production</option>
                   </select-->
+                </td>
                 <td>
                   <select id="select-project" name="project">
                     <option selected="selected" disabled>Choose project</option>
                   </select>
-              </tr><tr>
+                  <div id="select-project-loader" class='loader'>
+                    <div id='select-project-loader-spinner' class='spinner'></div>
+                    <p>Loading projects...</p>
+                  </div>
+                </td>
+              </tr>
+              <tr>
                 <td>Freqmode:
+                </td>
                 <td>
                   <select id="select-freqmode" name="freqmode">
                     <option selected="selected" disabled>Choose freqmode</option>
                   </select>
+                  <div id="select-freqmode-loader" class='loader'>
+                    <div id='select-freqmode-loader-spinner' class='spinner'></div>
+                    <p>Loading freqmodes...</p>
+                  </div>
+                </td>
               </tr><tr>
                 <td>Start:
+                </td>
                 <td><input name="start_date" data-provide="datepicker" data-date-format="yyyy-mm-dd" size="12">
+                </td>
               </tr><tr>
                 <td>End:
+                </td>
                 <td><input name="end_date" data-provide="datepicker" data-date-format="yyyy-mm-dd" size="12">
+                </td>
               </tr><tr>
                 <td colspan="2">
                   <input type="radio" name="types" value="scans" checked> Scans
                   <input type="radio" name="types" value="failed"> Failed
+                </td>
               </tr><tr>
                 <td><input type="submit" value="Show">
+                </td>
               </tr>
             </table>
           </form>

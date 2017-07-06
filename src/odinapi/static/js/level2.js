@@ -1,39 +1,142 @@
 function initLevel2Dashboard() {
+    $('#select-project-loader').hide();
+    $('#select-freqmode-loader').hide();
     fillProjectSelector();
 }
 
-function fillProjectSelector() {
-    $.getJSON(
-        '/rest_api/v5/level2/projects',
-        function(data) {
-            $('#select-project').empty();
-            $('#select-project').append(
-                '<option selected="selected" disabled>Choose project</option>');
-            $('#select-project').append(
-                '<option disabled>-- Production --</option>');
-            $.each(data.Data, function (index, project) {
-                $('#select-project').append(
-                    '<option value="' + project.Name + '">' +
-                        project.Name + '</option>');
-            });
+function populateSelectWithDataOrSetNoData(settings, data) {
+    if (settings.title !== undefined) {
+        $(settings.target).append(
+            '<option disabled>-- ' + settings.title + ' --</option>');
+    }
+    if (settings.empty !== undefined && data.Data.length === 0) {
+        $(settings.target).append(
+            '<option disabled><em>' + settings.empty +
+            '</em></option>');
+    } else {
+        $.each(data.Data, function (index, item) {
+            $(settings.target).append(
+                '<option value="' + item[settings.itemKey] + '">' +
+                    item[settings.itemKey] + '</option>');
         });
-    $.getJSON(
-        '/rest_api/v5/level2/development/projects',
-        function(data) {
-            $('#select-project').append(
-                '<option disabled>-- Development --</option>');
-            $.each(data.Data, function (index, project) {
-                $('#select-project').append(
-                    '<option value="development/' + project.Name + '">' +
-                        project.Name + '</option>');
-            });
+    }
+}
+
+function populateSelectWithFailMessage(settings) {
+
+    if (settings.title !== undefined) {
+        $(settings.target).append(
+            '<option disabled>-- ' + settings.title + ' --</option>');
+    }
+    if (settings.fail !== undefined) {
+        $(settings.target).append(
+            '<option disabled><em>' + settings.fail +
+            '</em></option>');
+    }
+}
+
+function handleSelectLoadingStatus(settings, completeCheck) {
+    if (completeCheck.single !== true) {
+        completeCheck.requestsEnded[settings.completionIndex] = true;
+    }
+    if (completeCheck.single === true ||
+            completeCheck.requestsEnded.every(function (v) {return v;})) {
+
+        $(settings.loaderTarget).hide();
+    }
+    $(settings.target).removeAttr('disabled');
+}
+
+function promiseRequestWithLoader(settings, completeCheck) {
+
+    $.getJSON(settings.uri)
+        .done(function(data) {
+            populateSelectWithDataOrSetNoData(settings, data);
+        })
+        .fail(function(data) {
+            populateSelectWithFailMessage(settings);
+        })
+        .always(function(data) {
+            handleSelectLoadingStatus(settings, completeCheck);
         });
 }
 
+function fillProjectSelector() {
+
+    var completeCheck = {
+        requestsEnded : [false, false],
+        single: false
+    };
+
+    var target = '#select-project';
+    var targetLoader = '#select-project-loader';
+
+    $(targetLoader).show();
+
+    $(target).empty();
+    $(target).attr('disabled', 'disabled');
+
+    $(target).append(
+        '<option selected="selected" disabled>Choose project</option>');
+
+    var requests = {
+        production : {
+            uri : '/rest_api/v5/level2/projects',
+            completionIndex: 0,
+            title: 'Production',
+            empty: 'No projects in database',
+            fail: 'Failed to load projects',
+            target: target,
+            loaderTarget: targetLoader,
+            itemKey: 'Name'
+        },
+
+        development : {
+            uri : '/rest_api/v5/level2/development/projects',
+            completionIndex: 1,
+            title: 'Development',
+            empty: 'No projects in database',
+            fail: 'Failed to load projects',
+            target: target,
+            loaderTarget: targetLoader,
+            itemKey: 'Name'
+        }
+    };
+
+    promiseRequestWithLoader(requests.production, completeCheck);
+    promiseRequestWithLoader(requests.development, completeCheck);
+}
+
 function fillFreqmodeSelector() {
-    project = $('#select-project').val();
+    var target = '#select-freqmode';
+    var targetLoader = '#select-freqmode-loader';
+
+    $(targetLoader).show();
+    $(target).hide();
+
+    $(target).empty();
+
+    $(target).append(
+        '<option selected="selected" disabled>Choose freqmode</option>');
+
+    var project = $('#select-project').val();
+
+    var settings = {
+        uri : '/rest_api/v5/level2/' + project,
+        empty: 'No freqmodes in database for' + project,
+        fail: 'Failed to load freqmodes for' + project,
+        target: target,
+        loaderTarget: targetLoader,
+        itemKey: 'FreqMode'
+    };
+
+    var completeCheck = {
+        single: true
+    };
+
+    promiseRequestWithLoader(settings, completeCheck);
+
     $.getJSON(
-        '/rest_api/v5/level2/' + project,
         function(data) {
             $('#select-freqmode').empty();
             $('#select-freqmode').append(

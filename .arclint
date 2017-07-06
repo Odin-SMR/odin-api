@@ -19,7 +19,8 @@
     "jshint": {
       "type": "jshint",
       "include": "(\\.js$)",
-      "exclude": "(\\.min.js$)"
+      "exclude": "(\\.min.js$)",
+      "exclude": "(jasmine-jquery.js)"
     }
   }
 }

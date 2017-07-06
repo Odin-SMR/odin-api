@@ -62,3 +62,149 @@ describe("Tests for array manipulations for convenient plotting:",
     });
 
 });
+
+describe("Tests DOM manipulation for project selection", function() {
+
+    beforeEach(function() {
+        //jasmine.getFixtures().fixturesPath = '/home/martin/Devel/odin-api/spec/javascripts/fixtures';
+        setFixtures('<select id="select-project" name="project"><option selected="selected" disabled>Choose project</option></select><div id="select-project-loader" class="loader"><div id="select-project-loader-spinner" class="spinner"></div><p>Loading projects...</p></div>');
+    });
+
+    it("adds success data", function() {
+
+        var target = '#select-project';
+        var settings = {
+            target: target,
+            itemKey: 'Name'
+        };
+
+        var data = {
+            Data: [
+                {
+                    Name: 'Data 1'
+                },
+                {
+                    Name: 'Data 2'
+                }
+            ]
+        };
+
+        populateSelectWithDataOrSetNoData(settings, data);
+
+        expect($(target)).toContainText('Data 1');
+        expect($(target)).toContainText('Data 2');
+        expect($(target + " option").size()).toBe(3);
+    });
+
+    it("adds success data with title", function() {
+
+        var target = '#select-project';
+        var settings = {
+            title: 'Title',
+            target: target,
+            itemKey: 'Name'
+        };
+
+        var data = {
+            Data: [
+                {
+                    Name: 'Data 1'
+                },
+                {
+                    Name: 'Data 2'
+                }
+            ]
+        };
+
+        populateSelectWithDataOrSetNoData(settings, data);
+
+        expect($(target)).toContainText('Title');
+        expect($(target)).toContainText('Data 1');
+        expect($(target)).toContainText('Data 2');
+        expect($(target + " option").size()).toBe(4);
+    });
+
+	it("adds no-data if no data", function() {
+
+        var target = '#select-project';
+        var settings = {
+            empty: 'No data',
+            target: target,
+            itemKey: 'Name'
+        };
+
+        var data = {
+            Data: [
+            ]
+        };
+
+        populateSelectWithDataOrSetNoData(settings, data);
+
+        expect($(target)).toContainText('No data');
+        expect($(target + " option").size()).toBe(2);
+	});
+
+	it("adds fail if status code != 200", function() {
+
+        var target = '#select-project';
+        var settings = {
+            fail: 'Error',
+            target: target,
+            itemKey: 'Name'
+        };
+
+        populateSelectWithFailMessage(settings);
+
+        expect($(target)).toContainText('Error');
+        expect($(target + " option").size()).toBe(2);
+	});
+
+	it("hides loader when single request is done", function() {
+
+        var target = '#select-project';
+        var targetLoader = '#select-project-loader';
+        var settings = {
+            loaderTarget: targetLoader,
+        };
+
+        var completeCheck = {
+            single: true
+        };
+		$(targetLoader).show();
+		expect($(targetLoader)).toBeVisible();
+		handleSelectLoadingStatus(settings, completeCheck);
+		expect($(targetLoader)).not.toBeVisible();
+		expect($(target)).toBeVisible();
+
+	});
+
+	it("hides loader only when all requests are done", function() {
+
+        var target = '#select-project';
+        var targetLoader = '#select-project-loader';
+        var settings = {
+            loaderTarget: targetLoader,
+            completionIndex: 0
+        };
+
+        var completeCheck = {
+            single: false,
+        	requestsEnded : [false, false]
+        };
+		$(targetLoader).show();
+		expect($(targetLoader)).toBeVisible();
+
+		handleSelectLoadingStatus(settings, completeCheck);
+
+		expect($(targetLoader)).toBeVisible();
+		expect($(target)).toBeVisible();
+
+		settings.completionIndex = 1;
+
+		handleSelectLoadingStatus(settings, completeCheck);
+
+		expect($(targetLoader)).not.toBeVisible();
+		expect($(target)).toBeVisible();
+	});
+
+});
