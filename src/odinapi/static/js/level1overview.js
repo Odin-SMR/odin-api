@@ -46,20 +46,26 @@ function initLevel1(date) {
             tr.removeClass('shown');
         } else {
             row.child(addInfo(freqmode)).show();
+            $(this).closest('tbody')
+                .find('.highlight')
+                .each(function() {$(this).removeClass("highlight");});
+
             tr.addClass('shown');
-        }
-        // The plot rows don't have the necessary attributes, so don't try to
-        // update when those are clicked:
-        if ((backend == "AC1") || (backend == "AC2")) {
-            clearDataTable();
-            updateDataTable(date, freqmode);
-            updatePlot(date, freqmode);
-        } else if (!tr.hasClass("foldablePlot")) {
-            backend = tr.prev().children().eq(0).text();
-            freqmode = tr.prev().children().eq(1).text();
-            clearDataTable();
-            updateDataTable(date, freqmode);
-            updatePlot(date, freqmode);
+            tr.addClass('highlight');
+
+            // The plot rows don't have the necessary attributes,
+            // so don't try to update when those are clicked:
+            if ((backend == "AC1") || (backend == "AC2")) {
+                clearDataTable();
+                updateDataTable(date, freqmode);
+                updatePlot(date, freqmode);
+            } else if (!tr.hasClass("foldablePlot")) {
+                backend = tr.prev().children().eq(0).text();
+                freqmode = tr.prev().children().eq(1).text();
+                clearDataTable();
+                updateDataTable(date, freqmode);
+                updatePlot(date, freqmode);
+            }
         }
     });
 }

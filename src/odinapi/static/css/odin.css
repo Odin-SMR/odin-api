@@ -19,6 +19,17 @@ img.loadingsql {
     width: 800px;
     background: transparent url(/static/images/odin-loader.gif) no-repeat scroll center center;
 }
+
+.highlight {
+    background-color: #428bca !important;
+    color: #fff;
+}
+
+.highlight a {
+    color: #fff;
+    font-style: italic;
+}
+
 .plotter {
     height: 60px;
     width: 80%;
