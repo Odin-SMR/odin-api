@@ -60,7 +60,7 @@ RUN export CPPFLAGS=-I/dependencies/hdf5-1.8.16/hdf5/include \
     cd .. && rm -rf netcdf-c-4.3.3.1*
 
 #netcdf4 python
-RUN pip install git+https://github.com/Unidata/netcdf4-python.git
+RUN pip install git+https://github.com/Unidata/netcdf4-python.git@v1.2.4rel
 
 #coda
 RUN cd /dependencies && tar -xzf coda-2.17.3.tar.gz && \
