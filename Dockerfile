@@ -99,6 +99,14 @@ run pip install visitor==0.1.3            # via flask-bootstrap
 run pip install werkzeug==0.11.11         # via flask
 run pip install gunicorn==19.7.1
 
+ENV TRAVIS=1
+# There is a concurency issue in matplotlib font manager caching. Setting
+# TRAVIS=1 is a poorly named way to tell matplotlib not to use the font manager
+# cache.
+# The issue should be fixed in matplotlib 2.x available in Ubuntu 17.04.
+# See https://github.com/matplotlib/matplotlib/issues/5226/
+# and https://github.com/matplotlib/matplotlib/pull/5276
+
 copy src/ /app/
 run cd /app && python setup.py install && python setup.py develop
 expose 5000
