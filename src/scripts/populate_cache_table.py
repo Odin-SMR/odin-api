@@ -6,21 +6,9 @@ Part of odin-api, tools to make it happen
 from requests import get
 from requests.exceptions import HTTPError
 from datetime import date, timedelta
-from psycopg2 import connect
 from argparse import ArgumentParser
 from dateutil import parser as date_parser
-
-
-def odin_connection():
-    """Connects to the database, returns a connection"""
-    connection_string = (
-        "host='malachite.rss.chalmers.se' "
-        "dbname='odin' "
-        "user='odinop' "
-        "password='***REMOVED***'"
-        )
-    connection = connect(connection_string)
-    return connection
+from odinapi.database import DatabaseConnector
 
 
 def add_to_database(cursor, day, freqmode, numscans, backend):
@@ -59,7 +47,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     step = timedelta(days=-1)
     current_date = end_date
     earliest_date = start_date
-    db_connection = odin_connection()
+    db_connection = DatabaseConnector()
     db_cursor = db_connection.cursor()
     while current_date >= earliest_date:
         url = (

@@ -5,16 +5,7 @@ from matplotlib import dates,rc
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from mpl_toolkits.basemap import Basemap
-from pg import DB
-
-
-class db(DB):
-    def __init__(self):
-        DB.__init__(self,dbname='odin',user='odinop',host='localhost')
-        #DB.__init__(self,dbname='odin',user='odinop',
-        #            host='malachite.rss.chalmers.se',passwd='***REMOVED***')
-
-
+from odinapi.database import DatabaseConnector
 
 
 def read_colloc_file(freqmode, instrument, species):
@@ -176,6 +167,6 @@ if __name__ == "__main__":
     instrument = 'sageIII'
     species= 'O3'
     freqmode = 21
-    con =db()
+    con = DatabaseConnector()
     plot_data4xxx(freqmode, instrument, species)
     con.close()

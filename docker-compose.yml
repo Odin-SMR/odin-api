@@ -13,6 +13,11 @@ httpd:
     - ./services/proxy/testdata/:/data/odin-l2-data/
 
 webapi:
+  environment:
+    - PGHOST=postgresql
+    - PGDBNAME=odin
+    - PGUSER=odinop
+    - PGPASS=odinop
   build: .
   volumes:
     - ./src/:/app

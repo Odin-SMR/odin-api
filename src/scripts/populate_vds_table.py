@@ -11,27 +11,7 @@ from argparse import ArgumentParser
 from requests import get
 from requests.exceptions import HTTPError
 from dateutil import parser as date_parser
-from psycopg2 import connect
-
-
-def odin_connection():
-    """Connects to the database, returns a connection"""
-    if 'ODIN_API_PRODUCTION' not in environ:
-        connection_string = (
-            "host='postgresql' "
-            "dbname='odin' "
-            "user='odinop' "
-            "password='***REMOVED***'"
-        )
-    else:
-        connection_string = (
-            "host='malachite.rss.chalmers.se' "
-            "dbname='odin' "
-            "user='odinop' "
-            "password='***REMOVED***'"
-        )
-    connection = connect(connection_string)
-    return connection
+from odinapi.database import DatabaseConnector
 
 
 def delete_day_from_database(cursor, day):
@@ -85,7 +65,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     step = timedelta(days=-1)
     current_date = end_date
     earliest_date = start_date
-    db_connection = odin_connection()
+    db_connection = DatabaseConnector()
     db_cursor = db_connection.cursor()
     if 'ODIN_API_PRODUCTION' not in environ:
         url_base = 'http://localhost:5000'

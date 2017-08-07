@@ -16,7 +16,7 @@ import ephem
 import requests as R
 from dateutil.relativedelta import relativedelta
 from netCDF4 import Dataset
-from pg import DB
+from odinapi.database import DatabaseConnector
 import spacepy.coordinates as coord
 from spacepy.time import Ticktock
 import pyproj
@@ -31,17 +31,6 @@ PRESSURE_GRID_CCI = np.array([
     0.0015, 0.001, 0.0007, 0.0005, 0.0004, 0.0003, 0.0002,
     0.00015, 0.0001
 ])
-
-
-class Dbcon(DB):
-    '''database connection'''
-    def __init__(self):
-        super(Dbcon, self).__init__(
-            dbname='odin',
-            user='odinop',
-            host='malachite.rss.chalmers.se',
-            passwd='***REMOVED***'
-        )
 
 
 class Smrl2filewriter(object):
@@ -914,7 +903,8 @@ if __name__ == "__main__":
     TEST_DATA_DIR = os.path.join(
         os.path.dirname(__file__), 'testdata').replace('scripts',
                                                        'odinapi/test')
-    DBCON = Dbcon()
+    DBCON = DatabaseConnector()
+
     USE_PGRID_CCI = bool(ARGS.pgrid_type == 'cci')
     if bool(ARGS.debug == 'True'):
         test_create_l2_file(

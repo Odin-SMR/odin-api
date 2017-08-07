@@ -3,11 +3,8 @@ import numpy as N
 import h5py 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from pg import DB
+from odinapi.database import DatabaseConnector
 
-class db(DB):
-    def __init__(self):
-        DB.__init__(self,dbname='odin',user='odinop',host='localhost')
 
 def read_mls_file(file):
 
@@ -51,7 +48,7 @@ if __name__ == "__main__":
 
     files = os.listdir(datapath)
 
-    con = db()
+    con = DatabaseConnector()
 
     for file in files:
 
