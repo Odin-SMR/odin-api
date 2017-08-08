@@ -219,7 +219,7 @@ class ScandataExporter(object):
                 try:
                     spec[item] = np.array(
                         res[item].replace('{', '').replace('}', '').split(',')
-                    ).astype(float)
+                    ).astype(float).tolist()
                 except AttributeError:
                     spec[item] = ()
             spec['ssb_fq'] = np.array(
