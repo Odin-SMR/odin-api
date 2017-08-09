@@ -1,14 +1,28 @@
 #! /usr/bin/env python
+# pylint: disable=E0401
 """
 Part of odin-api, tools to make it happen
 """
 
-from requests import get
-from requests.exceptions import HTTPError
+from os import environ
 from datetime import date, timedelta
 from argparse import ArgumentParser
+from requests import get
+from requests.exceptions import HTTPError
+from psycopg2 import connect
 from dateutil import parser as date_parser
-from odinapi.database import DatabaseConnector
+
+
+def odin_connection():
+    """Connects to the database, returns a connection"""
+    connection_string = (
+        "host={0} ".format(environ.get("PGHOST")) +
+        "dbname={0} ".format(environ.get("PGDBNAME")) +
+        "user={0} ".format(environ.get("PGUSER")) +
+        "password={0}".format(environ.get("PGPASS"))
+    )
+    connection = connect(connection_string)
+    return connection
 
 
 def add_to_database(cursor, day, freqmode, numscans, backend):
@@ -47,7 +61,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     step = timedelta(days=-1)
     current_date = end_date
     earliest_date = start_date
-    db_connection = DatabaseConnector()
+    db_connection = odin_connection()
     db_cursor = db_connection.cursor()
     while current_date >= earliest_date:
         url = (
@@ -58,7 +72,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         try:
             response.raise_for_status()
         except HTTPError as msg:
-            print("{0} {1} {2}".format(current_date, msg))
+            print("{0} {1}".format(current_date, msg))
             continue
         json_data = response.json()
         for freqmode in json_data['Info']:

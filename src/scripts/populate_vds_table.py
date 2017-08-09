@@ -8,10 +8,22 @@ from os import environ
 from time import sleep
 from datetime import date, timedelta, datetime
 from argparse import ArgumentParser
+from psycopg2 import connect
 from requests import get
 from requests.exceptions import HTTPError
 from dateutil import parser as date_parser
-from odinapi.database import DatabaseConnector
+
+
+def odin_connection():
+    """Connects to the database, returns a connection"""
+    connection_string = (
+        "host={0} ".format(environ.get("PGHOST")) +
+        "dbname={0} ".format(environ.get("PGDBNAME")) +
+        "user={0} ".format(environ.get("PGUSER")) +
+        "password={0}".format(environ.get("PGPASS"))
+    )
+    connection = connect(connection_string)
+    return connection
 
 
 def delete_day_from_database(cursor, day):
@@ -65,7 +77,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     step = timedelta(days=-1)
     current_date = end_date
     earliest_date = start_date
-    db_connection = DatabaseConnector()
+    db_connection = odin_connection()
     db_cursor = db_connection.cursor()
     if 'ODIN_API_PRODUCTION' not in environ:
         url_base = 'http://localhost:5000'
