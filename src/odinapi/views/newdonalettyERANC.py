@@ -239,11 +239,6 @@ def save_zptfile(basedir, date, scanid, zpt):
 
     rootgrp.close()
 
-    debug = 'ODIN_API_PRODUCTION' not in os.environ
-    if debug:
-        os.chmod(fullfile, 0777)
-        os.chmod(os.path.split(fullfile)[0], 0777)
-
 
 def check_if_file_exist(basedir, date, scanid):
 

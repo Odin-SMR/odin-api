@@ -26,6 +26,16 @@ URL_BATCHCALC = (
 )
 
 
+@pytest.fixture(scope='session', autouse=True)
+def zpt_data_directory():
+    """
+    Create dirs that are used in the tests. This ensure that they are owned by
+    us so that we can clean them at the end. Otherwise, they'll be created by
+    root inside the docker image.
+    """
+    os.makedirs(os.path.join(ROOT_PATH, 'data/ptz-data/ZPT/2015/01/'))
+
+
 @system
 @slow
 @pytest.mark.usefixtures('dockercompose')
