@@ -15,7 +15,7 @@
         </div>
 
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">Project: {{ data.project}}, Freqmode: {{ data.freqmode }}, Scanid: {{ data.scanno }}</h1>
+          <h1 class="page-header">Title: {{ data.title}}, Project: {{ data.project}}, Freqmode: {{ data.freqmode }}, Scanid: {{ data.scanno }}</h1>
           <div id="alt-cross-section-plots"></div>
         </div>
       </div>
@@ -41,6 +41,7 @@
         $(document).ready(function () {
           plotAltitudeCrossSection(
             'alt-cross-section-plots',
+            '{{ data.title }}',
             '{{ data.project }}',
             '{{ data.scanno }}',
             '{{ data.freqmode }}'

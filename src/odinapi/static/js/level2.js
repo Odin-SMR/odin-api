@@ -13,7 +13,16 @@ function populateSelectWithDataOrSetNoData(settings, data) {
         $(settings.target).append(
             '<option disabled><em>' + settings.empty +
             '</em></option>');
-    } else {
+    }
+    else if (settings.itemKey === 'Name') {
+        /* fillProjectSelector end up here: both title and project name must be selected */
+        $.each(data.Data, function (index, item) {
+            $(settings.target).append(
+                '<option value="' + settings.title + '/' + item[settings.itemKey] + '">' +
+                    settings.title + '/' + item[settings.itemKey] + '</option>');
+        });
+    }
+    else {
         $.each(data.Data, function (index, item) {
             $(settings.target).append(
                 '<option value="' + item[settings.itemKey] + '">' +
@@ -58,6 +67,7 @@ function promiseRequestWithLoader(settings, completeCheck) {
         })
         .always(function(data) {
             handleSelectLoadingStatus(settings, completeCheck);
+            $(settings.target).removeAttr('disabled');
         });
 }
 
@@ -72,7 +82,6 @@ function fillProjectSelector() {
     var targetLoader = '#select-project-loader';
 
     $(targetLoader).show();
-
     $(target).empty();
     $(target).attr('disabled', 'disabled');
 
@@ -83,7 +92,7 @@ function fillProjectSelector() {
         production : {
             uri : '/rest_api/v5/level2/projects',
             completionIndex: 0,
-            title: 'Production',
+            title: 'production',
             empty: 'No projects in database',
             fail: 'Failed to load projects',
             target: target,
@@ -94,7 +103,7 @@ function fillProjectSelector() {
         development : {
             uri : '/rest_api/v5/level2/development/projects',
             completionIndex: 1,
-            title: 'Development',
+            title: 'development',
             empty: 'No projects in database',
             fail: 'Failed to load projects',
             target: target,
@@ -112,14 +121,12 @@ function fillFreqmodeSelector() {
     var targetLoader = '#select-freqmode-loader';
 
     $(targetLoader).show();
-    $(target).hide();
-
     $(target).empty();
-
+    $(target).attr('disabled', 'disabled');
     $(target).append(
         '<option selected="selected" disabled>Choose freqmode</option>');
 
-    var project = $('#select-project').val();
+    var project = $('#select-project').val().replace('production/', '');
 
     var settings = {
         uri : '/rest_api/v5/level2/' + project,
@@ -135,18 +142,6 @@ function fillFreqmodeSelector() {
     };
 
     promiseRequestWithLoader(settings, completeCheck);
-
-    $.getJSON(
-        function(data) {
-            $('#select-freqmode').empty();
-            $('#select-freqmode').append(
-                '<option selected="selected" disabled>Choose freqmode</option>');
-            $.each(data.Data, function (index, freqmode) {
-                $('#select-freqmode').append(
-                    '<option value="' + freqmode.FreqMode + '">' +
-                        freqmode.FreqMode + '</option>');
-            });
-        });
 }
 
 function searchLevel2Scans(form) {
@@ -160,13 +155,13 @@ function searchLevel2Scans(form) {
     if (form.end_date.value)
         param.end_time = form.end_date.value;
     param = $.param(param);
-    var url = '/rest_api/v5/level2/' + form.project.value + '/' +
+    var project = form.project.value.replace('production/', '');
+    var url = '/rest_api/v5/level2/' + project + '/' +
         form.freqmode.value + '/' + form.types.value;
     if (param)
         url += '?' + param;
-
     $('#search-results-info').html(
-        '<h2>Project: ' + form.project.value + ', freqmode: ' +
+        '<h2>Project: ' + project + ', freqmode: ' +
         form.freqmode.value + ', ' + form.types.value + '</h2>');
     var table = $('#search-results').DataTable({
         "ajax":{
@@ -218,7 +213,7 @@ function searchLevel2Scans(form) {
                 "title": "Level2 plot",
                 "render": function ( data, type, full, meta ) {
                     return '<a target="_blank" href="/level2/' +
-                        form.project.value + '/' + form.freqmode.value + '/' +
+                        project + '/' + form.freqmode.value + '/' +
                         data + '">Plot</a>';
                 },
             },
@@ -266,7 +261,7 @@ function find_min(data, error) {
 }
 
 
-function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
+function plotAltitudeCrossSection(container_id, project_mode, project, scanid, freqmode) {
     opt_vmr = {
         "grid": {
             "hoverable": true,
@@ -285,10 +280,14 @@ function plotAltitudeCrossSection(container_id, project, scanid, freqmode) {
         opacity: 0.80
     }).appendTo("body");
 
+    var scanurl = '/rest_api/v5/level2/' + project_mode + '/' + project + '/' +
+        freqmode + '/' + scanid + '/';
+    var url = scanurl.replace('production/', '');
+
     $.getJSON(
-        '/rest_api/v5/level2/' + project + '/' + freqmode + '/' + scanid + '/',
+        url,
         function(data) {
-            $.each(data.Data.L2, function (index, product) {
+            $.each(data.Data.L2.Data, function (index, product) {
                 template.content.querySelector('h2').textContent = product.Product;
                 template.content.querySelector(
                     '.alt-cross-section-plot-product').setAttribute(

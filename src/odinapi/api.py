@@ -1,7 +1,4 @@
-# pylint: skip-file
 """A simple datamodel implementation"""
-from os import environ
-
 from flask import Flask, Blueprint
 
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
@@ -24,7 +21,8 @@ from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
     ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2, ViewLevel2Scan,
-    ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot)
+    ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot,
+    ViewLevel2DevScan)
 from odinapi.views.data_info import FileInfo, LatestECMF
 
 SWAGGER.add_parameter('version', 'path', str)
@@ -358,8 +356,12 @@ class Odin(Flask):
             view_func=ViewLevel2.as_view('level2')
         )
         self.add_url_rule(
-            '/level2/<project>/<freqmode>/<scanno>/',
+            '/level2/<project>/<int:freqmode>/<int:scanno>/',
             view_func=ViewLevel2Scan.as_view('viewlevel2can')
+        )
+        self.add_url_rule(
+            '/level2/<title>/<project>/<int:freqmode>/<int:scanno>/',
+            view_func=ViewLevel2DevScan.as_view('viewlevel2devcan')
         )
         self.add_url_rule(
             '/level2/overview/<project>/',

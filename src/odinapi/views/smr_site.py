@@ -50,7 +50,19 @@ class ViewLevel2Scan(MethodView):
     """View level2 single scan"""
 
     def get(self, project, freqmode, scanno):
-        data = {'project': project,
+        data = {'title': 'production',
+                'project': project,
+                'freqmode': freqmode,
+                'scanno': scanno}
+        return render_template('level2scan.html', data=data)
+
+
+class ViewLevel2DevScan(MethodView):
+    """View level2 development single scan"""
+
+    def get(self, title, project, freqmode, scanno):
+        data = {'title': title,
+                'project': project,
                 'freqmode': freqmode,
                 'scanno': scanno}
         return render_template('level2scan.html', data=data)
