@@ -86,6 +86,9 @@ run pip install dateutils==0.6.6
 run pip install dominate==2.3.0           # via flask-bootstrap
 run pip install flask-bootstrap==3.3.7.0
 run pip install flask==0.11.1
+run pip install gevent==1.2.2
+run pip install greenlet==0.4.12          # via gevent
+
 run pip install itsdangerous==0.24        # via flask
 run pip install jinja2==2.8               # via flask
 run pip install markupsafe==0.23          # via jinja2
@@ -111,4 +114,4 @@ copy src/ /app/
 run cd /app && python setup.py install && python setup.py develop
 expose 5000
 workdir /app
-cmd gunicorn -w 4 -b 0.0.0.0:5000 --timeout 180 odinapi.api:app
+cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 180 odinapi.api:app

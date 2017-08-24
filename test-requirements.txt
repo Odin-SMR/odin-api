@@ -16,7 +16,9 @@ dateutils==0.6.6
 dominate==2.3.1           # via flask-bootstrap
 flask-bootstrap==3.3.7.1
 flask==0.12
+gevent==1.2.2
 glob2==0.5                # via jasmine-core
+greenlet==0.4.12          # via gevent
 gunicorn==19.7.1
 isort==4.2.5              # via pylint
 itsdangerous==0.24        # via flask

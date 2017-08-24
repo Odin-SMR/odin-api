@@ -6,4 +6,4 @@ pymongo
 dateutils
 scipy
 gunicorn
-
+gevent
