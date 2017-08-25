@@ -7,6 +7,7 @@ Environment variables:
 - ODINAPI_MONGODB_PORT (default=27017)
 - ODINAPI_MONGODB_USERNAME (default=<empty>)
 - ODINAPI_MONGODB_PASSWORD (default=<empty>)
+- ODINAPI_MONGODB_SERVER_TIMEOUT (default=180000 ms)
 
 Example:
 
@@ -27,7 +28,11 @@ def get_connection():
     if not CLIENT:
         CLIENT = MongoClient(
             environ.get('ODINAPI_MONGODB_HOST', 'level2db'),
-            int(environ.get('ODINAPI_MONGODB_PORT', 27017)))
+            int(environ.get('ODINAPI_MONGODB_PORT', 27017)),
+            serverSelectionTimeoutMS=int(
+                environ.get('ODINAPI_MONGODB_SERVER_TIMEOUT', 180000)
+            )
+        )
     return CLIENT
 
 
