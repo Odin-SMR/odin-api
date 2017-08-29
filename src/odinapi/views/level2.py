@@ -22,6 +22,13 @@ from odinapi.views.baseview import BaseView, register_versions, BadRequest
 from odinapi.views.utils import make_rfc5988_pagination_header
 from odinapi.utils.swagger import SWAGGER
 import odinapi.utils.get_args as get_args
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+)
 
 
 DEFAULT_LIMIT = 1000
@@ -113,21 +120,29 @@ class Level2Write(MethodView):
         """Insert level2 data for a scan id and freq mode"""
         msg = request.args.get('d')
         if not msg:
+            logging.warning('Level2Write.post: request message is empty')
             abort(400)
         try:
             scanid, freqmode, project = decode_level2_target_parameter(msg)
         except:
+            logging.warning('Level2Write.post: data can not be decoded')
             abort(400)
         data = request.json
         if not data:
+            logging.warning('Level2Write.post: no json data')
             abort(400)
         if any(k not in data for k in ('L2', 'L2I', 'L2C')):
+            logging.warning(
+                "Level2Write.post: at least one of L2, L2I, "
+                "or, L2C is missing")
             abort(400)
         L2c = data.pop('L2C') or ''
         if not isinstance(L2c, basestring):
+            logging.warning('Level2Write.post: L2c is not basestring')
             abort(400)
         L2 = data.pop('L2') or []
         if not isinstance(L2, list):
+            logging.warning('Level2Write.post: L2 is not a list')
             abort(400)
         for nr, species in enumerate(L2):
             try:
@@ -137,6 +152,7 @@ class Level2Write(MethodView):
                     {'error': 'L2 species %d: %s' % (nr, e)}), 400
         L2i = data.pop('L2I') or {}
         if not isinstance(L2i, dict):
+            logging.warning('Level2Write.post: L2I is not a dict')
             abort(400)
         if L2i:
             try:
@@ -151,10 +167,12 @@ class Level2Write(MethodView):
             L2i['FreqMode'] = freqmode
             L2i['ProcessingError'] = True
         if scanid != L2i['ScanID']:
+            logging.warning('Level2Write.post: scanid mismatch')
             return jsonify(
                 {'error': 'ScanID missmatch (%r != %r)' % (
                     scanid, L2i['ScanID'])}), 400
         if freqmode != L2i['FreqMode']:
+            logging.warning('Level2Write.post: freqmode mismatch')
             return jsonify(
                 {'error': 'FreqMode missmatch (%r != %r)' % (
                     scanid, L2i['FreqMode'])}), 400
@@ -164,6 +182,7 @@ class Level2Write(MethodView):
         try:
             db.store(L2, L2i, L2c)
         except DuplicateKeyError:
+            logging.warning('Level2Write.post: DuplicateKeyError')
             return jsonify(
                 {'error': ('Level2 data for this scan id and freq mode '
                            'already exist')}), 400
