@@ -195,7 +195,6 @@ function searchLevel2Scans(form) {
                 "title": "Level1 plot",
                 "render": function ( data, type, full, meta ) {
                     return '<a target="_blank" href="/browse/' +
-                        FREQMODE_TO_BACKEND[form.freqmode.value] + '/' +
                         form.freqmode.value + '/' + data + '/' +
                         '">Plot</a>';
                 },
