@@ -182,10 +182,18 @@ class Level2Write(MethodView):
         try:
             db.store(L2, L2i, L2c)
         except DuplicateKeyError:
-            logging.warning('Level2Write.post: DuplicateKeyError')
-            return jsonify(
-                {'error': ('Level2 data for this scan id and freq mode '
-                           'already exist')}), 400
+            # DuplicateKeyError should not return an error,
+            # we allow to overwrite posted level2 data,
+            # if someone wants to reprocess scans we expect
+            # that there is a good reason for that
+            db.delete(L2i['ScanID'], L2i['FreqMode'])
+            db.store(L2, L2i, L2c)
+            logging.warning(
+                "Level2Write.post: DuplicateKeyError "
+                "scan data already existed in database "
+                "for project={0}, FreqMode={1}, and ScanID={2} "
+                "but has now been replaced".format(
+                    project, L2i['FreqMode'], L2i['ScanID']))
         return '', 201
 
     def delete(self, version):

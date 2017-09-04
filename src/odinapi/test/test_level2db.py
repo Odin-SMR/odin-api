@@ -192,15 +192,26 @@ class TestWriteLevel2(unittest.TestCase):
         r = requests.post(url, json=data)
         self.assertEqual(r.status_code, 201)
 
-        # Post of duplicate should not be possible
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 400)
-
-        r = requests.delete(url)
-        self.assertEqual(r.status_code, 204)
-
+        # Post of duplicate should be possible
+        # if someone wants to repost data we
+        # think there is a good reason for this
+        mjd = round(data['L2'][0]['MJD']) + 1
+        data['L2'][0]['MJD'] = mjd
+        data['L2'][1]['MJD'] = mjd
+        data['L2'][2]['MJD'] = mjd
         r = requests.post(url, json=data)
         self.assertEqual(r.status_code, 201)
+
+        # Check that the post above actually
+        # updated data
+        rurl = SCAN_URL_DEV.format(
+            version=VERSION,
+            project=PROJECT_NAME,
+            freqmode=freq_mode,
+            scanid=scan_id)
+        r = requests.get(rurl)
+        self.assertEqual(
+            r.json()['Data']['L2']['Data'][0]['MJD'], mjd)
 
         r = requests.delete(url)
         self.assertEqual(r.status_code, 204)
