@@ -154,15 +154,63 @@ function searchLevel2Scans(form) {
         param.start_time = form.start_date.value;
     if (form.end_date.value)
         param.end_time = form.end_date.value;
+    if (form.offset.value) {
+        form.offset.value = getOffsetValue(form.offset.value);
+        param.offset = form.offset.value;
+    } else  {
+        form.offset.value = 0;
+    }
     param = $.param(param);
     var project = form.project.value.replace('production/', '');
     var url = '/rest_api/v5/level2/' + project + '/' +
         form.freqmode.value + '/' + form.types.value;
     if (param)
         url += '?' + param;
-    $('#search-results-info').html(
-        '<h2>Project: ' + project + ', freqmode: ' +
-        form.freqmode.value + ', ' + form.types.value + '</h2>');
+
+    var count = [];
+    $.ajax({
+        url: url,
+        async: false,
+        dataType: 'json',
+        success: function (json) {
+            count = json.Count;
+        }
+    });
+    var lowerbound = parseInt(form.offset.value, 10) + 1;
+    var upperbound = Math.min(parseInt(form.offset.value, 10) + 1000, count);
+    // highest valid offset
+    var maxoffset = Math.floor((parseInt(count, 10) - 1) / 1000) * 1000;
+    // create an informative string that will be displayed on UI
+    // together with the data table,
+    // table only displays a maximum of 1000 entries and the
+    // string will help the user to understand how to get
+    // data (or other) data in table
+    var search_results_str = 'Project: ' + project + ', ' +
+        'Freqmode: ' + form.freqmode.value + ', ' +
+        'Type: ' + form.types.value + ': ' +
+        'In total data from ' + count + ' scans is available. ';
+    if (lowerbound >= count) {
+        // no data is displayed in table due to too high offset
+        search_results_str = search_results_str +
+            'You have entered an offset (' +
+            form.offset.value + ') ' +
+            'that is greater or equal to the ' +
+            'total number of available scans. ' +
+            'Update offset to be less or equal to ' +
+            maxoffset + ' to get entries to scans in table.';
+    } else {
+        // data is displayed
+        search_results_str = search_results_str +
+            'The table is showing entries for scan ' + lowerbound +
+            ' to ' + upperbound + ' within selected range. ';
+        if (count > 1000) {
+            // table does not show entries to all data within given limits
+            search_results_str = search_results_str +
+                'Update start date or offset to get entries to ' +
+                'other scans in table.';
+        }
+    }
+    $('#search-results-info').html('<h2>' + search_results_str + '</h2>');
     var table = $('#search-results').DataTable({
         "ajax":{
             "url": url,
@@ -224,6 +272,26 @@ function searchLevel2Scans(form) {
     });
 
 }
+
+
+function getOffsetValue(value) {
+    if (!isPositiveInteger(value)) {
+        // only allow positive integers
+        // otherwise set it to 0,
+        // however, the template should help
+        // user to properly fill in the form
+        // and not end up here
+        return 0;
+    } else {
+        return value;
+    }
+}
+
+
+function isPositiveInteger(n) {
+    return 0 === n % (!isNaN(parseFloat(n)) && 0 <= ~~n);
+}
+
 
 function zip(arrays) {
     return arrays[0].map(function(_,i){

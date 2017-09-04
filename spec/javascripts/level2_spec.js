@@ -26,6 +26,66 @@ describe("Unit conversions:", function() {
 });
 
 
+// Tests to validate input offset parameter:
+describe("Checking if input is positive integer:", function() {
+
+      it("returns true if input is positive integer",
+              function() {
+          var input = 10;
+          expect(isPositiveInteger(input)).toEqual(true);
+      });
+
+      it("returns false if input is negative integer",
+              function() {
+          var input = -10;
+          expect(isPositiveInteger(input)).toEqual(false);
+      });
+
+      it("returns false if input is float",
+              function() {
+          var input = 10.125;
+          expect(isPositiveInteger(input)).toEqual(false);
+      });
+
+      it("returns false if input is string",
+              function() {
+          var input = 'abc';
+          expect(isPositiveInteger(input)).toEqual(false);
+      });
+
+});
+
+
+// Tests for getting input offset parameter:
+describe("Get input  offset parameter:", function() {
+
+      it("returns input if input is positive integer",
+              function() {
+          var input = 10;
+          expect(getOffsetValue(input)).toEqual(10);
+      });
+
+      it("returns 0 if input is negative integer",
+              function() {
+          var input = -10;
+          expect(getOffsetValue(input)).toEqual(0);
+      });
+
+      it("returns 0 if input is float",
+              function() {
+          var input = 10.125;
+          expect(getOffsetValue(input)).toEqual(0);
+      });
+
+      it("returns 0 if input is string",
+              function() {
+          var input = 'abc';
+          expect(getOffsetValue(input)).toEqual(0);
+      });
+
+});
+
+
 // Functions for manipulating arrays for easier plotting:
 describe("Tests for array manipulations for convenient plotting:",
         function() {

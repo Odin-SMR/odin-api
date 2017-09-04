@@ -41,6 +41,7 @@ class TestLevel2Browser(unittest.TestCase):
     def tearDown(self):
         self.driver.quit()
         delete_level2data()
+        delete_level2data(offset=-1)
 
     def test_main_page_is_up(self):
         """Test that main page is up"""
@@ -89,6 +90,7 @@ class TestLevel2Browser(unittest.TestCase):
            when doing a selection and that a plot of a level2 scan
            is shown if a link is clicked
            """
+        import_level2data(offset=-1)
         import_level2data()
         driver = self.driver
         driver.get("http://localhost:5000/level2")
@@ -98,6 +100,7 @@ class TestLevel2Browser(unittest.TestCase):
         select.select_by_visible_text('1')
         driver.find_element_by_name('start_date').send_keys('2015-04-01')
         driver.find_element_by_name('end_date').send_keys('2015-04-10')
+        driver.find_element_by_name('offset').send_keys('1')
         driver.find_element_by_class_name('search-form-table').submit()
         assert (driver.find_element_by_id(
             'search-results').find_elements_by_tag_name(
@@ -113,9 +116,10 @@ class TestLevel2Browser(unittest.TestCase):
                 'product-name')[0].text == 'O3 / 501 GHz / 20 to 50 km')
 
 
-def import_level2data():
+def import_level2data(offset=0):
     '''import level2 data'''
     data = get_test_data()
+    data['L2I']['ScanID'] = data['L2I']['ScanID'] + offset
     datastring = encrypt_util.encode_level2_target_parameter(
         data['L2I']['ScanID'],
         data['L2I']['FreqMode'],
@@ -125,9 +129,10 @@ def import_level2data():
     requests.post(url, json=data)
 
 
-def delete_level2data():
+def delete_level2data(offset=0):
     '''delete level2 data'''
     data = get_test_data()
+    data['L2I']['ScanID'] = data['L2I']['ScanID'] + offset
     datastring = encrypt_util.encode_level2_target_parameter(
         data['L2I']['ScanID'],
         data['L2I']['FreqMode'],

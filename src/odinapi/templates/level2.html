@@ -34,8 +34,18 @@
 
           <h3>Instructions</h3>
           <p>
-            Choose a project, freqmode and a date range. Choose to list
-            scans with level2 data or scans that failed the level2 processing.
+            Choose a project and freqmode (and optionally a date range and/or offset).
+            The data table will only show entries for a maximum of 1000 scans
+            at a given time.</p>
+
+          <p> 
+            The date range and offset can be used to filter the data entries
+            of the table
+            (the offset parameter can be used to skip the n first entries).</p>
+
+          <p>
+            Choose to list scans with level2 data or scans that failed the level2
+            processing.
           </p>
 
           <form action="javascript:;" onsubmit="javascript:searchLevel2Scans(this)">
@@ -70,16 +80,21 @@
                   </div>
                 </td>
               </tr><tr>
-                <td>Start:
+                <td>Start (yyyy-mm-dd):
                 </td>
                 <td><input name="start_date" data-provide="datepicker" data-date-format="yyyy-mm-dd" size="12">
                 </td>
               </tr><tr>
-                <td>End:
+                <td>End (yyyy-mm-dd):
                 </td>
                 <td><input name="end_date" data-provide="datepicker" data-date-format="yyyy-mm-dd" size="12">
                 </td>
               </tr><tr>
+                <td>Offset (a number):
+                </td>
+                <td><input name="offset" type="number" min="0" step="1000" size="6">
+                </td>
+             </tr><tr>
                 <td colspan="2">
                   <input type="radio" name="types" value="scans" checked> Scans
                   <input type="radio" name="types" value="failed"> Failed
