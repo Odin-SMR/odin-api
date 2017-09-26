@@ -85,6 +85,10 @@ class TestLevel2Browser(unittest.TestCase):
         assert 'Choose freqmode' in options
         assert '1' in options
 
+    @pytest.mark.xfail(
+        reason='https://bugs.launchpad.net/ubuntu/+bug/1719572',
+        strict=True,
+    )
     def test_scan_get_selected(self):
         """test that a scan show up in the search table
            when doing a selection and that a plot of a level2 scan
