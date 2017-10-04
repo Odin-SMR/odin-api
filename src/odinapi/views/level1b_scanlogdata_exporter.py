@@ -60,6 +60,17 @@ class ScanInfoExporter(object):
             )
         except IndexError:
             return []
+        required_items = [
+            'mjd', 'latitude', 'longitude', 'altitude',
+            'sunzd', 'freqmode', 'quality']
+        for item in required_items:
+            if item not in data.keys():
+                # if missing data item
+                return []
+            else:
+                if data[item][0] is None or data[item][-1] is None:
+                    # if data item is empty
+                    return []
         mjd0 = datetime(1858, 11, 17)
         datei = mjd0 + relativedelta(days=+data['mjd'][0])
         # check that scan starts within desired time span
@@ -83,8 +94,7 @@ class ScanInfoExporter(object):
                 'Quality': data['quality'][0],
             }
             return outdata
-        else:
-            return []
+        return []
 
     def get_loginfo_of_scans(self, date1, date2, scanid):
         '''loop over scans and extract the desired data'''
@@ -171,8 +181,7 @@ def plot_loginfo(backend, date1, date2, data):
     return fig
 
 
-def get_scan_logdata(con, backend, datei,
-                     freqmode=-1, dmjd=0.25, version='v4'):
+def get_scan_logdata(con, backend, datei, freqmode=-1, dmjd=0.25):
     '''get loginfo of scans for a given date'''
     sinfo = ScanInfoExporter(backend, freqmode, con)
     try:

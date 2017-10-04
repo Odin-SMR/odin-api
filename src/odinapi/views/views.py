@@ -309,8 +309,7 @@ class FreqmodeInfoNoBackend(BaseView):
         itemlist = FreqmodeInfo.ITEMS_V4
 
         loginfo, _, _ = get_scan_logdata(
-            con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
-            version='v4')
+            con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1)
         con.close()
 
         try:
