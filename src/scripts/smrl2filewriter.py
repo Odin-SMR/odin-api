@@ -16,7 +16,7 @@ import ephem
 import requests as R
 from dateutil.relativedelta import relativedelta
 from netCDF4 import Dataset
-from odinapi.database import DatabaseConnector
+from odinapi.views.database import DatabaseConnector
 import spacepy.coordinates as coord
 from spacepy.time import Ticktock
 import pyproj
