@@ -37,7 +37,7 @@ class Smrl2filewriter(object):
     '''class derived to generate Odin/SMR level2 netcdf files'''
     def __init__(self, l2idata, l2data, project, dbcon,
                  use_pgrid_cci=False):
-        self.l2item = l2data['Product'].split('/')[0].rstrip()
+        self.l2item = l2data['Product'].split('-')[0].rstrip()
         self.project = project
         self.l2idata = l2idata
         self.l2data = l2data
@@ -56,7 +56,7 @@ class Smrl2filewriter(object):
             os.makedirs(l2datadir)
         mjd0 = DT.datetime(1858, 11, 17)
         datetime = mjd0 + DT.timedelta(self.l2data['MJD'])
-        l2item = self.l2data['Product'].replace(' / ', '-').replace(' ', '-')
+        l2item = self.l2data['Product'].replace(' - ', '-').replace(' ', '-')
         if self.use_pgrid_cci:
             pgridtype = 'grid'
         else:
