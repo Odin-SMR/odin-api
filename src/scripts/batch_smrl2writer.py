@@ -111,7 +111,7 @@ def loop_generator(args):
 def main(args):
     """Loop over period, products and gridtypes as requested and produce files
     """
-    dbcon = smrl2filewriter.Dbcon()
+    dbcon = smrl2filewriter.DatabaseConnector()
     for year, month, grid, product in loop_generator(args):
         print "Creating file for {year}-{month}: {prod} (CCI: {cci})".format(
             year=year, month=month, prod=product, cci=grid)
