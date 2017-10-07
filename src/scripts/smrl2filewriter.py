@@ -619,6 +619,9 @@ def get_resolution(altitude, avks):
     for indi, avk in enumerate(avks):
         avk_hres = np.interp(alt_hres, altitude, avk)
         index = np.nonzero(avk_hres >= np.max(avk) / 2.0)[0]
+        if index.shape[0] == 0:
+            resolution.append(np.nan)
+            continue
         if index[0] == 0:
             #  take care of edge effects:
             #  double upper width used as proxy
@@ -688,7 +691,7 @@ def get_orbit_from_scanid(con, scanid):
     query = con.query(
         '''
         select orbit from attitude_level1
-        where stw between {0} - 100  and {0} + 100
+        where stw between {0} - 1000  and {0} + 1000
         limit 1
         '''.format(scanid)
     )
