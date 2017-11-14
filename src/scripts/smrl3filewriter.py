@@ -365,7 +365,9 @@ def get_number_of_measurements(l2_value):
 
 
 def get_quartiles(l2_value):
-    return np.percentile(l2_value, QUARTILE, axis=0).transpose()
+    return np.array(
+        np.percentile(l2_value, list(QUARTILE), axis=0)
+    ).transpose()
 
 
 def get_average_latitude(latitude):
@@ -380,6 +382,7 @@ def generate_l3_file(project, product, data_folder):
     l2_files = [
         l2_file for l2_file in os.listdir(data_folder)
         if product in l2_file and 'grid' in l2_file]
+    l2_files.sort()
     list_of_l2_data = []
     for l2_file in l2_files:
         odin_l2_file = os.path.join(data_folder, l2_file)
