@@ -1,5 +1,6 @@
 '''test of browser'''
 import unittest
+from time import sleep
 import requests
 import pytest
 
@@ -98,19 +99,20 @@ class TestLevel2Browser(unittest.TestCase):
         select.select_by_visible_text('development/testproject')
         select = Select(driver.find_element_by_id('select-freqmode'))
         select.select_by_visible_text('1')
-        driver.find_element_by_name('start_date').send_keys('2015-04-01')
-        driver.find_element_by_name('end_date').send_keys('2015-04-10')
+        driver.find_element_by_name('start_date').send_keys('2015-01-12')
+        driver.find_element_by_name('end_date').send_keys('2015-01-13')
         driver.find_element_by_name('offset').send_keys('1')
         driver.find_element_by_class_name('search-form-table').submit()
         assert (driver.find_element_by_id(
             'search-results').find_elements_by_tag_name(
-                name='td')[0].text == '7123991206')
-        test_ref = '/level2/development/testproject/1/7123991206'
+                name='td')[0].text == '7014791071')
+        test_ref = '/level2/development/testproject/1/7014791071'
         href = driver.find_element_by_id(
             'search-results').find_elements_by_xpath(
                 "//a[@href='{0}']".format(test_ref))[0]
         href.click()
         driver.get("http://localhost:5000{0}".format(test_ref))
+        sleep(1)
         assert (driver.find_elements_by_id(
             'alt-cross-section-plots')[0].find_elements_by_class_name(
                 'product-name')[0].text == 'O3 / 501 GHz / 20 to 50 km')

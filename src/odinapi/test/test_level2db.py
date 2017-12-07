@@ -346,22 +346,26 @@ class TestReadLevel2(BaseWithDataInsert):
             self.assertEqual(len(scans), 1)
             scan = scans[0]
             self.assertEqual(scan['ScanID'], self.scan_id)
-            self.assertEqual(set(scan['URLS']), set([
-                'URL-level2', 'URL-log', 'URL-spectra']))
+            if version <= 'v4':
+                self.assertEqual(set(scan['URLS']), set([
+                    'URL-level2', 'URL-log', 'URL-spectra']))
+            else:
+                self.assertEqual(set(scan['URLS']), set([
+                    'URL-level2', 'URL-log', 'URL-spectra', 'URL-ancillary']))
 
-            r = requests.get(rurl + '?start_time=2015-04-01')
+            r = requests.get(rurl + '?start_time=2015-01-12')
             self.assertEqual(r.status_code, 200)
             self.assertEqual(len(get_scans(r)), 1)
 
-            r = requests.get(rurl + '?start_time=2015-04-02')
+            r = requests.get(rurl + '?start_time=2015-01-13')
             self.assertEqual(r.status_code, 200)
             self.assertEqual(len(get_scans(r)), 0)
 
-            r = requests.get(rurl + '?end_time=2015-04-01')
+            r = requests.get(rurl + '?end_time=2015-01-12')
             self.assertEqual(r.status_code, 200)
             self.assertEqual(len(get_scans(r)), 0)
 
-            r = requests.get(rurl + '?end_time=2015-04-02')
+            r = requests.get(rurl + '?end_time=2015-01-13')
             self.assertEqual(r.status_code, 200)
             self.assertEqual(len(get_scans(r)), 1)
 
@@ -462,7 +466,7 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(scan['ScanID'], self.failed_scan_id)
         self.assertEqual(scan['Error'], self.error_message)
         self.assertEqual(set(scan['URLS']), set([
-            'URL-level2', 'URL-log', 'URL-spectra']))
+            'URL-level2', 'URL-log', 'URL-spectra', 'URL-ancillary']))
 
     def test_get_failed_scans_respects_limit(self):
         self.add_additional_failed_scan(self.failed_scan_id + 42)

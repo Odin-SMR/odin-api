@@ -38,6 +38,7 @@ port-for==0.3.1           # via pytest-mongo
 psutil==5.2.2             # via mirakuru
 py==1.4.31                # via pytest
 pycrypto==2.6.1
+pyephem==3.7.6.0
 pyflakes==1.5.0
 pylint==1.6.4
 pymongo==3.4.0

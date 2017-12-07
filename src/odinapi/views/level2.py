@@ -1,6 +1,7 @@
 # pylint: skip-file
 """Views for getting Level 2 data"""
 import urllib
+
 from datetime import timedelta
 from operator import itemgetter
 from itertools import groupby
@@ -20,6 +21,8 @@ from odinapi.database import level2db
 from odinapi.views.views import get_L2_collocations
 from odinapi.views.baseview import BaseView, register_versions, BadRequest
 from odinapi.views.utils import make_rfc5988_pagination_header
+from odinapi.views.database import DatabaseConnector
+from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.utils.swagger import SWAGGER
 import odinapi.utils.get_args as get_args
 import logging
@@ -389,6 +392,7 @@ SWAGGER.add_type('level2_scan_info', {
         "URL-level2": str,
         "URL-spectra": str,
         "URL-log": str,
+        "URL-ancillary": str,
     }
 })
 
@@ -546,9 +550,14 @@ class Level2ViewScan(Level2ProjectBaseView):
             ['level2'],
             ['version', 'project', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_mixed_type_response(
-                [('L2', True), ('L2i', False), ('L2c', True)])},
+                [
+                    ('L2', True),
+                    ('L2i', False),
+                    ('L2c', True),
+                    ('L2anc', True)])},
             summary=(
-                "Get level2 data, info and comments for one scan and freqmode")
+                "Get level2 data, info, comments, and ancillary data" +
+                " for one scan and freqmode")
         )
 
     @register_versions('fetch')
@@ -563,6 +572,9 @@ class Level2ViewScan(Level2ProjectBaseView):
             collocations = get_L2_collocations(
                 request.url_root, version, freqmode, scanno)
             info['Collocations'] = collocations
+        if version >= 'v5':
+            info['L2anc'] = get_ancillary_data(
+                DatabaseConnector(), info['L2'])
         return info
 
     @register_versions('return', ['v4'])
@@ -578,6 +590,9 @@ class Level2ViewScan(Level2ProjectBaseView):
             'L2': {'Data': info['L2'], 'Type': 'L2', 'Count': len(info['L2'])},
             'L2c': {
                 'Data': info['L2c'], 'Type': 'L2c', 'Count': len(info['L2c'])},
+            'L2anc': {
+                'Data': info['L2anc'], 'Type': 'L2anc',
+                'Count': len(info['L2anc'])},
         }
         return {'Data': data, 'Type': 'mixed',
                 'Count': None}
@@ -657,6 +672,53 @@ class L2cView(Level2ProjectBaseView):
         return {'Data': L2c, 'Type': 'L2c', 'Count': len(L2c)}
 
 
+SWAGGER.add_type('L2anc', {
+    "InvMode": str,
+    "FreqMode": int,
+    "ScanID": int,
+    "MJD": float,
+    "Orbit": int,
+    "Lat1D": float,
+    "Lon1D": float,
+    "Latitude": [float],
+    "Longitude": [float],
+    "Pressure": [float],
+    "SZA1D": float,
+    "SZA": [float],
+    "LST": float,
+    "Theta": [float],
+})
+
+
+class L2ancView(Level2ProjectBaseView):
+    """Get ancillary data for one scan and freqmode"""
+    SUPPORTED_VERSIONS = ['v5']
+
+    @register_versions('swagger')
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level2'],
+            ['version', 'project', 'freqmode', 'scanno'],
+            {"200": SWAGGER.get_type_response('L2anc', is_list=True)},
+            summary=(
+                "Get ancillary data for one scan and freqmode")
+        )
+
+    @register_versions('fetch')
+    def _get(self, version, project, freqmode, scanno):
+        product = get_args.get_string('product')
+        db = level2db.Level2DB(project)
+        L2 = db.get_L2(freqmode, scanno, product=product)
+        if not L2:
+            abort(404)
+        L2anc = get_ancillary_data(DatabaseConnector(), L2)
+        return L2anc
+
+    @register_versions('return')
+    def _return(self, version, L2anc, project, freqmode, scanno):
+        return {'Data': L2anc, 'Type': 'L2anc', 'Count': len(L2anc)}
+
+
 SWAGGER.add_type('L2', {
     "Product": str,
     "InvMode": str,
@@ -731,7 +793,10 @@ def get_scan_urls(version, project, freqmode, scanno):
                 '{0}/{1}/{2}/{3}/').format(
                     get_base_url(version), project, freqmode, scanno),
             'URL-spectra': '{0}rest_api/{1}/level1/{2}/{3}/L1b/'.format(
-                request.url_root, version, freqmode, scanno)
+                request.url_root, version, freqmode, scanno),
+            'URL-ancillary': (
+                '{0}/{1}/{2}/{3}/L2anc').format(
+                    get_base_url(version), project, freqmode, scanno),
         }
 
 

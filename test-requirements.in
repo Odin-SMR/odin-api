@@ -11,3 +11,4 @@ jasmine
 pep8
 pyflakes
 netCDF4
+pyephem
