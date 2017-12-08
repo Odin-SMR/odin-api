@@ -1,0 +1,39 @@
+httpd:
+  image: docker2.molflow.com/odin_redo/proxy:latest
+  ports:
+    - 5000:80
+  links:
+    - webapi
+  volumes:
+    - /db_sdb1/odin/l2netcdf:/data/odin-l2-data
+    - /db_sdb1/odin/MesosphEO:/data/MesosphEO
+
+webapi:
+  image: docker2.molflow.com/odin_redo/odin_api:latest
+  extra_hosts:
+    - "postgresql:129.16.69.112" # titan.rss.chalmers.se
+    - "level2db:129.16.35.100" # bronze.rss.chalmers.se
+  environment:
+    - ODIN_API_PRODUCTION
+    - ODINAPI_MONGODB_USERNAME=${ODINAPI_MONGODB_USERNAME}
+    - ODINAPI_MONGODB_PASSWORD=${ODINAPI_MONGODB_PASSWORD}
+    - PGHOST=titan.rss.chalmers.se
+    - PGDBNAME=${PGDBNAME}
+    - PGUSER=${PGUSER}
+    - PGPASS=${PGPASS}
+    - GUNICORN_CMD_ARGS=-w 8 -b 0.0.0.0:5000 -k gevent -e ODIN_API_PRODUCTION=1 --timeout 180 --log-level debug
+  volumes:
+    - /misc/pearl/extdata/ERA-Interim:/var/lib/odindata/ECMWF
+    - /misc/pearl/extdata/ERA-Interim:/ecmwf-data
+    - /db/zpt:/var/lib/odindata/ZPT
+    - /db:/var/lib/odindata
+    - /odin/external/vds-data:/vds-data
+    - /odin/osiris/Level2/Daily:/osiris-data
+    - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-1:/odin-smr-2-1-data
+    - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-0:/odin-smr-2-0-data
+    - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-3:/odin-smr-2-3-data
+    - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-4:/odin-smr-2-4-data
+    - /home/odinop/.ecmwfapirc:/root/.ecmwfapirc
+    - /db_sdb1/odin/l2netcdf:/data/odin-l2-data
+    - /db_sdb1/odin/MesosphEO:/data/MesosphEO
+  command: gunicorn odinapi.api:app
