@@ -6,7 +6,7 @@ REMOTE_COMPOSE_FILE=${REMOTE_DIR}docker-compose.yml
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
 remoteDockerCompose () {
-    ssh "$PRODUCTION_HOST" -t -- docker-compose -f "$REMOTE_COMPOSE_FILE" "$*"
+    ssh odinop@"$PRODUCTION_HOST" -t -- docker-compose -f "$REMOTE_COMPOSE_FILE" "$*"
 }
 
 scp "${GIT_ROOT}"/scripts/docker-compose.deploy.yml odinop@"$PRODUCTION_HOST:$REMOTE_COMPOSE_FILE"
