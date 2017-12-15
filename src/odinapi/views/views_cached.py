@@ -10,7 +10,8 @@ from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from odinapi.utils.swagger import SWAGGER
 from odinapi.utils import get_args
 from database import DatabaseConnector
-from level1b_scanlogdata_exporter import get_scan_logdata
+from odinapi.views.level1b_scanlogdata_exporter import(
+    ScanInfoExporter)
 from odinapi.views.baseview import BaseView, register_versions
 from odinapi.views.urlgen import get_freqmode_info_url
 
@@ -81,6 +82,26 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
                 infoDict[itemDict[key]] = [item]
 
     return infoDict
+
+
+def get_scan_logdata_uncached(con, freqmode, scanid):
+    """get scan logdata from uncached tables"""
+    try:
+        backend = FREQMODE_TO_BACKEND[freqmode]
+    except KeyError:
+        abort(404)
+    scan_info_exporter = ScanInfoExporter(
+            backend, freqmode, con)
+    scan_log_data = scan_info_exporter.extract_scan_log(scanid)
+
+    log_data_dict_with_item_as_list = {}
+    if not scan_log_data == {}:
+        for item in scan_log_data.keys():
+            log_data_dict_with_item_as_list[item] = [
+                    scan_log_data[item]]
+        log_data_dict_with_item_as_list["DateTime"][0] = (
+            str(log_data_dict_with_item_as_list["DateTime"][0]))
+    return log_data_dict_with_item_as_list
 
 
 def generate_freq_mode_data(query_string, root_url, version,
@@ -489,6 +510,10 @@ class L1LogCached(BaseView):
 
         loginfo = get_scan_logdata_cached(
             con, date=None, freqmode=int(freqmode), scanid=int(scanno))
+        if loginfo == {}:
+            # if scan logdata is not yet in cache table
+            loginfo = get_scan_logdata_uncached(
+                con, int(freqmode), int(scanno))
         con.close()
 
         for item in loginfo.keys():
@@ -523,6 +548,10 @@ class L1LogCached(BaseView):
 
         loginfo = get_scan_logdata_cached(
             con, date=None, freqmode=int(freqmode), scanid=scanno)
+        if loginfo == {}:
+            # if scan logdata is not yet in cache table
+            loginfo = get_scan_logdata_uncached(
+                con, int(freqmode), int(scanno))
         con.close()
 
         for item in loginfo.keys():

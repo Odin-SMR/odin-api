@@ -12,3 +12,6 @@ pep8
 pyflakes
 netCDF4
 pyephem
+matplotlib
+PyGreSQL==4.1.1
+scipy==0.18.1
