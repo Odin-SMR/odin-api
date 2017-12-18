@@ -7,8 +7,6 @@
 argparse==1.4.0           # via dateutils
 click==6.6                # via flask
 dateutils==0.6.6
-dominate==2.3.0           # via flask-bootstrap
-flask-bootstrap==3.3.7.0
 flask==0.11.1
 gevent==1.2.2
 greenlet==0.4.12          # via gevent
@@ -20,8 +18,6 @@ pycrypto==2.6.1
 pymongo==3.3.1
 python-dateutil==2.6.0    # via dateutils
 pytz==2016.10             # via dateutils
-scipy==0.18.1
 six==1.10.0               # via python-dateutil
 sqlalchemy==1.1.4
-visitor==0.1.3            # via flask-bootstrap
 werkzeug==0.11.11         # via flask

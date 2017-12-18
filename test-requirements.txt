@@ -6,7 +6,7 @@
 #
 argparse==1.4.0           # via dateutils, jasmine
 astroid==1.4.8            # via pylint
-backports.functools-lru-cache==1.3  # via pylint
+backports.functools-lru-cache==1.3  # via matplotlib, pylint
 chardet==2.3              # via jasmine
 cherrypy==3.8.2           # via jasmine
 click==6.7                # via flask
@@ -14,8 +14,6 @@ configparser==3.5.0       # via pylint
 coverage==4.2
 cycler==0.10.0            # via matplotlib
 dateutils==0.6.6
-dominate==2.3.1           # via flask-bootstrap
-flask-bootstrap==3.3.7.1
 flask==0.12
 gevent==1.2.2
 glob2==0.5                # via jasmine-core
@@ -54,8 +52,8 @@ pyyaml==3.10              # via jasmine
 requests==2.11.1
 scipy==0.18.1
 selenium==2.53.6
-six==1.10.0               # via astroid, cycler, jasmine, matplotlib, pylint, python-dateutil
+six==1.10.0               # via astroid, jasmine, matplotlib, pylint, python-dateutil
 sqlalchemy==1.1.9
-visitor==0.1.3            # via flask-bootstrap
+subprocess32==3.2.7       # via matplotlib
 werkzeug==0.11.1          # via flask, jasmine
 wrapt==1.10.8             # via astroid

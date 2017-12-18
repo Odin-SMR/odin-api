@@ -1,9 +1,7 @@
 flask
-flask-bootstrap
 sqlalchemy
 pycrypto
 pymongo
 dateutils
-scipy
 gunicorn
 gevent
