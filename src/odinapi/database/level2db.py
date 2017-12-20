@@ -18,6 +18,10 @@ EARTH_EQ_RADIUS_KM = 6378.1
 HARD_LIMIT = 50000
 
 
+class ProjectError(Exception):
+    pass
+
+
 class ProjectsDB(object):
 
     def __init__(self):
@@ -48,6 +52,14 @@ class ProjectsDB(object):
         else:
             return self.projects_collection.find(
                 {'development': development}, {'_id': 0})
+
+    def publish_project(self, name):
+        result = self.projects_collection.update_one(
+            {'name': name},
+            {'$set': {'development': False}},
+        )
+        if result.modified_count != 1:
+            raise ProjectError
 
 
 class Level2DB(object):

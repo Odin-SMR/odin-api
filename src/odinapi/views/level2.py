@@ -1,17 +1,19 @@
 # pylint: skip-file
 """Views for getting Level 2 data"""
+from datetime import timedelta
+import httplib
+from itertools import groupby
+import logging
+from operator import itemgetter
 import urllib
 
-from datetime import timedelta
-from operator import itemgetter
-from itertools import groupby
-
-from flask import request, abort, jsonify
+from flask import request, abort, jsonify, redirect, url_for
 from flask.views import MethodView
-
+from flask_httpauth import HTTPBasicAuth
 from pymongo.errors import DuplicateKeyError
 
-from odinapi.utils.encrypt_util import decode_level2_target_parameter
+from odinapi.utils.encrypt_util import (
+    decode_level2_target_parameter, SECRET_KEY)
 from odinapi.utils.jsonmodels import (
     l2_prototype, l2i_prototype, check_json, JsonModelError)
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
@@ -25,7 +27,6 @@ from odinapi.views.database import DatabaseConnector
 from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.utils.swagger import SWAGGER
 import odinapi.utils.get_args as get_args
-import logging
 
 
 logging.basicConfig(
@@ -309,6 +310,24 @@ class Level2ViewProject(Level2ProjectBaseView):
             'Type': 'level2_project_freqmode',
             'Count': len(info['FreqModes'])
         }
+
+
+auth = HTTPBasicAuth()
+auth.verify_password(lambda _, password: password == SECRET_KEY)
+
+
+class Level2ProjectPublish(MethodView):
+    @auth.login_required
+    def post(self, project):
+        projectsdb = level2db.ProjectsDB()
+        try:
+            projectsdb.publish_project(project)
+        except level2db.ProjectError:
+            abort(httplib.NOT_FOUND)
+        return redirect(
+            url_for('level2viewproject', project=project, version='v5'),
+            code=httplib.CREATED,
+        )
 
 
 SWAGGER.add_type('level2_scan_comment', {

@@ -14,6 +14,7 @@ configparser==3.5.0       # via pylint
 coverage==4.2
 cycler==0.10.0            # via matplotlib
 dateutils==0.6.6
+flask-httpauth==3.2.3
 flask==0.12
 gevent==1.2.2
 glob2==0.5                # via jasmine-core
@@ -29,6 +30,7 @@ markupsafe==0.23          # via jinja2
 matplotlib==2.1.1
 mccabe==0.5.2             # via pylint
 mirakuru==0.8.2           # via pytest-mongo
+mock==2.0.0
 netcdf4==1.3.1
 numpy==1.11.2
 ordereddict==1.1          # via jasmine-core

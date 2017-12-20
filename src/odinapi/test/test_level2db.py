@@ -1,6 +1,9 @@
-# pylint: skip-file
+# pylint: disable=no-self-use
+import httplib
 import unittest
 import urllib
+import uuid
+
 import requests
 import pytest
 
@@ -920,3 +923,69 @@ class TestReadLevel2(BaseWithDataInsert):
                  max_altitude=20000)
         test_bad(AREA_URL.format(project=PROJECT_NAME),
                  start_time='2015-01-01', end_time='2015-12-31')
+
+
+@system
+@pytest.mark.usefixtures('dockercompose')
+class TestPublishProject(unittest.TestCase):
+
+    def test_publish(self):
+        project = self.create_project()
+        self.assert_not_published(project)
+        response = requests.post(
+            self.development_url(project) + 'publish',
+            auth=('bob', encrypt_util.SECRET_KEY),
+        )
+        assert response.status_code == httplib.CREATED
+        assert response.headers['location'] == self.production_url(project)
+        self.assert_published(project)
+
+    def test_publish_unknown_project(self):
+        response = requests.post(
+            self.development_url('unknown-project') + 'publish',
+            auth=('bob', encrypt_util.SECRET_KEY),
+        )
+        assert response.status_code == httplib.NOT_FOUND
+
+    def test_no_credentials(self):
+        project = self.create_project()
+        self.assert_not_published(project)
+        response = requests.post(self.development_url(project) + 'publish')
+        assert response.status_code == httplib.UNAUTHORIZED
+        self.assert_not_published(project)
+
+    def test_bad_credentials(self):
+        project = self.create_project()
+        self.assert_not_published(project)
+        response = requests.post(
+            self.development_url(project) + 'publish',
+            auth=('bob', 'password'),
+        )
+        assert response.status_code == httplib.UNAUTHORIZED
+        self.assert_not_published(project)
+
+    def create_project(self):
+        data = get_test_data()
+        project = str(uuid.uuid1())
+        freq_mode = data['L2I']['FreqMode']
+        scan_id = data['L2I']['ScanID']
+        payload = encrypt_util.encode_level2_target_parameter(
+            scan_id, freq_mode, project
+        )
+        wurl = WRITE_URL.format(version=VERSION, d=payload)
+        requests.post(wurl, json=data).raise_for_status()
+        return project
+
+    def assert_not_published(self, project):
+        assert requests.get(self.development_url(project)).ok
+        assert not requests.get(self.production_url(project)).ok
+
+    def assert_published(self, project):
+        assert requests.get(self.production_url(project)).ok
+        assert not requests.get(self.development_url(project)).ok
+
+    def development_url(self, project):
+        return PROJECT_URL_DEV.format(version='v5', project=project)
+
+    def production_url(self, project):
+        return PROJECT_URL.format(version='v5', project=project)

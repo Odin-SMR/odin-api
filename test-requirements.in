@@ -8,6 +8,7 @@ pytest-mongo
 pylint
 selenium
 jasmine
+mock
 pep8
 pyflakes
 netCDF4
