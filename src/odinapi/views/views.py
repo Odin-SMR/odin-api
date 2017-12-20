@@ -1,7 +1,7 @@
 # pylint: skip-file
 """ doc
 """
-from flask import request, url_for, jsonify, abort
+from flask import request, jsonify, abort
 from flask.views import MethodView
 from numpy import around
 
@@ -33,6 +33,7 @@ from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.utils import time_util
 from odinapi.utils.collocations import get_collocations
 from odinapi.utils.swagger import SWAGGER
+from odinapi.views.views_cached import get_scan_log_data
 import odinapi.utils.get_args as get_args
 
 # Make linter happy
@@ -370,9 +371,7 @@ class FreqmodeInfoNoBackend(BaseView):
 
     @register_versions('return')
     def _return_data_v5(self, version, data, date, freqmode):
-        try:
-            count = len(data)
-        except TypeError:
+        if not data:
             data = []
         return {'Data': data, 'Type': 'Log', 'Count': len(data)}
 
@@ -505,17 +504,14 @@ class ScanPTZ(BaseView):
 
     @register_versions('fetch', ['v4'])
     def _get_ptz_v4(self, version, date, backend, freqmode, scanno):
-        url_base = request.headers['Host']
-        url_base = url_base.replace('webapi', 'localhost')
-        url = 'http://' + url_base + url_for('.scaninfo', version='v4',
-                                             date=date, backend=backend,
-                                             freqmode=freqmode, scanno=scanno)
-        try:
-            mjd, _, midlat, midlon = get_geoloc_info(url)
-            datadict = run_donaletty(mjd, midlat, midlon, scanno)
-        except:
-            # TODO: Separate not found and other exceptions
+
+        con = DatabaseConnector()
+        loginfo = get_scan_log_data(con, freqmode, scanno)
+        con.close()
+        if loginfo == {}:
             abort(404)
+        mjd, _, midlat, midlon = get_geoloc_info(loginfo)
+        datadict = run_donaletty(mjd, midlat, midlon, scanno)
         self._convert_items(datadict)
 
         datadictv4 = dict()
@@ -590,13 +586,12 @@ class ScanAPR(BaseView):
 
     @register_versions('fetch', ['v4'])
     def _get_v4(self, version, species, date, backend, freqmode, scanno):
-        # TODO: Call function instead?
-        url_base = request.headers['Host']
-        url_base = url_base.replace('webapi', 'localhost')
-        url = 'http://' + url_base + url_for('.scaninfo', version='v4',
-                                             date=date, backend=backend,
-                                             freqmode=freqmode, scanno=scanno)
-        _, day_of_year, midlat, _ = get_geoloc_info(url)
+        con = DatabaseConnector()
+        loginfo = get_scan_log_data(con, freqmode, scanno)
+        con.close()
+        if loginfo == {}:
+            abort(404)
+        _, day_of_year, midlat, _ = get_geoloc_info(loginfo)
         datadict = get_apriori(species, day_of_year, midlat)
         for item in ['pressure', 'vmr']:
             datadict[item] = datadict[item].tolist()

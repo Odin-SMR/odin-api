@@ -1,53 +1,55 @@
 import numpy as N
-import datetime as DT
-import requests as R
-import json
-from date_tools import *
+from odinapi.views.date_tools import mjd2datetime
 
 
-def sph2cart(az, el, r):
-    rcos_theta = r * N.cos(el)
-    x = rcos_theta * N.cos(az)
-    y = rcos_theta * N.sin(az)
-    z = r * N.sin(el)
-    return x, y, z
-
-def cart2sph(x, y, z):
-    hxy = N.hypot(x, y)
-    r = N.hypot(hxy, z)
-    el = N.arctan2(z, hxy)
-    az = N.arctan2(y, x)
-    return az, el, r
+def sph2cart(azimuth, elevation, radius):
+    rcos_theta = radius * N.cos(elevation)
+    x_cart = rcos_theta * N.cos(azimuth)
+    y_cart = rcos_theta * N.sin(azimuth)
+    z_cart = radius * N.sin(elevation)
+    return x_cart, y_cart, z_cart
 
 
-def getscangeoloc(startlat,startlon,endlat,endlon):
+def cart2sph(x_cart, y_cart, z_cart):
+    hypot_xy = N.hypot(x_cart, y_cart)
+    radius = N.hypot(hypot_xy, z_cart)
+    elevation = N.arctan2(z_cart, hypot_xy)
+    azimuth = N.arctan2(y_cart, x_cart)
+    return azimuth, elevation, radius
+
+
+def getscangeoloc(
+        lat_start, lon_start, lat_end, lon_end):
     deg2rad = N.pi/180.0
     rad2deg = 180/N.pi
-    startlat = startlat * deg2rad
-    startlon = startlon * deg2rad
-    endlat = endlat * deg2rad
-    endlon = endlon * deg2rad
-    [xs,ys,zs] = sph2cart(startlon ,startlat,1)
-    [xe,ye,ze] = sph2cart(endlon , endlat,1)
-    [midlon,midlat,r] = cart2sph((xs+xe)/2.0, (ys+ye)/2.0, (zs+ze)/2.0)
-    midlon = midlon * rad2deg
-    midlat = midlat * rad2deg
-    return midlat,midlon
+    lat_start = lat_start * deg2rad
+    lon_start = lon_start * deg2rad
+    lat_end = lat_end * deg2rad
+    lon_end = lon_end * deg2rad
+    [x_start, y_start, z_start] = sph2cart(
+        lon_start, lat_start, 1)
+    [x_end, y_end, z_end] = sph2cart(
+        lon_end, lat_end, 1)
+    [lon_mid, lat_mid, _] = cart2sph(
+        (x_start + x_end) / 2.0,
+        (y_start + y_end) / 2.0,
+        (z_start + z_end) / 2.0)
+    lon_mid = lon_mid * rad2deg
+    lat_mid = lat_mid * rad2deg
+    return lat_mid, lon_mid
 
-def get_geoloc_info(url_string):
+
+def get_geoloc_info(logdata):
     "Get the day of year and mid-latitude of the scan"
-
-    specinfo = json.loads(R.get(url_string).text)
-    ScanID = specinfo['Info']['ScanID']
-    startlon = specinfo['Info']['LonStart']
-    startlat = specinfo['Info']['LatStart']
-    endlon = specinfo['Info']['LonEnd']
-    endlat = specinfo['Info']['LatEnd']   
-    midlat,midlon = getscangeoloc(startlat,startlon,endlat,endlon)
-    MJD = (specinfo['Info']['MJDStart'] + specinfo['Info']['MJDEnd'])/2
-    datetime = mjd2datetime(MJD)
-    doy = datetime.timetuple().tm_yday    
-
-    return MJD,doy,midlat,midlon
-
-
+    lon_start = logdata['LonStart'][0]
+    lat_start = logdata['LatStart'][0]
+    lon_end = logdata['LonEnd'][0]
+    lat_end = logdata['LatEnd'][0]
+    lat_mid, lon_mid = getscangeoloc(
+        lat_start, lon_start, lat_end, lon_end)
+    mjd_mid = (
+        logdata['MJDStart'][0] +
+        logdata['MJDEnd'][0])/2
+    datetime_scan = mjd2datetime(mjd_mid)
+    doy = datetime_scan.timetuple().tm_yday
+    return (mjd_mid, doy, lat_mid, lon_mid)

@@ -104,6 +104,17 @@ def get_scan_logdata_uncached(con, freqmode, scanid):
     return log_data_dict_with_item_as_list
 
 
+def get_scan_log_data(dbcon, freqmode, scanid):
+    logdata = get_scan_logdata_cached(
+        dbcon, date=None, freqmode=int(freqmode),
+        scanid=int(scanid))
+    if logdata == {}:
+        # if scan logdata is not yet in cache table
+        logdata = get_scan_logdata_uncached(
+            dbcon, int(freqmode), int(scanid))
+    return logdata
+
+
 def generate_freq_mode_data(query_string, root_url, version,
                             include_date=False, date=None):
     con = DatabaseConnector()
@@ -504,16 +515,9 @@ class L1LogCached(BaseView):
         except KeyError:
             abort(404)
 
-        con = DatabaseConnector()
-        loginfo = {}
         itemlist = FreqmodeInfoCached.ITEMS_V4
-
-        loginfo = get_scan_logdata_cached(
-            con, date=None, freqmode=int(freqmode), scanid=int(scanno))
-        if loginfo == {}:
-            # if scan logdata is not yet in cache table
-            loginfo = get_scan_logdata_uncached(
-                con, int(freqmode), int(scanno))
+        con = DatabaseConnector()
+        loginfo = get_scan_log_data(con, freqmode, scanno)
         con.close()
 
         for item in loginfo.keys():
@@ -542,18 +546,10 @@ class L1LogCached(BaseView):
 
     @register_versions('fetch', ['v5'])
     def _fetch_data(self, version, freqmode, scanno):
-        con = DatabaseConnector()
-        loginfo = {}
         itemlist = FreqmodeInfoCached.ITEMS_V4
-
-        loginfo = get_scan_logdata_cached(
-            con, date=None, freqmode=int(freqmode), scanid=scanno)
-        if loginfo == {}:
-            # if scan logdata is not yet in cache table
-            loginfo = get_scan_logdata_uncached(
-                con, int(freqmode), int(scanno))
+        con = DatabaseConnector()
+        loginfo = get_scan_log_data(con, freqmode, scanno)
         con.close()
-
         for item in loginfo.keys():
             try:
                 loginfo[item] = loginfo[item].tolist()
