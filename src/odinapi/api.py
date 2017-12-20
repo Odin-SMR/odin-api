@@ -16,7 +16,7 @@ from odinapi.views.level2 import (
     Level2Write, Level2ViewScan, Level2ViewLocations, Level2ViewDay,
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
     Level2ViewScans, Level2ViewFailedScans, Level2ViewComments, L2iView,
-    L2cView, L2View, L2ancView)
+    L2cView, L2View, L2ancView, Level2ViewProductsFreqmode)
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
@@ -253,6 +253,12 @@ class Odin(Flask):
             view_func=Level2ViewProducts.as_view('level2viewproducts')
         )
         self.add_url_rule(
+            ('/rest_api/<version>/level2/<project>'
+             '/<int:freqmode>/products/'),
+            view_func=Level2ViewProductsFreqmode.as_view(
+                'level2viewfmproducts')
+        )
+        self.add_url_rule(
             '/rest_api/<version>/level2/<project>/locations',
             view_func=Level2ViewLocations.as_view('level2viewlocations')
         )
@@ -307,9 +313,9 @@ class Odin(Flask):
                 'level2devviewproducts', development=True)
         )
         self.add_url_rule(
-            '/rest_api/<version>/level2/development/<project>/<freqmode>/'
+            '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'
             'products/',
-            view_func=Level2ViewProducts.as_view(
+            view_func=Level2ViewProductsFreqmode.as_view(
                 'level2devviewfmproducts', development=True)
         )
         self.add_url_rule(

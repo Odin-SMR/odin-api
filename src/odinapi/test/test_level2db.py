@@ -27,6 +27,9 @@ FAILED_URL = (
     'failed')
 PRODUCTS_URL = (
     'http://localhost:5000/rest_api/{version}/level2/{project}/products/')
+PRODUCTS_FREQMODE_URL = (
+    'http://localhost:5000/rest_api/{version}/level2/{project}/'
+    '{freqmode}/products/')
 SCAN_URL = ('http://localhost:5000/rest_api/{version}/level2/'
             '{project}/{freqmode}/{scanid}/')
 AREA_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/area'
@@ -45,6 +48,7 @@ COMMENTS_URL_DEV = make_dev_url(COMMENTS_URL)
 SCANS_URL_DEV = make_dev_url(SCANS_URL)
 FAILED_URL_DEV = make_dev_url(FAILED_URL)
 PRODUCTS_URL_DEV = make_dev_url(PRODUCTS_URL)
+PRODUCTS_FREQMODE_URL_DEV = make_dev_url(PRODUCTS_FREQMODE_URL)
 SCAN_URL_DEV = make_dev_url(SCAN_URL)
 AREA_URL_DEV = make_dev_url(AREA_URL)
 LOCATIONS_URL_DEV = make_dev_url(LOCATIONS_URL)
@@ -644,6 +648,42 @@ class TestReadLevel2(BaseWithDataInsert):
         self.assertEqual(r.status_code, 200)
         res = r.json()['Data']
         self.assertEqual(len(res), 3)
+
+    def test_get_products_for_freqmode(self):
+        """Test get products for a freqmode"""
+        # V4
+        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
+            version='v4', freqmode=1, project=PROJECT_NAME)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        res = r.json()['Info']['Products']
+        self.assertEqual(len(res), 3)
+
+        # V5
+        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
+            version='v5', freqmode=1, project=PROJECT_NAME)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        res = r.json()['Data']
+        self.assertEqual(len(res), 3)
+
+    def test_get_products_for_missing_freqmode(self):
+        """Test get products for a missing freqmode"""
+        # V4
+        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
+            version='v4', freqmode=2, project=PROJECT_NAME)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        res = r.json()['Info']['Products']
+        self.assertEqual(len(res), 0)
+
+        # V5
+        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
+            version='v5', freqmode=2, project=PROJECT_NAME)
+        r = requests.get(rurl)
+        self.assertEqual(r.status_code, 200)
+        res = r.json()['Data']
+        self.assertEqual(len(res), 0)
 
     def test_get_locations(self):
         """Test level2 get locations endpoint"""

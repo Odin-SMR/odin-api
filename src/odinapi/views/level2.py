@@ -810,7 +810,7 @@ class Level2ViewProducts(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode'],
+            ['version', 'project'],
             {"200": SWAGGER.get_type_response(
                 'level2_product_name', is_list=True)},
             summary=(
@@ -818,23 +818,56 @@ class Level2ViewProducts(Level2ProjectBaseView):
         )
 
     @register_versions('fetch', ['v4'])
-    def _get(self, version, project, freqmode=None):
-        if freqmode:
-            abort(404)
+    def _get(self, version, project):
         db = level2db.Level2DB(project)
         return db.get_product_count()
 
     @register_versions('return', ['v4'])
-    def _return(self, version, products, project, freqmode=None):
+    def _return(self, version, products, project):
         return {'Info': {'Products': products}}
 
     @register_versions('fetch', ['v5'])
-    def _get_v5(self, version, project, freqmode=None):
+    def _get_v5(self, version, project):
         db = level2db.Level2DB(project)
-        return db.get_products(freqmode=freqmode)
+        return db.get_products(freqmode=None)
 
     @register_versions('return', ['v5'])
-    def _return_v5(self, version, products, project, freqmode=None):
+    def _return_v5(self, version, products, project):
+        return {'Data': products, 'Type': 'level2_product_name',
+                'Count': len(products)}
+
+
+class Level2ViewProductsFreqmode(Level2ProjectBaseView):
+    """GET available products"""
+
+    @register_versions('swagger', ['v5'])
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level2'],
+            ['version', 'project', 'freqmode'],
+            {"200": SWAGGER.get_type_response(
+                'level2_product_name', is_list=True)},
+            summary=(
+                "Get available products"
+                " for a given project and freqmode")
+        )
+
+    @register_versions('fetch', ['v4'])
+    def _get(self, version, project, freqmode):
+        db = level2db.Level2DB(project)
+        return db.get_products(freqmode=int(freqmode))
+
+    @register_versions('return', ['v4'])
+    def _return(self, version, products, project, freqmode):
+        return {'Info': {'Products': products}}
+
+    @register_versions('fetch', ['v5'])
+    def _get_v5(self, version, project, freqmode):
+        db = level2db.Level2DB(project)
+        return db.get_products(freqmode=int(freqmode))
+
+    @register_versions('return', ['v5'])
+    def _return_v5(self, version, products, project, freqmode):
         return {'Data': products, 'Type': 'level2_product_name',
                 'Count': len(products)}
 
