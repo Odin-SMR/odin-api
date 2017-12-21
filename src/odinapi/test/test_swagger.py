@@ -49,6 +49,7 @@ class TestSwagger(unittest.TestCase):
         expected = {
             'name': 'testparam',
             'in': 'path',
+            'required': True,
             'type': 'string',
             'format': 'date'
         }

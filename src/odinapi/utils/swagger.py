@@ -224,7 +224,7 @@ class Swagger(object):
         }
         if default is not None:
             self.parameters[name]['default'] = default
-        if required and default is None:
+        if location == 'path' or (required and default is None):
             self.parameters[name]['required'] = True
         if string_format:
             self.parameters[name]['format'] = string_format
