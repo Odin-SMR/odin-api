@@ -9,7 +9,7 @@ pylint
 selenium
 jasmine
 mock
-pep8
+pycodestyle
 pyflakes
 netCDF4
 pyephem

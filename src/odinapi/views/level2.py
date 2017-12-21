@@ -128,7 +128,7 @@ class Level2Write(MethodView):
             abort(400)
         try:
             scanid, freqmode, project = decode_level2_target_parameter(msg)
-        except:
+        except:  # noqa
             logging.warning('Level2Write.post: data can not be decoded')
             abort(400)
         data = request.json
@@ -207,7 +207,7 @@ class Level2Write(MethodView):
             abort(400)
         try:
             scanid, freqmode, project = decode_level2_target_parameter(msg)
-        except:
+        except:  # noqa
             abort(400)
         db = level2db.Level2DB(project)
         db.delete(scanid, freqmode)
