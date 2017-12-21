@@ -1,12 +1,13 @@
 # pylint: skip-file
 """Views for getting Level 2 data"""
-from datetime import timedelta
+from datetime import datetime, timedelta
 import httplib
 from itertools import groupby
 import logging
 from operator import itemgetter
 import urllib
 
+import dateutil.tz
 from flask import request, abort, jsonify, redirect, url_for
 from flask.views import MethodView
 from flask_httpauth import HTTPBasicAuth
@@ -328,6 +329,61 @@ class Level2ProjectPublish(MethodView):
             url_for('level2viewproject', project=project, version='v5'),
             code=httplib.CREATED,
         )
+
+
+class Level2ProjectAnnotations(BaseView):
+    def get(self, project):
+        projectsdb = level2db.ProjectsDB()
+        try:
+            annotations = list(projectsdb.get_annotations(project))
+            return jsonify(
+                Data=[{
+                    'Text': annotation.text,
+                    'FreqMode': annotation.freqmode,
+                    'CreatedAt': annotation.created_at.isoformat(),
+                } for annotation in annotations],
+                Type='level2_project_annotation',
+                Count=len(annotations),
+            )
+        except level2db.ProjectError:
+            abort(httplib.NOT_FOUND)
+
+    @auth.login_required
+    def post(self, project):
+        text = request.json.get('Text')
+        freqmode = request.json.get('FreqMode')
+        if text is None or not isinstance(text, basestring):
+            abort(httplib.BAD_REQUEST)
+        if freqmode is not None and not isinstance(freqmode, int):
+            abort(httplib.BAD_REQUEST)
+        projectsdb = level2db.ProjectsDB()
+        annotation = level2db.ProjectAnnotation(
+            text=text,
+            created_at=datetime.utcnow().replace(tzinfo=dateutil.tz.tzutc()),
+            freqmode=freqmode,
+        )
+        try:
+            projectsdb.add_annotation(project, annotation)
+        except level2db.ProjectError:
+            abort(httplib.NOT_FOUND)
+        return '', httplib.CREATED
+
+    @register_versions('swagger', ['v5'])
+    def _swagger_def(self, version):
+        return SWAGGER.get_path_definition(
+            ['level2'],
+            ['version', 'project'],
+            {"200": SWAGGER.get_type_response(
+                'level2_project_annotation', is_list=True)},
+            summary='Get annotations for a project',
+        )
+
+
+SWAGGER.add_type('level2_project_annotation', {
+    "Text": str,
+    "FreqMode": int,
+    "CreatedAt": str,
+})
 
 
 SWAGGER.add_type('level2_scan_comment', {

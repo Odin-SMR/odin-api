@@ -1,4 +1,4 @@
-# pylint: disable=no-self-use
+# pylint: disable=no-self-use,invalid-name
 import httplib
 import unittest
 import urllib

@@ -4,9 +4,7 @@
 #
 #    pip-compile --output-file odinapi-requirements.txt odinapi-requirements.in
 #
-argparse==1.4.0           # via dateutils
 click==6.6                # via flask
-dateutils==0.6.6
 flask-httpauth==3.2.3
 flask==0.11.1
 gevent==1.2.2
@@ -17,8 +15,7 @@ jinja2==2.8               # via flask
 markupsafe==0.23          # via jinja2
 pycrypto==2.6.1
 pymongo==3.3.1
-python-dateutil==2.6.0    # via dateutils
-pytz==2016.10             # via dateutils
+python-dateutil==2.6.0
 six==1.10.0               # via python-dateutil
 sqlalchemy==1.1.4
 werkzeug==0.11.11         # via flask

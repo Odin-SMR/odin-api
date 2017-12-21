@@ -17,7 +17,7 @@ from odinapi.views.level2 import (
     Level2ViewArea, Level2ViewProducts, Level2ViewProjects, Level2ViewProject,
     Level2ViewScans, Level2ViewFailedScans, Level2ViewComments, L2iView,
     L2cView, L2View, L2ancView, Level2ViewProductsFreqmode,
-    Level2ProjectPublish)
+    Level2ProjectPublish, Level2ProjectAnnotations)
 from odinapi.views.statistics import (
     FreqmodeStatistics, TimelineFreqmodeStatistics)
 from odinapi.views.smr_site import (
@@ -213,6 +213,10 @@ class Odin(Flask):
             view_func=Level2ViewProject.as_view('level2viewproject')
         )
         self.add_url_rule(
+            '/rest_api/v5/level2/<project>/annotations',
+            view_func=Level2ProjectAnnotations.as_view('level2annotations')
+        )
+        self.add_url_rule(
             '/rest_api/<version>/level2/<project>/<int:freqmode>/comments/',
             view_func=Level2ViewComments.as_view('level2viewcomments')
         )
@@ -287,6 +291,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/rest_api/v5/level2/development/<project>/publish',
             view_func=Level2ProjectPublish.as_view('level2publishproject')
+        )
+        self.add_url_rule(
+            '/rest_api/v5/level2/development/<project>/annotations',
+            view_func=Level2ProjectAnnotations.as_view('level2devannotations')
         )
         self.add_url_rule(
             '/rest_api/<version>/level2/development/<project>/<int:freqmode>/'

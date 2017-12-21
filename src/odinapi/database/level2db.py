@@ -1,5 +1,7 @@
 # pylint: skip-file
+from datetime import datetime
 from itertools import chain
+from collections import namedtuple
 
 import numpy
 from pymongo.errors import DuplicateKeyError
@@ -22,16 +24,28 @@ class ProjectError(Exception):
     pass
 
 
+class ProjectAnnotation(namedtuple('ProjectAnnotation', [
+    'text', 'created_at', 'freqmode',
+])):
+    def __new__(typ, text, created_at, freqmode=None):
+        assert isinstance(text, basestring)
+        assert isinstance(created_at, datetime)
+        assert freqmode is None or isinstance(freqmode, int)
+        return super(ProjectAnnotation, typ).__new__(
+            typ, text, created_at, freqmode,
+        )
+
+
 class ProjectsDB(object):
 
     def __init__(self):
-        self.projects_collection = mongo.get_collection(
-            'level2', 'projects')
+        self.projects_collection = mongo.get_collection('level2', 'projects')
+        self._annotations = mongo.get_collection('level2', 'annotations')
         self._create_indexes()
 
     def _create_indexes(self):
-        self.projects_collection.create_index(
-            [('name', 1)], unique=True)
+        self.projects_collection.create_index('name', unique=True)
+        self._annotations.create_index('project', unique=False)
 
     def add_project_if_not_exists(self, project_name):
         try:
@@ -43,7 +57,9 @@ class ProjectsDB(object):
 
     def get_project(self, project_name):
         return self.projects_collection.find_one(
-            {'name': project_name}, {'_id': 0})
+            {'name': project_name},
+            {'_id': False, 'name': True, 'development': True},
+        )
 
     def get_projects(self, development=True):
         if development is None:
@@ -51,7 +67,9 @@ class ProjectsDB(object):
             return self.projects_collection.find({}, {'_id': 0})
         else:
             return self.projects_collection.find(
-                {'development': development}, {'_id': 0})
+                {'development': development},
+                {'_id': False, 'name': True, 'development': True},
+            )
 
     def publish_project(self, name):
         result = self.projects_collection.update_one(
@@ -60,6 +78,28 @@ class ProjectsDB(object):
         )
         if result.modified_count != 1:
             raise ProjectError
+
+    def add_annotation(self, name, annotation):
+        assert isinstance(annotation, ProjectAnnotation)
+        if self.projects_collection.count({'name': name}) < 1:
+            raise ProjectError
+        annotationdict = {
+            'project': name,
+            'created_at': annotation.created_at,
+            'text': annotation.text,
+            'freqmode': annotation.freqmode,
+        }
+        self._annotations.insert_one(annotationdict)
+
+    def get_annotations(self, name):
+        if self.projects_collection.count({'name': name}) < 1:
+            raise ProjectError
+        for annotation in self._annotations.find({'project': name}):
+            yield ProjectAnnotation(
+                text=annotation['text'],
+                created_at=annotation['created_at'],
+                freqmode=annotation.get('freqmode'),
+            )
 
 
 class Level2DB(object):

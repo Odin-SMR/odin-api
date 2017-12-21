@@ -1,8 +1,8 @@
 flask
 flask-httpauth
-sqlalchemy
+gevent
+gunicorn
 pycrypto
 pymongo
-dateutils
-gunicorn
-gevent
+python-dateutil
+sqlalchemy
