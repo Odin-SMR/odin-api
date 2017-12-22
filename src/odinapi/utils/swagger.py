@@ -127,16 +127,20 @@ class Swagger(object):
               "schema": {...}
             }
         """
-        data = self.types[type_name]
+        dataschema = {'$ref': '#/definitions/' + type_name}
         if is_list:
-            data = {'type': 'array', 'items': data}
+            dataschema = {
+                'type': 'array',
+                'items': dataschema,
+            }
 
         schema = self.make_properties(kwargs)
         schema['required'] = ['Data', 'Type', 'Count']
         schema['properties'].update({
             'Type': {'type': 'string'},
             'Count': {'type': 'integer'},
-            'Data': data})
+            'Data': dataschema,
+        })
         return {'description': description, 'schema': schema}
 
     def get_mixed_type_response(self, types, description=''):
@@ -299,7 +303,7 @@ class Swagger(object):
             }
         """
         if isinstance(properties, dict):
-            return {'properties': {
+            return {'type': 'object', 'properties': {
                 key: Swagger.make_properties(val)
                 for key, val in properties.items()}}
         elif isinstance(properties, list):
@@ -339,9 +343,9 @@ class SwaggerSpecView(MethodView):
         super(SwaggerSpecView, self).__init__()
 
     @staticmethod
-    def rule_to_swagger_path(rule):
-        """/path/<param> -> /path/{param}"""
+    def rule_to_swagger_path(rule, version):
         rule = str(rule)
+        rule = rule.replace('<version>', version)
         for arg in re.findall('(<([^<>]*:)?([^<>]*)>)', rule):
             rule = rule.replace(arg[0], '{%s}' % arg[2])
         return rule
@@ -351,7 +355,7 @@ class SwaggerSpecView(MethodView):
         for rule in current_app.url_map.iter_rules():
             endpoint = current_app.view_functions[rule.endpoint]
             if is_base_view(endpoint):
-                path = self.rule_to_swagger_path(rule)
+                path = self.rule_to_swagger_path(rule, version)
                 path_spec = endpoint.view_class().swagger_spec(version)
                 if path_spec:
                     paths[path] = path_spec
@@ -360,7 +364,6 @@ class SwaggerSpecView(MethodView):
     def get(self, version):
         """GET swagger definition for a certain version of the API."""
         param = SWAGGER.get_parameters()
-        param['version']['default'] = version
         return jsonify({
             "swagger": "2.0",
             "info": {
@@ -369,6 +372,7 @@ class SwaggerSpecView(MethodView):
                 "description": self.description,
                 "termsOfService": self.terms_of_service,
             },
+            'basePath': '/',
             "paths": self.collect_path_specifications(version),
             "definitions": SWAGGER.get_definitions(),
             "parameters": param,

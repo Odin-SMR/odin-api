@@ -55,7 +55,7 @@ class DateInfo(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'date'],
+            ['date'],
             {"200": SWAGGER.get_type_response(
                 'freqmode_info', is_list=True, Date=str)},
             summary="Get scan counts for a day"
@@ -292,7 +292,7 @@ class FreqmodeInfoNoBackend(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'date', 'freqmode'],
+            ['date', 'freqmode'],
             {"200": SWAGGER.get_type_response('Log', is_list=True)},
             summary="Get log info for scans in a day and freqmode"
         )
@@ -382,7 +382,7 @@ class ScanInfoNoBackend(FreqmodeInfoNoBackend):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'date', 'freqmode', 'scanno'],
+            ['date', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('Log')},
             summary="Get log info for a scan"
         )
@@ -473,7 +473,7 @@ class ScanSpecNoBackend(ScanSpec):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'scanno', 'debug'],
+            ['freqmode', 'scanno', 'debug'],
             {"200": SWAGGER.get_type_response('L1b')},
             summary="Get level1 data for a scan"
         )
@@ -558,7 +558,7 @@ class ScanPTZNoBackend(ScanPTZ):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'scanno'],
+            ['freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('ptz')},
             summary="Get ptz data for a scan"
         )
@@ -626,7 +626,7 @@ class ScanAPRNoBackend(ScanAPR):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'scanno', 'species'],
+            ['freqmode', 'scanno', 'species'],
             {"200": SWAGGER.get_type_response('apriori')},
             summary="Get apriori data for a scan and species"
         )
@@ -661,7 +661,7 @@ class CollocationsView(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'scanno'],
+            ['freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('collocation', is_list=True)},
             summary="Get collocations for a scan"
         )

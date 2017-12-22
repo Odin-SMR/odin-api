@@ -26,7 +26,6 @@ from odinapi.views.smr_site import (
     ViewLevel2DevScan)
 from odinapi.views.data_info import FileInfo, LatestECMF
 
-SWAGGER.add_parameter('version', 'path', str)
 SWAGGER.add_parameter('freqmode', 'path', int)
 SWAGGER.add_parameter('scanno', 'path', int)
 

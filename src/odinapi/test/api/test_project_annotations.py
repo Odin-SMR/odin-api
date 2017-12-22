@@ -4,6 +4,7 @@ import httplib
 import uuid
 
 import dateutil.parser
+from dateutil.tz import tzutc
 import pytest
 import requests
 
@@ -57,7 +58,7 @@ def test_post(project):
         json={'Text': 'This is a freqmode', 'FreqMode': 13},
         auth=('bob', encrypt_util.SECRET_KEY),
     )
-    now = datetime.now()
+    now = datetime.utcnow().replace(tzinfo=tzutc())
     assert response.status_code == httplib.CREATED
     response = requests.get(project + '/annotations')
     assert response.status_code == httplib.OK
@@ -74,7 +75,7 @@ def test_post(project):
 @system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_multiple(project):
-    now = datetime.now()
+    now = datetime.utcnow().replace(tzinfo=tzutc())
     requests.post(
         project + '/annotations',
         json={'Text': 'This is a project'},

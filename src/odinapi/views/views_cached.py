@@ -10,8 +10,7 @@ from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from odinapi.utils.swagger import SWAGGER
 from odinapi.utils import get_args
 from database import DatabaseConnector
-from odinapi.views.level1b_scanlogdata_exporter import(
-    ScanInfoExporter)
+from odinapi.views.level1b_scanlogdata_exporter import ScanInfoExporter
 from odinapi.views.baseview import BaseView, register_versions
 from odinapi.views.urlgen import get_freqmode_info_url
 
@@ -143,7 +142,7 @@ class DateInfoCached(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'date'],
+            ['date'],
             {"200": SWAGGER.get_type_response(
                 'freqmode_info', is_list=True, Date=str)},
             summary="Get scan counts for a day from cached table"
@@ -196,7 +195,7 @@ class PeriodInfoCached(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'year', 'month', 'day', 'length'],
+            ['year', 'month', 'day', 'length'],
             {"200": SWAGGER.get_type_response(
                 'freqmode_info', is_list=True, PeriodStart=str,
                 PeriodEnd=str)},
@@ -430,7 +429,7 @@ class FreqmodeInfoCachedNoBackend(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'date', 'freqmode'],
+            ['date', 'freqmode'],
             {"200": SWAGGER.get_type_response('Log', is_list=True)},
             summary=(
                 "Get log info for scans in a day and freqmode from "
@@ -475,7 +474,7 @@ class ScanInfoCachedNoBackend(FreqmodeInfoCachedNoBackend):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'date', 'freqmode', 'scanno'],
+            ['date', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('Log')},
             summary="Get log info for a scan from cached table"
         )
@@ -501,7 +500,7 @@ class L1LogCached(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'scanno'],
+            ['freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('Log')},
             summary="Get log info for a scan from cached table"
         )
@@ -600,7 +599,7 @@ class L1LogCachedList(FreqmodeInfoCachedNoBackend):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['version', 'freqmode', 'start_time', 'end_time', 'apriori'],
+            ['freqmode', 'start_time', 'end_time', 'apriori'],
             {"200": SWAGGER.get_type_response('Log', is_list=True)},
             summary=(
                 "Get log info for scans in period and freqmode from "

@@ -217,12 +217,9 @@ class Level2Write(MethodView):
 
 SWAGGER.add_type('level2_project', {
     "Name": str,
-    "FreqModes": [{
-        "FreqMode": int,
-        "URLS": {
-            "URL-project": str,
-        }
-    }]
+    "URLS": {
+        "URL-project": str,
+    },
 })
 
 
@@ -233,7 +230,7 @@ class Level2ViewProjects(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version'],
+            [],
             {"200": SWAGGER.get_type_response('level2_project', is_list=True)},
             summary="Get list of existing projects"
         )
@@ -276,8 +273,12 @@ class Level2ViewProject(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project'],
-            {"200": SWAGGER.get_type_response('level2_project_freqmode')},
+            ['project'],
+            {
+                "200": SWAGGER.get_type_response(
+                    'level2_project_freqmode', is_list=True,
+                )
+            },
             summary="Get project information"
         )
 
@@ -337,16 +338,21 @@ class Level2ProjectAnnotations(BaseView):
         try:
             annotations = list(projectsdb.get_annotations(project))
             return jsonify(
-                Data=[{
-                    'Text': annotation.text,
-                    'FreqMode': annotation.freqmode,
-                    'CreatedAt': annotation.created_at.isoformat(),
-                } for annotation in annotations],
-                Type='level2_project_annotation',
+                Data=[
+                    self._annotation_to_json(annotation)
+                    for annotation in annotations
+                ],
+                Type='L2ProjectAnnotation',
                 Count=len(annotations),
             )
         except level2db.ProjectError:
             abort(httplib.NOT_FOUND)
+
+    def _annotation_to_json(self, annotation):
+        obj = {'Text': annotation.text, 'CreatedAt': annotation.created_at}
+        if annotation.freqmode is not None:
+            obj['FreqMode'] = annotation.freqmode
+        return obj
 
     @auth.login_required
     def post(self, project):
@@ -372,14 +378,17 @@ class Level2ProjectAnnotations(BaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project'],
-            {"200": SWAGGER.get_type_response(
-                'level2_project_annotation', is_list=True)},
+            ['project'],
+            {
+                "200": SWAGGER.get_type_response(
+                    'L2ProjectAnnotation', is_list=True
+                )
+            },
             summary='Get annotations for a project',
         )
 
 
-SWAGGER.add_type('level2_project_annotation', {
+SWAGGER.add_type('L2ProjectAnnotation', {
     "Text": str,
     "FreqMode": int,
     "CreatedAt": str,
@@ -402,7 +411,7 @@ class Level2ViewComments(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'offset', 'limit'],
+            ['project', 'freqmode', 'offset', 'limit'],
             {"200": SWAGGER.get_type_response(
                 'level2_scan_comment', is_list=True)},
             summary="Get list of comments for a freqmode"
@@ -479,7 +488,7 @@ class Level2ViewScans(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'start_time', 'end_time',
+            ['project', 'freqmode', 'start_time', 'end_time',
              'comment', 'limit', 'offset'],
             {"200": SWAGGER.get_type_response(
                 'level2_scan_info', is_list=True)},
@@ -558,7 +567,7 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'start_time', 'end_time',
+            ['project', 'freqmode', 'start_time', 'end_time',
              'comment', 'offset', 'limit'],
             {"200": SWAGGER.get_type_response(
                 'level2_failed_scan_info', is_list=True)},
@@ -623,7 +632,7 @@ class Level2ViewScan(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'scanno'],
+            ['project', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_mixed_type_response(
                 [
                     ('L2', True),
@@ -697,7 +706,7 @@ class L2iView(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'scanno'],
+            ['project', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('L2i')},
             summary=(
                 "Get level2 info for one scan and freqmode")
@@ -728,7 +737,7 @@ class L2cView(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'scanno'],
+            ['project', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('L2c', is_list=True)},
             summary=(
                 "Get level2 comments for one scan and freqmode")
@@ -773,7 +782,7 @@ class L2ancView(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'scanno'],
+            ['project', 'freqmode', 'scanno'],
             {"200": SWAGGER.get_type_response('L2anc', is_list=True)},
             summary=(
                 "Get ancillary data for one scan and freqmode")
@@ -826,7 +835,7 @@ class L2View(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode', 'scanno', 'product'],
+            ['project', 'freqmode', 'scanno', 'product'],
             {"200": SWAGGER.get_type_response('L2', is_list=True)},
             summary=(
                 "Get level2 data for one scan and freqmode")
@@ -885,7 +894,7 @@ class Level2ViewProducts(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project'],
+            ['project'],
             {"200": SWAGGER.get_type_response(
                 'level2_product_name', is_list=True)},
             summary=(
@@ -919,7 +928,7 @@ class Level2ViewProductsFreqmode(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'freqmode'],
+            ['project', 'freqmode'],
             {"200": SWAGGER.get_type_response(
                 'level2_product_name', is_list=True)},
             summary=(
@@ -966,7 +975,7 @@ class Level2ViewLocations(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'product', 'location', 'radius',
+            ['project', 'product', 'location', 'radius',
              'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude',
              'start_time', 'end_time'],
             {
@@ -1027,7 +1036,7 @@ class Level2ViewDay(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'date', 'product',
+            ['project', 'date', 'product',
              'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude'],
             {
                 "200": SWAGGER.get_type_response('L2', is_list=True),
@@ -1096,7 +1105,7 @@ class Level2ViewArea(Level2ProjectBaseView):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level2'],
-            ['version', 'project', 'product', 'min_lat', 'max_lat',
+            ['project', 'product', 'min_lat', 'max_lat',
              'min_lon', 'max_lon', 'min_pressure', 'max_pressure',
              'min_altitude', 'max_altitude', 'start_time', 'end_time'],
             {

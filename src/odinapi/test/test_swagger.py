@@ -3,7 +3,7 @@ import unittest
 import requests
 import pytest
 
-from odinapi.utils.swagger import Swagger
+from odinapi.utils.swagger import Swagger, SwaggerSpecView
 from odinapi.test.testdefs import slow, system
 
 
@@ -62,7 +62,10 @@ class TestSwagger(unittest.TestCase):
         response = swagger.get_response('BadQuery')
         expected = {
             'description': 'Unsupported query',
-            'schema': {'properties': {'Error': {'type': 'string'}}}
+            'schema': {
+                'type': 'object',
+                'properties': {'Error': {'type': 'string'}},
+            }
         }
         self.assertEqual(response, expected)
 
@@ -75,13 +78,11 @@ class TestSwagger(unittest.TestCase):
         expected = {
             'description': 'Return a test type',
             'schema': {
+                'type': 'object',
                 'properties': {
                     'Count': {'type': 'integer'},
                     'Type': {'type': 'string'},
-                    'Data': {'properties': {
-                        'key1': {'type': 'array', 'items': {'type': 'number'}},
-                        'key2': {'type': 'string'}
-                    }},
+                    'Data': {'$ref': '#/definitions/testtype'},
                     'extra': {'type': 'string'}
                 },
                 'required': ['Data', 'Type', 'Count']
@@ -95,16 +96,13 @@ class TestSwagger(unittest.TestCase):
         expected = {
             'description': 'Return a list of test type',
             'schema': {
+                'type': 'object',
                 'properties': {
                     'Count': {'type': 'integer'},
                     'Type': {'type': 'string'},
                     'Data': {
                         'type': 'array',
-                        'items': {'properties': {
-                            'key1': {
-                                'type': 'array', 'items': {'type': 'number'}},
-                            'key2': {'type': 'string'}
-                        }},
+                        'items': {'$ref': '#/definitions/testtype'},
                     },
                 },
                 'required': ['Data', 'Type', 'Count']
@@ -130,29 +128,26 @@ class TestSwagger(unittest.TestCase):
                         'required': ['type1', 'type2'],
                         'properties': {
                             'type1': {
+                                'type': 'object',
                                 'required': ['Data', 'Type', 'Count'],
                                 'properties': {
                                     'Count': {'type': 'integer'},
                                     'Type': {'type': 'string'},
-                                    'Data': {'properties': {
-                                        'key1': {
-                                            'type': 'array',
-                                            'items': {'type': 'number'}},
-                                        'key2': {'type': 'string'}
-                                    }},
+                                    'Data': {'$ref': '#/definitions/type1'},
                                 }
                             },
                             'type2': {
+                                'type': 'object',
                                 'required': ['Data', 'Type', 'Count'],
                                 'properties': {
                                     'Count': {'type': 'integer'},
                                     'Type': {'type': 'string'},
                                     'Data': {
                                         'type': 'array',
-                                        'items': {'properties': {
-                                            'key1': {'type': 'string'}
-                                        }}
-                                    }
+                                        'items': {
+                                            '$ref': '#/definitions/type2',
+                                        },
+                                    },
                                 }
                             }
                         }
@@ -172,6 +167,7 @@ class TestSwagger(unittest.TestCase):
             'key5': [[float]]
         })
         expected = {
+            'type': 'object',
             "properties": {
                 "key1": {"type": "integer"},
                 "key2": {
@@ -179,11 +175,13 @@ class TestSwagger(unittest.TestCase):
                     "items": {"type": "number"}
                 },
                 "subkey": {
+                    'type': 'object',
                     "properties": {"key3": {"type": "string"}}
                 },
                 "subkey2": {
                     "type": "array",
                     "items": {
+                        'type': 'object',
                         "properties": {"key4": {"type": "string"}}
                     }
                 },
@@ -229,19 +227,41 @@ class TestSwagger(unittest.TestCase):
                         'properties': {
                             'Count': {'type': 'integer'},
                             'Type': {'type': 'string'},
-                            'Data': {'properties': {
-                                'key1': {'type': 'string'}
-                            }},
+                            'Data': {'$ref': '#/definitions/type1'},
                         },
-                        'required': ['Data', 'Type', 'Count']
+                        'required': ['Data', 'Type', 'Count'],
+                        'type': 'object',
                     }
                 },
                 '400': {
                     'description': 'Unsupported query',
-                    'schema': {'properties': {'Error': {'type': 'string'}}}
+                    'schema': {
+                        'type': 'object',
+                        'properties': {'Error': {'type': 'string'}},
+                    }
                 }
             },
             'summary': 'A test path',
             'tags': ['test_tag']
         }}
         self.assertEqual(path, expected)
+
+
+class TestRuleToSwaggerPath:
+    def test_static_rule(self):
+        assert (
+            SwaggerSpecView.rule_to_swagger_path('/foo/bar', 'v3')
+            == '/foo/bar'
+        )
+
+    def test_set_version(self):
+        assert (
+            SwaggerSpecView.rule_to_swagger_path('/<version>/foo/bar', 'v3')
+            == '/v3/foo/bar'
+        )
+
+    def test_rule_with_variable(self):
+        assert (
+            SwaggerSpecView.rule_to_swagger_path('/foo/<bar>', 'v3')
+            == '/foo/{bar}'
+        )
