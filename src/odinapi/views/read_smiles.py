@@ -47,8 +47,12 @@ def read_smiles_file(file, date, species, file_index):
             'data_fields'][item][file_index].tolist()
     for item in data['geolocation_fields'].keys():
         if item not in ['Altitude']:
-            data['geolocation_fields'][item] = data[
-                'geolocation_fields'][item][file_index].tolist()
+            try:
+                data['geolocation_fields'][item] = data[
+                    'geolocation_fields'][item][file_index].tolist()
+            except AttributeError:
+                data['geolocation_fields'][item] = data[
+                    'geolocation_fields'][item][file_index]
         else:
             data['geolocation_fields'][item] = data[
                 'geolocation_fields'][item].tolist()
