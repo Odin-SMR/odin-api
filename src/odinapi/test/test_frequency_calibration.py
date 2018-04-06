@@ -3,18 +3,18 @@ import pytest
 import numpy as np
 from pg import DB
 from odinapi.test.testdefs import system
-from odinapi.views.level1b_scandata_exporter_v2 import(
+from odinapi.views.level1b_scandata_exporter_v2 import (
     ScandataExporter,
     smr_lofreqcorr,
     unsplit_normalmode,
     apply_calibration_step2,
 )
-from odinapi.views.smr_frequency import(
+from odinapi.views.smr_frequency import (
     Smrl1bFreqspec,
     Smrl1bFreqsort,
     get_bad_ssb_modules,
 )
-from odinapi.views.freq_calibration import(
+from odinapi.views.freq_calibration import (
     Freqcorr572,
 )
 
@@ -94,19 +94,19 @@ class TestFreqcorr572():
             f_initial,
             tb_initial] == [
                 1,
-                pytest.approx(576.5917, abs=1e-3),
-                pytest.approx(29.1972, abs=1e-3)])
+                pytest.approx(576.5938, abs=1e-3),
+                pytest.approx(82.1877, abs=1e-3)])
 
     def test_fit_data(self, freq_corr_572):
         freq_corr_572.get_initial_fit_values()
         [fit_is_ok, freq1, freq2] = freq_corr_572.fit_data(
-                29.1972, 576.5917)
+            82.1877, 576.5938)
         assert np.all([
             fit_is_ok,
             freq1,
             freq2] == [
                 1,
-                pytest.approx(576.593, abs=1e-3),
+                pytest.approx(576.5938, abs=1e-3),
                 pytest.approx(576.840, abs=1e-3)])
 
     def test_get_tb_profile(self, freq_corr_572):

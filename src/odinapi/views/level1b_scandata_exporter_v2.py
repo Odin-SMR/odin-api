@@ -1,4 +1,4 @@
-# pylint: disable=E0401,C0413
+# pylint: disable=E0401,C0413,C0302,R0912,R0914
 '''extract scan data from odin database and display on webapi'''
 
 
@@ -144,8 +144,6 @@ class ScandataExporter(object):
                              '''.format(*[stw1, stw2, stw_offset]))
         self.refdata = query.dictresult()
         if result == [] or result2 == [] or self.refdata == []:
-            print('''1: could not extract all necessary data
-                     for '{0}' in scan {1}'''.format(*temp))
             return 0
         # combine target and calibration data
         self.specdata = []  # list of both target and calibration spectrum data
@@ -960,9 +958,21 @@ def get_freqinfo(scangr, debug=False):
             # make a frequency adjustement of measurements from 572 frontend
             # according to Julias description in L1ATBD
             if numspec == 0:
-                fcgr = Freqcorr572(lofreq + freqvec,
-                                   spectra[2::, channels_id],
-                                   scangr.spectra['altitude'][2::])
+                # # use doppler corrected frequency grid around 60 km
+                index_close_to_60_km = np.argsort(
+                    np.abs(np.array(scangr.spectra['altitude']) - 60e3)
+                )[0]
+                lofreq_at_60_km, _ = doppler_corr(
+                    scangr.spectra['skyfreq'][index_close_to_60_km],
+                    scangr.spectra['restfreq'][index_close_to_60_km],
+                    scangr.spectra['lofreq'][index_close_to_60_km],
+                    freqvec
+                )
+                fcgr = Freqcorr572(
+                    lofreq_at_60_km + freqvec,
+                    spectra[2::, channels_id],
+                    scangr.spectra['altitude'][2::]
+                )
                 fcgr.run_freq_corr()
             if fcgr.correction_is_ok:
                 lofreq = lofreq - fcgr.fdiff * 1e9
@@ -999,7 +1009,6 @@ def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
     except IndexError:
         isok = 0
     if isok == 0:
-        print('data for scan {0} not found'.format(calstw))
         return {}
     scangr.decode_refdata()
     scangr.decode_specdata()

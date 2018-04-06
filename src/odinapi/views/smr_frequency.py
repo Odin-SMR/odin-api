@@ -112,7 +112,6 @@ class Smrl1bFreqspec(object):
             else:
                 freq = self.ac_intmode_other()
         if freq == []:
-            print('no frequencies, spectrum not frequency sorted!')
             return []
         return freq
 
@@ -341,7 +340,9 @@ class Smrl1bFreqsort(object):
         freqs = np.mean(freqs, 1)
         index = []
         for indi in range(self.freq.shape[0]):
-            multi_f = np.nonzero((self.freq[indi] == self.freq))[0]
+            multi_f = np.nonzero(
+                (np.abs(self.freq[indi] - self.freq) <= 0.51e6)
+            )[0]
             if multi_f.shape[0] == 1:
                 index.append(indi)
             else:
