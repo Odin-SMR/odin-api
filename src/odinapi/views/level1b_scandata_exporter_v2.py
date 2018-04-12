@@ -958,24 +958,42 @@ def get_freqinfo(scangr, debug=False):
             # make a frequency adjustement of measurements from 572 frontend
             # according to Julias description in L1ATBD
             if numspec == 0:
-                # # use doppler corrected frequency grid around 60 km
-                index_close_to_60_km = np.argsort(
-                    np.abs(np.array(scangr.spectra['altitude']) - 60e3)
-                )[0]
-                lofreq_at_60_km, _ = doppler_corr(
-                    scangr.spectra['skyfreq'][index_close_to_60_km],
-                    scangr.spectra['restfreq'][index_close_to_60_km],
-                    scangr.spectra['lofreq'][index_close_to_60_km],
-                    freqvec
+                # get doppler corrected lo frequencies
+                lo_frequencies = []
+                for sky_freq, rest_freq, lo_freq in zip(
+                        scangr.spectra['skyfreq'],
+                        scangr.spectra['restfreq'],
+                        scangr.spectra['lofreq']):
+                    (lo_freq_corrected, _) = doppler_corr(
+                        sky_freq,
+                        rest_freq,
+                        lo_freq,
+                        freqvec
+                    )
+                    lo_frequencies.append(lo_freq_corrected)
+                lo_frequencies = np.array(lo_frequencies)
+                frequency_grids = (
+                    np.tile(freqvec, (len(scangr.spectra['altitude']) - 2, 1))
+                    + np.tile(
+                        lo_frequencies[2::], (freqvec.shape[0], 1)
+                    ).transpose()
                 )
                 fcgr = Freqcorr572(
-                    lofreq_at_60_km + freqvec,
+                    frequency_grids,
                     spectra[2::, channels_id],
                     scangr.spectra['altitude'][2::]
                 )
-                fcgr.run_freq_corr()
-            if fcgr.correction_is_ok:
-                lofreq = lofreq - fcgr.fdiff * 1e9
+                (
+                    scan_correction_is_ok,
+                    _,  # single_spectrum_correction_is_ok,
+                    frequency_offset_of_scan,
+                    frequencies_offset_per_spectrum
+                ) = fcgr.run_frequency_correction()
+            if scan_correction_is_ok:
+                lofreq = lofreq - (
+                    frequency_offset_of_scan +
+                    frequencies_offset_per_spectrum[numspec - 2]
+                ) * 1e9
             else:
                 # mark that frequency can not be trusted
                 scangr.spectra['quality'][numspec] = (

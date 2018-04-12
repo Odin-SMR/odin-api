@@ -16,6 +16,8 @@ from odinapi.views.smr_frequency import (
 )
 from odinapi.views.freq_calibration import (
     Freqcorr572,
+    fit_scan_median_spectrum,
+    identify_species_by_lines
 )
 
 
@@ -65,7 +67,9 @@ def scan_sample_data():
             spectra[0],
             bad_modules))
     return {
-        'frequency_grid': frequency_grid,
+        'frequency_grids': np.tile(
+            frequency_grid, (spectra.shape[0] - 2, 1)
+        ),
         'spectra': spectra[2::, channels_id],
         'altitudes':
             scan_data_exporter.spectra['altitude'][2::]}
@@ -74,7 +78,7 @@ def scan_sample_data():
 @pytest.fixture
 def freq_corr_572(scan_sample_data):
     return Freqcorr572(
-        scan_sample_data['frequency_grid'],
+        scan_sample_data['frequency_grids'],
         scan_sample_data['spectra'],
         scan_sample_data['altitudes'])
 
@@ -99,13 +103,17 @@ class TestFreqcorr572():
 
     def test_fit_data(self, freq_corr_572):
         freq_corr_572.get_initial_fit_values()
-        [fit_is_ok, freq1, freq2] = freq_corr_572.fit_data(
-            82.1877, 576.5938)
+        [fit_is_ok, freq1, freq2, _, _] = fit_scan_median_spectrum(
+            576.5938,
+            82.1877,
+            freq_corr_572.frequency_grid,
+            freq_corr_572.median_tb
+        )
         assert np.all([
             fit_is_ok,
             freq1,
             freq2] == [
-                1,
+                True,
                 pytest.approx(576.5938, abs=1e-3),
                 pytest.approx(576.840, abs=1e-3)])
 
@@ -128,20 +136,45 @@ class TestFreqcorr572():
             576.593, 576.840)
         co_found = freq_corr_572.identify_species_by_profile(
             tb_profile)
-        assert co_found == 1
+        assert co_found
 
     def test_identify_species_by_lines(self, freq_corr_572):
-        [initial_guess_is_ok, f_initial, tb_initial] = \
-            freq_corr_572.get_initial_fit_values()
-        [fit_is_ok, freq1, freq2] = freq_corr_572.fit_data(
-                tb_initial, f_initial)
-        co_found = freq_corr_572.identify_species_by_lines()
-        assert co_found == 1
+        freq_corr_572.get_initial_fit_values()
+        [fit_is_ok, _, _, amplitude_1, amplitude_2] = (
+            fit_scan_median_spectrum(
+                82.1877,
+                576.5938,
+                freq_corr_572.frequency_grid,
+                freq_corr_572.median_tb
+            )
+        )
+        co_found = identify_species_by_lines(
+            amplitude_1, amplitude_2)
+        assert co_found
 
-    def test_run_freq_corr(self, freq_corr_572):
-        freq_corr_572.run_freq_corr()
+    def test_get_frequency_offset_of_scan(self, freq_corr_572):
+        (scan_correction_is_ok, frequency_offset) = (
+            freq_corr_572.get_frequency_offset_of_scan()
+        )
         assert np.all([
-            freq_corr_572.correction_is_ok,
-            freq_corr_572.fdiff] == [
-                1,
+            scan_correction_is_ok,
+            frequency_offset] == [
+                True,
                 pytest.approx(0.3254, abs=1e-4)])
+
+    def test_run_frequency_correction(self, freq_corr_572):
+        (
+            scan_correction_is_ok,
+            single_spectrum_correction_is_ok,
+            frequency_offset_of_scan,
+            frequencies_offset_per_spectrum
+        ) = freq_corr_572.run_frequency_correction()
+        assert np.all([
+            scan_correction_is_ok,
+            frequency_offset_of_scan,
+            ] == [
+                True,
+                pytest.approx(0.3254, abs=1e-4)])
+        assert np.all(single_spectrum_correction_is_ok)
+        assert np.max(
+            np.abs(frequencies_offset_per_spectrum)) < 5e-3
