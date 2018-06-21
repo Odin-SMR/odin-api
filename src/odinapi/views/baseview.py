@@ -6,7 +6,7 @@ handling of different api versions.
 import inspect
 from threading import Lock
 
-from flask import jsonify, abort
+from flask import jsonify, abort, Response
 from flask.views import MethodView
 
 NEW_BASEVIEW_LOCK = Lock()
@@ -127,7 +127,9 @@ class BaseView(MethodView):
                 version, *args, **kwargs)
         except BadRequest as err:
             return jsonify({'Error': str(err)}), 400
-        if isinstance(data, tuple):
+        if isinstance(data, Response):
+            return data, 400
+        elif isinstance(data, tuple):
             data, status, headers = data
         else:
             status, headers = 200, {}
