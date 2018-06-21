@@ -31,7 +31,7 @@
 
         </div>
         <div class="col-md-5 col-md-pull-7">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Generic placeholder image">
+          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Odin at work">
         </div>
       </div>
       <hr class="featurette-divider">
@@ -120,38 +120,90 @@ Esrange.  </p>
         </div>
       </div>
 
-      <hr id="consortium" class="featurette-divider">
+      <hr id="sanoma" class="featurette-divider">
 
       <div class="row featurette">
         <div class="col-md-7">
+          <h2 class="featurette-heading"> NO empirical model <span
+                  class="text-muted">SANOMA</span></h2>
+
+          <p>
+          SANOMA is an empirical model of nitric oxide in the upper mesosphere
+          and lower thermosphere, based on Odin/SMR measurements.  It provides
+          the NO number density as a function of magnetic latitude (from -82.5
+          to +82.5 degrees) and altitude (from 85 to 118 km) for any day under
+          consideration.  Basic instructions on how to use this model, as well
+          as the associated coefficients, are available on this web page.
+          These files are provided in MATLAB format. The coefficients are also
+          available in text format for those who do not have MATLAB.
+          </p>
+
+          <p>
+          We refer the users to the article <a
+            href="https://doi.org/10.5194/acp-2018-39">"An empirical model of
+            nitric oxide in the upper mesosphere and lower thermosphere based
+            on 12 years of Odin-SMR measurements"</a>, by J. Kiviranta, K.
+          Pérot, P. Eriksson and D. Murtagh, published in Atmospheric Chemistry
+          and Physics in 2018, for further details.  If you wish to use this
+          model, or for any other question about it, please contact Kristell
+          Pérot (<a
+            href="mailto:kristell.perot@chalmers.se">kristell.perot@chalmers.se</a>),
+          </p>
+
+          <p>
+            <ul>
+              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_instructions.m') }}">
+                    General instructions</a>
+              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_extraindices.m') }}">
+                    How to calculate the additional indices</a>
+              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.mat') }}">
+                    Model coefficients (MATLAB)</a>
+              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.txt') }}">
+                    Model coefficients (text)</a>
+            </ul>
+          </p>
+
+        </div>
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/8_odin.jpg') }}" alt="Odin making progress">
+        </div>
+      </div>
+
+      <hr id="consortium" class="featurette-divider">
+
+      <div class="row featurette">
+        <div class="col-md-7 col-md-push-5">
           <h2 class="featurette-heading">
               The consortium bringing data from space <span
                   class="text-muted">all the way to you </span></h2>
 
           <p class="lead">
-            Since the launch of Odin in 2001 the Department of Earth and Space
-            Sciences at Chalmers has been responsible for processing the Level2
-            product. In september 2015 <a
-             href="https://earth.esa.int/web/sppa/home">ESA/SPPA</a> decided to
-           support the reprocessing of the Odin/SMR data set, which is now in
-           progress.</p>
+          Since the launch of Odin in 2001 the Department of Earth and Space
+          Sciences at Chalmers has been responsible for processing the Level2
+          product. In september 2015 <a
+            href="https://earth.esa.int/web/sppa/home">ESA/SPPA</a> decided to
+          support the reprocessing of the Odin/SMR data set, which is now in
+          progress.
+          </p>
 
           <p> The Odin mission has been supported by ESA since 2007. Odin is a
           part of ESA's <a
           href="https://earth.esa.int/web/guest/missions/3rd-party-missions/overview">Third
-          party misson program</a> within its Earthnet Programme.  </p>
+          party misson program</a> within its Earthnet Programme.
+          </p>
 
           <p>
           <i class="fa fa-link"></i>
           <a href="https://earth.esa.int/web/guest/missions/3rd-party-missions/overview">ESA third party missions</a>
           </p>
 
-          <p>The reprocessing campaign is a cooperation between <a
-              href="http://www.chalmers.se">Chalmers</a> and <a
-              hreg="http://www.molflow.com">Molflow</a>.</p>
+          <p>The reprocessing campaign is a cooperation between
+          <a href="http://www.chalmers.se">Chalmers</a> and
+          <a href="http://www.molflow.com">Molflow</a>.
+          </p>
 
         </div>
-        <div class="col-md-5">
+        <div class="col-md-5 col-md-pull-7">
           <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto9.jpg') }}" alt="Odin in space">
         </div>
         </div>
@@ -160,43 +212,40 @@ Esrange.  </p>
       <hr id="contact" class="featurette-divider">
 
       <div class="row featurette">
-        <div class="col-md-7 col-md-push-5">
+        <div class="col-md-7">
           <h2 class="featurette-heading">Contact us, <span class="text-muted">you will find us here:</span></h2>
           <p class="lead">The mission scientist for ODIN/SMR is Prof. Donal
           Murtagh (Chalmers) and ESA's contact is Angelika Dehn </p>
 
           <div class="well">
-          <p><span class="fa fa-user"/> Prof. Donal Murtagh</p>
-          <p><i class="fa fa-envelope"></i>
-
-          donal.murtagh@chalmers.se</p>
-
-          <p>
-          <i class="fa fa-map-marker"></i>
-
-          Chalmers University of Technology </br>
-          Department of Earth and Space Sciences </br>
-          SE-412 96 Gothenburg </br>
-          Sweden
-          </p>
+            <p><span class="fa fa-user"/> Prof. Donal Murtagh</p>
+            <p><span class="fa fa-envelope"/>
+              <a href="mailto:donal.murtagh@chalmers.se">donal.murtagh@chalmers.se</a>
+            </p>
+            <p>
+            <span class="fa fa-map-marker"/>
+            Chalmers University of Technology </br>
+            Department of Earth and Space Sciences </br>
+            SE-412 96 Gothenburg </br>
+            Sweden
+            </p>
           </div>
 
           <div class="well">
-          <p> <span class="fa fa-user"/> Angelika Dehn</p>
-
-          <p><i class="fa fa-envelope"></i>
-          angelika.dehn@esa.int </p>
-          <p>
-          <i class="fa fa-map-marker"></i>
-
-          ESA-ESRIN <br/>
-          Via Galileo Galilei Frascati (RM) <br/>
-          00044 Italy
-          </p>
+            <p><span class="fa fa-user"/> Angelika Dehn</p>
+            <p><span class="fa fa-envelope"/>
+              <a href="mailto:angelika.dehn@esa.int">angelika.dehn@esa.int</a>
+            </p>
+            <p>
+            <span class="fa fa-map-marker"/>
+            ESA-ESRIN <br/>
+            Via Galileo Galilei Frascati (RM) <br/>
+            00044 Italy
+            </p>
           </div>
 
         </div>
-        <div class="col-md-5 col-md-pull-7">
+        <div class="col-md-5">
           <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/AS4-1-410HR.jpg') }}" alt="Home">
         </div>
       </div>
