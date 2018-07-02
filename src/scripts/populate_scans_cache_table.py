@@ -82,14 +82,16 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     if 'ODIN_API_PRODUCTION' not in environ:
         url_base = 'http://localhost:5000'
     else:
-        url_base = 'http://odin.rss.chalmers.se'
+        url_base = 'https://odin.rss.chalmers.se'
     while current_date >= earliest_date:
+        if verbose:
+            print "Working on {0}".format(current_date)
         url_day = (
             '{0}/rest_api/v5/freqmode_info/{1}/'.format(
                 url_base,
                 current_date.isoformat())
             )
-        response = get(url_day, timeout=666)
+        response = get(url_day, timeout=60)
         retries = max_retries
         while retries > 0:
             try:
@@ -108,6 +110,12 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         db_connection.commit()
         json_data_day = response.json()
         for freqmode in json_data_day['Data']:
+            if freqmode['FreqMode'] == '0':
+                if verbose:
+                    print "Skipping FreqMode 0 on {}".format(current_date)
+                continue
+            if verbose:
+                print "Working on {0}".format(freqmode['FreqMode'])
             url_scan = (
                 '{0}/rest_api/v5/freqmode_raw/{1}/{2}/'.format(
                     url_base,
@@ -116,7 +124,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                 )
             retries = max_retries
             while retries > 0:
-                response = get(url_scan, timeout=666)
+                response = get(url_scan, timeout=420)
                 try:
                     response.raise_for_status()
                     break
@@ -149,8 +157,10 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                     scan["ScanID"],
                     scan["SunZD"],
                     scan["Quality"],
-                    )
+                )
             db_connection.commit()
+            if verbose:
+                print "freqmode {0} OK".format(freqmode["FreqMode"])
         if verbose:
             print "{0} OK".format(current_date)
         current_date += step
@@ -184,6 +194,7 @@ def cli():
         exit(1)
 
     exit(main(start_date, end_date, args.verbose))
+
 
 if __name__ == '__main__':
     cli()

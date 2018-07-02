@@ -95,4 +95,4 @@ copy src/ /app/
 run cd /app && python setup.py install && python setup.py develop
 expose 5000
 workdir /app
-cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 180 odinapi.api:app
+cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app

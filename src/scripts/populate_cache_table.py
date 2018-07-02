@@ -116,5 +116,6 @@ def cli():
 
     exit(main(start_date, end_date, args.verbose))
 
+
 if __name__ == '__main__':
     cli()
