@@ -1,8 +1,8 @@
 #!/bin/sh -eux
 
 PRODUCTION_HOST=malachite.rss.chalmers.se
-REMOTE_DIR=/etc/docker-compose/odin-api/
-REMOTE_COMPOSE_FILE=${REMOTE_DIR}docker-compose.yml
+REMOTE_DIR=/etc/docker-compose/odin-api
+REMOTE_COMPOSE_FILE=${REMOTE_DIR}/docker-compose.yml
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
 remoteDockerCompose () {
