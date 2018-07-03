@@ -110,7 +110,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         db_connection.commit()
         json_data_day = response.json()
         for freqmode in json_data_day['Data']:
-            if freqmode['FreqMode'] == '0':
+            if freqmode['FreqMode'] == 0:
                 if verbose:
                     print "Skipping FreqMode 0 on {}".format(current_date)
                 continue
