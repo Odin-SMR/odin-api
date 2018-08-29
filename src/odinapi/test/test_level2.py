@@ -231,6 +231,18 @@ class TestWriteLevel2(unittest.TestCase):
         r = requests.delete(url)
         self.assertEqual(r.status_code, 204)
 
+    def test_single_product(self):
+        """Test post a single product"""
+        data = get_test_data()
+        freq_mode = data['L2I']['FreqMode']
+        scan_id = data['L2I']['ScanID']
+        data['L2'] = data['L2'][0]
+        d = encrypt_util.encode_level2_target_parameter(
+            scan_id, freq_mode, PROJECT_NAME)
+        url = WRITE_URL.format(version=VERSION, d=d)
+        r = requests.post(url, json=data)
+        self.assertEqual(r.status_code, 201)
+
     def test_bad_posts(self):
         """Test invalid posts of level2 data"""
         # No url parameter

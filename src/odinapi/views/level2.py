@@ -146,6 +146,8 @@ class Level2Write(MethodView):
             logging.warning('Level2Write.post: L2c is not basestring')
             abort(400)
         L2 = data.pop('L2') or []
+        if isinstance(L2, dict):
+            L2 = [L2]
         if not isinstance(L2, list):
             logging.warning('Level2Write.post: L2 is not a list')
             abort(400)
