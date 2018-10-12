@@ -1,4 +1,4 @@
--rodinapi-requirements.in
+-rodinapi-requirements.txt
 dateutils
 requests
 numpy
