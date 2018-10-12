@@ -1,4 +1,5 @@
 # pylint: skip-file
+import shutil
 import unittest
 import pytest
 import requests as R
@@ -33,7 +34,10 @@ def zpt_data_directory():
     us so that we can clean them at the end. Otherwise, they'll be created by
     root inside the docker image.
     """
-    os.makedirs(os.path.join(ROOT_PATH, 'data/ptz-data/ZPT/2015/01/'))
+    path = os.path.join(ROOT_PATH, 'data/ptz-data/ZPT/2015/01/')
+    os.makedirs(path)
+    yield path
+    shutil.rmtree(path)
 
 
 @system

@@ -4,7 +4,7 @@
 # the build master template job.
 set -e
 
-virtualenv env
+virtualenv env --python=python2
 export VIRTUAL_ENV="${PWD}/env"
 export PATH="${PWD}/env/bin:${PATH}"
 export PATH="/usr/lib/chromium-browser:${PATH}"
