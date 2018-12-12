@@ -28,6 +28,8 @@ FREQMODE_TO_BACKEND = {
     27: "AC1",  # AC1+AC2
     28: "AOS",
     29: "AC1",
+    40: "AC1",
+    41: "AC2",
     102: "AC2",
     113: "AC2",
     119: "AC2",

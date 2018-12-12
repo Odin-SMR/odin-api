@@ -21,7 +21,7 @@ class Smrl1bFreqspec(object):
         ''' text
         '''
         self.channels = scan_h['channels'][numspec]
-        self.intmode = scan_h['intmode'][numspec]
+        self.intmode = scan_h['mode'][numspec]
         self.freqcal = scan_h['ssb_fq'][numspec]
         self.skyfreq = scan_h['skyfreq'][ispec]
         self.backend = scan_h['backend'][numspec]
@@ -55,6 +55,10 @@ class Smrl1bFreqspec(object):
 
     def ac_freq(self):
         '''ac frequency'''
+        return self.get_ac_frequency_grid()
+
+    def get_seq_pattern(self):
+        '''get the adc pattern'''
         #
         # The IntMode reported by the correlator is interpreted as
         # a bit pattern. Because this bit pattern only describes ADC
@@ -104,21 +108,8 @@ class Smrl1bFreqspec(object):
         # and  ADC 7 uses 1 chip in lower-side band mode
         # and  ADC 8 uses 1 chip in upper-side band mode
         #
-        if self.intmode & 256:
-            freq = self.ac_intmode_and_256()
-        else:
-            if self.intmode & (1 << 4):
-                freq = self.ac_intmode_and_16()
-            else:
-                freq = self.ac_intmode_other()
-        if freq == []:
-            return []
-        return freq
-
-    def get_seq_pattern(self):
-        '''get the adc pattern'''
         ssbvec = [1, -1, 1, -1, -1, 1, -1, 1]
-        mode = self.intmode & 255
+        mode = self.intmode << 1 | 1  # bitshift described above
         seqvec = np.zeros(16, dtype='int')
         mind = 0
         for bit_i in range(8):
@@ -132,7 +123,7 @@ class Smrl1bFreqspec(object):
                 seqvec[2 * bit_i + 1] = 0
         return seqvec
 
-    def ac_intmode_and_256(self):
+    def get_ac_frequency_grid(self):
         ''' get ac frequencies
         '''
         seqvec = self.get_seq_pattern()
@@ -160,101 +151,6 @@ class Smrl1bFreqspec(object):
         if self.intmode & 512:
             # for split mode keep used bands only
             freq = freq[bands, :]
-        return freq
-
-    def ac_intmode_and_16(self):
-        '''get ac frequencies
-        '''
-        freq = []
-        mode = self.intmode & 15
-        if self.intmode & (1 << 5):
-            if mode == 2:
-                nchan = self.channels
-                dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-                freq = self.freqcal[1] * np.ones(nchan) - dec_vec
-            elif mode == 3:
-                nchan = self.channels / 2
-                inc_vec = np.arange(0, nchan, 1) * self.freqres
-                dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-                freq = [
-                    self.freqcal[3] * np.ones(nchan) - dec_vec,
-                    self.freqcal[2] * np.ones(nchan) + inc_vec
-                ]
-            else:
-                nchan = self.channels / 4
-                inc_vec = np.arange(0, nchan, 1) * self.freqres
-                dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-                freq = [
-                    self.freqcal[2] * np.ones(nchan) - dec_vec,
-                    self.freqcal[2] * np.ones(nchan) + inc_vec,
-                    self.freqcal[3] * np.ones(nchan) - dec_vec,
-                    self.freqcal[3] * np.ones(nchan) + inc_vec
-                ]
-        else:
-            if mode == 2:
-                nchan = self.channels
-                inc_vec = np.arange(0, nchan, 1) * self.freqres
-                freq = self.freqcal[0] * np.ones(nchan) + inc_vec
-            elif mode == 3:
-                nchan = self.channels / 2
-                inc_vec = np.arange(0, nchan, 1) * self.freqres
-                dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-                freq = [
-                    self.freqcal[1] * np.ones(nchan) - dec_vec,
-                    self.freqcal[0] * np.ones(nchan) + inc_vec
-                ]
-            else:
-                nchan = self.channels / 4
-                inc_vec = np.arange(0, nchan, 1) * self.freqres
-                dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-                freq = [
-                    self.freqcal[0] * np.ones(nchan) - dec_vec,
-                    self.freqcal[0] * np.ones(nchan) + inc_vec,
-                    self.freqcal[1] * np.ones(nchan) - dec_vec,
-                    self.freqcal[1] * np.ones(nchan) + inc_vec
-                ]
-        return freq
-
-    def ac_intmode_other(self):
-        '''get ac frequencies
-        '''
-        mode = self.intmode & 15
-        if mode == 1:
-            nchan = self.channels
-            inc_vec = np.arange(0, nchan, 1) * self.freqres
-            freq = self.freqcal[0] * np.ones(nchan) + inc_vec
-        elif mode == 2:
-            nchan = self.channels / 2
-            inc_vec = np.arange(0, nchan, 1) * self.freqres
-            dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-            freq = [
-                self.freqcal[0] * np.ones(nchan) + inc_vec,
-                self.freqcal[1] * np.ones(nchan) - dec_vec
-            ]
-        elif mode == 3:
-            nchan = self.channels / 4
-            inc_vec = np.arange(0, nchan, 1) * self.freqres
-            dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-            freq = [
-                self.freqcal[1] * np.ones(nchan) - dec_vec,
-                self.freqcal[0] * np.ones(nchan) + inc_vec,
-                self.freqcal[3] * np.ones(nchan) - dec_vec,
-                self.freqcal[2] * np.ones(nchan) + inc_vec
-            ]
-        else:
-            nchan = self.channels / 8
-            inc_vec = np.arange(0, nchan, 1) * self.freqres
-            dec_vec = np.arange(nchan - 1, -1, -1) * self.freqres
-            freq = [
-                self.freqcal[0] * np.ones(nchan) - dec_vec,
-                self.freqcal[0] * np.ones(nchan) + inc_vec,
-                self.freqcal[1] * np.ones(nchan) - dec_vec,
-                self.freqcal[1] * np.ones(nchan) + inc_vec,
-                self.freqcal[2] * np.ones(nchan) - dec_vec,
-                self.freqcal[2] * np.ones(nchan) + inc_vec,
-                self.freqcal[3] * np.ones(nchan) - dec_vec,
-                self.freqcal[3] * np.ones(nchan) + inc_vec
-            ]
         return freq
 
 

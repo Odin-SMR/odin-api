@@ -42,7 +42,7 @@ class ScandataExporter(object):
         temp = [self.backend, calstw, freqmode]
         query = self.con.query('''
               select ac_level1b.stw, calstw, ac_level1b.backend, orbit,
-              mjd, lst, intmode, spectra, alevel, version, channels,
+              mjd, lst, intmode, mode, spectra, alevel, version, channels,
               skyfreq, lofreq, restfreq, maxsuppression, tsys, sourcemode,
               freqmode, efftime, sbpath, latitude, longitude, altitude,
               skybeamhit, ra2000, dec2000, vsource, qtarget, qachieved,
@@ -63,7 +63,7 @@ class ScandataExporter(object):
         # extract all calibration spectrum data for the scan
         query2 = self.con.query('''
                select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
-               mjd, lst, intmode, spectra, alevel, version, channels,
+               mjd, lst, intmode, mode, spectra, alevel, version, channels,
                spectype, skyfreq, lofreq, restfreq, maxsuppression,
                sourcemode, freqmode, sbpath, latitude, longitude, altitude,
                tspill, skybeamhit, ra2000, dec2000, vsource, qtarget,
@@ -85,7 +85,7 @@ class ScandataExporter(object):
         if result2 == []:
             query2 = self.con.query('''
                select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
-               mjd, lst, intmode, spectra, alevel, version, channels,
+               mjd, lst, intmode, mode, spectra, alevel, version, channels,
                spectype, skyfreq, lofreq, restfreq, maxsuppression,
                sourcemode, freqmode, sbpath, latitude, longitude, altitude,
                tspill, skybeamhit, ra2000, dec2000, vsource, qtarget,
@@ -106,7 +106,7 @@ class ScandataExporter(object):
             if result2 == []:
                 query2 = self.con.query('''
                    select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
-                   mjd, lst, intmode, spectra, alevel, version, channels,
+                   mjd, lst, intmode, mode, spectra, alevel, version, channels,
                    spectype, skyfreq, lofreq, restfreq, maxsuppression,
                    sourcemode, freqmode, sbpath, latitude, longitude, altitude,
                    tspill, skybeamhit, ra2000, dec2000, vsource, qtarget,
@@ -143,6 +143,7 @@ class ScandataExporter(object):
                   order by ac_level0.stw
                              '''.format(*[stw1, stw2, stw_offset]))
         self.refdata = query.dictresult()
+
         if result == [] or result2 == [] or self.refdata == []:
             return 0
         # combine target and calibration data
@@ -198,13 +199,14 @@ class ScandataExporter(object):
         for ind, res in enumerate(self.specdata):
             spec = specdict()
             spec['calstw'] = self.calstw
-            for item in ['stw', 'orbit', 'lst', 'intmode',
+            for item in ['stw', 'orbit', 'lst', 'intmode', 'mode',
                          'channels', 'skyfreq', 'lofreq', 'restfreq',
                          'maxsuppression', 'sbpath', 'latitude', 'longitude',
                          'altitude', 'skybeamhit', 'ra2000', 'dec2000',
                          'vsource', 'sunzd', 'vgeo', 'vlsr', 'inttime',
                          'lo', 'freqmode', 'soda', 'ac0_frontend']:
                 spec[item] = res[item]
+
             spec['mjd'] = self.get_mjd(res)
             spec['hotloada'] = choose_nonzero(
                 res['hotloada'], res['hotloadb']
@@ -220,6 +222,7 @@ class ScandataExporter(object):
                     ).astype(float).tolist()
                 except AttributeError:
                     spec[item] = ()
+
             spec['ssb_fq'] = np.array(
                 res['ssb_fq'].replace('{', '').replace('}', '').split(',')
             ).astype(float) * 1e6
@@ -283,6 +286,7 @@ class ScandataExporter(object):
                 for row in self.specdata:
                     if row['mjd'] is not None:
                         return row['mjd']
+        return -1.0
 
 
 class CalibrationStep2(object):
@@ -384,6 +388,7 @@ class CalibrationStep2(object):
         [hotload_range1, hotload_range2, hl_1, hl_2] = (
             self.get_hotload_range(hotload)
         )
+
         query = self.con.query('''
           select hotload_range, altitude_range, median_fit, channels
           from ac_cal_level1c where freqmode = {0} and
@@ -410,22 +415,23 @@ class CalibrationStep2(object):
                                              self.altitude_range,
                                              hotload_range2]))
         result2 = query.dictresult()
-        if len(result1) > 0:
-            medianfit1 = np.ndarray(shape=(result1[0]['channels'],),
-                                    dtype='float64',
-                                    buffer=self.con.unescape_bytea(
-                                        result1[0]['median_fit']))
-        if len(result2) > 0:
-            medianfit2 = np.ndarray(shape=(result2[0]['channels'],),
-                                    dtype='float64',
-                                    buffer=self.con.unescape_bytea(
-                                        result2[0]['median_fit']))
-        if len(result1) > 0 and len(result2) > 0:
+        if result1:
+            medianfit1 = np.ndarray(
+                shape=(result1[0]['channels'],),
+                dtype='float64',
+                buffer=self.con.unescape_bytea(result1[0]['median_fit']))
+        if result2:
+            medianfit2 = np.ndarray(
+                shape=(result2[0]['channels'],),
+                dtype='float64',
+                buffer=self.con.unescape_bytea(result2[0]['median_fit'])
+            )
+        if result1 and result2:
             weight1 = 1 - np.abs(hl_1 - hotload) / np.abs(hl_2 - hl_1)
             medianfit = weight1 * medianfit1 + (1 - weight1) * medianfit2
-        elif len(result1) > 0:
+        elif result1:
             medianfit = medianfit1
-        elif len(result2) > 0:
+        elif result2:
             medianfit = medianfit2
         else:
             medianfit = 0.0
@@ -450,8 +456,7 @@ def choose_nonzero(value1, value2):
     '''choose value1 if non-zero'''
     if value1 > 0:
         return value1
-    else:
-        return value2
+    return value2
 
 
 def caldict():
@@ -482,7 +487,8 @@ def specdict():
              'discipline', 'topic', 'spectrum_index',
              'obsmode', 'type', 'soda', 'freqres',
              'pointer', 'tspill', 'ssb_fq', 'ac0_frontend',
-             'calstw', 'frequency', 'zerolagvar', 'ssb', 'imageloada']
+             'calstw', 'frequency', 'zerolagvar', 'ssb',
+             'imageloada', 'mode']
     for item in lista:
         spec[item] = []
     return spec
@@ -505,22 +511,26 @@ def backend_char2int(backend):
         return 1
     elif backend == 'AC2':
         return 2
+    return -1
 
 
 def frontend_char2int(frontend):
     '''convert from char to int'''
     if frontend == '555':
-        return 1
+        frontend_int = 1
     elif frontend == '495':
-        return 2
+        frontend_int = 2
     elif frontend == '572':
-        return 3
+        frontend_int = 3
     elif frontend == '549':
-        return 4
+        frontend_int = 4
     elif frontend == '119':
-        return 5
+        frontend_int = 5
     elif frontend == 'SPL':
-        return 6
+        frontend_int = 6
+    else:
+        frontend_int = -1
+    return frontend_int
 
 
 def zerolagfunc(zlag, vterm):
@@ -724,7 +734,7 @@ def plot_spectrum(spectra):
     ax1.yaxis.set_label_text('Tb. [K]')
     ax1.axes.xaxis.set_ticklabels([])
     plt.xlim([xmin, xmax])
-    plt.ylim([-10, 250])
+    plt.ylim([-10, 270])
 
 
 def plot_highalt_spectrum(spectra):
@@ -796,6 +806,7 @@ def smr_lofreqcorr(scangr):
         driftpara['av'].append(
             (driftpara['2'][ind] + driftpara['19'][ind])/2.0)
     for ind, lofreq in enumerate(scangr.spectra['lo']):
+
         kfactor = 1.0
         if scangr.spectra['frontend'][ind] == 1:
             # 555: use results derived for FM 13
@@ -852,8 +863,10 @@ def unsplit_normalmode(scangr):
     spectra = copyemptydict(scangr.spectra)
     for stw_i in np.sort(np.unique(scangr.spectra['stw'])):
         for spectype in [3, 9, 8]:
-            specind = np.nonzero((scangr.spectra['stw'] == stw_i) &
-                                 (scangr.spectra['type'] == spectype))[0]
+            specind = np.nonzero(
+                (scangr.spectra['stw'] == stw_i) &
+                (scangr.spectra['type'] == spectype)
+            )[0]
             if specind.shape[0] != 2:
                 continue
             tempdata = copyemptydict(scangr.spectra)
@@ -1028,17 +1041,21 @@ def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
         isok = 0
     if isok == 0:
         return {}
+
     scangr.decode_refdata()
     scangr.decode_specdata()
     # perform calibration step2 for target spectrum
     scangr = apply_calibration_step2(con, scangr)
+
     if scangr.spectra['ac0_frontend'][0] == 'SPL':
         # "unpslit data" to make it symmetric with data from other modes
         scangr = unsplit_splitmode(scangr)
+
     if (scangr.spectra['intmode'][0] != 511 and
             scangr.spectra['ac0_frontend'][0] != 'SPL'):
         # unsplit data from none 511 intmode
         scangr = unsplit_normalmode(scangr)
+
     # perform a frequency correction based on Donals study:
     smr_lofreqcorr(scangr)
     # add frequency vector to each spectrum in the scangr.spectra structure
@@ -1050,4 +1067,5 @@ def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
     scangr.spectra['quality'] = qualgr.quality
     scangr.spectra['zerolagvar'] = qualgr.zerolagvar
     # scangr.spectra is a dictionary containing the relevant data
+
     return scangr.spectra

@@ -1,7 +1,7 @@
 # pylint: skip-file
 import pytest
 import numpy as np
-from odinapi.views.smr_frequency import(
+from odinapi.views.smr_frequency import (
     Smrl1bFreqspec,
     Smrl1bFreqsort,
     get_bad_ssb_modules,
@@ -17,7 +17,7 @@ def scan_data_sample():
             number_of_spectra, dtype='int'),
         'channels': 896 * np.ones(
             number_of_spectra, dtype='int'),
-        'intmode': 511 * np.ones(
+        'mode': 127 * np.ones(
             number_of_spectra, dtype='int'),
         'ssb_fq': 1e6 * np.repeat(
             [[4300, 3700, 4100, 3900]],
@@ -57,13 +57,37 @@ class TestSmrl1bFreqspec():
                 pytest.approx(544.603e9, abs=1e5),
                 pytest.approx(544.603e9, abs=1e5)]))
 
-    def test_get_seq_pattern(self, scan_data_sample):
+    def test_get_seq_pattern_standard(self, scan_data_sample):
         smr_freq_spec = Smrl1bFreqspec()
         smr_freq_spec.get_frequency(scan_data_sample, 1)
         sequence_pattern = smr_freq_spec.get_seq_pattern()
         expected_sequence_pattern = np.array([
             1, 1, 1, -1, 1, 1, 1, -1,
             1, -1, 1, 1, 1, -1, 1, 1])
+        assert np.all(
+            sequence_pattern == expected_sequence_pattern)
+
+    def test_get_seq_pattern_mode17(self, scan_data_sample):
+        scan_data_sample['mode'] = 17 * scan_data_sample['mode'] / 127
+        smr_freq_spec = Smrl1bFreqspec()
+        smr_freq_spec.get_frequency(scan_data_sample, 1)
+        sequence_pattern = smr_freq_spec.get_seq_pattern()
+        expected_sequence_pattern = np.array([
+            1,  1,  4, -1,  0,  0,  0, 0,
+            0,  0,  3,  1,  0,  0,  0,  0
+        ])
+        assert np.all(
+            sequence_pattern == expected_sequence_pattern)
+
+    def test_get_seq_pattern_mode0(self, scan_data_sample):
+        scan_data_sample['mode'] = 0 * scan_data_sample['mode'] / 127
+        smr_freq_spec = Smrl1bFreqspec()
+        smr_freq_spec.get_frequency(scan_data_sample, 1)
+        sequence_pattern = smr_freq_spec.get_seq_pattern()
+        expected_sequence_pattern = np.array([
+            8, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
+        ])
         assert np.all(
             sequence_pattern == expected_sequence_pattern)
 
