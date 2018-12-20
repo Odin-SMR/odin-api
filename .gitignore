@@ -7,7 +7,7 @@
 *.png
 *.coverage
 *.cache
-!src/odinapi/test/testdata/*.json
+!src/odinapi/systemtest/testdata/*.json
 env
 ghostdriver.log
 result.xml

@@ -2,7 +2,7 @@
 import pytest
 import numpy as np
 from pg import DB
-from odinapi.test.testdefs import system
+from .testdefs import system
 from odinapi.views.level1b_scandata_exporter_v2 import (
     ScandataExporter,
     smr_lofreqcorr,

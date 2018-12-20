@@ -3,9 +3,11 @@ import sys
 import os
 import pytest
 import requests
+
+from .testdefs import system
+
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, MY_PATH + '/../../../src')
-from odinapi.test.testdefs import system  # noqa
 
 
 @system

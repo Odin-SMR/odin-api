@@ -11,8 +11,8 @@ from numpy.testing import assert_almost_equal
 from numpy import isnan
 
 from odinapi.utils import encrypt_util
-from odinapi.test.level2_test_data import WRITE_URL, VERSION, get_test_data
-from odinapi.test.testdefs import system
+from .level2_test_data import WRITE_URL, VERSION, get_test_data
+from .testdefs import system
 
 
 PROJECT_NAME = 'testproject'

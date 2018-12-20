@@ -8,8 +8,8 @@ from dateutil.tz import tzutc
 import pytest
 import requests
 
-from odinapi.test.level2_test_data import WRITE_URL, VERSION, get_test_data
-from odinapi.test.testdefs import system
+from ..level2_test_data import WRITE_URL, VERSION, get_test_data
+from ..testdefs import system
 from odinapi.utils import encrypt_util
 
 

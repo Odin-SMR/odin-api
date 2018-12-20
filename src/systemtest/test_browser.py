@@ -8,8 +8,8 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 
 from odinapi.utils import encrypt_util
-from odinapi.test.level2_test_data import WRITE_URL, VERSION, get_test_data
-from odinapi.test.testdefs import system
+from .level2_test_data import WRITE_URL, VERSION, get_test_data
+from .testdefs import system
 
 
 PROJECT_NAME = 'testproject'

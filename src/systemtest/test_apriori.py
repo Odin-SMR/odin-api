@@ -5,7 +5,7 @@ import pytest
 import requests as R
 import numpy as np
 
-from odinapi.test.testdefs import system
+from .testdefs import system
 
 
 URL_ROOT = 'http://localhost:5000/'

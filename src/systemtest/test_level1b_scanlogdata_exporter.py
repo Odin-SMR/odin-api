@@ -2,7 +2,7 @@
 from datetime import datetime
 import pytest
 from pg import DB
-from odinapi.test.testdefs import system
+from .testdefs import system
 from odinapi.views.level1b_scanlogdata_exporter import(
     ScanInfoExporter,
     scan_data_is_valid,

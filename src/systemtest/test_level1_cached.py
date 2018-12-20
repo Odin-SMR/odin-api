@@ -3,7 +3,7 @@ import unittest
 import pytest
 import requests
 
-from odinapi.test.testdefs import system
+from .testdefs import system
 
 
 @system
