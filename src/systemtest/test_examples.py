@@ -4,7 +4,7 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import disable, slow, system
+from .testdefs import slow, system
 from examples import get_l1b_for_period, filter_spectra
 
 

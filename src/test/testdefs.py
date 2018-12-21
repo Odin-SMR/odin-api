@@ -2,12 +2,12 @@
 import pytest
 
 
-slow = pytest.mark.skipif(  # pylint: disable=invalid-name
-    not pytest.config.getoption("--runslow"),  # pylint: disable=no-member
+slow = pytest.mark.skipif(
+    not pytest.config.getoption("--runslow"),
     reason="need --runslow option to run"
 )
 
-disable = pytest.mark.skipif(  # pylint: disable=invalid-name
-    not pytest.config.getoption("--rundisabled"),  # pylint: disable=no-member
+disable = pytest.mark.skipif(
+    not pytest.config.getoption("--rundisabled"),
     reason="need --rundisabled option to run"
 )

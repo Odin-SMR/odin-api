@@ -1,4 +1,3 @@
-# pylint: skip-file
 """
 Provide level1 views that extracts data from cache database.
 """

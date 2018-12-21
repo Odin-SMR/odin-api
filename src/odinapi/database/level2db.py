@@ -1,4 +1,3 @@
-# pylint: skip-file
 from datetime import datetime
 from itertools import chain
 from collections import namedtuple

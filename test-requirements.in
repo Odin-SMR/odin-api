@@ -1,16 +1,14 @@
 -rodinapi-requirements.txt
 dateutils
+flake8
 requests
 numpy
 coverage
 pytest
 pytest-mongo==1.1.2
-pylint
 selenium
 jasmine==3.1.0
 mock
-pycodestyle
-pyflakes
 netCDF4
 pyephem
 matplotlib

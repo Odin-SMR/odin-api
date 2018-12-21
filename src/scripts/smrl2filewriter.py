@@ -1,9 +1,4 @@
 #! /usr/bin/env python
-# pylint: disable=E1101
-# pylint: disable=E0611
-# pylint: disable=E0401
-# pylint: disable=R0902
-# pylint: disable=R0913
 '''Functionality to generate Odin/SMR level2 netcdf files'''
 
 

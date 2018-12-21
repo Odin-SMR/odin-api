@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# pylint: disable=E0401
 """
 Part of odin-api, tools to make it happen
 """

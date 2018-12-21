@@ -1,4 +1,3 @@
-# pylint: skip-file
 import unittest
 
 from odinapi.utils.swagger import Swagger, SwaggerSpecView

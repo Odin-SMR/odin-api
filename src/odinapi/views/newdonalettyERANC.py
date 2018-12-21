@@ -1,4 +1,3 @@
-# pylint: disable=C0103, R0914, R0902, W0231
 import os
 import re
 import datetime as DT

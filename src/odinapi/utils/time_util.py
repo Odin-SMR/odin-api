@@ -1,4 +1,3 @@
-# pylint: skip-file
 from datetime import datetime, timedelta
 
 MJD0 = 56416.7782534
@@ -11,6 +10,8 @@ def datetime2mjd(dt):
     diff = dt - MJD_START_DATE
     return diff.days + (
         diff.seconds + diff.microseconds*1e-6)*datetime2mjd.days_per_second
+
+
 datetime2mjd.days_per_second = 1./60/60/24
 
 

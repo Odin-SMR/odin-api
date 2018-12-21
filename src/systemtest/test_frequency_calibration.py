@@ -1,4 +1,3 @@
-# pylint: skip-file
 import pytest
 import numpy as np
 from pg import DB

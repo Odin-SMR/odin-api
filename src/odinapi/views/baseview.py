@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 """Provide BaseView class and register_versions decorator for easier
 handling of different api versions.
 """

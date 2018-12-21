@@ -1,4 +1,3 @@
-# pylint: skip-file
 """ doc
 """
 from flask import request, jsonify, abort

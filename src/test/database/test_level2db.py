@@ -1,4 +1,3 @@
-# pylint: disable=no-self-use,redefined-outer-name,invalid-name,no-init
 import pytest
 
 from odinapi.database.level2db import Level2DB

@@ -1,3 +1,4 @@
 {
-  "phabricator.uri" : "https://phabricator.molflow.com"
+  "phabricator.uri" : "https://phabricator.molflow.com",
+  "load": [".arcanist/eslint_linter"]
 }

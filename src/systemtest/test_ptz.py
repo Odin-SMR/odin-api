@@ -1,4 +1,3 @@
-# pylint: skip-file
 import shutil
 import unittest
 import pytest

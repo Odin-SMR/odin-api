@@ -1,9 +1,8 @@
-# pylint: skip-file
 import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal
 from netCDF4 import Dataset
-from scripts.smrl3filewriter import(
+from scripts.smrl3filewriter import (
     get_zonal_average_of_l2_data,
     get_representative_time_of_data,
     get_l2_median,

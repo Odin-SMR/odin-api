@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# pylint: disable=E0401, E0611
 import os
 from argparse import ArgumentParser
 import datetime as DT

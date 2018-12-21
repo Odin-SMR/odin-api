@@ -1,4 +1,3 @@
-# pylint: skip-file
 import pytest
 import numpy as np
 from odinapi.views.smr_frequency import (

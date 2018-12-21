@@ -1,4 +1,3 @@
-# pylint: disable=no-self-use,redefined-outer-name
 from datetime import datetime
 
 from mock import patch

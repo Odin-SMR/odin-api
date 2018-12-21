@@ -1,5 +1,3 @@
-# pylint: disable=no-self-use,redefined-outer-name,old-style-class,no-init
-
 import pytest
 
 

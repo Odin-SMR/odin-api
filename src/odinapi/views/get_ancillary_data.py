@@ -1,4 +1,3 @@
-# pylint: disable=E0401, E1101
 import numpy as np
 import ephem
 from odinapi.views.geoloc_tools import sph2cart
