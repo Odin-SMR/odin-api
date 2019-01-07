@@ -8,6 +8,11 @@
 *.coverage
 *.cache
 !src/odinapi/systemtest/testdata/*.json
+!/package.json
 env
 ghostdriver.log
 result.xml
+/node_modules
+/HeadlessChrome*
+/TESTS-HeadlessChrome*
+geckodriver.log

@@ -10,7 +10,8 @@
     },
     "eslint": {
       "type": "eslint",
-      "include": "(\\.js$)"
+      "include": "(\\.js$)",
+      "exclude": "(.eslintrc.js)"
     }
   }
 }
