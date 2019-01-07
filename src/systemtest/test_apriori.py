@@ -4,9 +4,6 @@ import pytest
 import requests as R
 import numpy as np
 
-from .testdefs import system
-
-
 URL_ROOT = 'http://localhost:5000/'
 URL_DATA_FILES = (
     URL_ROOT + 'rest_api/v4/config_data/data_files/'
@@ -16,7 +13,6 @@ URL_APRIORI = (
 )
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestApriori(unittest.TestCase):
 

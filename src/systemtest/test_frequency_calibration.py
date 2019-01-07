@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 from pg import DB
-from .testdefs import system
 from odinapi.views.level1b_scandata_exporter_v2 import (
     ScandataExporter,
     smr_lofreqcorr,
@@ -82,7 +81,6 @@ def freq_corr_572(scan_sample_data):
         scan_sample_data['altitudes'])
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestFreqcorr572():
 

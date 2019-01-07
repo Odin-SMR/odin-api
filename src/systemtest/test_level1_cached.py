@@ -3,10 +3,7 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import system
 
-
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestLevel1CachedViews(unittest.TestCase):
 

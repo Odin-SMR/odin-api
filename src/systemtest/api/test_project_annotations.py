@@ -8,7 +8,6 @@ import pytest
 import requests
 
 from ..level2_test_data import WRITE_URL, VERSION, get_test_data
-from ..testdefs import system
 from odinapi.utils import encrypt_util
 
 
@@ -33,7 +32,6 @@ def project():
     return make_project_url(project)
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_get_empty_annotations(project):
     response = requests.get(project + '/annotations')
@@ -41,7 +39,6 @@ def test_get_empty_annotations(project):
     assert response.json()['Data'] == []
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_get_annotations_unknown_project():
     project = make_project_url('unknown')
@@ -49,7 +46,6 @@ def test_get_annotations_unknown_project():
     assert response.status_code == httplib.NOT_FOUND
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post(project):
     response = requests.post(
@@ -71,7 +67,6 @@ def test_post(project):
     )
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_multiple(project):
     now = datetime.utcnow().replace(tzinfo=tzutc())
@@ -103,7 +98,6 @@ def test_post_multiple(project):
     )
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_unknown_project():
     project = make_project_url('unknown')
@@ -115,7 +109,6 @@ def test_post_unknown_project():
     assert response.status_code == httplib.NOT_FOUND
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_bad_text(project):
     response = requests.post(
@@ -126,7 +119,6 @@ def test_post_bad_text(project):
     assert response.status_code == httplib.BAD_REQUEST
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_no_text(project):
     response = requests.post(
@@ -137,7 +129,6 @@ def test_post_no_text(project):
     assert response.status_code == httplib.BAD_REQUEST
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_bad_freqmode(project):
     response = requests.post(
@@ -148,7 +139,6 @@ def test_post_bad_freqmode(project):
     assert response.status_code == httplib.BAD_REQUEST
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_no_credentials(project):
     response = requests.post(
@@ -158,7 +148,6 @@ def test_post_no_credentials(project):
     assert response.status_code == httplib.UNAUTHORIZED
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_post_bad_credentials(project):
     response = requests.post(

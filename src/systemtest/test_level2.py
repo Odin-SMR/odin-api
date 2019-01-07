@@ -11,8 +11,6 @@ from numpy import isnan
 
 from odinapi.utils import encrypt_util
 from .level2_test_data import WRITE_URL, VERSION, get_test_data
-from .testdefs import system
-
 
 PROJECT_NAME = 'testproject'
 
@@ -57,7 +55,6 @@ LOCATIONS_URL_DEV = make_dev_url(LOCATIONS_URL)
 DATE_URL_DEV = make_dev_url(DATE_URL)
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class BaseWithDataInsert(unittest.TestCase):
 
@@ -93,7 +90,6 @@ class BaseWithDataInsert(unittest.TestCase):
             requests.delete(url).raise_for_status()
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestProjects(BaseWithDataInsert):
 
@@ -179,7 +175,6 @@ class TestProjects(BaseWithDataInsert):
         test_version('v5', get_data_v5)
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestWriteLevel2(unittest.TestCase):
 
@@ -293,7 +288,6 @@ class TestWriteLevel2(unittest.TestCase):
         self.assertEqual(r.status_code, 400)
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestReadLevel2(BaseWithDataInsert):
 
@@ -936,7 +930,6 @@ class TestReadLevel2(BaseWithDataInsert):
                  start_time='2015-01-01', end_time='2015-12-31')
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestPublishProject(unittest.TestCase):
 

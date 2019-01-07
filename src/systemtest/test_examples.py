@@ -4,11 +4,10 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import slow, system
+from .testdefs import slow
 from examples import get_l1b_for_period, filter_spectra
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestLevel1Examples(unittest.TestCase):
     """Tests for Level1 API interaction example scripts"""

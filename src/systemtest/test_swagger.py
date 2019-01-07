@@ -3,10 +3,9 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import slow, system
+from .testdefs import slow
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestSwaggerViews(unittest.TestCase):
 

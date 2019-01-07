@@ -9,13 +9,10 @@ from selenium.webdriver.support.ui import Select
 
 from odinapi.utils import encrypt_util
 from .level2_test_data import WRITE_URL, VERSION, get_test_data
-from .testdefs import system
-
 
 PROJECT_NAME = 'testproject'
 
 
-@system
 @pytest.mark.usefixtures("dockercompose")
 class TestBrowser(unittest.TestCase):
     '''test of browser'''
@@ -32,7 +29,6 @@ class TestBrowser(unittest.TestCase):
         assert "Odin/SMR" in driver.title
 
 
-@system
 @pytest.mark.usefixtures("dockercompose")
 class TestLevel2Browser(unittest.TestCase):
     '''test of level2 browser'''

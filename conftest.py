@@ -1,4 +1,3 @@
-# pylint: skip-file
 from __future__ import print_function
 
 from time import sleep, time
@@ -13,10 +12,6 @@ def pytest_addoption(parser):
     """Adds the integrationtest option"""
     parser.addoption(
         "--runslow", action="store_true", help="run slow tests")
-    parser.addoption(
-        "--runsystem", action="store_true", help="run system tests")
-    parser.addoption(
-        "--rundisabled", action="store_true", help="run disabled tests")
     parser.addoption(
         "--no-system-restart", action="store_true",
         help="do not restart the system")
@@ -64,7 +59,7 @@ def dockercompose(tmpdir_factory):
                 timeout=5)
             if r.status_code == 200:
                 break
-        except:
+        except:  # noqa
             sleep(1)
         if time() > start_wait + max_wait:
             call_docker_compose('stop', root_path, log)

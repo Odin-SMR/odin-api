@@ -3,13 +3,10 @@ import os
 import pytest
 import requests
 
-from .testdefs import system
-
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, MY_PATH + '/../../../src')
 
 
-@system
 @pytest.mark.usefixtures("dockercompose")
 def test_get_l2_data():
     """Read a known file from the testdataset."""

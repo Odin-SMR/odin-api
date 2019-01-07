@@ -1,7 +1,6 @@
 from datetime import datetime
 import pytest
 from pg import DB
-from .testdefs import system
 from odinapi.views.level1b_scanlogdata_exporter import (
     ScanInfoExporter,
     scan_data_is_valid,
@@ -38,7 +37,6 @@ def scan_log_sample_data():
     }
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 class TestScanInfoExporter():
 

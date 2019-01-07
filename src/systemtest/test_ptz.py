@@ -5,7 +5,7 @@ import requests as R
 import numpy as np
 import os
 from subprocess import check_output
-from testdefs import system, slow
+from testdefs import slow
 from scripts.ptz_util import PrecalcPTZ
 from datetime import datetime
 
@@ -39,7 +39,6 @@ def zpt_data_directory():
     shutil.rmtree(path)
 
 
-@system
 @slow
 @pytest.mark.usefixtures('dockercompose')
 class TestPTZ(unittest.TestCase):
@@ -130,7 +129,6 @@ class TestPTZ(unittest.TestCase):
         self.assertTrue(test1 and test2 and test3)
 
 
-@system
 @pytest.mark.usefixtures('dockercompose')
 def test_latest_ecmf_file():
     """Test GET latest ecmf file"""
