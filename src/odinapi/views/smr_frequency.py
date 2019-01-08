@@ -124,8 +124,7 @@ class Smrl1bFreqspec(object):
         return seqvec
 
     def get_ac_frequency_grid(self):
-        ''' get ac frequencies
-        '''
+        ''' get ac frequencies'''
         seqvec = self.get_seq_pattern()
         freq = np.zeros(shape=(8, 112))
         bands = [1, 2, 3, 4, 5, 6, 7, 8]  # default: use all bands
@@ -180,28 +179,27 @@ class Smrl1bFreqsort(object):
         self.channels_id = np.arange(896)
         for band in range(8):
             self.ssb_ind[band * 112:(band + 1) * 112] = band + 1
-        if not bad_modules == [] or self.rm_edge_chs:
-            indf = np.ones(896)
-            if bad_modules is not None:
-                # mark bad modules
-                freqs = np.array(self.freq)
-                freqs.shape = (8, 112)
-                freqs = np.array([np.min(freqs, 1), np.max(freqs, 1)])
-                for bad_i, _ in enumerate(bad_modules):
-                    band_ind = np.nonzero(
-                        (bad_modules[bad_i] >= freqs[0, :]) &
-                        (bad_modules[bad_i] <= freqs[1, :])
-                    )[0]
-                    indf[(band_ind) * 112 + np.arange(0, 112, 1)] = 0
-            if self.rm_edge_chs:
-                # mark edge channels
-                indf[np.append(np.arange(0, 896, 112),
-                               np.arange(111, 896, 112))] = 0
-            index = np.nonzero((indf > 0))[0]
-            self.freq = self.freq[index]
-            self.ydata = self.ydata[index]
-            self.ssb_ind = self.ssb_ind[index]
-            self.channels_id = self.channels_id[index]
+        indf = np.ones(896)
+        if bad_modules is not None:
+            # mark bad modules
+            freqs = np.array(self.freq)
+            freqs.shape = (8, 112)
+            freqs = np.array([np.min(freqs, 1), np.max(freqs, 1)])
+            for bad_i, _ in enumerate(bad_modules):
+                band_ind = np.nonzero(
+                    (bad_modules[bad_i] >= freqs[0, :]) &
+                    (bad_modules[bad_i] <= freqs[1, :])
+                )[0]
+                indf[(band_ind) * 112 + np.arange(0, 112, 1)] = 0
+        if self.rm_edge_chs:
+            # mark edge channels
+            indf[np.append(np.arange(0, 896, 112),
+                           np.arange(111, 896, 112))] = 0
+        index = np.nonzero((indf > 0))[0]
+        self.freq = self.freq[index]
+        self.ydata = self.ydata[index]
+        self.ssb_ind = self.ssb_ind[index]
+        self.channels_id = self.channels_id[index]
 
     def ac_freqsort(self, freq0=None):
         '''sort frequency vector'''
