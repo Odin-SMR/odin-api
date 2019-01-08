@@ -578,6 +578,12 @@ class ScanPTZNoBackend(ScanPTZ):
         return {'Data': datadict, 'Type': 'ptz', 'Count': None}
 
 
+SWAGGER.add_parameter(
+    'aprsource', 'query', str,
+    description="Alternative apriori data source to use"
+)
+
+
 class ScanAPR(BaseView):
     """Get apriori data for a certain species"""
 
@@ -591,17 +597,17 @@ class ScanAPR(BaseView):
         if loginfo == {}:
             abort(404)
         _, day_of_year, midlat, _ = get_geoloc_info(loginfo)
-        datadict = get_apriori(species, day_of_year, midlat)
-        for item in ['pressure', 'vmr']:
-            datadict[item] = datadict[item].tolist()
-
-        datadictv4 = dict()
-        datadictv4['Pressure'] = around(
-            datadict['pressure'], decimals=8).tolist()
-        datadictv4['VMR'] = datadict['vmr']  # vmr can be very small,
-        # problematic to decreaese number of digits
-        datadictv4['Species'] = datadict['species']
-        return datadictv4
+        datadict = get_apriori(
+            species, day_of_year, midlat,
+            source=get_args.get_string('aprsource'),
+        )
+        # vmr can be very small, problematic to decreaese number of digits
+        return {
+            'Pressure': around(datadict['pressure'], decimals=8).tolist(),
+            'VMR': datadict['vmr'].tolist(),
+            'Species': datadict['species'],
+            'Altitude': datadict['altitude'].tolist(),
+        }
 
     @register_versions('return')
     def _return_format(self, version, data, *args, **kwargs):
@@ -611,6 +617,7 @@ class ScanAPR(BaseView):
 SWAGGER.add_parameter('species', 'path', str)
 SWAGGER.add_type('apriori', {
     "Pressure": [float],
+    "Altitude": [float],
     "Species": str,
     "VMR": [float],
 })
@@ -625,7 +632,7 @@ class ScanAPRNoBackend(ScanAPR):
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
             ['level1'],
-            ['freqmode', 'scanno', 'species'],
+            ['freqmode', 'scanno', 'species', 'aprsource'],
             {"200": SWAGGER.get_type_response('apriori')},
             summary="Get apriori data for a scan and species"
         )
