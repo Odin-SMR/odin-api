@@ -4,7 +4,6 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import slow
 from examples import get_l1b_for_period, filter_spectra
 
 
@@ -32,7 +31,7 @@ class TestLevel1Examples(unittest.TestCase):
             get_l1b_for_period.get_scans_for_period(
                 1, "2016-01-01", "2015-12-30", self.API_ROOT)
 
-    @slow
+    @pytest.mark.slow
     def test_get_spectra_for_period(self):
         """Test getting spectra for a frequency mode and period"""
         # V5
@@ -44,7 +43,7 @@ class TestLevel1Examples(unittest.TestCase):
             get_l1b_for_period.get_scans_for_period(
                 1, "2016-01-01", "2015-12-30", self.API_ROOT)
 
-    @slow
+    @pytest.mark.slow
     def test_break_postgresql(self):
         """This test used to break psql because 2015-01-13 has no spectra"""
         # V5

@@ -3,7 +3,6 @@ import pytest
 import requests
 import numpy as np
 from subprocess import check_output
-from testdefs import slow
 from scripts.ptz_util import PrecalcPTZ
 from datetime import datetime
 
@@ -37,7 +36,7 @@ def zpt_data_directory():
     """
 
 
-@slow
+@pytest.mark.slow
 @pytest.mark.usefixtures('dockercompose')
 class TestPTZ(unittest.TestCase):
 

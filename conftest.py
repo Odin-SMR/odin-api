@@ -17,6 +17,14 @@ def pytest_addoption(parser):
         help="do not restart the system")
 
 
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption('--runslow'):
+        skip_slow = pytest.mark.skip(reason='need --runslow option to run')
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
+
+
 def call_docker_compose(cmd, root_path, log, args=None, wait=True):
     cmd = ['docker-compose', cmd] + (args or [])
     popen = Popen(cmd, cwd=root_path, stdout=log)

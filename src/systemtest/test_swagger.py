@@ -3,13 +3,11 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import slow
-
 
 @pytest.mark.usefixtures('dockercompose')
 class TestSwaggerViews(unittest.TestCase):
 
-    @slow
+    @pytest.mark.slow
     def test_spec_v5(self):
         """Check that v5 spec is generated without errors"""
         r = requests.get('http://localhost:5000/rest_api/v5/spec')

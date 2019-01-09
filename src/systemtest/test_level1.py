@@ -3,8 +3,6 @@ import unittest
 import pytest
 import requests
 
-from .testdefs import slow
-
 
 @pytest.mark.usefixtures('dockercompose')
 class TestLevel1Views(unittest.TestCase):
@@ -48,7 +46,7 @@ class TestLevel1Views(unittest.TestCase):
              'collocations/'))
         self.assertEqual(r.status_code, 404)
 
-    @slow
+    @pytest.mark.slow
     def test_freqmode_raw_hierarchy(self):
         """Test freqmode raw hierarchy flow"""
         base_url = (
