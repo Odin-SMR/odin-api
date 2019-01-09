@@ -23,16 +23,18 @@ services:
       - PGDBNAME=odin
       - PGUSER=odinop
       - PGPASS=odinop
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker2.molflow.com/odin_redo/odin_api:latest
     volumes:
       - ./src/:/app:ro
       - ./data/vds-data:/vds-data:ro
-      - ./data/apriori:/var/lib/odindata/apriori:ro
       - ./data/vds-data/SMRhdf/Qsmr-2-1/:/odin-smr-2-1-data:ro
-      - ./data/ptz-data/:/var/lib/odindata:rw
       - ./data/vds-data/OSIRIS_Level2/:/osiris-data:ro
-      - ./data/ptz-data/ERA-Interim:/var/lib/odindata/ECMWF:rw
-      - ./data/odin-l2-data:/data/odin-l2-data:rw
+      - ./data/apriori:/var/lib/odindata/apriori:ro
+      - ./data/ptz-data/Solardata2.db:/var/lib/odindata/Solardata2.db:ro
+      - ./data/ptz-data/ERA-Interim:/var/lib/odindata/ECMWF:ro
     links:
       - postgresql
       - level2db

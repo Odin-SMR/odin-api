@@ -1,9 +1,7 @@
-import shutil
 import unittest
 import pytest
-import requests as R
+import requests
 import numpy as np
-import os
 from subprocess import check_output
 from testdefs import slow
 from scripts.ptz_util import PrecalcPTZ
@@ -32,11 +30,11 @@ def zpt_data_directory():
     Create dirs that are used in the tests. This ensure that they are owned by
     us so that we can clean them at the end. Otherwise, they'll be created by
     root inside the docker image.
-    """
     path = os.path.join(ROOT_PATH, 'data/ptz-data/ZPT/2015/01/')
     os.makedirs(path)
     yield path
     shutil.rmtree(path)
+    """
 
 
 @slow
@@ -45,7 +43,7 @@ class TestPTZ(unittest.TestCase):
 
     def test_erainterim_file_exists(self):
         """Check that file exists"""
-        data = R.get(URL_DATA_FILES).json()
+        data = requests.get(URL_DATA_FILES).json()
         self.assertTrue(
             data['data']['ptz-files']['era-interim']['example-file'] ==
             '/var/lib/odindata/ECMWF/2015/01/ei_pl_2015-01-12-00.nc'
@@ -53,56 +51,22 @@ class TestPTZ(unittest.TestCase):
 
     def test_solar_file_exists(self):
         """Check that file exists"""
-        data = R.get(URL_DATA_FILES).json()
+        data = requests.get(URL_DATA_FILES).json()
         self.assertTrue(
             data['data']['ptz-files']['solardata']['example-file'] ==
             '/var/lib/odindata/Solardata2.db'
         )
 
-    def test_ptz_file_can_be_created(self):
+    def test_can_return_ptz_data(self):
         """Check that odin-api can create ptz-file"""
 
         def test_version(url_string, key=None):
-            ptzfile = os.path.join(
-                ROOT_PATH,
-                'data/ptz-data/ZPT/2015/01/',
-                'ZPT_7014836770.nc'
-            )
-            if os.path.isfile(ptzfile):
-                os.remove(ptzfile)
-            data = R.get(url_string).json()
+            response = requests.get(url_string)
+            data = response.json()
             if key:
                 data = data[key]
             t0 = data['Temperature'][0]
             t0 = np.around(t0, decimals=3).tolist()
-            self.assertTrue(t0 == 275.781)
-
-        url_string = (
-            URL_PTZ + '2015-01-12/AC1/2/7014836770/'
-        )
-        test_version(url_string)
-        url_string = (
-            URL_PTZ_V5.format(freqmode='2', scanid='7014836770')
-        )
-        test_version(url_string, key='Data')
-
-    def test_ptz_file_is_readable(self):
-        """Check that odin-api can read ptz file"""
-
-        def test_version(url_string, key=None):
-            ptzfile = '/var/lib/odindata/ZPT/2015/01/ZPT_7014836770.nc'
-            data = R.get(url_string).json()
-            if key:
-                data = data[key]
-            t0 = data['Temperature'][0]
-            t0 = np.around(t0, decimals=3).tolist()
-            ptzfile = os.path.join(
-                ROOT_PATH,
-                'data/ptz-data/ZPT/2015/01/',
-                'ZPT_7014836770.nc'
-            )
-            if os.path.isfile(ptzfile):
-                os.remove(ptzfile)
             self.assertTrue(t0 == 275.781)
 
         url_string = (
@@ -132,5 +96,5 @@ class TestPTZ(unittest.TestCase):
 @pytest.mark.usefixtures('dockercompose')
 def test_latest_ecmf_file():
     """Test GET latest ecmf file"""
-    data = R.get(URL_LATEST_ECMF_FILE).json()
+    data = requests.get(URL_LATEST_ECMF_FILE).json()
     assert data == {u'Date': u'2015-01-12', u'File': u'ei_pl_2015-01-12-18.nc'}

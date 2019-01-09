@@ -1,0 +1,12 @@
+gfortran-5
+gfortran
+build-essential
+libhdfeos-dev
+libhdf4-dev
+libhdf5-dev
+libnetcdf-dev
+libcfitsio-dev
+libpq-dev
+python-dev
+python-pip
+

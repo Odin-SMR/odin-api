@@ -25,22 +25,22 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
         query_string = (
             "select * "
             "from scans_cache "
-            "where date = '{0}' "
-            "and freqmode = {1} "
-            "and backend = '{2}' "
-            "order by backend, freqmode "
-            ).format(date, freqmode, backend)
-        query = con.query(query_string)
+            "where date = $1 "
+            "and freqmode = $2 "
+            "and backend = $3 "
+            "order by backend, freqmode"
+        )
+        query = con.query(query_string, date, freqmode, backend)
     elif scanid is not None:
         query_string = (
             "select * "
             "from scans_cache "
-            "where scanid = {0} "
-            "and freqmode = {1} "
-            "and backend = '{2}' "
-            "order by backend, freqmode "
-            ).format(scanid, freqmode, backend)
-        query = con.query(query_string)
+            "where scanid = $1 "
+            "and freqmode = $2 "
+            "and backend = $3 "
+            "order by backend, freqmode"
+        )
+        query = con.query(query_string, scanid, freqmode, backend)
     else:
         abort(404)
 
@@ -527,7 +527,7 @@ class L1LogCached(BaseView):
         loginfo['Info'] = []
         try:
             for ind in range(len(loginfo['ScanID'])):
-                date = loginfo['DateTime'][ind].split(' ')[0]
+                date = loginfo['DateTime'][ind].date().isoformat()
                 loginfo['Info'].append(
                     make_loginfo_v4(
                         loginfo, itemlist, ind, version, date, backend))

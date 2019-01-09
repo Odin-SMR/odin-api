@@ -1,9 +1,0 @@
-flask==0.12.3
-flask-httpauth
-gevent
-gunicorn
-pycrypto
-pymongo
-python-dateutil
-sqlalchemy
-requests

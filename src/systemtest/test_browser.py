@@ -17,7 +17,14 @@ PROJECT_NAME = 'testproject'
 class TestBrowser(unittest.TestCase):
     '''test of browser'''
     def setUp(self):
-        self.driver = webdriver.Chrome()
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        self.driver = webdriver.Chrome(
+            './dependencies/chromedriver',
+            chrome_options=chrome_options
+        )
 
     def tearDown(self):
         self.driver.quit()
@@ -33,7 +40,14 @@ class TestBrowser(unittest.TestCase):
 class TestLevel2Browser(unittest.TestCase):
     '''test of level2 browser'''
     def setUp(self):
-        self.driver = webdriver.Chrome()
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        self.driver = webdriver.Chrome(
+            './dependencies/chromedriver',
+            chrome_options=chrome_options
+        )
 
     def tearDown(self):
         self.driver.quit()

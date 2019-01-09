@@ -3,19 +3,20 @@
 
 
 from datetime import datetime
+import string
 import numpy as np
 from dateutil.relativedelta import relativedelta
 import matplotlib
 matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt  # nopep8
-from odinapi.views.utils import copyemptydict  # nopep8
-from odinapi.views.freq_calibration import Freqcorr572  # nopep8
-from odinapi.views.smr_quality import (  # nopep8
+import matplotlib.pyplot as plt  # noqa
+from odinapi.views.utils import copyemptydict  # noqa
+from odinapi.views.freq_calibration import Freqcorr572  # noqa
+from odinapi.views.smr_quality import (  # noqa
     QualityControl,
-    QualityDisplay
+    QualityDisplay,
 )
-from odinapi.views.smr_frequency import (  # nopep8
+from odinapi.views.smr_frequency import (  # noqa
     Smrl1bFreqspec,
     Smrl1bFreqsort,
     freqfunc,
@@ -180,7 +181,7 @@ class ScandataExporter(object):
                     corrcoef = np.ndarray(
                         shape=(8 * 96,),
                         dtype='float64',
-                        buffer=self.con.unescape_bytea(row['cc'])
+                        buffer=row['cc']
                     )
                     # store only zerolags
                     zerolag = []
@@ -218,19 +219,19 @@ class ScandataExporter(object):
                          'gpsvel', 'sunpos', 'moonpos']:
                 try:
                     spec[item] = np.array(
-                        res[item].replace('{', '').replace('}', '').split(',')
+                        res[item]
                     ).astype(float).tolist()
                 except AttributeError:
                     spec[item] = ()
 
             spec['ssb_fq'] = np.array(
-                res['ssb_fq'].replace('{', '').replace('}', '').split(',')
+                res['ssb_fq']
             ).astype(float) * 1e6
             # change backend and frontend to integer
             spec['backend'] = backend_char2int(res['backend'])
             spec['frontend'] = frontend_char2int(res['frontend'])
             data = np.ndarray(shape=(res['channels'],), dtype='float64',
-                              buffer=self.con.unescape_bytea(res['spectra']))
+                              buffer=res['spectra'])
             try:
                 if res['ac0_frontend'] == 'SPL' and res['spectype'] == 'SSB':
                     data = data[0:448]
@@ -388,43 +389,44 @@ class CalibrationStep2(object):
         [hotload_range1, hotload_range2, hl_1, hl_2] = (
             self.get_hotload_range(hotload)
         )
+        query_string = (
+            "select hotload_range, altitude_range, median_fit, channels "
+            "from ac_cal_level1c where freqmode = $1 and "
+            "version = $2 and intmode = $3 and ssb_fq = $4 "
+            "and altitude_range = $5 and hotload_range = $6 "
+            "order by hotload_range"
+        )
 
-        query = self.con.query('''
-          select hotload_range, altitude_range, median_fit, channels
-          from ac_cal_level1c where freqmode = {0} and
-          version = {1} and intmode = {2} and ssb_fq = '{3}'
-          and altitude_range = '{4}' and hotload_range = '{5}'
-          order by hotload_range
-                                '''.format(*[self.freqmode,
-                                             self.version,
-                                             intmode,
-                                             ssb_fq,
-                                             self.altitude_range,
-                                             hotload_range1]))
+        query = self.con.query(
+            query_string,
+            self.freqmode,
+            int(self.version),
+            intmode,
+            ssb_fq.__repr__().translate(string.maketrans("[]", "{}")),
+            self.altitude_range,
+            hotload_range1
+        )
         result1 = query.dictresult()
-        query = self.con.query('''
-          select hotload_range, altitude_range, median_fit, channels
-          from ac_cal_level1c where freqmode = {0} and
-          version = {1} and intmode = {2} and ssb_fq = '{3}'
-          and altitude_range = '{4}' and hotload_range = '{5}'
-          order by hotload_range
-                                '''.format(*[self.freqmode,
-                                             self.version,
-                                             intmode,
-                                             ssb_fq,
-                                             self.altitude_range,
-                                             hotload_range2]))
+        query = self.con.query(
+            query_string,
+            self.freqmode,
+            int(self.version),
+            intmode,
+            ssb_fq.__repr__().translate(string.maketrans("[]", "{}")),
+            self.altitude_range,
+            hotload_range2
+        )
         result2 = query.dictresult()
         if result1:
             medianfit1 = np.ndarray(
                 shape=(result1[0]['channels'],),
                 dtype='float64',
-                buffer=self.con.unescape_bytea(result1[0]['median_fit']))
+                buffer=result1[0]['median_fit'])
         if result2:
             medianfit2 = np.ndarray(
                 shape=(result2[0]['channels'],),
                 dtype='float64',
-                buffer=self.con.unescape_bytea(result2[0]['median_fit'])
+                buffer=result2[0]['median_fit']
             )
         if result1 and result2:
             weight1 = 1 - np.abs(hl_1 - hotload) / np.abs(hl_2 - hl_1)

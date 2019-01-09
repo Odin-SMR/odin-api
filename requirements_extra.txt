@@ -1,0 +1,4 @@
+ffnet==0.8.4              # via spacepy
+networkx==2.2             # via spacepy
+python-hdf4==0.9.1
+spacepy==0.1.6

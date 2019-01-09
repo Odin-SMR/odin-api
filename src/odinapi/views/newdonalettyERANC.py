@@ -217,9 +217,8 @@ def save_zptfile(basedir, date, scanid, zpt):
     altitude = datagrp.createVariable('Z', 'f4', ('level',))
     altitude.units = 'Km'
     altitude[:] = zpt['Z']
-
     pressure = datagrp.createVariable('P', 'f4', ('level',))
-    pressure .units = 'hPa'
+    pressure.units = 'hPa'
     pressure[:] = zpt['P']
 
     temperature = datagrp.createVariable('T', 'f4', ('level',))
