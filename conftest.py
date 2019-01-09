@@ -7,6 +7,8 @@ import sys
 import pytest
 import requests
 
+__RESTARTDOCKER = True
+
 
 def pytest_addoption(parser):
     """Adds the integrationtest option"""
@@ -25,6 +27,12 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_slow)
 
 
+def pytest_configure(config):
+    global __RESTARTDOCKER
+    if config.getoption('--no-system-restart'):
+        __RESTARTDOCKER = False
+
+
 def call_docker_compose(cmd, root_path, log, args=None, wait=True):
     cmd = ['docker-compose', cmd] + (args or [])
     popen = Popen(cmd, cwd=root_path, stdout=log)
@@ -33,14 +41,18 @@ def call_docker_compose(cmd, root_path, log, args=None, wait=True):
     return popen
 
 
+@pytest.fixture(scope='session')
+def root_path():
+    return check_output(['git', 'rev-parse', '--show-toplevel']).strip()
+
+
 @pytest.yield_fixture(scope='session')
-def dockercompose(tmpdir_factory):
+def dockercompose(tmpdir_factory, root_path):
     """Set up the full system"""
-    root_path = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
     logpath = tmpdir_factory.mktemp('docker').join('docker-compose.log')
     log = logpath.open('w')
 
-    if not pytest.config.getoption("--no-system-restart"):
+    if __RESTARTDOCKER:
         print(
             'docker-compose logs available at {}'.format(logpath),
             file=sys.stderr
@@ -78,7 +90,7 @@ def dockercompose(tmpdir_factory):
 
     yield system.pid
 
-    if not pytest.config.getoption("--no-system-restart"):
+    if __RESTARTDOCKER:
         call_docker_compose('stop', root_path, log)
         if system.poll() is None:
             system.kill()
