@@ -5,7 +5,7 @@ RUN sed -i "s#archive.ubuntu.com#archive.mirror.blix.com#" /etc/apt/sources.list
 RUN set -x && \
     apt-get update && xargs apt-get install -y < requirements.apt
 
-add dependencies/ /dependencies/
+COPY dependencies/ /dependencies/
 
 # swagger
 RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
@@ -19,7 +19,7 @@ COPY requirements.txt /app
 RUN pip install --no-binary=h5py -r requirements.txt
 COPY requirements_extra.txt /app
 RUN pip install -r requirements_extra.txt
-copy src/ /app/src/
+COPY src/ /app/src/
 run cd /app/src && python setup.py install
 expose 5000
 cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app

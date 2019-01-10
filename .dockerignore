@@ -1,0 +1,7 @@
+**/*.pyc
+*.log
+.git/
+.tox/
+/data/
+/env
+/node_modules

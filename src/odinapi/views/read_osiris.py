@@ -1,9 +1,10 @@
 '''read osiris level2 file'''
 from datetime import datetime
 from os.path import join
-import numpy as N
+
 from dateutil.relativedelta import relativedelta
-from odinapi.utils.hdf5_util import thread_safe_h5py_file
+from h5py import File
+import numpy as np
 
 
 def read_osiris_file(osiris_file, date, species, file_index):
@@ -16,13 +17,13 @@ def read_osiris_file(osiris_file, date, species, file_index):
     data = dict()
     data_fields = dict()
     geolocation_fields = dict()
-    with thread_safe_h5py_file(osiris_file) as fgr:
+    with File(osiris_file, 'r') as fgr:
         fdata = fgr['HDFEOS']['SWATHS'][
             r'OSIRIS\Odin {0}MART'.format(species)]
         for item in fdata['Data Fields'].keys():
-            data_fields[item] = N.array(fdata['Data Fields'][item])
+            data_fields[item] = np.array(fdata['Data Fields'][item])
         for item in fdata['Geolocation Fields'].keys():
-            geolocation_fields[item] = N.array(
+            geolocation_fields[item] = np.array(
                 fdata['Geolocation Fields'][item])
     # transform the mls date to MJD and add to dict
     mjd = []
@@ -31,7 +32,7 @@ def read_osiris_file(osiris_file, date, species, file_index):
         mjd_i = date_i - datetime(1858, 11, 17)
         sec_per_day = 24*60*60.0
         mjd.append(mjd_i.total_seconds()/sec_per_day)
-    geolocation_fields['MJD'] = N.array(mjd)
+    geolocation_fields['MJD'] = np.array(mjd)
     data['data_fields'] = data_fields
     data['geolocation_fields'] = geolocation_fields
     # select data from the given index

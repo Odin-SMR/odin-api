@@ -6,16 +6,18 @@ import os
 from argparse import ArgumentParser
 import datetime as DT
 import json
+
 import numpy as np
 import ephem
 import requests as R
 from dateutil.relativedelta import relativedelta
 from netCDF4 import Dataset
-from odinapi.views.database import DatabaseConnector
 import spacepy.coordinates as coord
 from spacepy.time import Ticktock
+from simpleflock import SimpleFlock
 import pyproj
-from odinapi.utils.hdf5_util import HDF5_LOCK
+
+from odinapi.views.database import DatabaseConnector
 
 
 PRESSURE_GRID_CCI = np.array([
@@ -39,7 +41,6 @@ class Smrl2filewriter(object):
         self.dbcon = dbcon
         self.use_pgrid_cci = use_pgrid_cci
         self.odinl2file = self.generate_filename()
-        self.rootgrp = ''
 
     def generate_filename(self):
         '''generate product filename:
@@ -65,74 +66,70 @@ class Smrl2filewriter(object):
         )
         return os.path.join(l2datadir, l2filename)
 
-    def filter_data(self):
+    def add_scan_to_file(self, rootgrp):
         '''filter data to be included:
            currently only check if scan already is included
         '''
         ids_included = np.array(
-            self.rootgrp['Satellite_specific_data']['scanID']
+            rootgrp['Satellite_specific_data']['scanID']
         )
         if np.any(ids_included == self.l2data['ScanID']):
             print '''scan {0} already included'''.format(self.l2data['ScanID'])
-            self.rootgrp.close()
-            add_scan_to_file = False
+            return False
+        return True
+
+    def _open_file(self):
+        if not os.path.isfile(self.odinl2file):
+            #  create new file
+            rootgrp = Dataset(self.odinl2file, 'w', format='NETCDF4')
+            self.createnewfile = True
         else:
-            add_scan_to_file = True
-        return add_scan_to_file
+            #  open file to append data to existing file
+            rootgrp = Dataset(self.odinl2file, 'a', format='NETCDF4')
+            self.createnewfile = False
+        return rootgrp
 
     def write_scan_to_file(self):
         '''apply the functions of the class to write data from
            one scan to file'''
-        with HDF5_LOCK:
-            if not os.path.isfile(self.odinl2file):
-                #  create new file
-                self.rootgrp = Dataset(
-                    self.odinl2file, 'w', format='NETCDF4'
-                )
-                createnewfile = True
-            else:
-                #  open file to append data to existing file
-                self.rootgrp = Dataset(
-                    self.odinl2file, 'a', format='NETCDF4'
-                )
-                createnewfile = False
-            if createnewfile:
-                #  create dimensions
-                if self.use_pgrid_cci:
-                    nlevels = np.array(PRESSURE_GRID_CCI).shape[0]
+        with SimpleFlock(self.odinl2file + '.lock', timeout=600):
+            with self._open_file() as rootgrp:
+                if self.createnewfile:
+                    #  create dimensions
+                    if self.use_pgrid_cci:
+                        nlevels = np.array(PRESSURE_GRID_CCI).shape[0]
+                    else:
+                        nlevels = np.array(self.l2data['Pressure']).shape[0]
+                    ntimes = None
+                    self.create_dimensions(rootgrp, nlevels, ntimes)
+                    index = 0
+                    add_scan_to_file = True
                 else:
-                    nlevels = np.array(self.l2data['Pressure']).shape[0]
-                ntimes = None
-                self.create_dimensions(nlevels, ntimes)
-                index = 0
-                add_scan_to_file = True
-            else:
-                #  get the number of scans already included in file
-                index = self.rootgrp['Geolocation']['time'].shape[0]
-                add_scan_to_file = self.filter_data()
-            if add_scan_to_file:
-                #  write geolocation data
-                self.write_geolocation(index)
-                #  write retrieval results
-                self.write_retrieval_results(index)
-                #  write specific data for selection
-                self.write_data_for_selection(index)
-                #  write satellite specific data
-                self.write_satellite_specific_data(index)
-                #  write apriori data
-                self.write_apriori_data(index)
-                #  create/update attributes
-                self.write_global_netcdf_attributes()
-                #  close file
-                self.rootgrp.close()
+                    #  get the number of scans already included in file
+                    index = rootgrp['Geolocation']['time'].shape[0]
+                    add_scan_to_file = self.add_scan_to_file(rootgrp)
+                if add_scan_to_file:
+                    #  write geolocation data
+                    self.write_geolocation(rootgrp, index)
+                    #  write retrieval results
+                    self.write_retrieval_results(rootgrp, index)
+                    #  write specific data for selection
+                    self.write_data_for_selection(rootgrp, index)
+                    #  write satellite specific data
+                    self.write_satellite_specific_data(rootgrp, index)
+                    #  write apriori data
+                    self.write_apriori_data(rootgrp, index)
+                    #  create/update attributes
+                    self.write_global_netcdf_attributes(rootgrp)
 
-    def create_dimensions(self, nlevels, ntimes):
+    @staticmethod
+    def create_dimensions(self, rootgrp, nlevels, ntimes):
         '''create time and level dimensions'''
-        self.rootgrp.createDimension('level', nlevels)
-        self.rootgrp.createDimension('time', ntimes)
-        self.rootgrp.createDimension('range', 2)
+        rootgrp.createDimension('level', nlevels)
+        rootgrp.createDimension('time', ntimes)
+        rootgrp.createDimension('range', 2)
 
-    def write_geolocation(self, index):
+    def write_geolocation(self, rootgrp, index):
         '''Common measurement geolocation:
            - time (from 01/01/1900)
            - latitude (-90 to +90)
@@ -142,7 +139,7 @@ class Smrl2filewriter(object):
         datagroup = 'Geolocation'
         if index == 0:
             #  create group and items
-            datagrp = self.rootgrp.createGroup('Geolocation')
+            datagrp = rootgrp.createGroup('Geolocation')
             times = datagrp.createVariable('time', 'f8', ('time',))
             latitudes = datagrp.createVariable('latitude', 'f4', ('time',))
             longitudes = datagrp.createVariable('longitude', 'f4', ('time',))
@@ -157,15 +154,15 @@ class Smrl2filewriter(object):
             pressures.units = 'hPa'
         else:
             #  get pointers to existing items (except pressure)
-            times = self.rootgrp[datagroup]['time']
-            latitudes = self.rootgrp[datagroup]['latitude']
-            longitudes = self.rootgrp[datagroup]['longitude']
+            times = rootgrp[datagroup]['time']
+            latitudes = rootgrp[datagroup]['latitude']
+            longitudes = rootgrp[datagroup]['longitude']
         #  fill in data to items
         times[index] = mjd2daysince19000101(self.l2data['MJD'])
         latitudes[index] = self.l2data['Lat1D']
         longitudes[index] = fix_longitude(self.l2data['Lon1D'])
 
-    def write_retrieval_results(self, index):
+    def write_retrieval_results(self, rootgrp, index):
         '''- concentration in vmr
            - concentration error in vmr
            - vertical resolution
@@ -173,7 +170,7 @@ class Smrl2filewriter(object):
         datagroup = 'Retrieval_results'
         if index == 0:
             #  create group and items
-            datagrp = self.rootgrp.createGroup(datagroup)
+            datagrp = rootgrp.createGroup(datagroup)
             l2values = datagrp.createVariable(
                 'l2_value', 'f4', ('time', 'level',)
             )
@@ -192,9 +189,9 @@ class Smrl2filewriter(object):
             resolutions.units = 'km'
         else:
             #  get pointers to existing items
-            l2values = self.rootgrp[datagroup]['l2_value']
-            l2errors = self.rootgrp[datagroup]['l2_error']
-            resolutions = self.rootgrp[datagroup]['vertical_resolution']
+            l2values = rootgrp[datagroup]['l2_value']
+            l2errors = rootgrp[datagroup]['l2_error']
+            resolutions = rootgrp[datagroup]['vertical_resolution']
         #  fill in data to items
         if self.use_pgrid_cci:
             #  interpolate to p_grid_cci
@@ -233,7 +230,7 @@ class Smrl2filewriter(object):
                 self.l2data['Altitude'], self.l2data['AVK']
             )
 
-    def write_data_for_selection(self, index):
+    def write_data_for_selection(self, rootgrp, index):
         '''- quality flags
            - measurement response
            - averaging kernels
@@ -247,7 +244,7 @@ class Smrl2filewriter(object):
         datagroup = 'Specific_data_for_selection'
         if index == 0:
             #  create group and items
-            datagrp = self.rootgrp.createGroup(datagroup)
+            datagrp = rootgrp.createGroup(datagroup)
             quals = datagrp.createVariable('quality', 'f4', ('time',))
             quals.units = '-'
             measr = datagrp.createVariable(
@@ -284,16 +281,16 @@ class Smrl2filewriter(object):
             vertranges.units = 'hPa'
         else:
             #  get pointers to existing items
-            quals = self.rootgrp[datagroup]['quality']
-            measr = self.rootgrp[datagroup]['measurement_response']
+            quals = rootgrp[datagroup]['quality']
+            measr = rootgrp[datagroup]['measurement_response']
             if not self.use_pgrid_cci:
-                avks = self.rootgrp[datagroup]['averaging_kernel']
-            ltimes = self.rootgrp[datagroup]['local_time']
-            glats = self.rootgrp[datagroup]['geomagnetic_latitude']
-            glons = self.rootgrp[datagroup]['geomagnetic_longitude']
+                avks = rootgrp[datagroup]['averaging_kernel']
+            ltimes = rootgrp[datagroup]['local_time']
+            glats = rootgrp[datagroup]['geomagnetic_latitude']
+            glons = rootgrp[datagroup]['geomagnetic_longitude']
             #  skip equivalent_latitude for now
-            #  eqlats = self.rootgrp[datagroup]['equivalent_latitude']
-            vertranges = self.rootgrp[datagroup]['valid_vertical_range']
+            #  eqlats = rootgrp[datagroup]['equivalent_latitude']
+            vertranges = rootgrp[datagroup]['valid_vertical_range']
         #  fill in data to items
         quals[index] = 0  # N.B change
         if self.use_pgrid_cci:
@@ -325,7 +322,7 @@ class Smrl2filewriter(object):
             np.array(self.l2data['MeasResponse'])
         )
 
-    def write_satellite_specific_data(self, index):
+    def write_satellite_specific_data(self, rootgrp, index):
         '''- orbit number
            - scan ID
            - frequency mode
@@ -335,7 +332,7 @@ class Smrl2filewriter(object):
         datagroup = 'Satellite_specific_data'
         if index == 0:
             #  create group and items
-            datagrp = self.rootgrp.createGroup(datagroup)
+            datagrp = rootgrp.createGroup(datagroup)
             orbitnumbers = datagrp.createVariable('orbit', 'u8', ('time',))
             orbitnumbers.units = '-'
             scanids = datagrp.createVariable('scanID', 'u8', ('time',))
@@ -355,14 +352,14 @@ class Smrl2filewriter(object):
                 longitudes.units = 'degrees east'
         else:
             #  get pointers to existing items
-            orbitnumbers = self.rootgrp[datagroup]['orbit']
-            scanids = self.rootgrp[datagroup]['scanID']
-            freqmodes = self.rootgrp[datagroup]['freqmode']
+            orbitnumbers = rootgrp[datagroup]['orbit']
+            scanids = rootgrp[datagroup]['scanID']
+            freqmodes = rootgrp[datagroup]['freqmode']
             if not self.use_pgrid_cci:
                 #  only include these variables when using
                 #  the original retrieval grid
-                latitudes = self.rootgrp[datagroup]['latitude']
-                longitudes = self.rootgrp[datagroup]['longitude']
+                latitudes = rootgrp[datagroup]['latitude']
+                longitudes = rootgrp[datagroup]['longitude']
         #  fill in data to items
         orbitnumbers[index] = get_orbit_from_scanid(
             self.dbcon, self.l2data['ScanID']
@@ -375,12 +372,12 @@ class Smrl2filewriter(object):
             latitudes[index, :] = self.l2data['Latitude']
             longitudes[index, :] = fix_longitude(self.l2data['Longitude'])
 
-    def write_apriori_data(self, index):
+    def write_apriori_data(self, rootgrp, index):
         '''a priori data'''
         datagroup = 'Apriori'
         if index == 0:
             #  create group and items
-            datagrp = self.rootgrp.createGroup(datagroup)
+            datagrp = rootgrp.createGroup(datagroup)
             l2aprioris = datagrp.createVariable(
                 'l2_apriori', 'f4', ('time', 'level',)
             )
@@ -390,7 +387,7 @@ class Smrl2filewriter(object):
                 l2aprioris.units = 'VMR'
         else:
             #  get pointers to existing items
-            l2aprioris = self.rootgrp[datagroup]['l2_apriori']
+            l2aprioris = rootgrp[datagroup]['l2_apriori']
         #  fill in data to items
         if self.use_pgrid_cci:
             #  interpolate to p_grid_cci
@@ -403,11 +400,14 @@ class Smrl2filewriter(object):
             #  use the original retrieval grid data
             l2aprioris[index, :] = self.l2data['Apriori']
 
-    def write_global_netcdf_attributes(self,
-                                       prodversion='0001',
-                                       l1version='8.0',
-                                       l2version='3.0',
-                                       file_vers_description='first version'):
+    def write_global_netcdf_attributes(
+        self,
+        rootgrp,
+        prodversion='0001',
+        l1version='8.0',
+        l2version='3.0',
+        file_vers_description='first version',
+    ):
         '''- source file identification
            - instrument name
            - platform name
@@ -419,100 +419,100 @@ class Smrl2filewriter(object):
            - name and email of the person responsible for the dataset
              within the project
         '''
-        if not hasattr(self.rootgrp, 'title'):
+        if not hasattr(rootgrp, 'title'):
             # write all attributes
-            self.rootgrp.title = (
+            rootgrp.title = (
                 'ESA MesosphEO / ESA Odin reprocessing ' +
                 '{0} {1} product level 2'.format(*[self.project, self.l2item])
             )
-            self.rootgrp.institution = 'Chalmers University of Technology'
-            self.rootgrp.source = 'Odin/SMR L2 version {0}'.format(l2version)
-            #  self.rootgrp.history = '?' skip this?
-            self.rootgrp.platform = 'Odin'
-            self.rootgrp.sensor = 'SMR'
-            self.rootgrp.affiliation = (
+            rootgrp.institution = 'Chalmers University of Technology'
+            rootgrp.source = 'Odin/SMR L2 version {0}'.format(l2version)
+            #  rootgrp.history = '?' skip this?
+            rootgrp.platform = 'Odin'
+            rootgrp.sensor = 'SMR'
+            rootgrp.affiliation = (
                 'Chalmers University of Technology, ' +
                 'Department of Earth and Space Sciences'
             )
-            self.rootgrp.date_created = (
+            rootgrp.date_created = (
                 'Created ' + DT.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
             )
-            self.rootgrp.creator_name = 'Donal Murtagh'
-            self.rootgrp.creator_url = 'odin.rss.chalmers.se'
-            self.rootgrp.creator_email = 'donal.murtagh@chalmers.se'
-            self.rootgrp.address = '412 96 Gothenburg, Sweden'
-            self.rootgrp.naming_authority = 'Chalmers University of Technology'
-            self.rootgrp.product_version = prodversion
-            self.rootgrp.level_1_data_version = l1version
-            self.rootgrp.level_2_data_version = l2version
-            self.rootgrp.level_2_data_product = self.l2data['Product']
-            self.rootgrp.file_id = self.odinl2file
-            self.rootgrp.comment = (
+            rootgrp.creator_name = 'Donal Murtagh'
+            rootgrp.creator_url = 'odin.rss.chalmers.se'
+            rootgrp.creator_email = 'donal.murtagh@chalmers.se'
+            rootgrp.address = '412 96 Gothenburg, Sweden'
+            rootgrp.naming_authority = 'Chalmers University of Technology'
+            rootgrp.product_version = prodversion
+            rootgrp.level_1_data_version = l1version
+            rootgrp.level_2_data_version = l2version
+            rootgrp.level_2_data_product = self.l2data['Product']
+            rootgrp.file_id = self.odinl2file
+            rootgrp.comment = (
                 'These data were created at Chalmers as part of the ' +
                 'ESA MesosphEO / ESA Odin reprocessing projects'
             )
-            self.rootgrp.summary = (
+            rootgrp.summary = (
                 'This dataset contains screened level-2 limb ' +
                 '{0} profiles from Odin/SMR'.format(self.l2item)
             )
-            self.rootgrp.keywords = (
+            rootgrp.keywords = (
                 '{0}, remote sensing, atmosphere, Odin, SMR'.format(
                     self.l2item
                 )
             )
-            self.rootgrp.value_for_nodata = 'NaN'
-            #  self.rootgrp.Conventions = 'CF-1.5' skip this?
-            self.rootgrp.standard_name_vocabulary = (
+            rootgrp.value_for_nodata = 'NaN'
+            #  rootgrp.Conventions = 'CF-1.5' skip this?
+            rootgrp.standard_name_vocabulary = (
                 'NetCDF Climate and Forecast(CF) Metadata ' +
                 'Convention version 18'
             )
-            self.rootgrp.license = (
+            rootgrp.license = (
                 'ESA MesosphEO / ESA Odin reprocessing guidelines'
             )
-            self.rootgrp.restriction = (
+            rootgrp.restriction = (
                 'Restricted under the use of ESA MesosphEO / ' +
                 'ESA Odin reprocessing guidelines'
             )
-            self.rootgrp.geospatial_lat_min = '-90.0'
-            self.rootgrp.geospatial_lat_max = '+90.0'
-            self.rootgrp.geospatial_lon_min = '-180.0'
-            self.rootgrp.geospatial_lon_max = '+180.0'
-            self.rootgrp.geospatial_vertical_max = get_geospatial_vertical_max(
-                self.rootgrp['Geolocation']['pressure']
+            rootgrp.geospatial_lat_min = '-90.0'
+            rootgrp.geospatial_lat_max = '+90.0'
+            rootgrp.geospatial_lon_min = '-180.0'
+            rootgrp.geospatial_lon_max = '+180.0'
+            rootgrp.geospatial_vertical_max = get_geospatial_vertical_max(
+                rootgrp['Geolocation']['pressure']
             )
-            self.rootgrp.geospatial_vertical_min = get_geospatial_vertical_min(
-                self.rootgrp['Geolocation']['pressure']
+            rootgrp.geospatial_vertical_min = get_geospatial_vertical_min(
+                rootgrp['Geolocation']['pressure']
             )
-            self.rootgrp.string_date_format = 'YYYYMMDDThhmmssZ'
-            self.rootgrp.time_coverage_start = get_time_coverage_start(
-                self.rootgrp['Geolocation']['time']
+            rootgrp.string_date_format = 'YYYYMMDDThhmmssZ'
+            rootgrp.time_coverage_start = get_time_coverage_start(
+                rootgrp['Geolocation']['time']
             )
-            self.rootgrp.time_coverage_end = get_time_coverage_end(
-                self.rootgrp['Geolocation']['time']
+            rootgrp.time_coverage_end = get_time_coverage_end(
+                rootgrp['Geolocation']['time']
             )
-            self.rootgrp.number_of_press_levels = get_number_of_pres_levels(
-                self.rootgrp['Geolocation']['pressure']
+            rootgrp.number_of_press_levels = get_number_of_pres_levels(
+                rootgrp['Geolocation']['pressure']
             )
-            self.rootgrp.number_of_profiles = get_number_of_profiles(
-                self.rootgrp['Geolocation']['time']
+            rootgrp.number_of_profiles = get_number_of_profiles(
+                rootgrp['Geolocation']['time']
             )
-            self.rootgrp.file_version = '''fv-{0}'''.format(*[prodversion])
-            self.rootgrp.file_version_description = '''fv-{0}: {1}'''.format(
+            rootgrp.file_version = '''fv-{0}'''.format(*[prodversion])
+            rootgrp.file_version_description = '''fv-{0}: {1}'''.format(
                 *[prodversion, file_vers_description]
             )
         else:
             #  only update attribute that needs to be updated
-            self.rootgrp.date_created = (
+            rootgrp.date_created = (
                 'Created ' + DT.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
             )
-            self.rootgrp.time_coverage_start = get_time_coverage_start(
-                self.rootgrp['Geolocation']['time']
+            rootgrp.time_coverage_start = get_time_coverage_start(
+                rootgrp['Geolocation']['time']
             )
-            self.rootgrp.time_coverage_end = get_time_coverage_end(
-                self.rootgrp['Geolocation']['time']
+            rootgrp.time_coverage_end = get_time_coverage_end(
+                rootgrp['Geolocation']['time']
             )
-            self.rootgrp.number_of_profiles = get_number_of_profiles(
-                self.rootgrp['Geolocation']['time']
+            rootgrp.number_of_profiles = get_number_of_profiles(
+                rootgrp['Geolocation']['time']
             )
 
 

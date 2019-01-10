@@ -26,4 +26,5 @@ requests
 scipy
 spacepy
 setuptools
+simpleflock
 sqlalchemy

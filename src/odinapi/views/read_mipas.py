@@ -1,7 +1,8 @@
-import numpy as N
 from datetime import datetime
+
 from dateutil.relativedelta import relativedelta
-from odinapi.utils.hdf5_util import thread_safe_netcdf4_dataset
+from netCDF4 import Dataset
+import numpy as np
 
 
 def read_mipas_file(file, date, species, file_index):
@@ -18,10 +19,10 @@ def read_mipas_file(file, date, species, file_index):
     ifile = mipas_datapath + file
 
     data = dict()
-    with thread_safe_netcdf4_dataset(ifile) as fgr:
+    with Dataset(ifile, 'r') as fgr:
 
         for item in fgr.variables.keys():
-            data[item] = N.array(fgr.variables[item][:])
+            data[item] = np.array(fgr.variables[item][:])
 
         if fgr.variables['time'].units == 'days since 1970-1-1 0:0:0':
             t0_unit = 1
@@ -39,11 +40,11 @@ def read_mipas_file(file, date, species, file_index):
             sec_per_day = 24*60*60.0
             mjd.append(mjd_i.total_seconds()/sec_per_day)
         data['MJD'] = mjd
-        data['MJD'] = N.array(data['MJD'])
+        data['MJD'] = np.array(data['MJD'])
 
     elif t0_unit == 2:
 
-        data['MJD'] = N.array(data['time']) - 2400000.5
+        data['MJD'] = np.array(data['time']) - 2400000.5
 
     # select data from the given index
     s1 = data['time'].shape[0]
@@ -59,10 +60,3 @@ def read_mipas_file(file, date, species, file_index):
             data[item] = data[item][:, file_index].tolist()
 
     return data
-
-
-if 0:
-    file = 'MIPAS-E_IMK.201201.V5R_O3_225.nc'
-    file_index = '502'
-    data = read_mipas_file(file, file_index)
-    #print data

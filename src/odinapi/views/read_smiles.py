@@ -1,7 +1,8 @@
-import numpy as N
 from datetime import datetime
+
 from dateutil.relativedelta import relativedelta
-from odinapi.utils.hdf5_util import thread_safe_h5py_file
+from h5py import File
+import numpy as np
 
 
 def read_smiles_file(file, date, species, file_index):
@@ -18,14 +19,14 @@ def read_smiles_file(file, date, species, file_index):
     data_fields = dict()
     geolocation_fields = dict()
 
-    with thread_safe_h5py_file(ifile) as f:
+    with File(ifile, 'r') as f:
         fdata = f['HDFEOS']['SWATHS'][species]
 
         for item in fdata['Data Fields'].keys():
-            data_fields[item] = N.array(fdata['Data Fields'][item])
+            data_fields[item] = np.array(fdata['Data Fields'][item])
 
         for item in fdata['Geolocation Fields'].keys():
-            geolocation_fields[item] = N.array(
+            geolocation_fields[item] = np.array(
                 fdata['Geolocation Fields'][item])
 
     # transform the mls date to MJD and add to dict
@@ -36,7 +37,7 @@ def read_smiles_file(file, date, species, file_index):
         mjd_i = date_i - datetime(1858, 11, 17)
         sec_per_day = 24*60*60.0
         mjd.append(mjd_i.total_seconds()/sec_per_day)
-    geolocation_fields['MJD'] = N.array(mjd)
+    geolocation_fields['MJD'] = np.array(mjd)
 
     data['data_fields'] = data_fields
     data['geolocation_fields'] = geolocation_fields

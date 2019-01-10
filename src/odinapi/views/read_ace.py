@@ -1,6 +1,6 @@
 '''read ace level2 file'''
-import numpy as N
-from odinapi.utils.hdf5_util import thread_safe_netcdf4_dataset
+import numpy as np
+from netCDF4 import Dataset
 
 
 def read_ace_file(acefile, date, file_index):
@@ -8,7 +8,7 @@ def read_ace_file(acefile, date, file_index):
     file_index = int(file_index)
     ace_datapath = "/vds-data/ACE_Level2/v2/{0}-{1}/".format(
         *[date[0:4], date[5:7]])
-    with thread_safe_netcdf4_dataset(ace_datapath + acefile) as fgr:
+    with Dataset(ace_datapath + acefile, 'r') as fgr:
         data = dict()
         for group in fgr['ACE-FTS-v2.2'].groups.keys():
             if group in ['Geometry']:
@@ -30,11 +30,11 @@ def read_ace_file(acefile, date, file_index):
                                 'T_fit',
                                 'dens',
                                 'z']:
-                    data[group][variable] = N.array(
+                    data[group][variable] = np.array(
                         fgr['ACE-FTS-v2.2'][group][variable]).tolist()
         data['Attributes'] = dict()
         for att in fgr['ACE-FTS-v2.2'].ncattrs():
-            data['Attributes'][att] = N.array(
+            data['Attributes'][att] = np.array(
                 getattr(fgr['ACE-FTS-v2.2'], att)).tolist()
 
     return data

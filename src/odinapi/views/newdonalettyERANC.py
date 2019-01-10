@@ -3,14 +3,15 @@ import re
 import datetime as DT
 from datetime import datetime
 
+from netCDF4 import Dataset
 import numpy as np
 from scipy.integrate import odeint
 from scipy.interpolate import splmake, spleval, spline
+from simpleflock import SimpleFlock
 
 import odinapi.views.msis90 as M90
-import odinapi.views.NC4eraint as NC
+from odinapi.views.NC4eraint import NCeraint
 from odinapi.views.date_tools import mjd2datetime, datetime2mjd
-from odinapi.utils.hdf5_util import HDF5_LOCK
 
 
 AVOGADRO = 6.02282e23  # [mol^-1] aovogadros number
@@ -145,7 +146,7 @@ class Donaletty(dict):
             # print ecmwffilename
             # TODO: Opening more than one netcdf file at the same time
             #       can result in segfault.
-            self.ecm.append(NC.NCeraint(ecmwffilename, 0))
+            self.ecm.append(NCeraint(ecmwffilename, 0))
 
         self.minlat = self.ecm[0]['lats'][0]
         self.latstep = np.mean(np.diff(self.ecm[0]['lats']))
@@ -202,81 +203,54 @@ class Donaletty(dict):
         self.lonstep = None
 
 
-def save_zptfile(basedir, date, scanid, zpt):
-    # save data to a netcdf file
-    datedir = date.strftime('%Y/%m/')
-    datadir = basedir + datedir
-    if not os.path.exists(datadir):
-        os.makedirs(datadir)
-    fullfile = get_expected_filename(basedir, date, scanid)
+def save_zptfile(filename, zpt):
+    with Dataset(filename, 'w', format='NETCDF4') as rootgrp:
+        datagrp = rootgrp.createGroup('Data')
+        datagrp.createDimension('level', 151)
 
-    rootgrp = NC.Dataset(fullfile, 'w', format='NETCDF4')
-    datagrp = rootgrp.createGroup('Data')
-    datagrp.createDimension('level', 151)
+        altitude = datagrp.createVariable('Z', 'f4', ('level',))
+        altitude.units = 'Km'
+        altitude[:] = zpt['Z']
+        pressure = datagrp.createVariable('P', 'f4', ('level',))
+        pressure.units = 'hPa'
+        pressure[:] = zpt['P']
 
-    altitude = datagrp.createVariable('Z', 'f4', ('level',))
-    altitude.units = 'Km'
-    altitude[:] = zpt['Z']
-    pressure = datagrp.createVariable('P', 'f4', ('level',))
-    pressure.units = 'hPa'
-    pressure[:] = zpt['P']
+        temperature = datagrp.createVariable('T', 'f4', ('level',))
+        temperature.units = 'K'
+        temperature[:] = zpt['T']
 
-    temperature = datagrp.createVariable('T', 'f4', ('level',))
-    temperature.units = 'K'
-    temperature[:] = zpt['T']
+        latitude = datagrp.createVariable('latitude', 'f4')
+        latitude.units = 'degrees north'
+        latitude[:] = zpt['latitude']
 
-    latitude = datagrp.createVariable('latitude', 'f4')
-    latitude.units = 'degrees north'
-    latitude[:] = zpt['latitude']
+        longitude = datagrp.createVariable('longitude', 'f4')
+        longitude.units = 'degrees east'
+        longitude[:] = zpt['longitude']
 
-    longitude = datagrp.createVariable('longitude', 'f4')
-    longitude.units = 'degrees east'
-    longitude[:] = zpt['longitude']
-
-    rootgrp.description = (
-        'PTZ data for odin-smr level2-processing data source is '
-        'ECMWF and NRLMSIS91')
-    rootgrp.history = 'Created ' + str(DT.datetime.now())
-    rootgrp.geoloc_latitude = "{0} degrees north".format(zpt['latitude'])
-    rootgrp.geoloc_longitude = "{0} degrees east".format(zpt['longitude'])
-    rootgrp.geoloc_datetime = "{0}".format(zpt['datetime'])
-
-    rootgrp.close()
+        rootgrp.description = (
+            'PTZ data for odin-smr level2-processing data source is '
+            'ECMWF and NRLMSIS91')
+        rootgrp.history = 'Created ' + str(DT.datetime.now())
+        rootgrp.geoloc_latitude = "{0} degrees north".format(zpt['latitude'])
+        rootgrp.geoloc_longitude = "{0} degrees east".format(zpt['longitude'])
+        rootgrp.geoloc_datetime = "{0}".format(zpt['datetime'])
 
 
-def check_if_file_exist(basedir, date, scanid):
-
-    fullfile = get_expected_filename(basedir, date, scanid)
-    if not os.path.isfile(fullfile):
-        return False
-    else:
-        try:
-            load_zptfile(basedir, date, scanid)
-        except KeyError:
-            os.remove(fullfile)
-            return False
-    return os.path.isfile(fullfile)
-
-
-def load_zptfile(basedir, date, scanid):
-
-    fullfile = get_expected_filename(basedir, date, scanid)
-    dataset = NC.Dataset(fullfile, mode='r')
-    data = dataset.groups['Data']
-    zpt = {
-        'ScanID': scanid,
-        'Z': data.variables['Z'][:],
-        'P': data.variables['P'][:],
-        'T': data.variables['T'][:],
-        'latitude': float(data.variables['latitude'][:]),
-        'longitude': float(data.variables['longitude'][:]),
-        'datetime': dataset.geoloc_datetime}
-    dataset.close()
-
+def load_zptfile(filepath, scanid):
+    with Dataset(filepath, mode='r') as dataset:
+        data = dataset.groups['Data']
+        zpt = {
+            'ScanID': scanid,
+            'Z': data.variables['Z'][:],
+            'P': data.variables['P'][:],
+            'T': data.variables['T'][:],
+            'latitude': float(data.variables['latitude'][:]),
+            'longitude': float(data.variables['longitude'][:]),
+            'datetime': dataset.geoloc_datetime}
     return zpt
 
 
-def get_expected_filename(basedir, date, scanid):
+def get_filename(basedir, date, scanid):
 
     datedir = date.strftime('%Y/%m/')
     datadir = basedir + datedir
@@ -295,16 +269,20 @@ def run_donaletty(mjd, midlat, midlon, scanid):
     solardatafile = basedir + '/Solardata2.db'
 
     date = mjd2datetime(mjd)
+    filepath = get_filename(zptpath, date, scanid)
 
-    with HDF5_LOCK:
-        if check_if_file_exist(zptpath, date, scanid):
-            zpt = load_zptfile(zptpath, date, scanid)
-        else:
+    if not os.path.exists(os.path.dirname(filepath)):
+        os.makedirs(os.path.dirname(filepath))
+
+    with SimpleFlock(filepath + '.lock', timeout=600):
+        try:
+            zpt = load_zptfile(filepath, scanid)
+        except (IOError,  KeyError):
             # create file
             donaletty = Donaletty(date, solardatafile, ecmwfpath)
             donaletty.loadecmwfdata()
             zpt = donaletty.makeprofile(midlat, midlon, date, scanid)
-            save_zptfile(zptpath, date, scanid, zpt)
+            save_zptfile(filepath, zpt)
 
     zpt['datetime'] = datetime2mjd(
         datetime.strptime(zpt['datetime'], '%Y-%m-%dT%H:%M:%S'))

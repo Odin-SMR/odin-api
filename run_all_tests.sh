@@ -4,7 +4,10 @@
 # the build master template job.
 set -e
 
-xvfb-run -a tox -- --runslow --junitxml=result.xml $*
+./run_unittests.sh -- --runslow --junitxml=result.xml "$@"
+
 npm install
 npm update
 npm test
+
+./run_systemtests.sh -- --runslow --junitxml=result.xml "$@"
