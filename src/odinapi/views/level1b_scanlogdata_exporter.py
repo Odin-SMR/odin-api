@@ -4,15 +4,17 @@
 '''
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import numpy as N
+import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt  # nopep8
-from matplotlib import dates  # nopep8
-from odinapi.views.level1b_scandata_exporter_v2 import(  # nopep8
-    get_scan_data_v2)
-from odinapi.views.date_tools import(  # nopep8
-    mjd2stw, datetime2mjd, mjd2datetime)
+import matplotlib.pyplot as plt  # noqa
+from matplotlib import dates  # noqa
+from odinapi.views.level1b_scandata_exporter_v2 import(  # noqa
+    get_scan_data_v2,
+)
+from odinapi.views.date_tools import(  # noqa
+    mjd2stw, datetime2mjd, mjd2datetime,
+)
 
 
 class ScanInfoExporter(object):
@@ -100,7 +102,7 @@ def scan_data_is_valid(scan_data):
 def plot_loginfo(backend, date1, date2, data):
     '''plot data'''
     for item in data.keys():
-        data[item] = N.array(data[item])
+        data[item] = np.array(data[item])
     fig = plt.figure(figsize=(15, 8))
     fig.suptitle(
         '''Scan loginfo for {0}: {1} - {2}'''.format(*[backend, date1, date2])
@@ -149,7 +151,7 @@ def plot_loginfo(backend, date1, date2, data):
     ax1.grid(True)
     ax1.minorticks_on()
     ax1.yaxis.set_label_text('NumSpec [-]')
-    plt.ylim([0, N.max(data['NumSpec'])])
+    plt.ylim([0, np.max(data['NumSpec'])])
     dates.DateFormatter('%Y/%m/%d-%hh:%mm')
     ax1.xaxis.set_label_text('Date [year/month]')
     plt.xticks(rotation=10)

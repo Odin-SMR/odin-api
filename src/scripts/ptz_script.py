@@ -7,9 +7,9 @@ from sys import argv
 from datetime import datetime
 import matplotlib
 matplotlib.use("Agg")  # this is neededd to import run_donaletty
-from odinapi.views.newdonalettyERANC import run_donaletty  # nopep8
-from scripts.ptz_util import PrecalcPTZ  # nopep8
-import os  # nopep8
+from odinapi.views.newdonalettyERANC import run_donaletty  # noqa
+from scripts.ptz_util import PrecalcPTZ  # noqa
+import os  # noqa
 
 
 def execute_donaletty(midmjd, midlat, midlon, scanid):
@@ -29,6 +29,7 @@ def usage():
     print '''date_end format: 2015-01-31'''
     print '''prod format: 0 or 1'''
     exit(0)
+
 
 if __name__ == "__main__":
     try:
