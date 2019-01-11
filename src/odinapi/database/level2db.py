@@ -80,7 +80,7 @@ class ProjectsDB(object):
 
     def add_annotation(self, name, annotation):
         assert isinstance(annotation, ProjectAnnotation)
-        if self.projects_collection.count({'name': name}) < 1:
+        if self.projects_collection.count_documents({'name': name}) < 1:
             raise ProjectError
         annotationdict = {
             'project': name,
@@ -91,7 +91,7 @@ class ProjectsDB(object):
         self._annotations.insert_one(annotationdict)
 
     def get_annotations(self, name):
-        if self.projects_collection.count({'name': name}) < 1:
+        if self.projects_collection.count_documents({'name': name}) < 1:
             raise ProjectError
         for annotation in self._annotations.find({'project': name}):
             yield ProjectAnnotation(
@@ -249,10 +249,10 @@ class Level2DB(object):
         ]
         return self.L2i_collection.aggregate(pipeline).next()['count']
 
-    def _get_scans(self, freqmode, fields, start_time=None, end_time=None,
-                   comment=None, failed=False, limit=None, offset=None):
-        limit = HARD_LIMIT if limit is None else limit
-        offset = 0 if offset is None else offset
+    def _build_query(
+        self, freqmode, failed=False, start_time=None, end_time=None,
+        comment=None,
+    ):
         query = {'FreqMode': freqmode, 'ProcessingError': failed}
         if start_time or end_time:
             query['ScanID'] = {}
@@ -262,7 +262,18 @@ class Level2DB(object):
                 query['ScanID']['$lt'] = datetime2stw(end_time)
         if comment:
             query['Comments'] = comment
+        return query
 
+    def _get_scans(
+        self, freqmode, fields, start_time=None, end_time=None,
+        comment=None, failed=False, limit=None, offset=None,
+    ):
+        limit = HARD_LIMIT if limit is None else limit
+        offset = 0 if offset is None else offset
+        query = self._build_query(
+            freqmode, failed=failed, start_time=start_time, end_time=end_time,
+            comment=comment,
+        )
         return (
             self.L2i_collection.find(query, fields).skip(offset).limit(limit)
         )
@@ -274,9 +285,14 @@ class Level2DB(object):
         for scan in self._get_scans(freqmode, fields, **kwargs):
             yield scan
 
-    def count_scans(self, freqmode, **kwargs):
-        scans = self._get_scans(freqmode, {'ScanID': 1}, **kwargs)
-        return scans.count()
+    def count_scans(self, freqmode, offset=0, limit=None, **kwargs):
+        query = self._build_query(freqmode, **kwargs)
+        if limit is None:
+            return self.L2i_collection.count_documents(query, skip=offset)
+
+        return self.L2i_collection.count_documents(
+            query, skip=offset, limit=limit,
+        )
 
     def get_failed_scans(self, freqmode, **kwargs):
         """Return matching scans that failed the level2 processing"""
@@ -284,9 +300,14 @@ class Level2DB(object):
         for scan in self._get_scans(freqmode, fields, failed=True, **kwargs):
             yield scan
 
-    def count_failed_scans(self, freqmode, **kwargs):
-        scans = self._get_scans(freqmode, {'ScanID': 1}, failed=True, **kwargs)
-        return scans.count()
+    def count_failed_scans(self, freqmode, offset=0, limit=None, **kwargs):
+        query = self._build_query(freqmode, failed=True, **kwargs)
+        if limit is None:
+            return self.L2i_collection.count_documents(query, skip=offset)
+
+        return self.L2i_collection.count_documents(
+            query, skip=offset, limit=limit,
+        )
 
     def get_product_count(self):
         """Return count grouped by product"""
