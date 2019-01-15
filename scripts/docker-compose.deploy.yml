@@ -41,4 +41,5 @@ services:
       - /db_sdb1/odin/l2netcdf:/data/odin-l2-data:rw
       - /db_sdb1/odin/MesosphEO:/data/MesosphEO:rw
     command: gunicorn odinapi.api:app
+    working_dir: /app/src/
     restart: unless-stopped
