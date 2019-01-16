@@ -1,4 +1,3 @@
-'''test of browser'''
 from time import sleep
 import requests
 import pytest
@@ -26,51 +25,50 @@ def chrome():
     driver.quit()
 
 
-@pytest.mark.usefixtures("dockercompose")
 class TestBrowser():
-    def test_main_page_is_up(self, chrome):
+    def test_main_page_is_up(self, odinapi_service, chrome):
         """Test that main page is up"""
         driver = chrome
-        driver.get("http://localhost:5000")
+        driver.get(odinapi_service)
         assert "Odin/SMR" in driver.title
 
 
 @pytest.fixture
-def lvl2data():
-    import_level2data()
+def lvl2data(odinapi_service):
+    import_level2data(odinapi_service)
     yield
-    delete_level2data()
+    delete_level2data(odinapi_service)
 
 
 @pytest.fixture
-def lvl2data_withoffset():
-    import_level2data(offset=-1)
+def lvl2data_withoffset(odinapi_service):
+    import_level2data(odinapi_service, offset=-1)
     yield
-    delete_level2data(offset=-1)
+    delete_level2data(odinapi_service, offset=-1)
 
 
-@pytest.mark.usefixtures("dockercompose")
-class TestLevel2Browser():
+class TestLevel2Browser:
     '''test of level2 browser'''
 
-    def test_main_page_is_up(self, chrome, lvl2data):
+    def get_lvl2page(self, driver, baseurl):
+        driver.get("{}/level2".format(baseurl))
+        return driver
+
+    def test_main_page_is_up(self, odinapi_service, chrome, lvl2data):
         """Test that main page is up"""
-        driver = chrome
-        driver.get("http://localhost:5000/level2")
+        driver = self.get_lvl2page(chrome, odinapi_service)
         assert "Odin/SMR" in driver.title
 
-    def test_selectors_displayed(self, chrome, lvl2data):
+    def test_selectors_displayed(self, odinapi_service, chrome, lvl2data):
         """test that project and freqmode selectors
            are displayed"""
-        driver = chrome
-        driver.get("http://localhost:5000/level2")
+        driver = self.get_lvl2page(chrome, odinapi_service)
         assert driver.find_element_by_id('select-project').is_displayed()
         assert driver.find_element_by_id('select-freqmode').is_displayed()
 
-    def test_project_is_selectable(self, chrome, lvl2data):
+    def test_project_is_selectable(self, odinapi_service, chrome, lvl2data):
         """test that a project can be selected"""
-        driver = chrome
-        driver.get("http://localhost:5000/level2")
+        driver = self.get_lvl2page(chrome, odinapi_service)
         select = Select(driver.find_element_by_id('select-project'))
         options = []
         for option in select.options:
@@ -78,11 +76,10 @@ class TestLevel2Browser():
         assert 'Choose project' in options
         assert 'development/testproject' in options
 
-    def test_freqmode_is_selectable(self, chrome, lvl2data):
+    def test_freqmode_is_selectable(self, odinapi_service, chrome, lvl2data):
         """test that when a project is selected freqmode is displayed
            and can also be selected"""
-        driver = chrome
-        driver.get("http://localhost:5000/level2")
+        driver = self.get_lvl2page(chrome, odinapi_service)
         select = Select(driver.find_element_by_id('select-project'))
         select.select_by_visible_text('development/testproject')
         assert driver.find_element_by_id('select-freqmode').is_displayed()
@@ -93,13 +90,14 @@ class TestLevel2Browser():
         assert 'Choose freqmode' in options
         assert '1' in options
 
-    def test_scan_get_selected(self, chrome, lvl2data, lvl2data_withoffset):
+    def test_scan_get_selected(
+        self, odinapi_service, chrome, lvl2data, lvl2data_withoffset,
+    ):
         """test that a scan show up in the search table
            when doing a selection and that a plot of a level2 scan
            is shown if a link is clicked
            """
-        driver = chrome
-        driver.get("http://localhost:5000/level2")
+        driver = self.get_lvl2page(chrome, odinapi_service)
         select = Select(driver.find_element_by_id('select-project'))
         select.select_by_visible_text('development/testproject')
         select = Select(driver.find_element_by_id('select-freqmode'))
@@ -116,14 +114,14 @@ class TestLevel2Browser():
             'search-results').find_elements_by_xpath(
                 "//a[@href='{0}']".format(test_ref))[0]
         href.click()
-        driver.get("http://localhost:5000{0}".format(test_ref))
+        driver.get("{}{}".format(odinapi_service, test_ref))
         sleep(1)
         assert (driver.find_elements_by_id(
             'alt-cross-section-plots')[0].find_elements_by_class_name(
                 'product-name')[0].text == 'O3 / 501 GHz / 20 to 50 km')
 
 
-def import_level2data(offset=0):
+def import_level2data(host, offset=0):
     '''import level2 data'''
     data = get_test_data()
     data['L2I']['ScanID'] = data['L2I']['ScanID'] + offset
@@ -131,12 +129,12 @@ def import_level2data(offset=0):
         data['L2I']['ScanID'],
         data['L2I']['FreqMode'],
         PROJECT_NAME)
-    url = WRITE_URL.format(version=VERSION, d=datastring)
+    url = WRITE_URL.format(host=host, version=VERSION, d=datastring)
     requests.delete(url)
     requests.post(url, json=data)
 
 
-def delete_level2data(offset=0):
+def delete_level2data(host, offset=0):
     '''delete level2 data'''
     data = get_test_data()
     data['L2I']['ScanID'] = data['L2I']['ScanID'] + offset
@@ -144,5 +142,5 @@ def delete_level2data(offset=0):
         data['L2I']['ScanID'],
         data['L2I']['FreqMode'],
         PROJECT_NAME)
-    url = WRITE_URL.format(version=VERSION, d=datastring)
+    url = WRITE_URL.format(host=host, version=VERSION, d=datastring)
     requests.delete(url)

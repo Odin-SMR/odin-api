@@ -20,21 +20,16 @@ from odinapi.views.freq_calibration import (
 
 
 class DatabaseConnector(DB):
-    def __init__(self):
-        DB.__init__(
-            self,
-            dbname='odin',
-            user='odinop',
-            host='localhost',
-        )
+    def __init__(self, host, port):
+        DB.__init__(self, dbname='odin', user='odinop', host=host, port=port)
 
 
 @pytest.fixture
-def scan_sample_data():
+def scan_sample_data(odin_postgresql):
     backend = 'AC2'
     freqmode = 22
     scanid = 7016113563
-    db_connection = DatabaseConnector()
+    db_connection = DatabaseConnector(*odin_postgresql)
     scan_data_exporter = ScandataExporter(
         backend, db_connection)
     scan_data_exporter.get_db_data(
@@ -81,13 +76,12 @@ def freq_corr_572(scan_sample_data):
         scan_sample_data['altitudes'])
 
 
-@pytest.mark.usefixtures('dockercompose')
 class TestFreqcorr572():
 
-    def test_altitude_check(self, freq_corr_572):
+    def test_altitude_check(self, odinapi_service, freq_corr_572):
         assert freq_corr_572.altitude_check() == 1
 
-    def test_get_initial_fit_values(self, freq_corr_572):
+    def test_get_initial_fit_values(self, odinapi_service, freq_corr_572):
         [initial_guess_is_ok, f_initial, tb_initial] = \
             freq_corr_572.get_initial_fit_values()
         assert np.all([
@@ -98,7 +92,7 @@ class TestFreqcorr572():
                 pytest.approx(576.5938, abs=1e-3),
                 pytest.approx(82.1877, abs=1e-3)])
 
-    def test_fit_data(self, freq_corr_572):
+    def test_fit_data(self, odinapi_service, freq_corr_572):
         freq_corr_572.get_initial_fit_values()
         [fit_is_ok, freq1, freq2, _, _] = fit_scan_median_spectrum(
             576.5938,
@@ -114,7 +108,7 @@ class TestFreqcorr572():
                 pytest.approx(576.5938, abs=1e-3),
                 pytest.approx(576.840, abs=1e-3)])
 
-    def test_get_tb_profile(self, freq_corr_572):
+    def test_get_tb_profile(self, odinapi_service, freq_corr_572):
         tb_profiles = freq_corr_572.get_tb_profile(
             576.593, 576.840)
         assert tb_profiles.shape == (45, 2)
@@ -128,14 +122,14 @@ class TestFreqcorr572():
                 pytest.approx(-7.0, abs=1e-1),
                 pytest.approx(195.6, abs=1e-1)])
 
-    def test_identify_species_by_profile(self, freq_corr_572):
+    def test_identify_species_by_profile(self, odinapi_service, freq_corr_572):
         tb_profile = freq_corr_572.get_tb_profile(
             576.593, 576.840)
         co_found = freq_corr_572.identify_species_by_profile(
             tb_profile)
         assert co_found
 
-    def test_identify_species_by_lines(self, freq_corr_572):
+    def test_identify_species_by_lines(self, odinapi_service, freq_corr_572):
         freq_corr_572.get_initial_fit_values()
         [fit_is_ok, _, _, amplitude_1, amplitude_2] = (
             fit_scan_median_spectrum(
@@ -149,7 +143,9 @@ class TestFreqcorr572():
             amplitude_1, amplitude_2)
         assert co_found
 
-    def test_get_frequency_offset_of_scan(self, freq_corr_572):
+    def test_get_frequency_offset_of_scan(
+        self, odinapi_service, freq_corr_572,
+    ):
         (scan_correction_is_ok, frequency_offset) = (
             freq_corr_572.get_frequency_offset_of_scan()
         )
@@ -159,7 +155,7 @@ class TestFreqcorr572():
                 True,
                 pytest.approx(0.3254, abs=1e-4)])
 
-    def test_run_frequency_correction(self, freq_corr_572):
+    def test_run_frequency_correction(self, odinapi_service, freq_corr_572):
         (
             scan_correction_is_ok,
             single_spectrum_correction_is_ok,

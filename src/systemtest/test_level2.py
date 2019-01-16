@@ -1,995 +1,1330 @@
 import httplib
-import unittest
 import urllib
 import uuid
 
 import requests
+import numpy as np
 import pytest
 
-from numpy.testing import assert_almost_equal
-from numpy import isnan
-
 from odinapi.utils import encrypt_util
-from .level2_test_data import WRITE_URL, VERSION, get_test_data
+from .level2_test_data import (
+    insert_test_data, insert_failed_scan, delete_test_data, WRITE_URL,
+    get_test_data, get_write_url,
+)
 
 PROJECT_NAME = 'testproject'
-
-PROJECTS_URL = 'http://localhost:5000/rest_api/{version}/level2/projects/'
-PROJECT_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/'
-COMMENTS_URL = (
-    'http://localhost:5000/rest_api/{version}/level2/{project}/{freqmode}/'
-    'comments')
-SCANS_URL = (
-    'http://localhost:5000/rest_api/{version}/level2/{project}/{freqmode}/'
-    'scans')
-FAILED_URL = (
-    'http://localhost:5000/rest_api/{version}/level2/{project}/{freqmode}/'
-    'failed')
-PRODUCTS_URL = (
-    'http://localhost:5000/rest_api/{version}/level2/{project}/products/')
-PRODUCTS_FREQMODE_URL = (
-    'http://localhost:5000/rest_api/{version}/level2/{project}/'
-    '{freqmode}/products/')
-SCAN_URL = ('http://localhost:5000/rest_api/{version}/level2/'
-            '{project}/{freqmode}/{scanid}/')
-AREA_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/area'
-LOCATIONS_URL = (
-    'http://localhost:5000/rest_api/{version}/level2/{project}/locations')
-DATE_URL = 'http://localhost:5000/rest_api/{version}/level2/{project}/{date}'
 
 
 def make_dev_url(url):
     return url.replace('/level2/', '/level2/development/')
 
 
-PROJECTS_URL_DEV = make_dev_url(PROJECTS_URL)
-PROJECT_URL_DEV = make_dev_url(PROJECT_URL)
-COMMENTS_URL_DEV = make_dev_url(COMMENTS_URL)
-SCANS_URL_DEV = make_dev_url(SCANS_URL)
-FAILED_URL_DEV = make_dev_url(FAILED_URL)
-PRODUCTS_URL_DEV = make_dev_url(PRODUCTS_URL)
-PRODUCTS_FREQMODE_URL_DEV = make_dev_url(PRODUCTS_FREQMODE_URL)
-SCAN_URL_DEV = make_dev_url(SCAN_URL)
-AREA_URL_DEV = make_dev_url(AREA_URL)
-LOCATIONS_URL_DEV = make_dev_url(LOCATIONS_URL)
-DATE_URL_DEV = make_dev_url(DATE_URL)
+@pytest.fixture
+def fake_data(odinapi_service):
+    # Insert level2 data
+
+    r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
+    assert r.status_code == httplib.CREATED
+
+    r, urlinfo_failed = insert_failed_scan(PROJECT_NAME, odinapi_service)
+    assert r.status_code == httplib.CREATED
+
+    yield urlinfo, urlinfo_failed
+
+    requests.delete(urlinfo.url).raise_for_status()
+    requests.delete(urlinfo_failed.url).raise_for_status()
 
 
-@pytest.mark.usefixtures('dockercompose')
-class BaseWithDataInsert(unittest.TestCase):
+class TestProjects:
 
-    def setUp(self):
-        # Insert level2 data
-        self.scans_to_delete = []
-        data = get_test_data()
-        self.freq_mode = data['L2I']['FreqMode']
-        self.scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(
-            self.scan_id, self.freq_mode, PROJECT_NAME)
-        wurl = WRITE_URL.format(version=VERSION, d=d)
-
-        r = requests.post(wurl, json=data)
-        self.assertEqual(r.status_code, 201)
-        self.scans_to_delete.append(wurl)
-
-        # Insert failed level2 scan
-        self.failed_scan_id = self.scan_id + 1
-        self.error_message = u'Error: This scan failed'
-        data_failed = {'L2I': [], 'L2': [],
-                       'L2C': data['L2C'] + '\n' + self.error_message}
-        d = encrypt_util.encode_level2_target_parameter(
-            self.failed_scan_id, self.freq_mode, PROJECT_NAME)
-        wurl_failed = WRITE_URL.format(version=VERSION, d=d)
-
-        r = requests.post(wurl_failed, json=data_failed)
-        self.assertEqual(r.status_code, 201)
-        self.scans_to_delete.append(wurl_failed)
-
-    def tearDown(self):
-        for url in self.scans_to_delete:
-            requests.delete(url).raise_for_status()
-
-
-@pytest.mark.usefixtures('dockercompose')
-class TestProjects(BaseWithDataInsert):
-
-    def test_get_projects(self):
+    def test_get_v4_projects(self, fake_data, odinapi_service):
         """Test get list of projects"""
-        # V4
-        r = requests.get(PROJECTS_URL.format(version='v4'))
-        self.assertEqual(r.status_code, 200)
+        url = '{}/rest_api/v4/level2/projects/'.format(odinapi_service)
+        projecturl = '{}/rest_api/v4/level2/{}/'.format(
+            odinapi_service, PROJECT_NAME,
+        )
+        r = requests.get(url)
+        assert r.status_code == httplib.OK
         info = r.json()['Info']
-        self.assertEqual(info['Projects'], [{
+        assert {
             'Name': PROJECT_NAME,
-            'URLS': {
-                'URL-project': PROJECT_URL.format(
-                    version='v4', project=PROJECT_NAME)}}])
+            'URLS': {'URL-project': projecturl},
+        } in info['Projects']
 
-        # V5
-        # No production projects added
-        r = requests.get(PROJECTS_URL.format(version='v5'))
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(r.json()['Data']), 0)
+    def test_get_v5_projects(self, fake_data, odinapi_service):
+        url = '{}/rest_api/v5/level2/projects/'.format(odinapi_service)
+        r = requests.get(url)
+        assert r.status_code == httplib.OK
+        assert len(r.json()['Data']) == 0
 
-        r = requests.get(PROJECTS_URL_DEV.format(version='v5'))
-        self.assertEqual(r.status_code, 200)
+    def test_get_v5_dev_projects(self, fake_data, odinapi_service):
+        url = '{}/rest_api/v5/level2/projects/'.format(odinapi_service)
+        projecturl = '{}/rest_api/v5/level2/{}/'.format(
+            odinapi_service, PROJECT_NAME,
+        )
+        r = requests.get(make_dev_url(url))
+        assert r.status_code == httplib.OK
         data = r.json()['Data']
-        self.assertEqual(data, [{
+        assert {
             'Name': PROJECT_NAME,
-            'URLS': {
-                'URL-project': PROJECT_URL_DEV.format(
-                    version='v5', project=PROJECT_NAME)}}])
+            'URLS': {'URL-project': make_dev_url(projecturl)},
+        } in data
 
-    def test_get_project(self):
+    @pytest.mark.parametrize('version', ('v4', 'v5'))
+    def test_get_project(self, fake_data, odinapi_service, version):
         """Test get project info"""
-        def test_version(version, get_data):
-            url = PROJECT_URL if version <= 'v4' else PROJECT_URL_DEV
-            r = requests.get(url.format(version=version, project=PROJECT_NAME))
-            self.assertEqual(r.status_code, 200)
-            info = get_data(r)
-            scans_url = SCANS_URL if version <= 'v4' else SCANS_URL_DEV
-            failed_url = FAILED_URL if version <= 'v4' else FAILED_URL_DEV
-            comments_url = (
-                COMMENTS_URL if version <= 'v4' else COMMENTS_URL_DEV)
-            if version <= 'v4':
-                self.assertEqual(info, {
-                    'Name': PROJECT_NAME,
-                    'FreqModes': [{
-                        'FreqMode': 1,
-                        'URLS': {
-                            'URL-scans': scans_url.format(
-                                version=version, freqmode=self.freq_mode,
-                                project=PROJECT_NAME),
-                            'URL-failed': failed_url.format(
-                                version=version, freqmode=self.freq_mode,
-                                project=PROJECT_NAME),
-                            'URL-comments': comments_url.format(
-                                version=version, freqmode=self.freq_mode,
-                                project=PROJECT_NAME)
-                        }
-                    }]
-                })
-            else:
-                self.assertEqual(info, [{
+        projinfo, _ = fake_data
+        url = '{host}/rest_api/{version}/level2/{project}/'
+        scans_url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/scans'
+            .format(
+                host=odinapi_service, version=version,
+                freqmode=projinfo.freq_mode, project=PROJECT_NAME,
+            )
+        )
+        failed_url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version=version,
+                freqmode=projinfo.freq_mode, project=PROJECT_NAME,
+            )
+        )
+        comments_url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments'
+            .format(
+                host=odinapi_service, version=version,
+                freqmode=projinfo.freq_mode, project=PROJECT_NAME,
+            )
+        )
+
+        if version == 'v5':
+            url = make_dev_url(url)
+
+        r = requests.get(url.format(
+            host=odinapi_service, version=version, project=PROJECT_NAME,
+        ))
+        assert r.status_code == httplib.OK
+        if version == 'v4':
+            assert r.json()['Info'] == {
+                'Name': PROJECT_NAME,
+                'FreqModes': [{
                     'FreqMode': 1,
                     'URLS': {
-                        'URL-scans': scans_url.format(
-                            version=version, freqmode=self.freq_mode,
-                            project=PROJECT_NAME),
-                        'URL-failed': failed_url.format(
-                            version=version, freqmode=self.freq_mode,
-                            project=PROJECT_NAME),
-                        'URL-comments': comments_url.format(
-                            version=version, freqmode=self.freq_mode,
-                            project=PROJECT_NAME)
-                    }
-                }])
+                        'URL-scans': scans_url,
+                        'URL-failed': failed_url,
+                        'URL-comments': comments_url,
+                    },
+                }]
+            }
+        elif version == 'v5':
+            scans_url = make_dev_url(scans_url)
+            failed_url = make_dev_url(failed_url)
+            comments_url = make_dev_url(comments_url)
+            assert r.json()['Data'] == [{
+                'FreqMode': 1,
+                'URLS': {
+                    'URL-scans': scans_url,
+                    'URL-failed': failed_url,
+                    'URL-comments': comments_url,
+                },
+            }]
+        else:
+            raise ValueError('{} not implemented'.format(version))
 
-        def get_data_v4(resp):
-            return resp.json()['Info']
 
-        def get_data_v5(resp):
-            return resp.json()['Data']
+class TestWriteLevel2:
 
-        test_version('v4', get_data_v4)
-        test_version('v5', get_data_v5)
+    @pytest.fixture
+    def cleanup(self, odinapi_service):
+        yield
+        r, _ = delete_test_data(PROJECT_NAME, odinapi_service)
 
-
-@pytest.mark.usefixtures('dockercompose')
-class TestWriteLevel2(unittest.TestCase):
-
-    def test_post_and_delete(self):
+    def test_post_and_delete(self, odinapi_service, cleanup):
         """Test post and delete of level2 data"""
-        data = get_test_data()
-        freq_mode = data['L2I']['FreqMode']
-        scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(
-            scan_id, freq_mode, PROJECT_NAME)
-        url = WRITE_URL.format(version=VERSION, d=d)
+        r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
+        assert r.status_code == httplib.CREATED
+        r = requests.delete(urlinfo.url)
+        assert r.status_code == httplib.NO_CONTENT
 
-        r = requests.delete(url)
-        self.assertEqual(r.status_code, 204)
-
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 201)
-
+    def test_update_data(self, odinapi_service, cleanup):
         # Post of duplicate should be possible
         # if someone wants to repost data we
         # think there is a good reason for this
+        r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
+        data = urlinfo.data()
         mjd = round(data['L2'][0]['MJD']) + 1
         data['L2'][0]['MJD'] = mjd
         data['L2'][1]['MJD'] = mjd
         data['L2'][2]['MJD'] = mjd
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 201)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.CREATED
 
         # Check that the post above actually
         # updated data
-        rurl = SCAN_URL_DEV.format(
-            version=VERSION,
-            project=PROJECT_NAME,
-            freqmode=freq_mode,
-            scanid=scan_id)
-        r = requests.get(rurl)
-        self.assertEqual(
-            r.json()['Data']['L2']['Data'][0]['MJD'], mjd)
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{freqmode}/{scanid}/'
+            .format(
+                host=odinapi_service,
+                project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+                scanid=urlinfo.scan_id,
+            )
+        )
+        r = requests.get(url)
+        assert r.status_code == httplib.OK
+        assert r.json()['Data']['L2']['Data'][0]['MJD'] == mjd
 
-        r = requests.delete(url)
-        self.assertEqual(r.status_code, 204)
+    def test_posting_failed_scan(self, odinapi_service, cleanup):
+        r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
+        r = requests.delete(urlinfo.url)
+        assert r.status_code == httplib.NO_CONTENT
 
         # When processing fails we only get comments
+        data = urlinfo.data()
         data_failed = {'L2I': [], 'L2': [], 'L2C': data['L2C']}
-        r = requests.post(url, json=data_failed)
-        self.assertEqual(r.status_code, 201)
+        r = requests.post(urlinfo.url, json=data_failed)
+        assert r.status_code == httplib.CREATED
 
-        r = requests.delete(url)
-        self.assertEqual(r.status_code, 204)
-
-    def test_single_product(self):
+    def test_single_product(self, odinapi_service, cleanup):
         """Test post a single product"""
-        data = get_test_data()
-        freq_mode = data['L2I']['FreqMode']
-        scan_id = data['L2I']['ScanID']
+        r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
+        data = urlinfo.data()
         data['L2'] = data['L2'][0]
-        d = encrypt_util.encode_level2_target_parameter(
-            scan_id, freq_mode, PROJECT_NAME)
-        url = WRITE_URL.format(version=VERSION, d=d)
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 201)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.CREATED
 
-    def test_bad_posts(self):
+    @pytest.mark.parametrize("d", ('', 'bad'))
+    def test_post_bad_url_d(self, odinapi_service, cleanup, d):
         """Test invalid posts of level2 data"""
         # No url parameter
-        url = WRITE_URL.format(version=VERSION, d='')
+        url = WRITE_URL.format(
+            host=odinapi_service, version='v5', d=d,
+        )
         r = requests.post(url)
-        self.assertEqual(r.status_code, 400)
+        assert r.status_code == httplib.BAD_REQUEST
 
-        # Wrong url parameter
-        url = WRITE_URL.format(version=VERSION, d='bad')
-        r = requests.post(url)
-        self.assertEqual(r.status_code, 400)
-
+    def test_missing_post_data(self, odinapi_service, cleanup):
         data = get_test_data()
-        freq_mode = data['L2I']['FreqMode']
-        scan_id = data['L2I']['ScanID']
-        d = encrypt_util.encode_level2_target_parameter(
-            scan_id, freq_mode, PROJECT_NAME)
-        url = WRITE_URL.format(version=VERSION, d=d)
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
+        r = requests.post(urlinfo.url)
+        assert r.status_code == httplib.BAD_REQUEST
 
-        # Missing data
-        r = requests.post(url)
-        self.assertEqual(r.status_code, 400)
-
+    def test_missing_l2_data(self, odinapi_service, cleanup):
         data = get_test_data()
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data.pop('L2')
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 400)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.BAD_REQUEST
 
+    def test_missing_l2i_scanid_data(self, odinapi_service, cleanup):
         data = get_test_data()
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2I'].pop('ScanID')
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 400)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.BAD_REQUEST
 
+    def test_missing_l2_scanid_data(self, odinapi_service, cleanup):
         data = get_test_data()
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2'][0].pop('ScanID')
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 400)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.BAD_REQUEST
 
-        # Freq mode missmatch
+    def test_freqmode_mismatch(self, odinapi_service, cleanup):
         data = get_test_data()
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2I']['FreqMode'] = 2
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 400)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.BAD_REQUEST
 
-        # Scan id missmatch
+    def test_scanid_mismatch(self, odinapi_service, cleanup):
         data = get_test_data()
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2I']['ScanID'] = 2
-        r = requests.post(url, json=data)
-        self.assertEqual(r.status_code, 400)
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == httplib.BAD_REQUEST
 
 
-@pytest.mark.usefixtures('dockercompose')
-class TestReadLevel2(BaseWithDataInsert):
+class TestReadLevel2:
 
-    def test_get_comments_v4(self):
+    def test_get_comments_v4(self, fake_data, odinapi_service):
         """Test get list of comments"""
-        # V4
-        rurl = COMMENTS_URL.format(
-            version='v4', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments'
+            .format(
+                host=odinapi_service, version='v4', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(url)
+        assert r.status_code == httplib.OK
         comments = r.json()['Info']['Comments']
         assert len(comments) == 6
 
-    def test_get_comments_v5(self):
-        # V5
-        rurl = COMMENTS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()['Type'], 'level2_scan_comment')
+    def test_get_comments_v5(self, fake_data, odinapi_service):
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(make_dev_url(url))
+        assert r.status_code == httplib.OK
+        assert r.json()['Type'] == 'level2_scan_comment'
         comments = r.json()['Data']
         assert len(comments) == 6
 
-    def test_get_comments_v5_respects_limit(self):
-        rurl = COMMENTS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl + '?limit=1')
-        self.assertEqual(r.status_code, 200)
+    def test_get_comments_v5_respects_limit(self, fake_data, odinapi_service):
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments?limit=1'  # noqa
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(make_dev_url(url))
+        assert r.status_code == httplib.OK
         comments = r.json()['Data']
         assert len(comments) == 1
         assert comments[0]['Comment'] == 'Error: This scan failed'
 
-    def test_get_comments_v5_respects_offset(self):
-        rurl = COMMENTS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl + '?offset=5')
-        self.assertEqual(r.status_code, 200)
+    def test_get_comments_v5_respects_offset(self, fake_data, odinapi_service):
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments?offset=5'  # noqa
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(make_dev_url(url))
+        assert r.status_code == httplib.OK
         comments = r.json()['Data']
         assert len(comments) == 1
         expected = 'Status: 9 spectra left after quality filtering'
         assert comments[0]['Comment'] == expected
 
-    def test_get_comments_v5_empty_if_offset_gt_count(self):
-        rurl = COMMENTS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl + '?offset=10')
-        r.raise_for_status()
+    def test_get_comments_v5_empty_if_offset_gt_count(
+        self, fake_data, odinapi_service
+    ):
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments?offset=10'  # noqa
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(make_dev_url(url))
+        assert r.status_code == httplib.OK
         comments = r.json()['Data']
         assert len(comments) == 0
 
-    def test_get_comments_v5_has_link_header(self):
-        url = COMMENTS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+    def test_get_comments_v5_has_link_header(self, fake_data, odinapi_service):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/comments'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
         r = requests.get(url + '?offset=2&limit=2')
-        assert r.links['prev']['url'] == url + '/?limit=2&offset=0'
-        assert r.links['next']['url'] == url + '/?limit=2&offset=4'
+        assert r.links['prev']['url'].split('?')[1] == 'limit=2&offset=0'
+        assert r.links['next']['url'].split('?')[1] == 'limit=2&offset=4'
 
-    def test_get_scans(self):
+    @pytest.mark.parametrize('version,params,expect_scans', (
+        ('v4', None, 1),
+        ('v5', None, 1),
+        ('v4', '?start_time=2015-01-12', 1),
+        ('v5', '?start_time=2015-01-12', 1),
+        ('v4', '?start_time=2015-01-13', 0),
+        ('v5', '?start_time=2015-01-13', 0),
+        ('v4', '?end_time=2015-01-12', 0),
+        ('v5', '?end_time=2015-01-12', 0),
+        ('v4', '?end_time=2015-01-13', 1),
+        ('v5', '?end_time=2015-01-13', 1),
+    ))
+    def test_get_scans(
+        self, fake_data, odinapi_service, version, params, expect_scans,
+    ):
         """Test get list of matching scans"""
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/scans'
+            .format(
+                host=odinapi_service, version=version, project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        if version == 'v5':
+            url = make_dev_url(url)
+        if params is not None:
+            url += params
+        r = requests.get(url)
 
-        def test_version(version, get_scans):
-            url = SCANS_URL if version <= 'v4' else SCANS_URL_DEV
-            rurl = url.format(
-                version=version, project=PROJECT_NAME, freqmode=self.freq_mode)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 200)
-            scans = get_scans(r)
-            self.assertEqual(len(scans), 1)
+        assert r.status_code == httplib.OK
+
+        if version == 'v4':
+            scans = r.json()['Info']['Scans']
+        elif version == 'v5':
+            scans = r.json()['Data']
+        else:
+            raise NotImplementedError()
+
+        assert len(scans) == expect_scans
+
+        if params is None:
             scan = scans[0]
-            self.assertEqual(scan['ScanID'], self.scan_id)
-            if version <= 'v4':
-                self.assertEqual(set(scan['URLS']), set([
-                    'URL-level2', 'URL-log', 'URL-spectra']))
-            else:
-                self.assertEqual(set(scan['URLS']), set([
-                    'URL-level2', 'URL-log', 'URL-spectra', 'URL-ancillary']))
 
-            r = requests.get(rurl + '?start_time=2015-01-12')
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(len(get_scans(r)), 1)
+            if version == 'v4':
+                assert (
+                    set(scan['URLS'])
+                    == set(['URL-level2', 'URL-log', 'URL-spectra'])
+                )
+            elif version == 'v5':
+                assert set(scan['URLS']) == set([
+                    'URL-level2', 'URL-log', 'URL-spectra', 'URL-ancillary',
+                ])
 
-            r = requests.get(rurl + '?start_time=2015-01-13')
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(len(get_scans(r)), 0)
+            assert scan['ScanID'] == urlinfo.scan_id
 
-            r = requests.get(rurl + '?end_time=2015-01-12')
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(len(get_scans(r)), 0)
+    @pytest.mark.parametrize('version,comment,expected_scans', (
+        (
+            'v4',
+            u'Status: 9 spectra left after quality filtering',
+            1,
+        ),
+        (
+            'v5',
+            u'Status: 9 spectra left after quality filtering',
+            1,
+        ),
+        (
+            'v4',
+            u'Comment does not exist',
+            0,
+        ),
+        (
+            'v5',
+            u'Comment does not exist',
+            0,
+        ),
 
-            r = requests.get(rurl + '?end_time=2015-01-13')
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(len(get_scans(r)), 1)
+    ))
+    def test_get_scans_with_comments(
+        self, fake_data, odinapi_service, version, comment, expected_scans,
+    ):
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/scans'
+            .format(
+                host=odinapi_service, version=version, project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        if version == 'v5':
+            url = make_dev_url(url)
+        r = requests.get('?'.join([
+            url, urllib.urlencode([('comment', comment)]),
+        ]))
 
-            comment = u'Status: 9 spectra left after quality filtering'
-            r = requests.get(
-                rurl + '?' + urllib.urlencode([('comment', comment)]))
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(len(get_scans(r)), 1)
+        assert r.status_code == httplib.OK
+        if version == 'v4':
+            scans = r.json()['Info']['Scans']
+        elif version == 'v5':
+            scans = r.json()['Data']
+        else:
+            raise NotImplementedError()
 
-            comment = u'Comment does not exist'
-            r = requests.get(
-                rurl + '?' + urllib.urlencode([('comment', comment)]))
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(len(get_scans(r)), 0)
+        assert len(scans) == expected_scans
 
-        def get_scans_v4(resp):
-            return resp.json()['Info']['Scans']
+    @pytest.fixture
+    def extra_scans(self, fake_data, odinapi_service):
+        urlinfo, _ = fake_data
 
-        def get_scans_v5(resp):
-            return resp.json()['Data']
+        def insert_new(new_scan_id):
+            data = urlinfo.data()
+            data['L2I']['ScanID'] = new_scan_id
+            for l2 in data['L2']:
+                l2['ScanID'] = new_scan_id
+            info = get_write_url(data, PROJECT_NAME, odinapi_service)
+            r = requests.post(info.url, json=data)
+            r.raise_for_status()
+            return info
 
-        test_version('v4', get_scans_v4)
-        test_version('v5', get_scans_v5)
+        extra1 = insert_new(urlinfo.scan_id + 42)
+        extra2 = insert_new(urlinfo.scan_id + 43)
+        yield extra1, extra2
 
-    def test_get_scans_respects_limit(self):
-        self.add_additional_scan(self.scan_id + 42)
-        url = SCANS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(url + '?limit=1')
+        def delete_extra(info):
+            requests.delete(info.url, json=info.data()).raise_for_status()
+
+        delete_extra(extra1)
+        delete_extra(extra2)
+
+    def test_get_scans_respects_limit(
+        self, odinapi_service, fake_data, extra_scans,
+    ):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{freqmode}/scans?limit=1'
+            .format(
+                host=odinapi_service, project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(url)
         r.raise_for_status()
         scans = r.json()['Data']
         assert len(scans) == 1
-        assert scans[0]['ScanID'] == self.scan_id
+        assert scans[0]['ScanID'] == urlinfo.scan_id
 
-    def test_get_scans_respects_offset(self):
-        self.add_additional_scan(self.scan_id + 42)
-        url = SCANS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(url + '?offset=1')
+    def test_get_scans_respects_offset(
+        self, odinapi_service, fake_data, extra_scans,
+    ):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{freqmode}/scans?offset=1'
+            .format(
+                host=odinapi_service, project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(url)
         r.raise_for_status()
         scans = r.json()['Data']
-        assert len(scans) == 1
-        assert scans[0]['ScanID'] == self.scan_id + 42
+        assert len(scans) == 2
+        assert (
+            [s['ScanID'] for s in scans] == [s.scan_id for s in extra_scans]
+        )
 
-    def test_get_scans_empty_if_offset_gt_count(self):
-        self.add_additional_scan(self.scan_id + 42)
-        url = SCANS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(url + '?offset=10')
+    def test_get_scans_empty_if_offset_gt_count(
+        self, odinapi_service, fake_data, extra_scans,
+    ):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{freqmode}/scans?offset=10'
+            .format(
+                host=odinapi_service, project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
+        r = requests.get(url)
         r.raise_for_status()
         scans = r.json()['Data']
         assert len(scans) == 0
 
-    def test_get_scans_has_link_header(self):
-        self.add_additional_scan(self.scan_id + 42)
-        self.add_additional_scan(self.scan_id + 43)
-        url = SCANS_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+    def test_get_scans_has_link_header(
+        self, odinapi_service, fake_data, extra_scans,
+    ):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{freqmode}/scans'
+            .format(
+                host=odinapi_service, project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode,
+            )
+        )
         r = requests.get(url + '?offset=1&limit=1')
         r.raise_for_status()
         assert r.links['prev']['url'] == url + '/?limit=1&offset=0'
         assert r.links['next']['url'] == url + '/?limit=1&offset=2'
 
-    def add_additional_scan(self, scan_id):
-        data = get_test_data()
-        freq_mode = data['L2I']['FreqMode']
-        data['L2I']['ScanID'] = scan_id
-        d = encrypt_util.encode_level2_target_parameter(
-            scan_id, freq_mode, PROJECT_NAME)
-        wurl = WRITE_URL.format(version=VERSION, d=d)
-        requests.post(wurl, json=data).raise_for_status()
-        self.scans_to_delete.append(wurl)
-
-    def test_get_failed_scans(self):
+    def test_get_failed_scans_v4(self, fake_data, odinapi_service):
         """Test get list of failed scans"""
-        # V4
-        rurl = FAILED_URL.format(
-            version='v4', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
+        _, failed = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version='v4', project=PROJECT_NAME,
+                freqmode=failed.freq_mode,
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
         scans = r.json()['Info']['Scans']
-        self.assertEqual(len(scans), 1)
+        assert len(scans) == 1
         scan = scans[0]
-        self.assertEqual(scan['ScanID'], self.failed_scan_id)
-        self.assertEqual(scan['Error'], self.error_message)
-        self.assertEqual(set(scan['URLS']), set([
-            'URL-level2', 'URL-log', 'URL-spectra']))
+        assert scan['ScanID'] == failed.scan_id
+        assert scan['Error'] == u'Error: This scan failed'
+        assert set(scan['URLS']) == set([
+            'URL-level2', 'URL-log', 'URL-spectra',
+        ])
 
-        # V5
-        rurl = FAILED_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()['Type'], 'level2_failed_scan_info')
+    def test_get_failed_scans_v5(self, fake_data, odinapi_service):
+        _, failed = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=failed.freq_mode,
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
+        assert r.json()['Type'] == 'level2_failed_scan_info'
         scans = r.json()['Data']
-        self.assertEqual(len(scans), 1)
+        assert len(scans) == 1
         scan = scans[0]
-        self.assertEqual(scan['ScanID'], self.failed_scan_id)
-        self.assertEqual(scan['Error'], self.error_message)
-        self.assertEqual(set(scan['URLS']), set([
-            'URL-level2', 'URL-log', 'URL-spectra', 'URL-ancillary']))
+        assert scan['ScanID'] == failed.scan_id
+        assert scan['Error'] == u'Error: This scan failed'
+        assert set(scan['URLS']) == set([
+            'URL-level2', 'URL-log', 'URL-spectra', 'URL-ancillary',
+        ])
 
-    def test_get_failed_scans_respects_limit(self):
-        self.add_additional_failed_scan(self.failed_scan_id + 42)
-        url = FAILED_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+    @pytest.fixture
+    def extra_failed(self, fake_data, odinapi_service):
+        _, failed = fake_data
+
+        def insert_new(new_scan_id):
+            r, info = insert_failed_scan(
+                PROJECT_NAME, odinapi_service, new_scan_id,
+                freqmode=failed.freq_mode,
+            )
+            r.raise_for_status()
+            return info
+
+        fail1 = insert_new(failed.scan_id + 42)
+        fail2 = insert_new(failed.scan_id + 43)
+        yield fail1, fail2
+
+        def remove_inserted(urlinfo):
+            r = requests.delete(urlinfo.url, json=urlinfo.data())
+            r.raise_for_status()
+
+        remove_inserted(fail1)
+        remove_inserted(fail2)
+
+    def test_get_failed_scans_respsects_limimt_v5(
+        self, fake_data, odinapi_service, extra_failed,
+    ):
+        _, failed = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=failed.freq_mode,
+            )
+        )
         r = requests.get(url + '?limit=1')
         r.raise_for_status()
         scans = r.json()['Data']
         assert len(scans) == 1
-        assert scans[0]['ScanID'] == self.failed_scan_id
+        assert scans[0]['ScanID'] == failed.scan_id
 
-    def test_get_failed_scans_respects_offset(self):
-        self.add_additional_failed_scan(self.failed_scan_id + 42)
-        url = FAILED_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+    def test_get_failed_scans_respects_offset(
+        self, fake_data, odinapi_service, extra_failed,
+    ):
+        _, failed = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=failed.freq_mode,
+            )
+        )
         r = requests.get(url + '?offset=1')
         r.raise_for_status()
         scans = r.json()['Data']
-        assert len(scans) == 1
-        assert scans[0]['ScanID'] == self.failed_scan_id + 42
+        assert len(scans) == 2
+        assert (
+            [s['ScanID'] for s in scans] == [s.scan_id for s in extra_failed]
+        )
 
-    def test_get_failed_scans_empty_if_offset_gt_count(self):
-        self.add_additional_failed_scan(self.failed_scan_id + 42)
-        url = FAILED_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+    def test_get_failed_scans_empty_if_offset_gt_count(
+        self, fake_data, odinapi_service, extra_failed,
+    ):
+        _, failed = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=failed.freq_mode,
+            )
+        )
         r = requests.get(url + '?offset=10')
         r.raise_for_status()
         scans = r.json()['Data']
         assert len(scans) == 0
 
-    def test_get_failed_scans_has_link_header(self):
-        self.add_additional_failed_scan(self.failed_scan_id + 42)
-        self.add_additional_failed_scan(self.failed_scan_id + 43)
-        url = FAILED_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode)
+    def test_get_failed_scans_has_link_header(
+        self, fake_data, odinapi_service, extra_failed,
+    ):
+        _, failed = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/failed'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=failed.freq_mode,
+            )
+        )
         r = requests.get(url + '?offset=1&limit=1')
         r.raise_for_status()
         assert r.links['prev']['url'] == url + '/?limit=1&offset=0'
         assert r.links['next']['url'] == url + '/?limit=1&offset=2'
 
-    def add_additional_failed_scan(self, scan_id):
-        self.error_message = u'Error: This scan failed'
-        data = get_test_data()
-        data_failed = {'L2I': [], 'L2': [],
-                       'L2C': data['L2C'] + '\n' + self.error_message}
-        d = encrypt_util.encode_level2_target_parameter(
-            scan_id, self.freq_mode, PROJECT_NAME)
-        wurl_failed = WRITE_URL.format(version=VERSION, d=d)
-        requests.post(wurl_failed, json=data_failed).raise_for_status()
-        self.scans_to_delete.append(wurl_failed)
+    def assert_scansproduct_eq(self, a, b):
+        eqtests = [u'InvMode', u'ScanID', u'FreqMode', u'Product']
+        for key in eqtests:
+            assert a[key] == b[key]
 
-    def test_get_scan(self):
+        approxtests = [
+            u'Altitude', u'ErrorNoise', u'AVK', u'VMR', u'MJD', u'Temperature',
+            u'Pressure', u'Lon1D', u'Apriori', u'ErrorTotal', u'Longitude',
+            u'MeasResponse', u'Lat1D', u'Latitude',
+        ]
+        for key in approxtests:
+            np.testing.assert_allclose(
+                a[key], b[key], err_msg='Failed on {}'.format(key),
+            )
+
+        # Dealing with that quality can be nono and nan in weird combos
+        aquality = a[u'Quality']
+        bquality = b[u'Quality']
+        if aquality is None and bquality is None:
+            # Everything good
+            pass
+        elif aquality is None:
+            assert np.isnan(bquality)
+        elif bquality is None:
+            assert np.isnan(aquality)
+        else:
+            assert aquality == bquality
+
+    def test_get_scan_v4(self, odinapi_service, fake_data):
         """Test get level2 data for a scan"""
-        rurl = SCAN_URL.format(
-            version='v4', project=PROJECT_NAME, freqmode=self.freq_mode,
-            scanid=self.scan_id)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
+        urlinfo, _ = fake_data
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/{scanid}/'
+            .format(
+                host=odinapi_service, version='v4', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode, scanid=urlinfo.scan_id
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
         info = r.json()['Info']
-        self.assertTrue('L2i' in info)
-        self.assertTrue('L2' in info)
-        self.assertTrue('L2c' in info)
-        self.assertTrue('URLS' in info)
+        assert set(['L2i', 'L2', 'L2c', 'URLS']).issubset(info.keys())
+        l2 = sorted(urlinfo.data()['L2'])
+        retl2 = sorted(info['L2'])
+        for a, b in zip(retl2, l2):
+            self.assert_scansproduct_eq(a, b)
 
-        test_data = get_test_data()
-        # Should return the data on the same format as from the qsmr processing
-        self.assertEqual(len(info['L2']), len(test_data['L2']))
-        expected = {}
-        for p in test_data['L2']:
-            expected[p['Product']] = p
-        from_api = {}
-        for p in info['L2']:
-            from_api[p['Product']] = p
-        self.assertEqual(set(from_api.keys()), set(expected.keys()))
-        for p in from_api:
-            api = from_api[p]
-            expect = expected[p]
-            for k, v in api.items():
-                print k
-                if isinstance(v, (list, float)):
-                    assert_almost_equal(v, expect[k])
-                elif isinstance(expect[k], float) and isnan(expect[k]):
-                    self.assertEqual(v, None)
-                else:
-                    self.assertEqual(v, expect[k])
+    @pytest.mark.parametrize("freq_mode,scan_id", (
+        (2, None), (0, None), (None, 0),
+    ))
+    def test_get_non_existing_scan_v4(
+        self, odinapi_service, fake_data, freq_mode, scan_id,
+    ):
+        urlinfo, _ = fake_data
+        if freq_mode is None:
+            freq_mode = urlinfo.freq_mode
+        if scan_id is None:
+            scan_id = urlinfo.scan_id
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/{scanid}/'
+            .format(
+                host=odinapi_service, version='v4', project=PROJECT_NAME,
+                freqmode=freq_mode, scanid=scan_id
+            )
+        )
+        r = requests.get(url)
+        assert r.status_code == httplib.NOT_FOUND
 
-        # Test none existing
-        rurl = SCAN_URL.format(
-            version='v4', project=PROJECT_NAME, freqmode=2,
-            scanid=self.scan_id)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 404)
-        rurl = SCAN_URL.format(
-            version='v4', project=PROJECT_NAME, freqmode=0,
-            scanid=self.scan_id)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 404)
-
-    def test_get_scan_v5(self):
-        """Test v5 get level2 data for a scan"""
-        rurl = SCAN_URL_DEV.format(
-            version='v5', project=PROJECT_NAME, freqmode=self.freq_mode,
-            scanid=self.scan_id)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
+    def test_get_scan_v5(self, odinapi_service, fake_data):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/{scanid}/'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode, scanid=urlinfo.scan_id
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
         mixed = r.json()
-        self.assertEqual(mixed['Type'], 'mixed')
+        assert mixed['Type'] == 'mixed'
         info = mixed['Data']
-        self.assertTrue('L2i' in info)
-        self.assertTrue('L2' in info)
-        self.assertTrue('L2c' in info)
+        assert set(['L2i', 'L2', 'L2c']).issubset(info.keys())
 
-        test_data = get_test_data()
-        # Should return the data on the same format as from the qsmr processing
-        self.assertEqual(info['L2']['Count'], len(test_data['L2']))
-        expected = {}
-        for p in test_data['L2']:
-            expected[p['Product']] = p
-        from_api = {}
-        for p in info['L2']['Data']:
-            from_api[p['Product']] = p
-        self.assertEqual(set(from_api.keys()), set(expected.keys()))
-        for p in from_api:
-            api = from_api[p]
-            expect = expected[p]
-            for k, v in api.items():
-                print k
-                if isinstance(v, (list, float)):
-                    assert_almost_equal(v, expect[k])
-                elif isinstance(expect[k], float) and isnan(expect[k]):
-                    self.assertEqual(v, None)
-                else:
-                    self.assertEqual(v, expect[k])
+        test_data = urlinfo.data()
+        assert (
+            info['L2']['Count']
+            == len(test_data['L2'])
+            == len(info['L2']['Data'])
+        )
+        l2 = sorted(test_data['L2'])
+        retl2 = sorted(info['L2']['Data'])
+        for a, b in zip(retl2, l2):
+            self.assert_scansproduct_eq(a, b)
 
-        l2i_url = rurl + 'L2i/'
-        r = requests.get(l2i_url)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()['Data'], info['L2i']['Data'])
+    @pytest.mark.parametrize('part', ('L2i', 'L2c', 'L2'))
+    def test_get_scan_v5_parts(self, odinapi_service, fake_data, part):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/{scanid}/'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode, scanid=urlinfo.scan_id
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
+        info = r.json()['Data']
+        r = requests.get(url + '{}/'.format(part))
+        r.raise_for_status()
+        assert r.json()['Data'] == info[part]['Data']
 
-        l2c_url = rurl + 'L2c/'
-        r = requests.get(l2c_url)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()['Data'], info['L2c']['Data'])
+    def test_get_scan_v5_part_by_product(self, odinapi_service, fake_data):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/{scanid}/L2/'  # noqa
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode, scanid=urlinfo.scan_id
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
+        info = r.json()['Data']
 
-        l2_url = rurl + 'L2/'
-        r = requests.get(l2_url)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()['Data'], info['L2']['Data'])
+        product = 'O3 / 501 GHz / 20 to 50 km'
+        r = requests.get(url + '?product={}'.format(product))
+        r.raise_for_status()
+        data = r.json()['Data']
+        assert data == [p for p in info if p['Product'] == product]
 
-        l2_product_url = l2_url + '?product=O3 / 501 GHz / 20 to 50 km'
-        r = requests.get(l2_product_url)
-        l2_data = r.json()['Data']
-        self.assertEqual(r.status_code, 200)
-        for prod in info['L2']['Data']:
-            if prod['Product'] == 'O3 / 501 GHz / 20 to 50 km':
-                for k, v in l2_data[0].items():
-                    print k
-                    if isinstance(v, (list, float)):
-                        assert_almost_equal(v, prod[k])
-                    else:
-                        self.assertEqual(v, prod[k])
-
-    def test_get_products(self):
+    @pytest.mark.parametrize('version', ('v4', 'v5'))
+    def test_get_products(self, odinapi_service, fake_data, version):
         """Test get products"""
-        # V4
-        rurl = PRODUCTS_URL.format(version='v4', project=PROJECT_NAME)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        res = r.json()['Info']['Products']
-        self.assertEqual(len(res), 3)
+        url = (
+            '{host}/rest_api/{version}/level2/{project}/products/'.format(
+                host=odinapi_service, version=version, project=PROJECT_NAME,
+            )
+        )
+        if version == 'v5':
+            url = make_dev_url(url)
 
-        # V5
-        rurl = PRODUCTS_URL_DEV.format(version='v5', project=PROJECT_NAME)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        res = r.json()['Data']
-        self.assertEqual(len(res), 3)
+        r = requests.get(url)
+        r.raise_for_status()
 
-    def test_get_products_for_freqmode(self):
-        """Test get products for a freqmode"""
-        # V4
-        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
-            version='v4', freqmode=1, project=PROJECT_NAME)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        res = r.json()['Info']['Products']
-        self.assertEqual(len(res), 3)
+        if version == 'v4':
+            products = r.json()['Info']['Products']
+        elif version == 'v5':
+            products = r.json()['Data']
+        else:
+            raise NotImplementedError()
+        assert len(products) == 3
 
-        # V5
-        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
-            version='v5', freqmode=1, project=PROJECT_NAME)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        res = r.json()['Data']
-        self.assertEqual(len(res), 3)
+    @pytest.mark.parametrize('version', ('v4', 'v5'))
+    def test_get_products_for_freqmode(
+        self, odinapi_service, fake_data, version
+    ):
+        urlinfo, _ = fake_data
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/products/'
+            .format(
+                host=odinapi_service, version=version,
+                freqmode=urlinfo.freq_mode, project=PROJECT_NAME,
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
+        if version == 'v4':
+            products = r.json()['Info']['Products']
+        elif version == 'v5':
+            products = r.json()['Data']
+        else:
+            raise NotImplementedError()
+        assert len(products) == 3
 
-    def test_get_products_for_missing_freqmode(self):
-        """Test get products for a missing freqmode"""
-        # V4
-        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
-            version='v4', freqmode=2, project=PROJECT_NAME)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        res = r.json()['Info']['Products']
-        self.assertEqual(len(res), 0)
+    @pytest.mark.parametrize('version', ('v4', 'v5'))
+    def test_get_products_for_missing_freqmode(self, version, odinapi_service):
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/products/'
+            .format(
+                host=odinapi_service, version=version,
+                freqmode=2, project=PROJECT_NAME,
+            )
+        )
+        r = requests.get(url)
+        r.raise_for_status()
+        if version == 'v4':
+            products = r.json()['Info']['Products']
+        elif version == 'v5':
+            products = r.json()['Data']
+        else:
+            raise NotImplementedError()
+        assert len(products) == 0
 
-        # V5
-        rurl = PRODUCTS_FREQMODE_URL_DEV.format(
-            version='v5', freqmode=2, project=PROJECT_NAME)
-        r = requests.get(rurl)
-        self.assertEqual(r.status_code, 200)
-        res = r.json()['Data']
-        self.assertEqual(len(res), 0)
+    def validate_v4_results(self, url, nr_expected, expected_l2):
+        r = requests.get(url)
+        r.raise_for_status()
+        results = r.json()['Info']['Results']
+        assert len(results) == nr_expected
+        assert (
+            len(set(
+                (result['Product'], result['ScanID']) for result in results
+            )) == expected_l2
+        )
 
-    def test_get_locations(self):
+    def validate_v5_results(self, url, nr_expected, expected_l2):
+        r = requests.get(url)
+        r.raise_for_status()
+        results = r.json()['Data']
+        # Results are grouped by scan and product
+        assert len(results) == expected_l2
+        inversions = sum((len(l2['VMR']) for l2 in results), 0)
+        assert inversions == nr_expected
+
+    @pytest.mark.parametrize('locations,radius,nr_expected,param', (
+        (['-6.0,95.0'], 30, 5, dict(min_pressure=1, start_time='2015-01-01')),
+        (
+            ['-6.0,95.0'], 30, 2,
+            dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0'], 100, 7, dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0'], 100, 3,
+            dict(
+                max_altitude=55000, product=u'O3 / 501 GHz / 20 to 50 km',
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0'], 1000, 25,
+            dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0', '-10,94.3'], 30, 4,
+            dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+    ))
+    def test_get_locations_v4(
+        self, locations, radius, nr_expected, param, odinapi_service,
+        fake_data,
+    ):
         """Test level2 get locations endpoint"""
-        def test_results_v4(locations, radius, nr_expected, **param):
-            rurl = LOCATIONS_URL.format(version='v4', project=PROJECT_NAME)
-            uparam = [('location', loc) for loc in locations]
-            uparam += [('radius', radius)]
-            if param:
-                uparam += [(k, str(v)) for k, v in param.items()]
-            rurl += '?%s' % urllib.urlencode(uparam)
-            r = requests.get(rurl)
-            if r.status_code != 200:
-                print r.json()
-            self.assertEqual(r.status_code, 200)
-            res = r.json()['Info']['Results']
-            self.assertEqual(len(res), nr_expected)
+        expected_l2 = 3 if nr_expected != 0 else 0
+        if 'product' in param:
+            expected_l2 = 1
+        url = '{host}/rest_api/v4/level2/{project}/locations'.format(
+            host=odinapi_service, project=PROJECT_NAME
+        )
+        uparam = [('location', loc) for loc in locations]
+        uparam += [('radius', radius)]
+        if param:
+            uparam += [(k, str(v)) for k, v in param.items()]
+        url += '?%s' % urllib.urlencode(uparam)
+        self.validate_v4_results(url, nr_expected, expected_l2)
 
-        def test_results_v5(locations, radius, nr_expected, **param):
-            rurl = LOCATIONS_URL_DEV.format(version='v5', project=PROJECT_NAME)
-            uparam = [('location', loc) for loc in locations]
-            uparam += [('radius', radius)]
-            nr_expected_L2 = 3  # Nr products in the test scan
-            if not nr_expected:
-                nr_expected_L2 = 0
-            if param:
-                if 'product' in param:
-                    nr_expected_L2 = 1
-                uparam += [(k, str(v)) for k, v in param.items()]
-            rurl += '?%s' % urllib.urlencode(uparam)
-            r = requests.get(rurl)
-            if r.status_code != 200:
-                print r.json()
-            self.assertEqual(r.status_code, 200)
-            res = r.json()['Data']
-            # Results are grouped by scan and product
-            self.assertEqual(len(res), nr_expected_L2)
-            inversions = sum([L2['VMR'] for L2 in res], [])
-            self.assertEqual(len(inversions), nr_expected)
+    @pytest.mark.parametrize('locations,radius,nr_expected,param', (
+        (['-6.0,95.0'], 30, 5, dict(min_pressure=1, start_time='2015-01-01')),
+        (
+            ['-6.0,95.0'], 30, 2,
+            dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0'], 100, 7, dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0'], 100, 3,
+            dict(
+                max_altitude=55000, product=u'O3 / 501 GHz / 20 to 50 km',
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0'], 1000, 25,
+            dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+        (
+            ['-6.0,95.0', '-10,94.3'], 30, 4,
+            dict(
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+    ))
+    def test_get_locations_v5(
+        self, locations, radius, nr_expected, param, odinapi_service,
+        fake_data,
+    ):
+        """Test level2 get locations endpoint"""
+        expected_l2 = 3 if nr_expected != 0 else 0
+        if 'product' in param:
+            expected_l2 = 1
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/locations'.format(
+                host=odinapi_service, project=PROJECT_NAME
+            ),
+        )
+        uparam = [('location', loc) for loc in locations]
+        uparam += [('radius', radius)]
+        uparam += [(k, str(v)) for k, v in param.items()]
+        url += '?%s' % urllib.urlencode(uparam)
+        self.validate_v5_results(url, nr_expected, expected_l2)
 
-        def test_results(locations, radius, nr_expected, **param):
-            test_results_v4(locations, radius, nr_expected, **param)
-            test_results_v5(locations, radius, nr_expected, **param)
+    @pytest.mark.parametrize("date,nr_expected,param", (
+        ('2016-10-06', 0, dict(min_pressure=1)),
+        ('2015-04-01', 61, dict(min_pressure=1)),
+        (
+            '2015-04-01', 1, dict(
+                min_pressure=1000, max_pressure=1000,
+                product=u'O3 / 501 GHz / 20 to 50 km',
+            )
+        ),
+        (
+            '2015-04-01', 11, dict(
+                min_pressure=1000, product=u'O3 / 501 GHz / 20 to 50 km'
+            ),
+        ),
+        (
+            '2015-04-01', 15, dict(
+                max_pressure=1000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 6, dict(
+                min_altitude=20000, max_altitude=30000,
+                product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 21, dict(
+                min_altitude=20000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 4, dict(
+                max_altitude=20000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        ('2015-04-01', 15, dict(min_altitude=20000, max_altitude=30000)),
+    ))
+    def test_get_date_v4(
+        self, date, nr_expected, param, odinapi_service, fake_data,
+    ):
+        expected_l2 = 3 if nr_expected != 0 else 0
+        if 'product' in param:
+            expected_l2 = 1
 
-        test_results(['-6.0,95.0'], 30, 5, min_pressure=1,
-                     start_time='2015-01-01')
+        url = '{host}/rest_api/v4/level2/{project}/{date}'.format(
+            host=odinapi_service, project=PROJECT_NAME, date=date,
+        )
+        if param:
+            url += '?%s' % urllib.urlencode(param)
+        self.validate_v4_results(url, nr_expected, expected_l2)
 
-        # Increase radius
-        test_results(['-6.0,95.0'], 30, 2,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
-        test_results(['-6.0,95.0'], 100, 7,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
-        test_results(['-6.0,95.0'], 100, 3, max_altitude=55000,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     start_time='2015-01-01')
-        test_results(['-6.0,95.0'], 1000, 25,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
+    @pytest.mark.parametrize("date,nr_expected,param", (
+        ('2016-10-06', 0, dict(min_pressure=1)),
+        ('2015-04-01', 61, dict(min_pressure=1)),
+        (
+            '2015-04-01', 1, dict(
+                min_pressure=1000, max_pressure=1000,
+                product=u'O3 / 501 GHz / 20 to 50 km',
+            )
+        ),
+        (
+            '2015-04-01', 11, dict(
+                min_pressure=1000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 15, dict(
+                max_pressure=1000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 6, dict(
+                min_altitude=20000, max_altitude=30000,
+                product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 21, dict(
+                min_altitude=20000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        (
+            '2015-04-01', 4, dict(
+                max_altitude=20000, product=u'O3 / 501 GHz / 20 to 50 km',
+            ),
+        ),
+        ('2015-04-01', 15, dict(min_altitude=20000, max_altitude=30000)),
+    ))
+    def test_get_date_v5(
+        self, date, nr_expected, param, odinapi_service, fake_data,
+    ):
+        expected_l2 = 3 if nr_expected != 0 else 0
+        if 'product' in param:
+            expected_l2 = 1
 
-        # Two locations
-        test_results(['-6.0,95.0', '-10,94.3'], 30, 4,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{date}'.format(
+                host=odinapi_service, project=PROJECT_NAME, date=date,
+            ),
+        )
+        url += '?%s' % urllib.urlencode(param)
+        self.validate_v5_results(url, nr_expected, expected_l2)
 
-    def test_get_date(self):
-        """Test level2 get date endpoint"""
-        def test_results_v4(date, nr_expected, **param):
-            rurl = DATE_URL.format(
-                version='v4', project=PROJECT_NAME, date=date)
-            if param:
-                rurl += '?%s' % urllib.urlencode(param)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 200)
-            res = r.json()['Info']['Results']
-            self.assertEqual(len(res), nr_expected)
+    @pytest.mark.parametrize('nr_expected,param', (
+        (61, dict(start_time='2015-03-02', min_pressure=1)),
+        (0, dict(start_time='2015-04-02', min_pressure=1)),
+        (61, dict(end_time='2015-04-02', min_pressure=1)),
+        (0, dict(end_time='2015-03-02', min_pressure=1)),
+        (
+            6, dict(
+                min_lat=-7, min_lon=95, product=u'O3 / 501 GHz / 20 to 50 km',
+                min_pressure=1, start_time='2015-01-01',
+            ),
+        ),
+        (
+            17, dict(
+                max_lat=-7, max_lon=95, product=u'O3 / 501 GHz / 20 to 50 km',
+                min_pressure=1, start_time='2015-01-01',
+            ),
+        ),
+        (
+            2, dict(
+                min_lat=-7, max_lat=-6, min_lon=95, max_lon=95.1,
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+    ))
+    def test_get_area_v4(
+        self, nr_expected, param, odinapi_service, fake_data,
+    ):
+        expected_l2 = 3 if nr_expected != 0 else 0
+        if 'product' in param:
+            expected_l2 = 1
 
-        def test_results_v5(date, nr_expected, **param):
-            rurl = DATE_URL_DEV.format(
-                version='v5', project=PROJECT_NAME, date=date)
-            nr_expected_L2 = 3  # Nr products in the test scan
-            if not nr_expected:
-                nr_expected_L2 = 0
-            if param:
-                if 'product' in param:
-                    nr_expected_L2 = 1
-                rurl += '?%s' % urllib.urlencode(param)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 200)
-            res = r.json()['Data']
-            # Results are grouped by scan and product
-            self.assertEqual(len(res), nr_expected_L2)
-            inversions = sum([L2['VMR'] for L2 in res], [])
-            self.assertEqual(len(inversions), nr_expected)
+        url = '{host}/rest_api/v4/level2/{project}/area'.format(
+            host=odinapi_service, project=PROJECT_NAME,
+        )
+        if param:
+            url += '?%s' % urllib.urlencode(param)
+        self.validate_v4_results(url, nr_expected, expected_l2)
 
-        def test_results(date, nr_expected, **param):
-            test_results_v4(date, nr_expected, **param)
-            test_results_v5(date, nr_expected, **param)
+    @pytest.mark.parametrize('nr_expected,param', (
+        (61, dict(start_time='2015-03-02', min_pressure=1)),
+        (0, dict(start_time='2015-04-02', min_pressure=1)),
+        (61, dict(end_time='2015-04-02', min_pressure=1)),
+        (0, dict(end_time='2015-03-02', min_pressure=1)),
+        (
+            6, dict(
+                min_lat=-7, min_lon=95, product=u'O3 / 501 GHz / 20 to 50 km',
+                min_pressure=1, start_time='2015-01-01',
+            ),
+        ),
+        (
+            17, dict(
+                max_lat=-7, max_lon=95, product=u'O3 / 501 GHz / 20 to 50 km',
+                min_pressure=1, start_time='2015-01-01',
+            ),
+        ),
+        (
+            2, dict(
+                min_lat=-7, max_lat=-6, min_lon=95, max_lon=95.1,
+                product=u'O3 / 501 GHz / 20 to 50 km', min_pressure=1,
+                start_time='2015-01-01',
+            ),
+        ),
+    ))
+    def test_get_area_v5(
+        self, nr_expected, param, odinapi_service, fake_data,
+    ):
+        expected_l2 = 3 if nr_expected != 0 else 0
+        if 'product' in param:
+            expected_l2 = 1
 
-        test_results('2016-10-06', 0, min_pressure=1)
-        test_results('2015-04-01', 61, min_pressure=1)
+        url = make_dev_url('{host}/rest_api/v5/level2/{project}/area'.format(
+            host=odinapi_service, project=PROJECT_NAME,
+        ))
+        if param:
+            url += '?%s' % urllib.urlencode(param)
+        self.validate_v5_results(url, nr_expected, expected_l2)
 
-        # Pressure
-        test_results('2015-04-01', 1, min_pressure=1000, max_pressure=1000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
-        test_results('2015-04-01', 11, min_pressure=1000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
-        test_results('2015-04-01', 15, max_pressure=1000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
-        # Altitude
-        test_results('2015-04-01', 6, min_altitude=20000, max_altitude=30000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
-        test_results('2015-04-01', 21, min_altitude=20000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
-        test_results('2015-04-01', 4, max_altitude=20000,
-                     product=u'O3 / 501 GHz / 20 to 50 km')
-
-        # All products
-        test_results('2015-04-01', 15, min_altitude=20000, max_altitude=30000)
-
-    def test_get_area(self):
-        """Test level2 get area endpoint"""
-        def test_results_v4(nr_expected, **param):
-            rurl = AREA_URL.format(version='v4', project=PROJECT_NAME)
-            if param:
-                rurl += '?%s' % urllib.urlencode(param)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 200)
-            res = r.json()['Info']['Results']
-            self.assertEqual(len(res), nr_expected)
-
-        def test_results_v5(nr_expected, **param):
-            rurl = AREA_URL_DEV.format(version='v5', project=PROJECT_NAME)
-            nr_expected_L2 = 3  # Nr products in the test scan
-            if not nr_expected:
-                nr_expected_L2 = 0
-            if param:
-                if 'product' in param:
-                    nr_expected_L2 = 1
-                rurl += '?%s' % urllib.urlencode(param)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 200)
-            res = r.json()['Data']
-            # Results are grouped by scan and product
-            self.assertEqual(len(res), nr_expected_L2)
-            inversions = sum([L2['VMR'] for L2 in res], [])
-            self.assertEqual(len(inversions), nr_expected)
-
-        def test_results(nr_expected, **param):
-            test_results_v4(nr_expected, **param)
-            test_results_v5(nr_expected, **param)
-
-        # Start and end time
-        test_results(61, start_time='2015-03-02', min_pressure=1)
-        test_results(0, start_time='2015-04-02', min_pressure=1)
-        test_results(61, end_time='2015-04-02', min_pressure=1)
-        test_results(0, end_time='2015-03-02', min_pressure=1)
-
-        # Area
-        test_results(6, min_lat=-7, min_lon=95,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
-        test_results(17, max_lat=-7, max_lon=95,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
-        test_results(2, min_lat=-7, max_lat=-6, min_lon=95, max_lon=95.1,
-                     product=u'O3 / 501 GHz / 20 to 50 km',
-                     min_pressure=1, start_time='2015-01-01')
-
-    def test_bad_requests(self):
-        """Test level2 bad get requests"""
-        def test_bad(rurl, **param):
-            if param:
-                rurl += '?%s' % urllib.urlencode(param)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 400)
-
-        def test_not_found(rurl, **param):
-            if param:
-                rurl += '?%s' % urllib.urlencode(param)
-            r = requests.get(rurl)
-            self.assertEqual(r.status_code, 404)
-
-        AREA_URL = 'http://localhost:5000/rest_api/v5/level2/{project}/area'
-        LOCATIONS_URL = (
-            'http://localhost:5000/rest_api/v5/level2/{project}/locations')
-
-        # No production projects added
-        test_not_found(LOCATIONS_URL.format(project=PROJECT_NAME))
-        test_not_found(AREA_URL.format(project=PROJECT_NAME))
-
-        AREA_URL = (
-            'http://localhost:5000/rest_api/v5/level2/development/{project}'
-            '/area')
-        LOCATIONS_URL = (
-            'http://localhost:5000/rest_api/v5/level2/development/{project}'
-            '/locations')
-
-        # No locations
-        test_bad(LOCATIONS_URL.format(project=PROJECT_NAME))
-
-        # No radius
-        test_bad(LOCATIONS_URL.format(project=PROJECT_NAME), location='-10,10')
-
-        # Bad locations
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 radius=100, location='-91,100')
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 radius=100, location='91,100')
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 radius=100, location='-10,-1')
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 radius=100, location='-10,361')
-
-        # Bad limits
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 min_pressure=1000, max_pressure=100)
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 min_altitude=50000, max_altitude=10000)
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 start_time='2015-01-01', end_time='2014-01-01')
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 min_lat=-5, max_lat=-10)
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 min_lon=100, max_lon=90)
-
-        # Pressure and altitude not supported at the same time
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 min_pressure=1000, max_altitude=100000)
-
-        # Too broad query
-        test_bad(AREA_URL.format(project=PROJECT_NAME))
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 max_altitude=20000)
-        test_bad(AREA_URL.format(project=PROJECT_NAME),
-                 start_time='2015-01-01', end_time='2015-12-31')
+    @pytest.mark.parametrize('url,status,param', (
+        # Not published
+        (
+            '/rest_api/v5/level2/{}/area'.format(PROJECT_NAME),
+            httplib.NOT_FOUND,
+            None,
+        ),
+        (
+            '/rest_api/v5/level2/{}/locations'.format(PROJECT_NAME),
+            httplib.NOT_FOUND,
+            None,
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            None
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/locations'.format(
+                PROJECT_NAME,
+            ),
+            httplib.BAD_REQUEST,
+            dict(location='-10,10'),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(radius=100, location='-91,100'),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(radius=100, location='91,100'),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(radius=100, location='-10,-1'),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(radius=100, location='-10,361'),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(min_pressure=1000, max_pressure=100),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(min_altitude=50000, max_altitude=10000),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(start_time='2015-01-01', end_time='2014-01-01'),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(min_lat=-5, max_lat=-10),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(min_lon=100, max_lon=90),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(min_pressure=1000, max_altitude=100000),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(max_altitude=20000),
+        ),
+        (
+            '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
+            httplib.BAD_REQUEST,
+            dict(start_time='2015-01-01', end_time='2015-12-31'),
+        ),
+    ))
+    def test_bad_requests(
+        self, url, status, param, odinapi_service, fake_data,
+    ):
+        if param:
+            url += '?%s' % urllib.urlencode(param)
+        r = requests.get(odinapi_service + url)
+        assert r.status_code == status
 
 
-@pytest.mark.usefixtures('dockercompose')
-class TestPublishProject(unittest.TestCase):
+class TestPublishProject:
 
-    def test_publish(self):
-        project = self.create_project()
-        self.assert_not_published(project)
+    @pytest.fixture
+    def project(self, odinapi_service):
+        project = str(uuid.uuid1())
+        insert_test_data(project, odinapi_service)
+        yield project
+        delete_test_data(project, odinapi_service)
+
+    def test_publish(self, odinapi_service, project):
+        self.assert_not_published(odinapi_service, project)
         response = requests.post(
-            self.development_url(project) + 'publish',
+            self.development_url(odinapi_service, project) + 'publish',
             auth=('bob', encrypt_util.SECRET_KEY),
         )
         assert response.status_code == httplib.CREATED
-        assert response.headers['location'] == self.production_url(project)
-        self.assert_published(project)
+        assert response.headers['location'] == self.production_url(
+            odinapi_service, project,
+        )
+        self.assert_published(odinapi_service, project)
 
-    def test_publish_unknown_project(self):
+    def test_publish_unknown_project(self, odinapi_service):
         response = requests.post(
-            self.development_url('unknown-project') + 'publish',
+            self.development_url(odinapi_service, 'unknown-project')
+            + 'publish',
             auth=('bob', encrypt_util.SECRET_KEY),
         )
         assert response.status_code == httplib.NOT_FOUND
 
-    def test_no_credentials(self):
-        project = self.create_project()
-        self.assert_not_published(project)
-        response = requests.post(self.development_url(project) + 'publish')
-        assert response.status_code == httplib.UNAUTHORIZED
-        self.assert_not_published(project)
-
-    def test_bad_credentials(self):
-        project = self.create_project()
-        self.assert_not_published(project)
+    def test_no_credentials(self, odinapi_service, project):
+        self.assert_not_published(odinapi_service, project)
         response = requests.post(
-            self.development_url(project) + 'publish',
+            self.development_url(odinapi_service, project) + 'publish',
+        )
+        assert response.status_code == httplib.UNAUTHORIZED
+        self.assert_not_published(odinapi_service, project)
+
+    def test_bad_credentials(self, odinapi_service, project):
+        self.assert_not_published(odinapi_service, project)
+        response = requests.post(
+            self.development_url(odinapi_service, project) + 'publish',
             auth=('bob', 'password'),
         )
         assert response.status_code == httplib.UNAUTHORIZED
-        self.assert_not_published(project)
+        self.assert_not_published(odinapi_service, project)
 
-    def create_project(self):
-        data = get_test_data()
-        project = str(uuid.uuid1())
-        freq_mode = data['L2I']['FreqMode']
-        scan_id = data['L2I']['ScanID']
-        payload = encrypt_util.encode_level2_target_parameter(
-            scan_id, freq_mode, project
-        )
-        wurl = WRITE_URL.format(version=VERSION, d=payload)
-        requests.post(wurl, json=data).raise_for_status()
-        return project
+    def assert_not_published(self, host, project):
+        assert requests.get(self.development_url(host, project)).ok
+        assert not requests.get(self.production_url(host, project)).ok
 
-    def assert_not_published(self, project):
-        assert requests.get(self.development_url(project)).ok
-        assert not requests.get(self.production_url(project)).ok
+    def assert_published(self, host, project):
+        assert requests.get(self.production_url(host, project)).ok
+        assert not requests.get(self.development_url(host, project)).ok
 
-    def assert_published(self, project):
-        assert requests.get(self.production_url(project)).ok
-        assert not requests.get(self.development_url(project)).ok
+    def development_url(self, host, project):
+        return make_dev_url(self.production_url(host, project))
 
-    def development_url(self, project):
-        return PROJECT_URL_DEV.format(version='v5', project=project)
-
-    def production_url(self, project):
-        return PROJECT_URL.format(version='v5', project=project)
+    def production_url(self, host, project):
+        url = '{host}/rest_api/{version}/level2/{project}/'
+        return url.format(host=host, version='v5', project=project)

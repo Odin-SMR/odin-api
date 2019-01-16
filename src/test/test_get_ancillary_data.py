@@ -1,4 +1,3 @@
-import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal
 from odinapi.views.get_ancillary_data import (
@@ -9,7 +8,7 @@ from odinapi.views.get_ancillary_data import (
 )
 
 
-class TestGetAncillaryData(unittest.TestCase):
+class TestGetAncillaryData:
 
     def test_get_theta(self):
         pressure = np.array([1e5, 1e4])
@@ -43,10 +42,9 @@ class TestGetAncillaryData(unittest.TestCase):
             latitude_reference,
             longitude_reference,
             sza_reference)
-        self.assertTrue(np.all(
-            sza_at_retrieval_pos == sza_reference[indexes]))
+        assert np.all(sza_at_retrieval_pos == sza_reference[indexes])
 
     def test_get_orbit(self):
         orbit = get_orbit(
             np.linspace(55000, 55001, 100))
-        self.assertTrue(orbit == 55000)
+        assert orbit == 55000

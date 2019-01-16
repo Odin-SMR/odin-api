@@ -11,15 +11,12 @@ from ..level2_test_data import WRITE_URL, VERSION, get_test_data
 from odinapi.utils import encrypt_util
 
 
-def make_project_url(project):
-    return (
-        'http://localhost:5000/rest_api/v5/level2/{}'
-        .format(project)
-    )
+def make_project_url(baseurl, project):
+    return '{}/rest_api/v5/level2/{}'.format(baseurl, project)
 
 
 @pytest.fixture
-def project():
+def project(odinapi_service):
     data = get_test_data()
     project = str(uuid.uuid1())
     freq_mode = data['L2I']['FreqMode']
@@ -27,27 +24,24 @@ def project():
     payload = encrypt_util.encode_level2_target_parameter(
         scan_id, freq_mode, project
     )
-    wurl = WRITE_URL.format(version=VERSION, d=payload)
+    wurl = WRITE_URL.format(host=odinapi_service, version=VERSION, d=payload)
     requests.post(wurl, json=data).raise_for_status()
-    return make_project_url(project)
+    return make_project_url(odinapi_service, project)
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_get_empty_annotations(project):
+def test_get_empty_annotations(project, odinapi_service):
     response = requests.get(project + '/annotations')
     assert response.status_code == httplib.OK
     assert response.json()['Data'] == []
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_get_annotations_unknown_project():
-    project = make_project_url('unknown')
+def test_get_annotations_unknown_project(odinapi_service):
+    project = make_project_url(odinapi_service, 'unknown')
     response = requests.get(project + '/annotations')
     assert response.status_code == httplib.NOT_FOUND
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post(project):
+def test_post(odinapi_service, project):
     response = requests.post(
         project + '/annotations',
         json={'Text': 'This is a freqmode', 'FreqMode': 13},
@@ -67,8 +61,7 @@ def test_post(project):
     )
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_multiple(project):
+def test_post_multiple(odinapi_service, project):
     now = datetime.utcnow().replace(tzinfo=tzutc())
     requests.post(
         project + '/annotations',
@@ -98,9 +91,8 @@ def test_post_multiple(project):
     )
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_unknown_project():
-    project = make_project_url('unknown')
+def test_post_unknown_project(odinapi_service):
+    project = make_project_url(odinapi_service,  'unknown')
     response = requests.post(
         project + '/annotations',
         json={'Text': 'This is a project'},
@@ -109,8 +101,7 @@ def test_post_unknown_project():
     assert response.status_code == httplib.NOT_FOUND
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_bad_text(project):
+def test_post_bad_text(odinapi_service, project):
     response = requests.post(
         project + '/annotations',
         json={'Text': 0000},
@@ -119,8 +110,7 @@ def test_post_bad_text(project):
     assert response.status_code == httplib.BAD_REQUEST
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_no_text(project):
+def test_post_no_text(odinapi_service, project):
     response = requests.post(
         project + '/annotations',
         json={},
@@ -129,8 +119,7 @@ def test_post_no_text(project):
     assert response.status_code == httplib.BAD_REQUEST
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_bad_freqmode(project):
+def test_post_bad_freqmode(odinapi_service, project):
     response = requests.post(
         project + '/annotations',
         json={'Text': 'xxx', 'FreqMode': 'abcd'},
@@ -139,8 +128,7 @@ def test_post_bad_freqmode(project):
     assert response.status_code == httplib.BAD_REQUEST
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_no_credentials(project):
+def test_post_no_credentials(odinapi_service, project):
     response = requests.post(
         project + '/annotations',
         json={'Text': 'This is a project'},
@@ -148,8 +136,7 @@ def test_post_no_credentials(project):
     assert response.status_code == httplib.UNAUTHORIZED
 
 
-@pytest.mark.usefixtures('dockercompose')
-def test_post_bad_credentials(project):
+def test_post_bad_credentials(odinapi_service, project):
     response = requests.post(
         project + '/annotations',
         json={'Text': 'This is a project'},

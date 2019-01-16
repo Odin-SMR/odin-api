@@ -1,35 +1,24 @@
-import unittest
-
+import requests
 import pytest
-import requests as R
-import numpy as np
-
-URL_ROOT = 'http://localhost:5000/'
-URL_DATA_FILES = (
-    URL_ROOT + 'rest_api/v4/config_data/data_files/'
-)
-URL_APRIORI = (
-    URL_ROOT + 'rest_api/v4/apriori/'
-)
 
 
-@pytest.mark.usefixtures('dockercompose')
-class TestApriori(unittest.TestCase):
-
-    def test_ozone_apriori_file_exists(self):
+class TestApriori:
+    def test_ozone_apriori_file_exists(self, odinapi_service):
         """Check that file exists"""
-        data = R.get(URL_DATA_FILES).json()
-        self.assertTrue(
-            data['data']['apriori-files']['ozone']['example-file'] ==
-            '/var/lib/odindata/apriori/apriori_O3.mat'
+        url = '{}/rest_api/v4/config_data/data_files/'.format(odinapi_service)
+        data = requests.get(url).json()
+        assert (
+            data['data']['apriori-files']['ozone']['example-file']
+            == '/var/lib/odindata/apriori/apriori_O3.mat'
         )
 
-    def test_ozone_apriori_file_is_readable(self):
+    def test_ozone_apriori_file_is_readable(self, odinapi_service):
         """Check that odin-api can read apriori file"""
-        url_string = (
-            URL_APRIORI + 'O3/2015-01-12/AC1/2/7014836770/'
+        url = '{}/rest_api/v4/apriori/O3/2015-01-12/AC1/2/7014836770/'.format(
+            odinapi_service,
         )
-        data = R.get(url_string).json()
+        r = requests.get(url)
+        r.raise_for_status()
+        data = r.json()
         t0 = data['VMR'][0] * 1e8
-        t0 = np.around(t0, decimals=3).tolist()
-        self.assertTrue(t0 == 1.621)
+        assert t0 == pytest.approx(1.621, abs=0.001)

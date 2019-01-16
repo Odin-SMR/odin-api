@@ -1,22 +1,19 @@
 from __future__ import print_function
+import os
 
-from time import sleep, time
-from subprocess import check_output, Popen
-import sys
-
+from pg import DB, InternalError
 import pytest
 import requests
+from requests.exceptions import RequestException
 
-__RESTARTDOCKER = True
+WAIT_FOR_SERVICE_TIME = 60 * 5
+PAUSE_TIME = 0.1
 
 
 def pytest_addoption(parser):
     """Adds the integrationtest option"""
     parser.addoption(
         "--runslow", action="store_true", help="run slow tests")
-    parser.addoption(
-        "--no-system-restart", action="store_true",
-        help="do not restart the system")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -27,71 +24,56 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_slow)
 
 
-def pytest_configure(config):
-    global __RESTARTDOCKER
-    if config.getoption('--no-system-restart'):
-        __RESTARTDOCKER = False
+def odinapi_is_responsive(baseurl):
+    try:
+        r = requests.get(
+            '{}/rest_api/v4/freqmode_info/2010-10-01/'.format(baseurl),
+        )
+        r.raise_for_status()
+    except RequestException:
+        return False
+    return True
 
 
-def call_docker_compose(cmd, root_path, log, args=None, wait=True):
-    cmd = ['docker-compose', cmd] + (args or [])
-    popen = Popen(cmd, cwd=root_path, stdout=log)
-    if wait:
-        popen.wait()
-    return popen
+class DatabaseConnector(DB):
+    def __init__(self, host, port):
+        DB.__init__(self, dbname='odin', user='odinop', host=host, port=port)
+
+
+def odinapi_postgresq_responsive(host, port):
+    try:
+        DatabaseConnector(host, port)
+    except InternalError:
+        return False
+    return True
 
 
 @pytest.fixture(scope='session')
-def root_path():
-    return check_output(['git', 'rev-parse', '--show-toplevel']).strip()
+def docker_compose_file(pytestconfig):
+    return os.path.join(
+        os.path.dirname(__file__),
+        'docker-compose.systemtest.yml',
+    )
 
 
-@pytest.yield_fixture(scope='session')
-def dockercompose(tmpdir_factory, root_path):
-    """Set up the full system"""
-    logpath = tmpdir_factory.mktemp('docker').join('docker-compose.log')
-    log = logpath.open('w')
+@pytest.fixture(scope='session')
+def odin_postgresql(docker_ip, docker_services):
+    port = docker_services.port_for('postgresql', 5432)
+    docker_services.wait_until_responsive(
+        timeout=WAIT_FOR_SERVICE_TIME,
+        pause=PAUSE_TIME,
+        check=lambda: odinapi_postgresq_responsive(docker_ip, port),
+    )
+    return docker_ip, port
 
-    if __RESTARTDOCKER:
-        print(
-            'docker-compose logs available at {}'.format(logpath),
-            file=sys.stderr
-        )
-        call_docker_compose('stop', root_path, log)
-        call_docker_compose('pull', root_path, log)
-        call_docker_compose('build', root_path, log)
-        call_docker_compose('rm', root_path, log, args=['--force'])
 
-    args = ['--abort-on-container-exit', '--remove-orphans']
-    system = call_docker_compose('up', root_path, log, args=args, wait=False)
-
-    # Wait for webapi and database
-    max_wait = 60*5
-    start_wait = time()
-    while True:
-        exit_code = system.poll()
-        if exit_code is not None:
-            call_docker_compose('stop', root_path, log)
-            assert False, 'docker-compose exit code {}'.format(exit_code)
-        try:
-            r = requests.get(
-                'http://localhost:5000/rest_api/v4/freqmode_info/2010-10-01/',
-                timeout=5)
-            if r.status_code == 200:
-                break
-        except:  # noqa
-            sleep(1)
-        if time() > start_wait + max_wait:
-            call_docker_compose('stop', root_path, log)
-            if system.poll() is None:
-                system.kill()
-                system.wait()
-            assert False, 'Could not access webapi after %d seconds' % max_wait
-
-    yield system.pid
-
-    if __RESTARTDOCKER:
-        call_docker_compose('stop', root_path, log)
-        if system.poll() is None:
-            system.kill()
-            system.wait()
+@pytest.fixture(scope='session')
+def odinapi_service(docker_ip, docker_services):
+    port = docker_services.port_for('odin', 80)
+    url = "http://localhost:{}".format(port)
+    docker_services.wait_until_responsive(
+        timeout=WAIT_FOR_SERVICE_TIME,
+        pause=PAUSE_TIME,
+        check=lambda: odinapi_is_responsive(url),
+    )
+    return url

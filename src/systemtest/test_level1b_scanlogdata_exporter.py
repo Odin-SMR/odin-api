@@ -1,6 +1,8 @@
 from datetime import datetime
-import pytest
+
 from pg import DB
+import pytest
+
 from odinapi.views.level1b_scanlogdata_exporter import (
     ScanInfoExporter,
     scan_data_is_valid,
@@ -8,20 +10,15 @@ from odinapi.views.level1b_scanlogdata_exporter import (
 
 
 class DatabaseConnector(DB):
-    def __init__(self):
-        DB.__init__(
-            self,
-            dbname='odin',
-            user='odinop',
-            host='localhost',
-        )
+    def __init__(self, host, port):
+        DB.__init__(self, dbname='odin', user='odinop', host=host, port=port)
 
 
 @pytest.fixture(scope="session")
-def scan_info_exporter():
-    db_connection = DatabaseConnector()
-    return ScanInfoExporter(
-        'AC1', 2, db_connection)
+def scan_info_exporter(odin_postgresql):
+    host, port = odin_postgresql
+    db_connection = DatabaseConnector(host, port)
+    return ScanInfoExporter('AC1', 2, db_connection)
 
 
 @pytest.fixture
@@ -37,10 +34,9 @@ def scan_log_sample_data():
     }
 
 
-@pytest.mark.usefixtures('dockercompose')
 class TestScanInfoExporter():
 
-    def test_get_scanids(self, scan_info_exporter):
+    def test_get_scanids(self, scan_info_exporter, odinapi_service):
         stw_min = 7014769646
         stw_max = 7014785316
         scanids = scan_info_exporter.get_scanids(
@@ -49,7 +45,7 @@ class TestScanInfoExporter():
         assert scanids[0] == stw_min
         assert scanids[-1] == stw_max
 
-    def test_extract_scan_log(self, scan_info_exporter):
+    def test_extract_scan_log(self, scan_info_exporter, odinapi_service):
         scan_log = scan_info_exporter.extract_scan_log(
             7014785316)
         assert scan_log['AltEnd'] == pytest.approx(
@@ -77,7 +73,7 @@ class TestScanInfoExporter():
         assert scan_log['SunZD'] == pytest.approx(
             103.17699, abs=1e-3)
 
-    def test_get_log_of_scans(self, scan_info_exporter):
+    def test_get_log_of_scans(self, scan_info_exporter, odinapi_service):
         scanids = [7014769646, 7014785316, 7037412634]
         log_of_scans = scan_info_exporter.get_log_of_scans(
             datetime(2015, 1, 12),
@@ -87,13 +83,17 @@ class TestScanInfoExporter():
         assert log_of_scans[0]['ScanID'] == 7014769646
         assert log_of_scans[-1]['ScanID'] == 7014785316
 
-    def test_scan_data_is_valid(self, scan_log_sample_data):
+    def test_scan_data_is_valid(self, scan_log_sample_data, odinapi_service):
         assert scan_data_is_valid(scan_log_sample_data)
 
-    def test_scan_data_is_unvalid_1(self, scan_log_sample_data):
+    def test_scan_data_is_unvalid_1(
+        self, scan_log_sample_data, odinapi_service
+    ):
         del(scan_log_sample_data['mjd'])
         assert not scan_data_is_valid(scan_log_sample_data)
 
-    def test_scan_data_is_unvalid_2(self, scan_log_sample_data):
+    def test_scan_data_is_unvalid_2(
+        self, scan_log_sample_data, odinapi_service
+    ):
         scan_log_sample_data['mjd'][0] = None
         assert not scan_data_is_valid(scan_log_sample_data)

@@ -1,23 +1,16 @@
-import unittest
-
 import pytest
 import requests
 
 
-@pytest.mark.usefixtures('dockercompose')
-class TestSwaggerViews(unittest.TestCase):
-
+class TestSwaggerViews:
     @pytest.mark.slow
-    def test_spec_v5(self):
-        """Check that v5 spec is generated without errors"""
-        r = requests.get('http://localhost:5000/rest_api/v5/spec')
-        self.assertEqual(r.status_code, 200)
+    def test_spec_v5(self, odinapi_service):
+        r = requests.get('{}/rest_api/v5/spec'.format(odinapi_service))
+        r.raise_for_status()
         spec = r.json()
-        self.assertTrue('paths' in spec)
-        self.assertGreater(len(spec['paths']), 0)
+        assert 'paths' in spec
+        assert len(spec['paths']) > 0
 
-    def test_gui(self):
-        """Check that swagger ui renders without errors"""
-        # TODO: Must run javascript to test this thoroughly.
-        r = requests.get('http://localhost:5000/apidocs/index.html')
-        self.assertEqual(r.status_code, 200)
+    def test_gui(self, odinapi_service):
+        r = requests.get('{}/apidocs/index.html'.format(odinapi_service))
+        r.raise_for_status()
