@@ -1,19 +1,16 @@
-@Library('molflow')
+@Library('molflow') _
 
 node() {
   def odinapiImage
   try {
-    stages {
       stage('git') {
         checkout scm
       }
-      stage('unit tests') {
-        parallel python: {
+      stage('python unit tests') {
           sh "./run_unittests.sh -- --runslow"
-        },
-        javascript: {
+      }
+      stage('javascript unit tests') {
           sh "npm install && npm update && npm test"
-        }
       }
       stage('build') {
         odinapiImage = docker.build("docker2.molflow.com/odin_redo/odin_api:${env.BUILD_TAG}")
@@ -24,9 +21,15 @@ node() {
       stage('proxy system tests') {
           sh "./run_systemtests.sh -e proxy -- --runslow"
       }
-    }
+      if (env.GITREF == 'master') {
+        stage('push') {
+          odinapiImage.push()
+          odinapiImage.push('latest')
+        }
+      }
   } catch (e) {
     currentBuild.result = "FAILED"
+    throw e
   } finally {
     setPhabricatorBuildStatus env.PHID
   }
