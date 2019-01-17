@@ -111,6 +111,7 @@
                 },
                 aspectRatio: 1.618,
                 defaultDate: startView,
+                displayEventTime: false,
                 editable: false,
                 eventLimit: true, // allow "more" link when too many events
                 events: function(start, end, timezone, callback) {
@@ -119,7 +120,7 @@
                 },
                 eventClick: function(calEvent, jsEvent, view) {
                     $('#datepicker1').datepicker(
-                            'setDate', calEvent.start.format());
+                            'setDate', calEvent.start.format('YYYY-MM-DD'));
                     clearDataTable();
                     updateDataTable(
                             calEvent.start.format(), calEvent.FreqMode);
