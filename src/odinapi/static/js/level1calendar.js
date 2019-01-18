@@ -39,6 +39,7 @@ function updateCalendar(start) {
                 var events = [];
                 // Loop over the elements under Data and create event:
                 $.each(data.Data, function(index, theData) {
+                    // Events are items in the calendar
                     theEvent = {
                         title: "FM: " + theData.FreqMode + " (" +
                             theData.Backend +  "): " +

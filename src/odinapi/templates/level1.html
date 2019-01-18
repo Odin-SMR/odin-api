@@ -119,8 +119,8 @@
                     callback();
                 },
                 eventClick: function(calEvent, jsEvent, view) {
-                    $('#datepicker1').datepicker(
-                            'setDate', calEvent.start.format('YYYY-MM-DD'));
+                    $('#datepicker1')
+                        .datepicker('setDate', calEvent.start.format('YYYY-MM-DD'));
                     clearDataTable();
                     updateDataTable(
                             calEvent.start.format(), calEvent.FreqMode);
@@ -137,8 +137,7 @@
                 autoclose: true,
                 startDate: startDate
             }).on('changeDate', function(e) {
-                $('#calendar').fullCalendar(
-                        'gotoDate', e.format('yyyy-mm-dd'));
+                $('#calendar').fullCalendar('gotoDate', e.format('yyyy-mm-dd'));
                 clearDataTable();
                 updateLevel1(e.format('yyyy-mm-dd'));
             });
