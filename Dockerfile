@@ -19,7 +19,9 @@ COPY requirements.txt /app
 RUN pip install --no-binary=h5py -r requirements.txt
 COPY requirements_extra.txt /app
 RUN pip install -r requirements_extra.txt
-COPY src/ /app/src/
-run cd /app/src && python setup.py install
+COPY src/odinapi /app/odinapi/
+COPY src/scripts /app/scripts/
+COPY src/setup.py /app/setup.py
+RUN python setup.py install
 expose 5000
 cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app
