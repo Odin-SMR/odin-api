@@ -1,4 +1,4 @@
-import httplib
+import http.client
 import pytest
 import requests
 
@@ -15,7 +15,7 @@ class TestLevel1CachedViews:
             host=odinapi_service, version='v4', date='2015-01-15',
             backend='AC2',
         ))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
 
     @pytest.mark.parametrize("url", (
         '{}/rest_api/v4/l1_log/42/7019446353',
@@ -28,7 +28,7 @@ class TestLevel1CachedViews:
         """Test calling API with non-existent freqmode"""
         # V4
         r = requests.get(url.format(odinapi_service))
-        assert r.status_code == httplib.NOT_FOUND
+        assert r.status_code == http.client.NOT_FOUND
 
     def test_freqmode_info_hierarchy(self, odinapi_service):
         """Test cached freqmode info hierarchy flow"""
@@ -38,22 +38,22 @@ class TestLevel1CachedViews:
 
         # V4
         r = requests.get(base_url.format(version='v4', date='2015-01-15'))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         nr_freqmodes_v4 = len(r.json()['Info'])
         next_level_url = r.json()['Info'][0]['URL']
         assert '/v4/' in next_level_url
         r = requests.get(next_level_url)
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         nr_scans_v4 = len(r.json()['Info'])
 
         # V5
         r = requests.get(base_url.format(version='v5', date='2015-01-15'))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         nr_freqmodes_v5 = r.json()['Count']
         next_level_url = r.json()['Data'][0]['URL']
         assert '/v5/' in next_level_url
         r = requests.get(next_level_url)
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         nr_scans_v5 = r.json()['Count']
         assert nr_freqmodes_v4 == nr_freqmodes_v5
         assert nr_scans_v4 == nr_scans_v5
@@ -64,7 +64,7 @@ class TestLevel1CachedViews:
         r = requests.get(
             '{}/rest_api/v4/l1_log/2/7019446353'.format(odinapi_service),
         )
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         assert (
             r.json()['Info']['URLS']['URL-ptz']
             == '{}/rest_api/v4/ptz/2015-01-15/AC1/2/7019446353/'.format(
@@ -76,7 +76,7 @@ class TestLevel1CachedViews:
         r = requests.get(
             '{}/rest_api/v5/level1/2/7019446353/Log'.format(odinapi_service),
         )
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         assert r.json()['Type'] == 'Log'
         assert (
             r.json()['Data']['URLS']['URL-ptz']
@@ -95,13 +95,13 @@ class TestLevel1CachedViews:
         # V4
         r = requests.get(base_url.format(
             version='v4', year='2015', month='01', day='15'))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         nr_freqmodes_v4 = len(r.json()['Info'])
 
         # V5
         r = requests.get(base_url.format(
             version='v5', year='2015', month='01', day='15'))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         nr_freqmodes_v5 = r.json()['Count']
         assert r.json()['PeriodStart'] == '2015-01-15'
         assert nr_freqmodes_v4 == nr_freqmodes_v5
@@ -109,16 +109,19 @@ class TestLevel1CachedViews:
     @pytest.mark.parametrize(
         "start_time,end_time,apriori,expect_status,expect_count, expect_url_count",  # noqa
         (
-            ("2015-01-11", "2015-01-12", '', httplib.OK, 489, 3),
-            ("2015-01-11", "2015-01-13", '', httplib.OK, 805, 3),
-            ("2015-01-13", "2015-01-11", '', httplib.BAD_REQUEST, None, None),
+            ("2015-01-11", "2015-01-12", '', http.client.OK, 489, 3),
+            ("2015-01-11", "2015-01-13", '', http.client.OK, 805, 3),
             (
-                "2015-01-11", "2015-01-12", "&apriori=BrO&apriori=O3",
-                httplib.OK, 489, 5,
+                "2015-01-13", "2015-01-11", '', http.client.BAD_REQUEST,
+                None, None,
             ),
             (
-                "2015-01-11", "2015-01-12", "&apriori=all", httplib.OK, 489,
-                43,
+                "2015-01-11", "2015-01-12", "&apriori=BrO&apriori=O3",
+                http.client.OK, 489, 5,
+            ),
+            (
+                "2015-01-11", "2015-01-12", "&apriori=all", http.client.OK,
+                489, 43,
             ),
         )
     )
@@ -136,6 +139,6 @@ class TestLevel1CachedViews:
             start_time=start_time, end_time=end_time, apriori=apriori,
         ))
         assert r.status_code == expect_status
-        if r.status_code == httplib.OK:
+        if r.status_code == http.client.OK:
             assert r.json()['Count'] == expect_count
             assert len(r.json()['Data'][0]["URLS"]) == expect_url_count

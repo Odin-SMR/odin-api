@@ -21,8 +21,8 @@ def scan_target_sample_data():
         'quality': 0 * np.ones(number_of_spectra),
         'frequency': {
             'SubBandIndex': [
-                range(0, 112 * 8, 112),
-                range(111, 112 * 8, 112)]},
+                list(range(0, 112 * 8, 112)),
+                list(range(111, 112 * 8, 112))]},
     }
 
 
@@ -48,7 +48,7 @@ def quality_control(
          scan_reference_sample_data)
 
 
-class TestQualityControl():
+class TestQualityControl:
 
     def test_check_tspill_is_ok(self, quality_control):
         quality_control.check_tspill()

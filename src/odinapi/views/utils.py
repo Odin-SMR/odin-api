@@ -5,8 +5,8 @@ from flask import url_for
 
 def copyemptydict(a):
     b = dict()
-    for item in a.keys():
-        b[item] = []
+    for key in a:
+        b[key] = []
     return b
 
 
@@ -39,7 +39,7 @@ def make_rfc5988_pagination_header(
     return ', '.join(links)
 
 
-class OffsetAndLimitPagination(object):
+class OffsetAndLimitPagination:
 
     Page = namedtuple("Page", ['offset', 'limit'])
 
@@ -54,8 +54,7 @@ class OffsetAndLimitPagination(object):
     def get_prev_page(self):
         if self.offset > 0:
             return self.Page(max(0, self.offset - self.limit), self.limit)
-        else:
-            return None
+        return None
 
     def get_previous_page(self):
         return self.get_prev_page()
@@ -66,8 +65,7 @@ class OffsetAndLimitPagination(object):
     def get_next_page(self):
         if self.offset + self.limit < self.count:
             return self.Page(self.offset + self.limit, self.limit)
-        else:
-            return None
+        return None
 
     def get_last_page(self):
         return self.Page(self.count // self.limit * self.limit, self.limit)

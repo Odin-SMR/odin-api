@@ -33,7 +33,7 @@ def test_returns_altitude_for_mipas(co_mipas):
         read_apriori.get_datadict(co_mipas, 'MIPAS')['altitude']
         .ravel()[:32].tolist()
     )
-    assert altitudes == range(18000, 50000, 1000)
+    assert altitudes == list(range(18000, 50000, 1000))
 
 
 def test_returns_expected_data_keys():

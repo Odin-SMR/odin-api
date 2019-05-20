@@ -1,9 +1,6 @@
 # pylint: disable=E0401,C0413,C0302,R0912,R0914
 '''extract scan data from odin database and display on webapi'''
-
-
 from datetime import datetime
-import string
 import numpy as np
 from dateutil.relativedelta import relativedelta
 import matplotlib
@@ -25,7 +22,7 @@ from odinapi.views.smr_frequency import (  # noqa
 )
 
 
-class ScandataExporter(object):
+class ScandataExporter:
     '''class derived to extract and decode scan data from odin database'''
     def __init__(self, backend, con):
         self.backend = backend
@@ -280,17 +277,16 @@ class ScandataExporter(object):
         '''decode mjd data'''
         if data['mjd'] is not None:
             return data['mjd']
-        else:
-            if data['spectype'] in ['SSB', 'CAL']:
-                # field MJD is missing for some calibration spectra:
-                # use MJD of the first target spectrum in scan
-                for row in self.specdata:
-                    if row['mjd'] is not None:
-                        return row['mjd']
+        if data['spectype'] in ['SSB', 'CAL']:
+            # field MJD is missing for some calibration spectra:
+            # use MJD of the first target spectrum in scan
+            for row in self.specdata:
+                if row['mjd'] is not None:
+                    return row['mjd']
         return -1.0
 
 
-class CalibrationStep2(object):
+class CalibrationStep2:
     '''class derived to perform calibration step 2,
        i.e. remove ripple'''
     def __init__(self, con, freqmode, version):
@@ -402,7 +398,7 @@ class CalibrationStep2(object):
             self.freqmode,
             int(self.version),
             intmode,
-            ssb_fq.__repr__().translate(string.maketrans("[]", "{}")),
+            ssb_fq.__repr__().translate(str.maketrans("[]", "{}")),
             self.altitude_range,
             hotload_range1
         )
@@ -412,7 +408,7 @@ class CalibrationStep2(object):
             self.freqmode,
             int(self.version),
             intmode,
-            ssb_fq.__repr__().translate(string.maketrans("[]", "{}")),
+            ssb_fq.__repr__().translate(str.maketrans("[]", "{}")),
             self.altitude_range,
             hotload_range2
         )
@@ -444,7 +440,7 @@ class CalibrationStep2(object):
         t_load = planck(spec['hotloada'][ind], spec['skyfreq'][ind])
         # t_sky = planck(2.7, spec['skyfreq'][ind])
         eta = 1 - spec['tspill'][ind] / 300.0  # main beam efficeiency
-        weight = 1 / eta * (1.0 - (spec['spectrum'][ind]) / (t_load))
+        weight = 1 / eta * (1.0 - spec['spectrum'][ind] / t_load)
         if not np.isscalar(self.spec['spectrum']):
             f_ind = np.nonzero((spec['spectrum'][ind] != 0))[0]
             reducespec = np.array(weight * self.spec['spectrum'])
@@ -502,8 +498,12 @@ def inv_erfc(zerolag):
     qcoef = [1.467751692, -3.013136362, 1.00000000]
     xterm = 1.0 - zerolag
     yterm = (xterm * xterm - 0.5625)
-    yterm = (xterm * (pcoef[0] + (pcoef[1] + pcoef[2] * yterm) * yterm) /
-             (qcoef[0] + (qcoef[1] + qcoef[2] * yterm) * yterm))
+    yterm = (
+        xterm * (
+            pcoef[0] + (pcoef[1] + pcoef[2] * yterm) * yterm
+            / (qcoef[0] + (qcoef[1] + qcoef[2] * yterm) * yterm)
+        )
+    )
     return yterm
 
 
@@ -539,8 +539,7 @@ def zerolagfunc(zlag, vterm):
     '''zerolag function'''
     if zlag >= 1.0 or zlag <= 0.0:
         return 0.0
-    else:
-        xterm = vterm / inv_erfc(zlag)
+    xterm = vterm / inv_erfc(zlag)
     return xterm * xterm / 2.0
 
 
@@ -701,8 +700,10 @@ def plot_latlon(spectra):
 def plot_trec_spectrum(spectra):
     '''plot Trec spectrum'''
     ax1 = plt.subplot2grid((7, 5), (0, 2), colspan=4, rowspan=1)
-    freqvec = np.array(spectra['frequency']['IFreqGrid'] +
-                       spectra['frequency']['LOFreq'][0]) / 1e9
+    freqvec = np.array(
+        spectra['frequency']['IFreqGrid']
+        + spectra['frequency']['LOFreq'][0]
+    ) / 1e9
     xmin = np.floor(np.min(freqvec * 2)) / 2
     xmax = np.ceil(np.max(freqvec * 2)) / 2
     plt.plot(freqvec, spectra['spectrum'][0], '.')
@@ -721,15 +722,19 @@ def plot_trec_spectrum(spectra):
 def plot_spectrum(spectra):
     '''plot all spectrum in scan'''
     ax1 = plt.subplot2grid((7, 5), (1, 2), colspan=4, rowspan=4)
-    freqvec = np.array(spectra['frequency']['IFreqGrid'] +
-                       spectra['frequency']['LOFreq'][0]) / 1e9
+    freqvec = np.array(
+        spectra['frequency']['IFreqGrid']
+        + spectra['frequency']['LOFreq'][0]
+    ) / 1e9
     xmin = np.floor(np.min(freqvec * 2)) / 2
     xmax = np.ceil(np.max(freqvec * 2)) / 2
     for speci in spectra['spectrum'][2::]:
         plt.plot(freqvec, speci, 'k.', markersize=0.5)
-    for ztan, spei in zip(spectra['altitude'][2::3],
-                          spectra['spectrum'][2::3]):
-        plt.plot(freqvec, spei, '.', label=np.int(np.around(ztan/1e3)))
+    for ztan, spei in zip(
+        spectra['altitude'][2::3],
+        spectra['spectrum'][2::3],
+    ):
+        plt.plot(freqvec, spei, '.', label=np.int(np.around(ztan / 1e3)))
     ax1.grid(True)
     ax1.minorticks_on()
     plt.legend(bbox_to_anchor=(1.02, 0.95), loc=2, borderaxespad=0.)
@@ -744,8 +749,10 @@ def plot_highalt_spectrum(spectra):
     ax1 = plt.subplot2grid((7, 5), (5, 2), colspan=4, rowspan=2)
     zmax = np.max(spectra['altitude'][2::])
     ind = np.nonzero((spectra['altitude'] >= zmax - 20e3))[0]
-    freqvec = np.array(spectra['frequency']['IFreqGrid'] +
-                       spectra['frequency']['LOFreq'][0]) / 1e9
+    freqvec = np.array(
+        spectra['frequency']['IFreqGrid']
+        + spectra['frequency']['LOFreq'][0]
+    ) / 1e9
     xmin = np.floor(np.min(freqvec * 2)) / 2
     xmax = np.ceil(np.max(freqvec * 2)) / 2
     data = []
@@ -976,9 +983,10 @@ def get_freqinfo(scangr, debug=False):
                 # get doppler corrected lo frequencies
                 lo_frequencies = []
                 for sky_freq, rest_freq, lo_freq in zip(
-                        scangr.spectra['skyfreq'],
-                        scangr.spectra['restfreq'],
-                        scangr.spectra['lofreq']):
+                    scangr.spectra['skyfreq'],
+                    scangr.spectra['restfreq'],
+                    scangr.spectra['lofreq'],
+                ):
                     (lo_freq_corrected, _) = doppler_corr(
                         sky_freq,
                         rest_freq,

@@ -1,62 +1,55 @@
 from datetime import datetime
 
-from dateutil.relativedelta import relativedelta
-from netCDF4 import Dataset
-import numpy as np
+from netCDF4 import Dataset, chartostring, num2date
 
 
-def read_mipas_file(file, date, species, file_index):
+def read_mipas_file(
+    file, date, species, file_index,
+    basepath_pattern='/vds-data/Envisat_MIPAS_Level2/{0}/V5',
+):
 
     file_index = int(file_index)
 
-    mipas_datapath = '/vds-data/Envisat_MIPAS_Level2/{0}/V5'.format(
-        *[species.upper()])
+    mipas_datapath = basepath_pattern.format(species.upper())
 
     year = date[0:4]
     month = date[5:7]
-    mipas_datapath = "{0}/{1}/{2}/".format(*[mipas_datapath, year, month])
+    mipas_datapath = "{0}/{1}/{2}/".format(mipas_datapath, year, month)
 
     ifile = mipas_datapath + file
 
     data = dict()
     with Dataset(ifile, 'r') as fgr:
 
-        for item in fgr.variables.keys():
-            data[item] = np.array(fgr.variables[item][:])
-
+        time = fgr.variables['time'][file_index]
         if fgr.variables['time'].units == 'days since 1970-1-1 0:0:0':
-            t0_unit = 1
-        elif fgr.variables['time'].units == 'julian days':
-            t0_unit = 2
-
-    # transform the mipas date to MJD and add to dict
-    if t0_unit == 1:
-
-        mjd = []
-        mipas_date0 = datetime(1970, 1, 1)
-        for time_i in data['time']:
-            date_i = mipas_date0 + relativedelta(days=time_i)
-            mjd_i = date_i - datetime(1858, 11, 17)
+            mjd_i = num2date(
+                time,
+                units=fgr.variables['time'].units
+            ) - datetime(1858, 11, 17)
             sec_per_day = 24*60*60.0
-            mjd.append(mjd_i.total_seconds()/sec_per_day)
-        data['MJD'] = mjd
-        data['MJD'] = np.array(data['MJD'])
+            data['MJD'] = mjd_i.total_seconds() / sec_per_day
+        elif fgr.variables['time'].units == 'julian days':
+            data['MJD'] = time - 2400000.5
 
-    elif t0_unit == 2:
+        # select data from the given index
+        s1 = fgr.variables['time'].shape[0]
+        for key in fgr.variables:
+            shape = fgr.variables[key].shape
+            if len(shape) == 1:
+                entry = fgr.variables[key][file_index]
+            elif len(shape) == 2 and shape[0] == s1:
+                entry = fgr.variables[key][file_index, :]
+            elif len(shape) == 2 and shape[1] == s1:
+                entry = fgr.variables[key][:, file_index]
+            else:
+                entry = fgr.variables[key]
 
-        data['MJD'] = np.array(data['time']) - 2400000.5
-
-    # select data from the given index
-    s1 = data['time'].shape[0]
-    for item in data.keys():
-
-        if len(data[item].shape) == 1:
-            data[item] = data[item][file_index].tolist()
-
-        elif len(data[item].shape) == 2 and data[item].shape[0] == s1:
-            data[item] = data[item][file_index, :].tolist()
-
-        elif len(data[item].shape) == 2 and data[item].shape[1] == s1:
-            data[item] = data[item][:, file_index].tolist()
+            try:
+                data[key] = chartostring(entry).item()
+            except ValueError:
+                data[key] = entry.tolist()
+            except AttributeError:
+                data[key] = entry
 
     return data

@@ -1,5 +1,8 @@
 """ doc
 """
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
 from flask import request, jsonify, abort
 from flask.views import MethodView
 from numpy import around
@@ -7,24 +10,22 @@ from numpy import around
 # Activate Agg, must be done before imports below
 from odinapi.utils import use_agg
 
-from date_tools import date2mjd, mjd2stw
-from geoloc_tools import get_geoloc_info
-from level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
-from level1b_scanlogdata_exporter import get_scan_logdata
-from read_apriori import get_apriori
-from read_mls import read_mls_file
-from read_mipas import read_mipas_file
-from read_smiles import read_smiles_file
-from read_sageIII import read_sageIII_file
-from read_osiris import read_osiris_file
-from read_odinsmr2_old import read_qsmr_file
-from read_ace import read_ace_file
-from newdonalettyERANC import run_donaletty
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from database import DatabaseConnector
+from .date_tools import date2mjd, mjd2stw
+from .geoloc_tools import get_geoloc_info
+from .level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
+from .level1b_scanlogdata_exporter import get_scan_logdata
+from .read_apriori import get_apriori
+from .read_mls import read_mls_file
+from .read_mipas import read_mipas_file
+from .read_smiles import read_smiles_file
+from .read_sageIII import read_sageIII_file
+from .read_osiris import read_osiris_file
+from .read_odinsmr2_old import read_qsmr_file
+from .read_ace import read_ace_file
+from .newdonalettyERANC import run_donaletty
+from .database import DatabaseConnector
 from odinapi.utils.defs import SPECIES
-from get_odinapi_info import get_config_data_files
+from .get_odinapi_info import get_config_data_files
 
 from odinapi.views.baseview import register_versions, BaseView
 from odinapi.views.urlgen import get_freqmode_raw_url
@@ -158,7 +159,7 @@ class FreqmodeInfo(BaseView):
 
     SUPPORTED_VERSIONS = ['v4']
 
-    ITEMS_V4 = [
+    KEYS_V4 = [
         'Quality',
         'DateTime',
         'FreqMode',
@@ -179,7 +180,7 @@ class FreqmodeInfo(BaseView):
 
         con = DatabaseConnector()
         loginfo = {}
-        itemlist = self.ITEMS_V4
+        keylist = self.KEYS_V4
 
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
@@ -194,9 +195,9 @@ class FreqmodeInfo(BaseView):
             loginfo['Info'] = []
             return jsonify({'Info': loginfo['Info']})
 
-        for item in loginfo.keys():
+        for key in loginfo:
             try:
-                loginfo[item] = loginfo[item].tolist()
+                loginfo[key] = loginfo[key].tolist()
             except AttributeError:
                 pass
 
@@ -207,8 +208,8 @@ class FreqmodeInfo(BaseView):
             scanid = loginfo['ScanID'][ind]
 
             datadict = dict()
-            for item in itemlist:
-                datadict[item] = loginfo[item][ind]
+            for key in keylist:
+                datadict[key] = loginfo[key][ind]
             datadict['URLS'] = dict()
             datadict['URLS']['URL-log'] = (
                 '{0}rest_api/{1}/freqmode_raw/{2}/{3}/{4}/{5}/').format(
@@ -306,7 +307,7 @@ class FreqmodeInfoNoBackend(BaseView):
 
         con = DatabaseConnector()
         loginfo = {}
-        itemlist = FreqmodeInfo.ITEMS_V4
+        keylist = FreqmodeInfo.KEYS_V4
 
         loginfo, _, _ = get_scan_logdata(
             con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1)
@@ -320,9 +321,9 @@ class FreqmodeInfoNoBackend(BaseView):
             loginfo['Info'] = []
             return jsonify({'Info': loginfo['Info']})
 
-        for item in loginfo.keys():
+        for key in loginfo:
             try:
-                loginfo[item] = loginfo[item].tolist()
+                loginfo[key] = loginfo[key].tolist()
             except AttributeError:
                 pass
 
@@ -333,8 +334,8 @@ class FreqmodeInfoNoBackend(BaseView):
             scanid = loginfo['ScanID'][ind]
 
             datadict = dict()
-            for item in itemlist:
-                datadict[item] = loginfo[item][ind]
+            for key in keylist:
+                datadict[key] = loginfo[key][ind]
             datadict['URLS'] = dict()
             datadict['URLS']['URL-log'] = (
                 '{0}rest_api/{1}/level1/{2}/{3}/Log/').format(
@@ -524,14 +525,14 @@ class ScanPTZ(BaseView):
         return datadictv4
 
     def _convert_items(self, datadict):
-        for item in ['P', 'T', 'Z']:
-            if item == 'P':
+        for key in ['P', 'T', 'Z']:
+            if key == 'P':
                 # convert from hPa to Pa
-                datadict[item] *= 100
-            if item == 'Z':
+                datadict[key] *= 100
+            if key == 'Z':
                 # convert from km to m
-                datadict[item] *= 1000
-            datadict[item] = datadict[item].tolist()
+                datadict[key] *= 1000
+            datadict[key] = datadict[key].tolist()
 
     @register_versions('return')
     def _to_return_format(self, version, datadict, *args, **kwargs):
@@ -852,20 +853,24 @@ class VdsDateInfo(MethodView):
         result = query.dictresult()
         con.close()
         datadict = {'VDS': []}
-        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
-                  'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
-                  'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime']
-        lista2 = ['Latitude', 'Longitude', 'MJD', 'Instrument', 'Species',
-                  'File', 'File_Index', 'DMJD', 'DTheta']
+        odin_keys = [
+            'Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
+            'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
+            'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD', 'Datetime',
+        ]
+        collocation_keys = [
+            'Latitude', 'Longitude', 'MJD', 'Instrument', 'Species',
+            'File', 'File_Index', 'DMJD', 'DTheta',
+        ]
 
         for row in result:
             data = dict()
             odin = dict()
-            for item in lista1:
-                odin[item] = row[item.lower()]
+            for key in odin_keys:
+                odin[key] = row[key.lower()]
             collocation = dict()
-            for item in lista2:
-                collocation[item] = row[item.lower()]
+            for key in collocation_keys:
+                collocation[key] = row[key.lower()]
             data['OdinInfo'] = odin
             data['CollocationInfo'] = collocation
             data['URLS'] = dict()
@@ -923,15 +928,17 @@ class VdsScanInfo(MethodView):
         result = query.dictresult()
         con.close()
         datadict = {'VDS': []}
-        lista1 = ['Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
-                  'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
-                  'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD']
+        odin_keys = [
+            'Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
+            'AltStart', 'LatEnd', 'LatStart', 'LonEnd', 'LonStart',
+            'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD',
+        ]
 
         for row in result:
             data, odin = dict(), dict()
 
-            for item in lista1:
-                odin[item] = row[item.lower()]
+            for key in odin_keys:
+                odin[key] = row[key.lower()]
             data['Info'] = odin
             data['URLS'] = dict()
             data['URLS']['URL-spectra'] = ('{0}rest_api/{1}/scan/{2}/{3}/{4}'

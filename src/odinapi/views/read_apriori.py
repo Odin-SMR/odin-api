@@ -8,7 +8,7 @@ def get_datadict(data, source):
     def get_index(key):
         idxs = [
             i for i, v in enumerate(view)
-            if v.size == 1 and np.asscalar(v) == key
+            if v.size == 1 and v.item() == key
         ]
         if idxs:
             return idxs[0] - 1
@@ -39,8 +39,8 @@ def get_vmr_interpolated_for_doy(vmr, doys, doy):
         axis=0,
     )
     ind1, ind2 = np.arange(deltas.size)[np.argsort(deltas)][:2]
-    doy1 = float(np.asscalar(doys[ind1]))
-    doy2 = float(np.asscalar(doys[ind2]))
+    doy1 = float(doys[ind1].item())
+    doy2 = float(doys[ind2].item())
     ddoy = min((doy1 - doy2) % 365, (doy2 - doy1) % 365)
     w1 = deltas[ind2] / ddoy
     w2 = deltas[ind1] / ddoy
@@ -51,8 +51,8 @@ def get_vmr_interpolated_for_doy(vmr, doys, doy):
 def get_vmr_interpolated_for_lat(vmr, latitudes, latitude):
     deltas = np.abs(latitudes[:, 0] - latitude)
     ind1, ind2 = np.arange(deltas.size)[np.argsort(deltas)][:2]
-    lat1 = np.asscalar(latitudes[ind1])
-    lat2 = np.asscalar(latitudes[ind2])
+    lat1 = latitudes[ind1].item()
+    lat2 = latitudes[ind2].item()
     if np.sign(lat1 - latitude) != np.sign(lat2 - latitude):
         dlat = np.abs(lat1 - lat2)
         w1 = deltas[ind2] / dlat

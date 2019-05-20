@@ -4,12 +4,10 @@
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 # In applying this licence, ECMWF does not waive the privileges and immunities
-# granted to it by virtue of its status as an intergovernmental organisation nor
-# does it submit to any jurisdiction.
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
 
 # make the python3-like print behave in python 2
-from __future__ import print_function
-
 import os
 import sys
 import time
@@ -19,13 +17,17 @@ import traceback
 try:
     from urllib.parse import urlparse
     from urllib.error import HTTPError, URLError
-    from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen, addinfourl
+    from urllib.request import (
+        HTTPRedirectHandler, Request, build_opener, urlopen, addinfourl
+    )
     from http.client import BadStatusLine
 except ImportError:
-    from urlparse import urlparse
-    from urllib2 import HTTPError, URLError
-    from urllib2 import HTTPRedirectHandler, Request, build_opener, urlopen, addinfourl
-    from httplib import BadStatusLine
+    from urllib.parse import urlparse
+    from urllib.error import HTTPError, URLError
+    from urllib.request import (
+        HTTPRedirectHandler, Request, build_opener, urlopen
+    )
+    from http.client import BadStatusLine
 
 try:
     import json
@@ -33,16 +35,15 @@ except ImportError:
     import simplejson as json
 
 try:
-    import ssl
+    import ssl  # noqa
 except ImportError:
-    print("Python socket module was not compiled with SSL support. Aborting...")
+    print(
+        "Python socket module was not compiled with SSL support. Aborting..."
+    )
     sys.exit(1)
 
 
-###############################################################################
 VERSION = '1.4.1'
-
-###############################################################################
 
 
 class APIKeyFetchError(Exception):
@@ -56,7 +57,9 @@ def _get_apikey_from_environ():
         email = os.environ["ECMWF_API_EMAIL"]
         return key, url, email
     except KeyError:
-        raise APIKeyFetchError("ERROR: Could not get the API key from the environment")
+        raise APIKeyFetchError(
+            "ERROR: Could not get the API key from the environment"
+        )
 
 
 def _get_apikey_from_rcfile():
@@ -65,11 +68,13 @@ def _get_apikey_from_rcfile():
     try:
         with open(rc) as f:
             config = json.load(f)
-    except IOError as e: # Failed reading from file
+    except IOError as e:  # Failed reading from file
         raise APIKeyFetchError(str(e))
-    except ValueError: # JSON decoding failed
-        raise APIKeyFetchError("ERROR: Missing or malformed API key in '%s'" % rc)
-    except Exception as e: # Unexpected error
+    except ValueError:  # JSON decoding failed
+        raise APIKeyFetchError(
+            "ERROR: Missing or malformed API key in '%s'" % rc
+        )
+    except Exception as e:  # Unexpected error
         raise APIKeyFetchError(str(e))
 
     try:
@@ -77,8 +82,10 @@ def _get_apikey_from_rcfile():
         url = config["url"]
         email = config["email"]
         return key, url, email
-    except:
-        raise APIKeyFetchError("ERROR: Missing or malformed API key in '%s'" % rc)
+    except Exception:
+        raise APIKeyFetchError(
+            "ERROR: Missing or malformed API key in '%s'" % rc
+        )
 
 
 def get_apikey_values():
@@ -104,9 +111,6 @@ def get_apikey_values():
     return key_values
 
 
-###############################################################################
-
-
 class RetryError(Exception):
 
     def __init__(self, code, text):
@@ -115,6 +119,7 @@ class RetryError(Exception):
 
     def __str__(self):
         return "%d %s" % (self.code, self.text)
+
 
 class APIException(Exception):
 
@@ -129,7 +134,7 @@ def robust(func):
 
     def wrapped(self, *args, **kwargs):
         max_tries = tries = 10
-        delay = 60 # retry delay
+        delay = 60  # retry delay
         last_error = None
         while tries > 0:
             try:
@@ -155,16 +160,22 @@ def robust(func):
                     print("WARNING: HTTP received %s" % (e.code))
                     print(e.text)
                 last_error = e
-            except:
+            except Exception:
                 if self.verbose:
-                    print("Unexpected error:", sys.exc_info()[0])
+                    print("Unexpected error: {}".format(sys.exc_info()[0]))
                     print(traceback.format_exc())
                 raise
-            print("Error contacting the WebAPI, retrying in %d seconds ..." % delay)
+            print(
+                "Error contacting the WebAPI, retrying in %d seconds ..."
+                % delay
+            )
             time.sleep(delay)
             tries -= 1
         # if all retries have been exhausted, raise the last exception caught
-        print("Could not contact the WebAPI after %d tries, failing !" % max_tries)
+        print(
+            "Could not contact the WebAPI after %d tries, failing !"
+            % max_tries
+        )
         raise last_error
 
     return wrapped
@@ -212,7 +223,8 @@ class Ignore303(HTTPRedirectHandler):
         infourl.code = code
         return infourl
 
-class Connection(object):
+
+class Connection:
 
     def __init__(self, email=None, key=None, verbose=False, quiet=False):
         self.email = email
@@ -230,9 +242,12 @@ class Connection(object):
     def call(self, url, payload=None, method="GET"):
 
         if self.verbose:
-            print(method, url)
+            print("{} {}".format(method, url))
 
-        headers = {"Accept": "application/json", "From": self.email, "X-ECMWF-KEY": self.key}
+        headers = {
+            "Accept": "application/json", "From": self.email,
+            "X-ECMWF-KEY": self.key,
+        }
 
         opener = build_opener(Ignore303)
 
@@ -296,7 +311,7 @@ class Connection(object):
         self.status = self.last.get("status", self.status)
 
         if self.verbose:
-            print("Status", self.status)
+            print("Status {}".format(self.status))
 
         if "messages" in self.last:
             for n in self.last["messages"]:
@@ -315,11 +330,11 @@ class Connection(object):
             self.done = True
 
         if "error" in self.last:
-            #self.done   = True
+            # self.done   = True
             raise APIException("ecmwf.API error 1: %s" % (self.last["error"],))
 
         if error:
-            #self.done   = True
+            # self.done   = True
             raise APIException("ecmwf.API error 2: %s" % (res, ))
 
         return self.last
@@ -349,15 +364,20 @@ class Connection(object):
         try:
             if self.location:
                 self.call(self.location, None, "DELETE")
-        except:
+        except Exception:
             pass
+
 
 def no_log(msg):
     pass
 
-class APIRequest(object):
 
-    def __init__(self, url, service, email=None, key=None, log=no_log, quiet=False, verbose=False, news=True):
+class APIRequest:
+
+    def __init__(
+        self, url, service, email=None, key=None, log=no_log, quiet=False,
+        verbose=False, news=True,
+    ):
         self.url = url
         self.service = service
         self.connection = Connection(email, key, quiet=quiet, verbose=verbose)
@@ -367,26 +387,30 @@ class APIRequest(object):
         self.log("ECMWF API python library %s" % (VERSION,))
         self.log("ECMWF API at %s" % (self.url,))
         user = self.connection.call("%s/%s" % (self.url, "who-am-i"))
-        self.log("Welcome %s" % (user["full_name"] or "user '%s'" % user["uid"],))
+        self.log(
+            "Welcome %s" % (user["full_name"] or "user '%s'" % user["uid"],)
+        )
         if news:
             try:
-                news = self.connection.call("%s/%s/%s" % (self.url, self.service, "news"))
+                news = self.connection.call(
+                    "%s/%s/%s" % (self.url, self.service, "news")
+                )
                 for n in news["news"].split("\n"):
                     self.log(n)
-            except:
+            except Exception:
                 pass
 
     def _bytename(self, size):
-        prefix = {'': 'K', 'K': 'M', 'M': 'G', 'G': 'T', 'T': 'P', 'P': 'E'}
-        l = ''
-        size = size * 1.0
+        prefixes = {'': 'K', 'K': 'M', 'M': 'G', 'G': 'T', 'T': 'P', 'P': 'E'}
+        prefix = ''
+        size = float(size)
         while 1024 < size:
-            l = prefix[l]
+            prefix = prefixes[prefix]
             size = size / 1024
         s = ""
         if size > 1:
             s = "s"
-        return "%g %sbyte%s" % (size, l, s)
+        return "%g %sbyte%s" % (size, prefix, s)
 
     @robust
     def _transfer(self, url, path, size):
@@ -417,7 +441,9 @@ class APIRequest(object):
         if length is None:
             self.log("Warning: Content-Length missing from HTTP header")
         if end > start:
-            self.log("Transfer rate %s/s" % self._bytename(total / (end - start)), )
+            self.log(
+                "Transfer rate %s/s" % self._bytename(total / (end - start)),
+            )
 
         return total
 
@@ -425,7 +451,9 @@ class APIRequest(object):
 
         status = None
 
-        self.connection.submit("%s/%s/requests" % (self.url, self.service), request)
+        self.connection.submit(
+            "%s/%s/requests" % (self.url, self.service), request
+        )
         self.log('Request submitted')
         self.log('Request id: ' + self.connection.last['name'])
         if self.connection.status != status:
@@ -462,11 +490,11 @@ class APIRequest(object):
         return result
 
 
-###############################################################################
+class ECMWFDataServer:
 
-class ECMWFDataServer(object):
-
-    def __init__(self, url=None, key=None, email=None, verbose=False, log=None):
+    def __init__(
+        self, url=None, key=None, email=None, verbose=False, log=None,
+    ):
         if url is None or key is None or email is None:
             key, url, email = get_apikey_values()
 
@@ -486,14 +514,19 @@ class ECMWFDataServer(object):
     def retrieve(self, req):
         target = req.get("target")
         dataset = req.get("dataset")
-        c = APIRequest(self.url, "datasets/%s" % (dataset,), self.email, self.key, self.trace, verbose=self.verbose)
+        c = APIRequest(
+            self.url, "datasets/%s" % (dataset,), self.email, self.key,
+            self.trace, verbose=self.verbose,
+        )
         c.execute(req, target)
 
-###############################################################################
 
-class ECMWFService(object):
+class ECMWFService:
 
-    def __init__(self, service, url=None, key=None, email=None, verbose=False, log=None, quiet=False):
+    def __init__(
+        self, service, url=None, key=None, email=None, verbose=False, log=None,
+        quiet=False,
+    ):
         if url is None or key is None or email is None:
             key, url, email = get_apikey_values()
 
@@ -513,8 +546,9 @@ class ECMWFService(object):
             print("%s %s" % (t, m,))
 
     def execute(self, req, target):
-        c = APIRequest(self.url, "services/%s" % (self.service,), self.email, self.key, self.trace, verbose=self.verbose, quiet=self.quiet)
+        c = APIRequest(
+            self.url, "services/%s" % (self.service,), self.email, self.key,
+            self.trace, verbose=self.verbose, quiet=self.quiet,
+        )
         c.execute(req, target)
         self.trace("Done.")
-
-###############################################################################

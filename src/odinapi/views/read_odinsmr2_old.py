@@ -38,13 +38,13 @@ def read_qsmr_file(filename, species, index2):
         # Extract geolocation data to dictionary:
         gloc_dict = {}
         Geolocation = [x for x in gloc[:] if x[i_gloc['ID1']] == index1][0]
-        for key in i_gloc.keys():
+        for key in i_gloc:
             gloc_dict[key] = Geolocation[i_gloc[key]]
 
         # Extract Data to dictionary:
         data_dict = {}
         Data = [x for x in data[:] if x[i_data['ID2']] == index2]
-        for key in i_data.keys():
+        for key in i_data:
             data_dict[key] = [x[i_data[key]] for x in Data]
     except IndexError:
         gloc_dict = {}

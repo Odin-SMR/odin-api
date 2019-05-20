@@ -27,7 +27,7 @@ class ProjectAnnotation(namedtuple('ProjectAnnotation', [
     'text', 'created_at', 'freqmode',
 ])):
     def __new__(typ, text, created_at, freqmode=None):
-        assert isinstance(text, basestring)
+        assert isinstance(text, str)
         assert isinstance(created_at, datetime)
         assert freqmode is None or isinstance(freqmode, int)
         return super(ProjectAnnotation, typ).__new__(
@@ -35,7 +35,7 @@ class ProjectAnnotation(namedtuple('ProjectAnnotation', [
         )
 
 
-class ProjectsDB(object):
+class ProjectsDB:
 
     def __init__(self):
         self.projects_collection = mongo.get_collection('level2', 'projects')
@@ -101,7 +101,7 @@ class ProjectsDB(object):
             )
 
 
-class Level2DB(object):
+class Level2DB:
 
     def __init__(self, project, mongo_db=None):
         if mongo_db is None:
@@ -324,7 +324,7 @@ class Level2DB(object):
                          fields=None):
         if not products:
             products = self.L2_collection.distinct('Product')
-        elif isinstance(products, basestring):
+        elif isinstance(products, str):
             products = [products]
         query = {'Product': {'$in': products}}
 
@@ -375,7 +375,7 @@ class Level2DB(object):
             yield conc
 
 
-class GeographicArea(object):
+class GeographicArea:
     def __init__(self, min_lat=None, max_lat=None, min_lon=None, max_lon=None):
         assert any([min_lat, max_lat, min_lon, max_lon])
         # TODO: Support other lat/lon formats.
@@ -412,7 +412,9 @@ class GeographicCircle(GeographicArea):
         validate_lat_lon(lat, lon)
         self.query = {'Location': {
             '$geoWithin': {'$centerSphere': [
-                [to_geojson_longitude(lon), lat], radius/EARTH_EQ_RADIUS_KM]}}}
+                [to_geojson_longitude(lon), lat], radius / EARTH_EQ_RADIUS_KM,
+            ]},
+        }}
 
 
 def collapse_products(products):
@@ -427,7 +429,7 @@ def collapse_products(products):
             prod = prods[pname]
             for array_key in PRODUCT_ARRAY_KEYS:
                 prod[array_key].append(product[array_key])
-    return prods.values()
+    return list(prods.values())
 
 
 def expand_product(product):
@@ -436,9 +438,12 @@ def expand_product(product):
     if not isinstance(p['VMR'], list):
         if p['VMR'] is None or numpy.isnan(p['VMR']):
             p['VMR'] = [None for _ in range(len(p['Altitude']))]
-    for (altitude, pressure, lat, lon, temp, errtot, errnoise, measresp,
-         apriori, vmr, avk) in zip(
-             *[p[array_key] for array_key in PRODUCT_ARRAY_KEYS]):
+    for (
+        altitude, pressure, lat, lon, temp, errtot, errnoise, measresp,
+        apriori, vmr, avk,
+    ) in zip(
+        *[p[array_key] for array_key in PRODUCT_ARRAY_KEYS]
+    ):
         doc = {
             'Product': p['Product'],
             'FreqMode': p['FreqMode'],

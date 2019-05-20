@@ -1,5 +1,7 @@
-import httplib
-import urllib
+import http.client
+import urllib.request
+import urllib.parse
+import urllib.error
 import uuid
 
 import requests
@@ -19,15 +21,21 @@ def make_dev_url(url):
     return url.replace('/level2/', '/level2/development/')
 
 
+def response_links_args(resp, link, url):
+    link = resp.links[link]['url']
+    assert link.startswith(url)
+    return set(link.split('?')[1].split('&'))
+
+
 @pytest.fixture
 def fake_data(odinapi_service):
     # Insert level2 data
 
     r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
-    assert r.status_code == httplib.CREATED
+    assert r.status_code == http.client.CREATED
 
     r, urlinfo_failed = insert_failed_scan(PROJECT_NAME, odinapi_service)
-    assert r.status_code == httplib.CREATED
+    assert r.status_code == http.client.CREATED
 
     yield urlinfo, urlinfo_failed
 
@@ -44,7 +52,7 @@ class TestProjects:
             odinapi_service, PROJECT_NAME,
         )
         r = requests.get(url)
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         info = r.json()['Info']
         assert {
             'Name': PROJECT_NAME,
@@ -54,7 +62,7 @@ class TestProjects:
     def test_get_v5_projects(self, fake_data, odinapi_service):
         url = '{}/rest_api/v5/level2/projects/'.format(odinapi_service)
         r = requests.get(url)
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         assert len(r.json()['Data']) == 0
 
     def test_get_v5_dev_projects(self, fake_data, odinapi_service):
@@ -63,7 +71,7 @@ class TestProjects:
             odinapi_service, PROJECT_NAME,
         )
         r = requests.get(make_dev_url(url))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         data = r.json()['Data']
         assert {
             'Name': PROJECT_NAME,
@@ -103,7 +111,7 @@ class TestProjects:
         r = requests.get(url.format(
             host=odinapi_service, version=version, project=PROJECT_NAME,
         ))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         if version == 'v4':
             assert r.json()['Info'] == {
                 'Name': PROJECT_NAME,
@@ -142,9 +150,9 @@ class TestWriteLevel2:
     def test_post_and_delete(self, odinapi_service, cleanup):
         """Test post and delete of level2 data"""
         r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
-        assert r.status_code == httplib.CREATED
+        assert r.status_code == http.client.CREATED
         r = requests.delete(urlinfo.url)
-        assert r.status_code == httplib.NO_CONTENT
+        assert r.status_code == http.client.NO_CONTENT
 
     def test_update_data(self, odinapi_service, cleanup):
         # Post of duplicate should be possible
@@ -157,7 +165,7 @@ class TestWriteLevel2:
         data['L2'][1]['MJD'] = mjd
         data['L2'][2]['MJD'] = mjd
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.CREATED
+        assert r.status_code == http.client.CREATED
 
         # Check that the post above actually
         # updated data
@@ -171,19 +179,19 @@ class TestWriteLevel2:
             )
         )
         r = requests.get(url)
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         assert r.json()['Data']['L2']['Data'][0]['MJD'] == mjd
 
     def test_posting_failed_scan(self, odinapi_service, cleanup):
         r, urlinfo = insert_test_data(PROJECT_NAME, odinapi_service)
         r = requests.delete(urlinfo.url)
-        assert r.status_code == httplib.NO_CONTENT
+        assert r.status_code == http.client.NO_CONTENT
 
         # When processing fails we only get comments
         data = urlinfo.data()
         data_failed = {'L2I': [], 'L2': [], 'L2C': data['L2C']}
         r = requests.post(urlinfo.url, json=data_failed)
-        assert r.status_code == httplib.CREATED
+        assert r.status_code == http.client.CREATED
 
     def test_single_product(self, odinapi_service, cleanup):
         """Test post a single product"""
@@ -191,7 +199,7 @@ class TestWriteLevel2:
         data = urlinfo.data()
         data['L2'] = data['L2'][0]
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.CREATED
+        assert r.status_code == http.client.CREATED
 
     @pytest.mark.parametrize("d", ('', 'bad'))
     def test_post_bad_url_d(self, odinapi_service, cleanup, d):
@@ -201,48 +209,48 @@ class TestWriteLevel2:
             host=odinapi_service, version='v5', d=d,
         )
         r = requests.post(url)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
     def test_missing_post_data(self, odinapi_service, cleanup):
         data = get_test_data()
         urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         r = requests.post(urlinfo.url)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
     def test_missing_l2_data(self, odinapi_service, cleanup):
         data = get_test_data()
         urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data.pop('L2')
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
     def test_missing_l2i_scanid_data(self, odinapi_service, cleanup):
         data = get_test_data()
         urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2I'].pop('ScanID')
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
     def test_missing_l2_scanid_data(self, odinapi_service, cleanup):
         data = get_test_data()
         urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2'][0].pop('ScanID')
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
     def test_freqmode_mismatch(self, odinapi_service, cleanup):
         data = get_test_data()
         urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2I']['FreqMode'] = 2
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
     def test_scanid_mismatch(self, odinapi_service, cleanup):
         data = get_test_data()
         urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
         data['L2I']['ScanID'] = 2
         r = requests.post(urlinfo.url, json=data)
-        assert r.status_code == httplib.BAD_REQUEST
+        assert r.status_code == http.client.BAD_REQUEST
 
 
 class TestReadLevel2:
@@ -258,7 +266,7 @@ class TestReadLevel2:
             )
         )
         r = requests.get(url)
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         comments = r.json()['Info']['Comments']
         assert len(comments) == 6
 
@@ -272,7 +280,7 @@ class TestReadLevel2:
             )
         )
         r = requests.get(make_dev_url(url))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         assert r.json()['Type'] == 'level2_scan_comment'
         comments = r.json()['Data']
         assert len(comments) == 6
@@ -287,7 +295,7 @@ class TestReadLevel2:
             )
         )
         r = requests.get(make_dev_url(url))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         comments = r.json()['Data']
         assert len(comments) == 1
         assert comments[0]['Comment'] == 'Error: This scan failed'
@@ -302,7 +310,7 @@ class TestReadLevel2:
             )
         )
         r = requests.get(make_dev_url(url))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         comments = r.json()['Data']
         assert len(comments) == 1
         expected = 'Status: 9 spectra left after quality filtering'
@@ -320,7 +328,7 @@ class TestReadLevel2:
             )
         )
         r = requests.get(make_dev_url(url))
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         comments = r.json()['Data']
         assert len(comments) == 0
 
@@ -334,8 +342,8 @@ class TestReadLevel2:
             )
         )
         r = requests.get(url + '?offset=2&limit=2')
-        assert r.links['prev']['url'].split('?')[1] == 'limit=2&offset=0'
-        assert r.links['next']['url'].split('?')[1] == 'limit=2&offset=4'
+        assert response_links_args(r, 'prev', url) == {'limit=2', 'offset=0'}
+        assert response_links_args(r, 'next', url) == {'limit=2', 'offset=4'}
 
     @pytest.mark.parametrize('version,params,expect_scans', (
         ('v4', None, 1),
@@ -367,7 +375,7 @@ class TestReadLevel2:
             url += params
         r = requests.get(url)
 
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
 
         if version == 'v4':
             scans = r.json()['Info']['Scans']
@@ -430,10 +438,10 @@ class TestReadLevel2:
         if version == 'v5':
             url = make_dev_url(url)
         r = requests.get('?'.join([
-            url, urllib.urlencode([('comment', comment)]),
+            url, urllib.parse.urlencode([('comment', comment)]),
         ]))
 
-        assert r.status_code == httplib.OK
+        assert r.status_code == http.client.OK
         if version == 'v4':
             scans = r.json()['Info']['Scans']
         elif version == 'v5':
@@ -532,8 +540,8 @@ class TestReadLevel2:
         )
         r = requests.get(url + '?offset=1&limit=1')
         r.raise_for_status()
-        assert r.links['prev']['url'] == url + '/?limit=1&offset=0'
-        assert r.links['next']['url'] == url + '/?limit=1&offset=2'
+        assert response_links_args(r, 'prev', url) == {'limit=1', 'offset=0'}
+        assert response_links_args(r, 'next', url) == {'limit=1', 'offset=2'}
 
     def test_get_failed_scans_v4(self, fake_data, odinapi_service):
         """Test get list of failed scans"""
@@ -665,8 +673,8 @@ class TestReadLevel2:
         )
         r = requests.get(url + '?offset=1&limit=1')
         r.raise_for_status()
-        assert r.links['prev']['url'] == url + '/?limit=1&offset=0'
-        assert r.links['next']['url'] == url + '/?limit=1&offset=2'
+        assert response_links_args(r, 'prev', url) == {'limit=1', 'offset=0'}
+        assert response_links_args(r, 'next', url) == {'limit=1', 'offset=2'}
 
     def assert_scansproduct_eq(self, a, b):
         eqtests = [u'InvMode', u'ScanID', u'FreqMode', u'Product']
@@ -709,9 +717,9 @@ class TestReadLevel2:
         r = requests.get(url)
         r.raise_for_status()
         info = r.json()['Info']
-        assert set(['L2i', 'L2', 'L2c', 'URLS']).issubset(info.keys())
-        l2 = sorted(urlinfo.data()['L2'])
-        retl2 = sorted(info['L2'])
+        assert set(['L2i', 'L2', 'L2c', 'URLS']).issubset(list(info.keys()))
+        l2 = sorted(urlinfo.data()['L2'], key=lambda d: d['Product'])
+        retl2 = sorted(info['L2'], key=lambda d: d['Product'])
         for a, b in zip(retl2, l2):
             self.assert_scansproduct_eq(a, b)
 
@@ -734,7 +742,7 @@ class TestReadLevel2:
             )
         )
         r = requests.get(url)
-        assert r.status_code == httplib.NOT_FOUND
+        assert r.status_code == http.client.NOT_FOUND
 
     def test_get_scan_v5(self, odinapi_service, fake_data):
         urlinfo, _ = fake_data
@@ -750,7 +758,7 @@ class TestReadLevel2:
         mixed = r.json()
         assert mixed['Type'] == 'mixed'
         info = mixed['Data']
-        assert set(['L2i', 'L2', 'L2c']).issubset(info.keys())
+        assert set(['L2i', 'L2', 'L2c']).issubset(list(info.keys()))
 
         test_data = urlinfo.data()
         assert (
@@ -758,8 +766,8 @@ class TestReadLevel2:
             == len(test_data['L2'])
             == len(info['L2']['Data'])
         )
-        l2 = sorted(test_data['L2'])
-        retl2 = sorted(info['L2']['Data'])
+        l2 = sorted(test_data['L2'], key=lambda x: x['Product'])
+        retl2 = sorted(info['L2']['Data'], key=lambda x: x['Product'])
         for a, b in zip(retl2, l2):
             self.assert_scansproduct_eq(a, b)
 
@@ -933,8 +941,8 @@ class TestReadLevel2:
         uparam = [('location', loc) for loc in locations]
         uparam += [('radius', radius)]
         if param:
-            uparam += [(k, str(v)) for k, v in param.items()]
-        url += '?%s' % urllib.urlencode(uparam)
+            uparam += [(k, str(v)) for k, v in list(param.items())]
+        url += '?%s' % urllib.parse.urlencode(uparam)
         self.validate_v4_results(url, nr_expected, expected_l2)
 
     @pytest.mark.parametrize('locations,radius,nr_expected,param', (
@@ -989,8 +997,8 @@ class TestReadLevel2:
         )
         uparam = [('location', loc) for loc in locations]
         uparam += [('radius', radius)]
-        uparam += [(k, str(v)) for k, v in param.items()]
-        url += '?%s' % urllib.urlencode(uparam)
+        uparam += [(k, str(v)) for k, v in list(param.items())]
+        url += '?%s' % urllib.parse.urlencode(uparam)
         self.validate_v5_results(url, nr_expected, expected_l2)
 
     @pytest.mark.parametrize("date,nr_expected,param", (
@@ -1041,7 +1049,7 @@ class TestReadLevel2:
             host=odinapi_service, project=PROJECT_NAME, date=date,
         )
         if param:
-            url += '?%s' % urllib.urlencode(param)
+            url += '?%s' % urllib.parse.urlencode(param)
         self.validate_v4_results(url, nr_expected, expected_l2)
 
     @pytest.mark.parametrize("date,nr_expected,param", (
@@ -1093,7 +1101,7 @@ class TestReadLevel2:
                 host=odinapi_service, project=PROJECT_NAME, date=date,
             ),
         )
-        url += '?%s' % urllib.urlencode(param)
+        url += '?%s' % urllib.parse.urlencode(param)
         self.validate_v5_results(url, nr_expected, expected_l2)
 
     @pytest.mark.parametrize('nr_expected,param', (
@@ -1132,7 +1140,7 @@ class TestReadLevel2:
             host=odinapi_service, project=PROJECT_NAME,
         )
         if param:
-            url += '?%s' % urllib.urlencode(param)
+            url += '?%s' % urllib.parse.urlencode(param)
         self.validate_v4_results(url, nr_expected, expected_l2)
 
     @pytest.mark.parametrize('nr_expected,param', (
@@ -1171,91 +1179,91 @@ class TestReadLevel2:
             host=odinapi_service, project=PROJECT_NAME,
         ))
         if param:
-            url += '?%s' % urllib.urlencode(param)
+            url += '?%s' % urllib.parse.urlencode(param)
         self.validate_v5_results(url, nr_expected, expected_l2)
 
     @pytest.mark.parametrize('url,status,param', (
         # Not published
         (
             '/rest_api/v5/level2/{}/area'.format(PROJECT_NAME),
-            httplib.NOT_FOUND,
+            http.client.NOT_FOUND,
             None,
         ),
         (
             '/rest_api/v5/level2/{}/locations'.format(PROJECT_NAME),
-            httplib.NOT_FOUND,
+            http.client.NOT_FOUND,
             None,
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             None
         ),
         (
             '/rest_api/v5/level2/development/{}/locations'.format(
                 PROJECT_NAME,
             ),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(location='-10,10'),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(radius=100, location='-91,100'),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(radius=100, location='91,100'),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(radius=100, location='-10,-1'),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(radius=100, location='-10,361'),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(min_pressure=1000, max_pressure=100),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(min_altitude=50000, max_altitude=10000),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(start_time='2015-01-01', end_time='2014-01-01'),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(min_lat=-5, max_lat=-10),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(min_lon=100, max_lon=90),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(min_pressure=1000, max_altitude=100000),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(max_altitude=20000),
         ),
         (
             '/rest_api/v5/level2/development/{}/area'.format(PROJECT_NAME),
-            httplib.BAD_REQUEST,
+            http.client.BAD_REQUEST,
             dict(start_time='2015-01-01', end_time='2015-12-31'),
         ),
     ))
@@ -1263,7 +1271,7 @@ class TestReadLevel2:
         self, url, status, param, odinapi_service, fake_data,
     ):
         if param:
-            url += '?%s' % urllib.urlencode(param)
+            url += '?%s' % urllib.parse.urlencode(param)
         r = requests.get(odinapi_service + url)
         assert r.status_code == status
 
@@ -1283,7 +1291,7 @@ class TestPublishProject:
             self.development_url(odinapi_service, project) + 'publish',
             auth=('bob', encrypt_util.SECRET_KEY),
         )
-        assert response.status_code == httplib.CREATED
+        assert response.status_code == http.client.CREATED
         assert response.headers['location'] == self.production_url(
             odinapi_service, project,
         )
@@ -1295,14 +1303,14 @@ class TestPublishProject:
             + 'publish',
             auth=('bob', encrypt_util.SECRET_KEY),
         )
-        assert response.status_code == httplib.NOT_FOUND
+        assert response.status_code == http.client.NOT_FOUND
 
     def test_no_credentials(self, odinapi_service, project):
         self.assert_not_published(odinapi_service, project)
         response = requests.post(
             self.development_url(odinapi_service, project) + 'publish',
         )
-        assert response.status_code == httplib.UNAUTHORIZED
+        assert response.status_code == http.client.UNAUTHORIZED
         self.assert_not_published(odinapi_service, project)
 
     def test_bad_credentials(self, odinapi_service, project):
@@ -1311,7 +1319,7 @@ class TestPublishProject:
             self.development_url(odinapi_service, project) + 'publish',
             auth=('bob', 'password'),
         )
-        assert response.status_code == httplib.UNAUTHORIZED
+        assert response.status_code == http.client.UNAUTHORIZED
         self.assert_not_published(odinapi_service, project)
 
     def assert_not_published(self, host, project):

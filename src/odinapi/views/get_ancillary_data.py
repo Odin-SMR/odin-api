@@ -14,7 +14,8 @@ def get_theta(pressure, temperature):
     spec_heat_capacity = 29.07
     return (
         temperature * (ref_pressure / pressure) **
-        (gas_constant / spec_heat_capacity))
+        (gas_constant / spec_heat_capacity)
+    )
 
 
 def get_solartime(mjd, longitude):

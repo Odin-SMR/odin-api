@@ -1,10 +1,8 @@
 '''functionality to generate frequency per spectrum in scan'''
-
-
 import numpy as np
 
 
-class Smrl1bFreqspec(object):
+class Smrl1bFreqspec:
     '''a class derived to calculate frequency
        vector from odin-smr L1B data
     '''
@@ -144,7 +142,7 @@ class Smrl1bFreqspec(object):
                     # The frequencies are calculated by noting that
                     # two consecutive ADCs share the same internal
                     # SSB-LO:
-                    freq[mind, :] = (self.freqcal[np.round(adci / 2)] *
+                    freq[mind, :] = (self.freqcal[adci // 2] *
                                      np.ones(112) + np.arange(0, 112, 1) *
                                      dfreq + (jind - 1) * 112 * dfreq)
         if self.intmode & 512:
@@ -153,7 +151,7 @@ class Smrl1bFreqspec(object):
         return freq
 
 
-class Smrl1bFreqsort(object):
+class Smrl1bFreqsort:
     '''class derived to sort smr frequency spectra'''
     def __init__(self, sortmeth='from_middle', rm_edge_chs=True):
         self.freq = []
@@ -320,9 +318,7 @@ def freqfunc(lofreq, skyfreq, ssb_freq):
             if seqvec[2 * adci + 1] < 0:
                 dfreq = -dfreq
             for jind in range(klen):
-                freq[mcount + jind] = (
-                    ssb_freq[adci / 2] + jind * dfreq
-                )
+                freq[mcount + jind] = ssb_freq[adci // 2] + jind * dfreq
             mcount += klen
     freqvec = np.zeros(shape=(nlen,))
     if skyfreq >= lofreq:

@@ -5,13 +5,13 @@ from datetime import datetime, date, timedelta
 
 from flask import abort, request
 
-from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
-from odinapi.utils.swagger import SWAGGER
-from odinapi.utils import get_args
-from database import DatabaseConnector
-from odinapi.views.level1b_scanlogdata_exporter import ScanInfoExporter
-from odinapi.views.baseview import BaseView, register_versions
-from odinapi.views.urlgen import get_freqmode_info_url
+from .baseview import BaseView, register_versions
+from .database import DatabaseConnector
+from .level1b_scanlogdata_exporter import ScanInfoExporter
+from .urlgen import get_freqmode_info_url
+from ..utils import get_args
+from ..utils.defs import FREQMODE_TO_BACKEND, SPECIES
+from ..utils.swagger import SWAGGER
 
 
 def get_scan_logdata_cached(con, date, freqmode, scanid=None):
@@ -48,8 +48,7 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
     result = query.dictresult()
 
     # translate keys
-    infoDict = {}
-    itemDict = {
+    key_translation = {
         'freqmode': 'FreqMode',
         'backend':  'BackEnd',
         'scanid':   'ScanID',
@@ -66,20 +65,21 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
         'datetime': 'DateTime',
         'quality': 'Quality',
     }
+    translated = {}
 
-    for key in itemDict.keys():
+    for key in key_translation:
         for row in result:
             try:
-                item = row[key]
+                value = row[key]
             except KeyError:
                 continue
 
             try:
-                infoDict[itemDict[key]].append(item)
+                translated[key_translation[key]].append(value)
             except KeyError:
-                infoDict[itemDict[key]] = [item]
+                translated[key_translation[key]] = [value]
 
-    return infoDict
+    return translated
 
 
 def get_scan_logdata_uncached(con, freqmode, scanid):
@@ -92,14 +92,15 @@ def get_scan_logdata_uncached(con, freqmode, scanid):
             backend, freqmode, con)
     scan_log_data = scan_info_exporter.extract_scan_log(scanid)
 
-    log_data_dict_with_item_as_list = {}
-    if not scan_log_data == {}:
-        for item in scan_log_data.keys():
-            log_data_dict_with_item_as_list[item] = [
-                    scan_log_data[item]]
-        log_data_dict_with_item_as_list["DateTime"][0] = (
-            str(log_data_dict_with_item_as_list["DateTime"][0]))
-    return log_data_dict_with_item_as_list
+    logdata_asdict_withlists = {}
+    for key in scan_log_data:
+        logdata_asdict_withlists[key] = [scan_log_data[key]]
+
+    logdata_asdict_withlists["DateTime"][0] = (
+        str(logdata_asdict_withlists["DateTime"][0])
+    )
+
+    return logdata_asdict_withlists
 
 
 def get_scan_log_data(dbcon, freqmode, scanid):
@@ -276,13 +277,13 @@ class DateBackendInfoCached(DateInfoCached):
         return query_str
 
 
-def make_loginfo_v4(loginfo, itemlist, ind, version, date, backend):
+def make_loginfo_v4(loginfo, keylist, ind, version, date, backend):
     freq_mode = loginfo['FreqMode'][ind]
     scanid = loginfo['ScanID'][ind]
 
     datadict = dict()
-    for item in itemlist:
-        datadict[item] = loginfo[item][ind]
+    for key in keylist:
+        datadict[key] = loginfo[key][ind]
     datadict['URLS'] = dict()
     datadict['URLS']['URL-log'] = (
         '{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}'
@@ -323,13 +324,15 @@ def make_loginfo_v4(loginfo, itemlist, ind, version, date, backend):
     return datadict
 
 
-def make_loginfo_v5(loginfo, itemlist, ind, version, apriori=SPECIES):
+def make_loginfo_v5(loginfo, keylist, ind, version, apriori=None):
+    if apriori is None:
+        apriori = SPECIES
     freq_mode = loginfo['FreqMode'][ind]
     scanid = loginfo['ScanID'][ind]
 
     datadict = dict()
-    for item in itemlist:
-        datadict[item] = loginfo[item][ind]
+    for key in keylist:
+        datadict[key] = loginfo[key][ind]
     datadict['URLS'] = dict()
     datadict['URLS']['URL-log'] = (
         '{0}rest_api/{1}/level1/{2}/{3}/Log/'
@@ -366,7 +369,7 @@ def make_loginfo_v5(loginfo, itemlist, ind, version, apriori=SPECIES):
 class FreqmodeInfoCached(BaseView):
     """loginfo for all scans from a given date and freqmode"""
 
-    ITEMS_V4 = [
+    KEYS_V4 = [
         'DateTime',
         'FreqMode',
         'LatStart',
@@ -387,15 +390,15 @@ class FreqmodeInfoCached(BaseView):
 
         con = DatabaseConnector()
         loginfo = {}
-        itemlist = self.ITEMS_V4
+        keylist = self.KEYS_V4
 
         loginfo = get_scan_logdata_cached(
             con, date, freqmode=int(freqmode), scanid=scanno)
         con.close()
 
-        for item in loginfo.keys():
+        for key in loginfo:
             try:
-                loginfo[item] = loginfo[item].tolist()
+                loginfo[key] = loginfo[key].tolist()
             except AttributeError:
                 pass
 
@@ -404,21 +407,23 @@ class FreqmodeInfoCached(BaseView):
             for ind in range(len(loginfo['ScanID'])):
                 loginfo['Info'].append(
                     make_loginfo_v4(
-                        loginfo, itemlist, ind, version, date, backend))
+                        loginfo, keylist, ind, version, date, backend))
         except KeyError:
             loginfo['Info'] = []
 
         return loginfo['Info']
 
     @register_versions('return', ['v4'])
-    def _return_data_v2(self, version, data, date, backend, freqmode,
-                        scanno=None):
+    def _return_data_v2(
+        self, version, data, date, backend, freqmode, scanno=None,
+    ):
         if scanno is None:
             return {'Info': data}
         else:
             for s in data:
                 if s['ScanID'] == scanno:
                     return {"Info": s}
+        return None
 
 
 class FreqmodeInfoCachedNoBackend(BaseView):
@@ -437,18 +442,21 @@ class FreqmodeInfoCachedNoBackend(BaseView):
 
     @register_versions('fetch')
     def _fetch_data(
-            self, version, date, freqmode, scanno=None, apriori=SPECIES):
+            self, version, date, freqmode, scanno=None, apriori=None,
+    ):
+        if apriori is None:
+            apriori = SPECIES
         con = DatabaseConnector()
         loginfo = {}
-        itemlist = FreqmodeInfoCached.ITEMS_V4
+        keylist = FreqmodeInfoCached.KEYS_V4
 
         loginfo = get_scan_logdata_cached(
             con, date, freqmode=int(freqmode), scanid=scanno)
         con.close()
 
-        for item in loginfo.keys():
+        for key in loginfo:
             try:
-                loginfo[item] = loginfo[item].tolist()
+                loginfo[key] = loginfo[key].tolist()
             except AttributeError:
                 pass
 
@@ -456,7 +464,7 @@ class FreqmodeInfoCachedNoBackend(BaseView):
         try:
             for ind in range(len(loginfo['ScanID'])):
                 loginfo['Info'].append(
-                    make_loginfo_v5(loginfo, itemlist, ind, version, apriori))
+                    make_loginfo_v5(loginfo, keylist, ind, version, apriori))
         except KeyError:
             loginfo['Info'] = []
 
@@ -513,14 +521,14 @@ class L1LogCached(BaseView):
         except KeyError:
             abort(404)
 
-        itemlist = FreqmodeInfoCached.ITEMS_V4
+        keylist = FreqmodeInfoCached.KEYS_V4
         con = DatabaseConnector()
         loginfo = get_scan_log_data(con, freqmode, scanno)
         con.close()
 
-        for item in loginfo.keys():
+        for key in loginfo:
             try:
-                loginfo[item] = loginfo[item].tolist()
+                loginfo[key] = loginfo[key].tolist()
             except AttributeError:
                 pass
 
@@ -530,7 +538,7 @@ class L1LogCached(BaseView):
                 date = loginfo['DateTime'][ind].date().isoformat()
                 loginfo['Info'].append(
                     make_loginfo_v4(
-                        loginfo, itemlist, ind, version, date, backend))
+                        loginfo, keylist, ind, version, date, backend))
         except KeyError:
             loginfo['Info'] = []
 
@@ -544,13 +552,13 @@ class L1LogCached(BaseView):
 
     @register_versions('fetch', ['v5'])
     def _fetch_data(self, version, freqmode, scanno):
-        itemlist = FreqmodeInfoCached.ITEMS_V4
+        keylist = FreqmodeInfoCached.KEYS_V4
         con = DatabaseConnector()
         loginfo = get_scan_log_data(con, freqmode, scanno)
         con.close()
-        for item in loginfo.keys():
+        for key in loginfo:
             try:
-                loginfo[item] = loginfo[item].tolist()
+                loginfo[key] = loginfo[key].tolist()
             except AttributeError:
                 pass
 
@@ -558,7 +566,7 @@ class L1LogCached(BaseView):
         try:
             for ind in range(len(loginfo['ScanID'])):
                 loginfo['Info'].append(
-                    make_loginfo_v5(loginfo, itemlist, ind, version))
+                    make_loginfo_v5(loginfo, keylist, ind, version))
         except KeyError:
             loginfo['Info'] = []
 
@@ -633,7 +641,7 @@ class L1LogCachedList(FreqmodeInfoCachedNoBackend):
         while the_date < end_time:
             loginfo = super(L1LogCachedList, self)._fetch_data(
                 version, the_date, freqmode, scanno=None, apriori=apriori)
-            if len(loginfo) > 0:
+            if loginfo:
                 log_list.extend(loginfo)
             the_date += timedelta(days=1)
 

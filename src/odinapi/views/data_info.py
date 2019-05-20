@@ -4,13 +4,13 @@
 import os.path
 from flask import jsonify
 from flask.views import MethodView
-from database import DatabaseConnector
-from odinapi.views import newdonalettyERANC
+from .database import DatabaseConnector
+from . import newdonalettyERANC
 
 
 class FileInfo(MethodView):
     """plots information"""
-    def get(self):
+    def get(self, version):
         """GET"""
         db_connection = DatabaseConnector()
         result_dict = {}
@@ -21,7 +21,10 @@ class FileInfo(MethodView):
                 "order by created desc limit 1"
                 ).format(file_ending)
             db_result = db_connection.query(query)
-            result_dict[file_ending] = db_result.getresult()[0][0]
+            try:
+                result_dict[file_ending] = db_result.getresult()[0][0]
+            except IndexError:
+                result_dict[file_ending] = None
         db_connection.close()
         return jsonify(**result_dict)
 

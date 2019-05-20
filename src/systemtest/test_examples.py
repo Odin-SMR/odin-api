@@ -58,6 +58,7 @@ class TestLevel1Examples:
         # V5
         apiurl = self.get_apiroot(odinapi_service)
         request = requests.get("{}/level1/1/7015305914/L1b/".format(apiurl))
+        request.raise_for_status(), request.text
         spectra = request.json()
         assert len(spectra) == 3
         assert len(spectra["Data"]) == 35

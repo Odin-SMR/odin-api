@@ -18,7 +18,7 @@ AVOGADRO = 6.02282e23  # [mol^-1] aovogadros number
 Ro = 8.3143  # [J * mol^-1 * K^-1] ideal gas constant
 
 
-class Donaletty(dict):
+class Donaletty:
     """
          Create ZPT2 file using the new NetCDF ECMWF files
          Created
@@ -61,9 +61,10 @@ class Donaletty(dict):
                 FLAT = 1.0 / 298.257
                 Rmax = EQRAD
                 Rmin = Rmax * (1.0 - FLAT)
-                Re = np.sqrt(1./(
-                    np.cos(np.radians(latitude)) ** 2 / Rmax ** 2 +
-                    np.sin(np.radians(latitude)) ** 2 / Rmin ** 2)) / 1000
+                Re = np.sqrt(1. / (
+                    np.cos(np.radians(latitude)) ** 2 / Rmax ** 2
+                    + np.sin(np.radians(latitude)) ** 2 / Rmin ** 2
+                )) / 1000
                 return Re
 
             def intermbar(z):
@@ -81,8 +82,8 @@ class Donaletty(dict):
                 # at 45 degree
                 return 9.80616 * (
                     1 - 0.0026373 * np.cos(2 * np.radians(lat)) +
-                    0.0000059 * np.cos(2 * np.radians(lat)) ** 2) * \
-                    (1 - 2. * z / geoid_radius(lat))
+                    0.0000059 * np.cos(2 * np.radians(lat)) ** 2
+                ) * (1 - 2. * z / geoid_radius(lat))
 
             def func(_, z, xk, cval, k):
                 grad = spleval((xk, cval, k), z)
@@ -93,10 +94,10 @@ class Donaletty(dict):
             splinecoeff = splmake(newz, g(newz, lat) / newT * mbar_over_m0, 3)
             integral = odeint(func, 0, newz, splinecoeff)
             integral = 3.483 * np.squeeze(integral.transpose())
-            integral = (1 * newT[1] / newT * mbar_over_m0 * np.exp(-integral))
-            normfactor = normrho/spline(newz, integral, normz)
+            integral = newT[1] / newT * mbar_over_m0 * np.exp(-integral)
+            normfactor = normrho / spline(newz, integral, normz)
             rho = normfactor * integral
-            nodens = rho / intermbar(newz) * AVOGADRO / 1e3
+            nodens = rho, intermbar(newz) * AVOGADRO / 1e3
             n2 = wn2 * mbar_over_m0 * nodens
             o2 = nodens * (mbar_over_m0 * (1 + wo2) - 1)
             o = 2 * (1 - mbar_over_m0) * nodens
@@ -113,9 +114,10 @@ class Donaletty(dict):
             scan_datetime, lat, lon, msisz)[1]
         z = np.r_[g5zpt[g5zpt[:, 0] < 60, 0], msisz]
         temp = np.r_[g5zpt[g5zpt[:, 0] < 60, 2], msisT]
-        normrho = np.interp(
-            [20], g5zpt[:, 0], g5zpt[:, 1]) * 28.9644 / 1000 / Ro / np.interp(
-                [20], g5zpt[:, 0], g5zpt[:, 2])
+        normrho = (
+            np.interp([20], g5zpt[:, 0], g5zpt[:, 1]) * 28.9644 / 1000 / Ro
+            / np.interp([20], g5zpt[:, 0], g5zpt[:, 2])
+        )
         newT, newp, _, _, _, _, _ = intatm(
             z, temp, newz, 20, normrho[0], lat)
         zpt = np.vstack((newz, newp, newT)).transpose()
@@ -126,7 +128,7 @@ class Donaletty(dict):
         # load all ecmwffiles for the day
         hourlist = ['00', '06', '12', '18', '24']
         hour = self.datetime.hour
-        ibelow = np.int(np.floor(hour/6))
+        ibelow = hour // 6
         self.ecm = []
         for ind in range(ibelow, ibelow+2):
             hourstr = hourlist[ind]
@@ -165,7 +167,7 @@ class Donaletty(dict):
         if midlon < 0:
             midlon = midlon + 360
         hour = scan_datetime.hour
-        ibelow = np.int(np.floor(hour/6))  # index in file w.r.t time
+        ibelow = hour // 6  # index in file w.r.t time
         # iabove = ibelow + 1 #not needed, files only contain one time index
         # if iabove==4:
         #     iabove = 0
@@ -181,7 +183,7 @@ class Donaletty(dict):
         # P shouldn't matter
         T[np.isnan(T)] = 273.0
         zpt = self.donaletty(
-            np.c_[ecmz/1000, P, T], scan_datetime, newz, midlat, midlon)
+            np.c_[ecmz / 1000, P, T], scan_datetime, newz, midlat, midlon)
         datadict = {
             'ScanID': scanid,
             'Z': zpt[:, 0],
@@ -277,7 +279,7 @@ def run_donaletty(mjd, midlat, midlon, scanid):
     with SimpleFlock(filepath + '.lock', timeout=600):
         try:
             zpt = load_zptfile(filepath, scanid)
-        except (IOError,  KeyError):
+        except (IOError, KeyError):
             # create file
             donaletty = Donaletty(date, solardatafile, ecmwfpath)
             donaletty.loadecmwfdata()
@@ -300,7 +302,7 @@ def get_latest_ecmf_file():
             return False
         return True
 
-    latest_year = filter(is_digit_dir, sorted(os.listdir(basedir)))
+    latest_year = list(filter(is_digit_dir, sorted(os.listdir(basedir))))
     if not latest_year:
         return None
     latest_year = latest_year[-1]

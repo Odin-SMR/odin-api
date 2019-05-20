@@ -1,7 +1,5 @@
 '''frequency correction tools for odin-api
 '''
-
-
 import numpy as np
 from scipy.optimize import curve_fit
 
@@ -12,7 +10,7 @@ FREQUENCY_LIMIT_LOWER = 576.263  # frequency limits for single
 FREQUENCY_LIMIT_UPPER = 576.273  # spectrum correction [GHz]
 
 
-class Freqcorr572(object):
+class Freqcorr572:
     '''A class derived for performing frequency
     calibration of data from Odin/SMR 572 frontend
     '''
@@ -83,8 +81,10 @@ class Freqcorr572(object):
         '''
         tb_profile = []
         for spectrum in self.spectra:
-            if (freq1 > self.frequency_grid[0] / 1e9 and
-                    freq2 < self.frequency_grid[-1] / 1e9):
+            if (
+                (freq1 > self.frequency_grid[0] / 1e9)
+                and (freq2 < self.frequency_grid[-1] / 1e9)
+            ):
                 tbi = np.interp(
                     [freq1, freq2], self.frequency_grid / 1e9, spectrum)
                 tb_profile.append([tbi[0], tbi[1]])
@@ -130,10 +130,13 @@ class Freqcorr572(object):
         the CO line
         '''
         index_within_frequency_limits = np.nonzero(
-            (self.frequency_grids[index_of_spectrum] / 1e9 >
-             FREQUENCY_LIMIT_LOWER) &
-            (self.frequency_grids[index_of_spectrum] / 1e9 <
-             FREQUENCY_LIMIT_UPPER)
+            (
+                self.frequency_grids[index_of_spectrum] / 1e9
+                > FREQUENCY_LIMIT_LOWER
+            ) & (
+                self.frequency_grids[index_of_spectrum] / 1e9
+                < FREQUENCY_LIMIT_UPPER
+            )
         )[0]
         if index_within_frequency_limits.shape[0] > 0:
 
@@ -293,10 +296,10 @@ def fit_function_scan_median_spectrum(
     line_position_o3 = line_position_co + LINE_POSITION_DIFFERENCE_CO_O3
     return (
         line_amplitude_co * np.exp(
-            -((frequency_grid - line_position_co) / line_width_co)**2
+            -((frequency_grid - line_position_co) / line_width_co) ** 2
         ) +
         line_amplitude_o3 * np.exp(
-            -((frequency_grid - line_position_o3) / line_width_o3)**2
+            -((frequency_grid - line_position_o3) / line_width_o3) ** 2
         )
     )
 
@@ -310,7 +313,7 @@ def fit_function_single_altitude_spectrum(
     '''fitting function for single altitude spectrum'''
     return (
         baseline + line_amplitude * np.exp(
-            -((frequency_grid - line_position) / line_width)**2
+            -((frequency_grid - line_position) / line_width) ** 2
         )
     )
 

@@ -5,17 +5,17 @@ TODO:
         http://json-schema.org/examples.html
 """
 l2i_prototype = {
-    "BLineOffset": [range(12) for _ in range(4)],
-    "ChannelsID": [range(639)],
-    "FitSpectrum": [range(639)],
+    "BLineOffset": [list(range(12)) for _ in range(4)],
+    "ChannelsID": [list(range(639))],
+    "FitSpectrum": [list(range(639))],
     "FreqMode": 0,
     "FreqOffset": 0.0,
     "InvMode": "",
-    "LOFreq": [range(12)],
+    "LOFreq": [list(range(12))],
     "MinLmFactor": 0,
     "PointOffset": 0.0,
     "Residual": 0.0,
-    "STW": [range(1) for _ in range(12)],
+    "STW": [[0] for _ in range(12)],
     "ScanID": 0,
     "Tsat": 0.0,
     "SBpath": 0.0,
@@ -57,7 +57,7 @@ def check_json(data, prototype={"Data": ""}, allowUnexpected=False,
     missing, unless this is overridden by keywords.
     """
     lowKey = {}
-    for k in prototype.keys():
+    for k in prototype:
         lowKey[k.lower()] = k
 
     if fillMissing:
@@ -65,12 +65,12 @@ def check_json(data, prototype={"Data": ""}, allowUnexpected=False,
     else:
         fixedData = {}
 
-    for k in data.keys():
+    for k in data:
         try:
             if isinstance(prototype[lowKey[k.lower()]], dict):
                 tmp = check_json(data[k], prototype[lowKey[k.lower()]],
                                  allowUnexpected, allowMissing, fillMissing)
-                if "JSONError" in tmp.keys():
+                if "JSONError" in tmp:
                     fixedData["JSONError"] = tmp["JSONError"]
                 fixedData[lowKey[k.lower()]] = tmp
             else:
@@ -83,7 +83,7 @@ def check_json(data, prototype={"Data": ""}, allowUnexpected=False,
                     "Data contains unexpected key '{0}'".format(k))
 
     if not allowMissing:
-        for k in prototype.keys():
+        for k in prototype:
             try:
                 fixedData[k]
             except KeyError:

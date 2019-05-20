@@ -41,7 +41,7 @@ def level2db(mongodb):
     return level2db
 
 
-class TestGetComments(object):
+class TestGetComments:
 
     def test_get_all_comments(self, level2db):
         expected = ["Bar", "Baz", "Error", "Fi", "Foo"]
@@ -59,7 +59,7 @@ class TestGetComments(object):
         assert level2db.count_comments(FREQMODE) == 5
 
 
-class TestGetScans(object):
+class TestGetScans:
 
     def test_get_all_scans(self, level2db):
         scans = level2db.get_scans(FREQMODE)
@@ -83,7 +83,7 @@ class TestGetScans(object):
         assert level2db.count_scans(FREQMODE, offset=1) == 2
 
 
-class TestGetFailedScans(object):
+class TestGetFailedScans:
 
     def test_get_all_failed_scans(self, level2db):
         scans = level2db.get_failed_scans(FREQMODE)

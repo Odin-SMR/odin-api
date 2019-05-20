@@ -9,15 +9,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa
 from matplotlib import dates  # noqa
-from odinapi.views.level1b_scandata_exporter_v2 import(  # noqa
-    get_scan_data_v2,
-)
-from odinapi.views.date_tools import(  # noqa
-    mjd2stw, datetime2mjd, mjd2datetime,
-)
+from odinapi.views.level1b_scandata_exporter_v2 import get_scan_data_v2  # noqa
+from odinapi.views.date_tools import mjd2stw, datetime2mjd, mjd2datetime  # noqa
 
 
-class ScanInfoExporter(object):
+class ScanInfoExporter:
     '''A class derived for extracting loginfo from odin scan'''
     def __init__(self, backend, freqmode, con):
         self.backend = backend
@@ -88,20 +84,19 @@ def scan_data_is_valid(scan_data):
         'mjd', 'latitude', 'longitude', 'altitude',
         'sunzd', 'freqmode', 'quality']
     for item in required_items:
-        if item not in scan_data.keys():
+        if item not in scan_data:
             # if missing data item
             return False
-        else:
-            if (scan_data[item][0] is None or
-                    scan_data[item][-1] is None):
-                # if data item is empty
-                return False
+        if (scan_data[item][0] is None or
+                scan_data[item][-1] is None):
+            # if data item is empty
+            return False
     return True
 
 
 def plot_loginfo(backend, date1, date2, data):
     '''plot data'''
-    for item in data.keys():
+    for item in data:
         data[item] = np.array(data[item])
     fig = plt.figure(figsize=(15, 8))
     fig.suptitle(
@@ -175,6 +170,6 @@ def get_scan_logdata(con, backend, datei, freqmode=-1, dmjd=0.25):
     list_of_scan_logs = scan_info_exporter.get_log_of_scans(
         date_start, date_end, scanids)
     loginfo = {}
-    for item in list_of_scan_logs[0].keys():
+    for item in list_of_scan_logs[0]:
         loginfo[item] = [scan_log[item] for scan_log in list_of_scan_logs]
     return (loginfo, date_start, date_end)

@@ -2,7 +2,7 @@
 """
 from flask import jsonify, abort, request
 from flask.views import MethodView
-from database import DatabaseConnector
+from .database import DatabaseConnector
 from datetime import date, datetime, timedelta
 
 
@@ -75,7 +75,7 @@ class TimelineFreqmodeStatistics(MethodView):
     def get_years(self):
         """Get freqmode scans per year for all years"""
         info_dict = {}
-        years = range(2001, datetime.now().year+1)
+        years = list(range(2001, datetime.now().year+1))
         for year in years:
             first_date = "{0}-01-01".format(year)
             last_date = "{0}-12-31".format(year)
@@ -92,7 +92,7 @@ class TimelineFreqmodeStatistics(MethodView):
     def get_months(self, year):
         """Get freqmode scans per month for a single year"""
         info_dict = {}
-        months = range(1, 13)
+        months = list(range(1, 13))
         for month in months:
             first_date = date(year, month, 1)
             last_date = find_last_day_of_month(year, month)
@@ -108,7 +108,7 @@ class TimelineFreqmodeStatistics(MethodView):
         return jsonify(Data=info_dict, Months=months, Year=year)
 
     def _fill_blanks(self, indices, info_dict):
-        for key in info_dict.keys():
+        for key in info_dict:
             for n, ind in enumerate(indices):
                 try:
                     if info_dict[key][n][0] != ind:

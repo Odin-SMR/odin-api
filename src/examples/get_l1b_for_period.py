@@ -22,7 +22,7 @@ def get_scans_for_date(freqmode, date, api_root=API_ROOT, retries=0):
     """
 
     # Sanity check arguments:
-    if isinstance(date, basestring):
+    if isinstance(date, str):
         date = dateparser.parse(date).date()
 
     for attempt in range(retries + 1):
@@ -57,9 +57,9 @@ def get_scans_for_period(
     """
 
     # Sanity check arguments:
-    if isinstance(first, basestring):
+    if isinstance(first, str):
         first = dateparser.parse(first).date()
-    if isinstance(last, basestring):
+    if isinstance(last, str):
         last = dateparser.parse(last).date()
     if last is None:
         last = first
@@ -74,7 +74,7 @@ def get_scans_for_period(
     while day <= last:
         # lookup day
         if verbose:
-            print "Looking up {}...".format(day)
+            print("Looking up {}...".format(day))
         for attempt in range(retries + 1):
             try:
                 req = requests.get(
@@ -119,7 +119,7 @@ def extend_dict(dikt, data):
     Returns:
         Nothing, works directly on dikt
     """
-    for key, val in data.iteritems():
+    for key, val in data.items():
         try:
             if isinstance(val, list):
                 if key == "Spectrum" and "Frequency" in dikt:
@@ -178,10 +178,12 @@ def get_spectra_for_period(
         if req.status_code == 200:
             data = req.json()["Data"]
             extend_dict(spectra, data)
-            print "Got scan {0} of {1} ({2:d}%)".format(
-                n+1, len(scans), (100*(n+1))/len(scans))
+            print("Got scan {} of {} ({:.0f}%)".format(
+                n+1, len(scans), (100 * (n + 1)) / len(scans),
+            ))
         else:
-            print "Failed to get scan {0} of {1} ({2:d}%)".format(
-                n+1, len(scans), (100*(n+1))/len(scans))
+            print("Failed to get scan {} of {} ({:.0f}%)".format(
+                n+1, len(scans), (100 * (n + 1)) / len(scans),
+            ))
 
     return spectra

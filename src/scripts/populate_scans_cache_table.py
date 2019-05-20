@@ -1,8 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Part of odin-api, tools to make it happen
 """
-
 from os import environ
 from time import sleep
 from datetime import date, timedelta, datetime
@@ -84,7 +83,7 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         url_base = 'https://odin.rss.chalmers.se'
     while current_date >= earliest_date:
         if verbose:
-            print "Working on {0}".format(current_date)
+            print("Working on {0}".format(current_date))
         url_day = (
             '{0}/rest_api/v5/freqmode_info/{1}/'.format(
                 url_base,
@@ -97,12 +96,12 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                 response.raise_for_status()
                 break
             except HTTPError as msg:
-                print "{0} {1} {2}".format(current_date, msg, url_day)
+                print("{0} {1} {2}".format(current_date, msg, url_day))
                 retries -= 1
-                print "Retries left {0}".format(retries)
+                print("Retries left {0}".format(retries))
                 sleep(sleep_time * 2 ** (max_retries - retries - 1))
         if retries == 0:
-            print("* FAILED:", current_date, url_day)
+            print("* FAILED: {} {}".format(current_date, url_day))
             continue
 
         delete_day_from_database(db_cursor, current_date.isoformat())
@@ -111,10 +110,10 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         for freqmode in json_data_day['Data']:
             if freqmode['FreqMode'] == 0:
                 if verbose:
-                    print "Skipping FreqMode 0 on {}".format(current_date)
+                    print("Skipping FreqMode 0 on {}".format(current_date))
                 continue
             if verbose:
-                print "Working on {0}".format(freqmode['FreqMode'])
+                print("Working on {0}".format(freqmode['FreqMode']))
             url_scan = (
                 '{0}/rest_api/v5/freqmode_raw/{1}/{2}/'.format(
                     url_base,
@@ -128,12 +127,12 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                     response.raise_for_status()
                     break
                 except HTTPError as msg:
-                    print "{0} {1} {2}".format(current_date, msg, url_scan)
+                    print("{0} {1} {2}".format(current_date, msg, url_scan))
                     retries -= 1
-                    print "Retries left {0}".format(retries)
+                    print("Retries left {0}".format(retries))
                     sleep(sleep_time * 2 ** (max_retries - retries - 1))
             if retries == 0:
-                print("* FAILED:", current_date, url_day)
+                print("* FAILED: {} {}".format(current_date, url_day))
                 continue
 
             json_data_scan = response.json()
@@ -159,9 +158,9 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                 )
             db_connection.commit()
             if verbose:
-                print "freqmode {0} OK".format(freqmode["FreqMode"])
+                print("freqmode {0} OK".format(freqmode["FreqMode"]))
         if verbose:
-            print "{0} OK".format(current_date)
+            print("{0} OK".format(current_date))
         current_date += step
 
     db_cursor.close()
@@ -176,20 +175,20 @@ def cli():
     try:
         start_date = date_parser.parse(args.start_date).date()
     except TypeError:
-        print "Could not understand start date {0}".format(args.start_date)
+        print("Could not understand start date {0}".format(args.start_date))
         exit(1)
 
     try:
         end_date = date_parser.parse(args.end_date).date()
     except TypeError:
-        print "Could not understand end date {0}".format(args.end_date)
+        print("Could not understand end date {0}".format(args.end_date))
         exit(1)
 
     try:
         assert end_date > start_date
     except AssertionError:
-        print "End date must be after start date!"
-        print "Got: start {0}, end {1}".format(args.start_date, args.end_date)
+        print("End date must be after start date!")
+        print("Got: start {0}, end {1}".format(args.start_date, args.end_date))
         exit(1)
 
     exit(main(start_date, end_date, args.verbose))

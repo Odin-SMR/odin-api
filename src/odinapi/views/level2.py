@@ -1,10 +1,12 @@
 """Views for getting Level 2 data"""
 from datetime import datetime, timedelta
-import httplib
+import http.client
 from itertools import groupby
 import logging
 from operator import itemgetter
-import urllib
+import urllib.request
+import urllib.parse
+import urllib.error
 
 import dateutil.tz
 from flask import request, abort, jsonify, redirect, url_for
@@ -141,8 +143,8 @@ class Level2Write(MethodView):
                 "or, L2C is missing")
             abort(400)
         L2c = data.pop('L2C') or ''
-        if not isinstance(L2c, basestring):
-            logging.warning('Level2Write.post: L2c is not basestring')
+        if not isinstance(L2c, str):
+            logging.warning('Level2Write.post: L2c is not a string')
             abort(400)
         L2 = data.pop('L2') or []
         if isinstance(L2, dict):
@@ -326,10 +328,10 @@ class Level2ProjectPublish(MethodView):
         try:
             projectsdb.publish_project(project)
         except level2db.ProjectError:
-            abort(httplib.NOT_FOUND)
+            abort(http.client.NOT_FOUND)
         return redirect(
             url_for('level2viewproject', project=project, version='v5'),
-            code=httplib.CREATED,
+            code=http.client.CREATED,
         )
 
 
@@ -347,7 +349,7 @@ class Level2ProjectAnnotations(BaseView):
                 Count=len(annotations),
             )
         except level2db.ProjectError:
-            abort(httplib.NOT_FOUND)
+            abort(http.client.NOT_FOUND)
 
     def _annotation_to_json(self, annotation):
         obj = {'Text': annotation.text, 'CreatedAt': annotation.created_at}
@@ -359,10 +361,10 @@ class Level2ProjectAnnotations(BaseView):
     def post(self, project):
         text = request.json.get('Text')
         freqmode = request.json.get('FreqMode')
-        if text is None or not isinstance(text, basestring):
-            abort(httplib.BAD_REQUEST)
+        if text is None or not isinstance(text, str):
+            abort(http.client.BAD_REQUEST)
         if freqmode is not None and not isinstance(freqmode, int):
-            abort(httplib.BAD_REQUEST)
+            abort(http.client.BAD_REQUEST)
         projectsdb = level2db.ProjectsDB()
         annotation = level2db.ProjectAnnotation(
             text=text,
@@ -372,8 +374,8 @@ class Level2ProjectAnnotations(BaseView):
         try:
             projectsdb.add_annotation(project, annotation)
         except level2db.ProjectError:
-            abort(httplib.NOT_FOUND)
-        return '', httplib.CREATED
+            abort(http.client.NOT_FOUND)
+        return '', http.client.CREATED
 
     @register_versions('swagger', ['v5'])
     def _swagger_def(self, version):
@@ -431,10 +433,10 @@ class Level2ViewComments(Level2ProjectBaseView):
                 'URLS': {
                     'URL-scans': '{}/{}/{}/scans?{}'.format(
                         base_url, project, freqmode,
-                        urllib.urlencode([('comment', comment)])),
+                        urllib.parse.urlencode([('comment', comment)])),
                     'URL-failed': '{}/{}/{}/failed?{}'.format(
                         base_url, project, freqmode,
-                        urllib.urlencode([('comment', comment)]))
+                        urllib.parse.urlencode([('comment', comment)]))
                 }
             } for comment in comments]
         }
@@ -1060,7 +1062,7 @@ class Level2ViewDay(Level2ProjectBaseView):
     def _fetch(self, version, project, date):
         try:
             start_time = get_args.get_datetime(val=date)
-        except ValueError as e:
+        except ValueError:
             abort(400)
         end_time = start_time + timedelta(hours=24)
         try:

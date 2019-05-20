@@ -16,12 +16,12 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     rm -rf swagger-ui*
 
 COPY requirements.txt /app
-RUN pip install --no-binary=h5py -r requirements.txt
+RUN pip3 install --no-binary=h5py -r requirements.txt
 COPY requirements_extra.txt /app
-RUN pip install -r requirements_extra.txt
+RUN pip3 install -r requirements_extra.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
 COPY src/setup.py /app/setup.py
-RUN python setup.py install
+RUN python3 setup.py install
 expose 5000
 cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app

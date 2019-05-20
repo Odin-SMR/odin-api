@@ -1,8 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 Part of odin-api, tools to make it happen
 """
-
 from os import environ
 from datetime import date, timedelta
 from argparse import ArgumentParser
@@ -107,7 +106,7 @@ def cli():
         exit(1)
 
     try:
-        assert(end_date > start_date)
+        assert end_date > start_date
     except AssertionError:
         print("End date must be after start date!")
         print("Got: start {0}, end {1}".format(args.start_date, args.end_date))

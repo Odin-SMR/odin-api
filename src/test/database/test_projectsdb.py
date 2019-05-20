@@ -29,7 +29,7 @@ def test_add_project(projectdb):
     assert project['development']
 
 
-class TestPublishProject(object):
+class TestPublishProject:
     def test_publish_project(self, projectdb):
         projectdb.add_project_if_not_exists('my-project')
         projectdb.publish_project('my-project')
@@ -41,7 +41,7 @@ class TestPublishProject(object):
             projectdb.publish_project('my-project')
 
 
-class TestGetProjects(object):
+class TestGetProjects:
 
     @pytest.fixture(autouse=True)
     def projects(self, projectdb):
@@ -64,7 +64,7 @@ class TestGetProjects(object):
         assert projects[0]['name'] == 'my-project-prod'
 
 
-class TestAnnotations(object):
+class TestAnnotations:
     def test_get_annotations_unknown_project(self, projectdb):
         with pytest.raises(ProjectError):
             list(projectdb.get_annotations('my-project'))

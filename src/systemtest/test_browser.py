@@ -22,7 +22,7 @@ def chrome():
     driver.quit()
 
 
-class TestBrowser():
+class TestBrowser:
     def test_main_page_is_up(self, odinapi_service, chrome):
         """Test that main page is up"""
         driver = chrome
@@ -113,9 +113,23 @@ class TestLevel2Browser:
         href.click()
         driver.get("{}{}".format(odinapi_service, test_ref))
         sleep(1)
-        assert (driver.find_elements_by_id(
-            'alt-cross-section-plots')[0].find_elements_by_class_name(
-                'product-name')[0].text == 'O3 / 501 GHz / 20 to 50 km')
+        header = driver.find_element_by_class_name('page-header')
+        assert (
+            header.text
+            == 'Title: development, Project: testproject, Freqmode: 1, Scanid: 7014791071'  # noqa
+        )
+        plotsection = driver.find_element_by_id('alt-cross-section-plots')
+        plottitles = set(
+            plot.find_element_by_class_name('product-name').text for plot
+            in plotsection.find_elements_by_class_name(
+                'alt-cross-section-plot-product',
+            )
+        )
+        assert plottitles == {
+         'O3 / 501 GHz / 20 to 50 km',
+         'N2O / 502 GHz / 20 to 50 km',
+         'ClO / 501 GHz / 20 to 50 km',
+        }
 
 
 def import_level2data(host, offset=0):

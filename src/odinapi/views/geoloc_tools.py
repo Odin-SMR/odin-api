@@ -20,8 +20,8 @@ def cart2sph(x_cart, y_cart, z_cart):
 
 def getscangeoloc(
         lat_start, lon_start, lat_end, lon_end):
-    deg2rad = N.pi/180.0
-    rad2deg = 180/N.pi
+    deg2rad = N.pi / 180.0
+    rad2deg = 180 / N.pi
     lat_start = lat_start * deg2rad
     lon_start = lon_start * deg2rad
     lat_end = lat_end * deg2rad
@@ -49,7 +49,8 @@ def get_geoloc_info(logdata):
         lat_start, lon_start, lat_end, lon_end)
     mjd_mid = (
         logdata['MJDStart'][0] +
-        logdata['MJDEnd'][0])/2
+        logdata['MJDEnd'][0]
+    ) / 2
     datetime_scan = mjd2datetime(mjd_mid)
     doy = datetime_scan.timetuple().tm_yday
     return (mjd_mid, doy, lat_mid, lon_mid)

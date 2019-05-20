@@ -9,7 +9,7 @@ SUN1 = 0x0008
 MOONMB = 0x0200
 
 
-class QualityControl(object):
+class QualityControl:
     '''class derived to check quality'''
     def __init__(self, specdata, refdata):
         self.refdata = refdata
@@ -77,8 +77,11 @@ class QualityControl(object):
             # estimated noise is suspicious
             # low or high, make a new estimate
             self.estimate_efftime(bandwidth)
-        noise = self.specdata['tsys'][2] / (
-            self.specdata['efftime'][2::] * bandwidth)**0.5
+        noise = (
+            self.specdata['tsys'][2]
+            / (self.specdata['efftime'][2::] * bandwidth) ** 0.5
+        )
+
         test = np.nonzero((noise <= noise_min) |
                           (noise >= noise_max))[0]
         if not test.shape[0] == 0:
@@ -100,10 +103,10 @@ class QualityControl(object):
                 meantb = np.repeat(
                     meantb, bandtb.shape[1], 0).transpose()
                 msqe = np.mean((bandtb - meantb)**2, 1)
-                efft[:, band] = (self.specdata['tsys'][2]**2 /
-                                 msqe /
-                                 bandwidth /
-                                 self.specdata['inttime'][okzind + 2])
+                efft[:, band] = (
+                    self.specdata['tsys'][2] ** 2
+                    / msqe / bandwidth / self.specdata['inttime'][okzind + 2]
+                )
         efft = np.max(np.mean(efft, 0))
         self.specdata['efftime'] = self.specdata['inttime'] * efft
 
@@ -235,8 +238,8 @@ class QualityControl(object):
         # store the good referenes
         allind = np.arange(self.refdata['sig_type'].shape[0])
         okind = np.setdiff1d(allind, badind)
-        for item in self.refdata.keys():
-            self.refdata[item] = self.refdata[item][okind]
+        for key in self.refdata:
+            self.refdata[key] = self.refdata[key][okind]
 
     def get_zerolagvar(self):
         '''identify the power variation of the two surrounding
@@ -262,7 +265,7 @@ class QualityControl(object):
             self.zerolagvar.append(np.around(frac, decimals=4).tolist())
 
 
-class QualityDisplay(object):
+class QualityDisplay:
     '''class derived to extract information from
        odin level1b quality flag
     '''
@@ -289,9 +292,9 @@ class QualityDisplay(object):
         '''identify which bits are non zero
         '''
         flaglist = []
-        for item in self.qualdict:
-            if self.quality & self.qualdict[item][0] != 0:
-                flaglist.append(item)
+        for key in self.qualdict:
+            if self.quality & self.qualdict[key][0] != 0:
+                flaglist.append(key)
         return flaglist
 
     def get_flaginfo(self):
@@ -306,7 +309,7 @@ class QualityDisplay(object):
                     message = ('The Quality of Level1B data ' +
                                'for this scan is limited: ')
                 message = message + self.qualdict[item][1]
-        for ind in range(0, len(message) / 180):
+        for ind in range(0, len(message) // 180):
             message = (message[0: 1 + 180 * (ind + 1) + 3*ind] + '-\n' +
                        message[1 + 180 * (ind + 1) + 3*ind::])
         return message

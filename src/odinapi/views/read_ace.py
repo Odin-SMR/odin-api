@@ -10,28 +10,18 @@ def read_ace_file(acefile, date, file_index):
         *[date[0:4], date[5:7]])
     with Dataset(ace_datapath + acefile, 'r') as fgr:
         data = dict()
-        for group in fgr['ACE-FTS-v2.2'].groups.keys():
+        for group in fgr['ACE-FTS-v2.2'].groups:
             if group in ['Geometry']:
                 continue
             data[group] = dict()
-            for variable in fgr['ACE-FTS-v2.2'][group].variables.keys():
-                if variable in ['H2O',
-                                'H2O_err',
-                                'CO',
-                                'CO_err',
-                                'NO',
-                                'NO_err',
-                                'N2O',
-                                'N2O_err',
-                                'O3',
-                                'O3_err',
-                                'P',
-                                'T',
-                                'T_fit',
-                                'dens',
-                                'z']:
+            for variable in fgr['ACE-FTS-v2.2'][group].variables:
+                if variable in [
+                    'H2O', 'H2O_err', 'CO', 'CO_err', 'NO', 'NO_err', 'N2O',
+                    'N2O_err', 'O3', 'O3_err', 'P', 'T', 'T_fit', 'dens', 'z',
+                ]:
                     data[group][variable] = np.array(
-                        fgr['ACE-FTS-v2.2'][group][variable]).tolist()
+                        fgr['ACE-FTS-v2.2'][group][variable],
+                    ).tolist()
         data['Attributes'] = dict()
         for att in fgr['ACE-FTS-v2.2'].ncattrs():
             data['Attributes'][att] = np.array(

@@ -41,7 +41,7 @@ def frequency_grid(scan_data_sample):
             scan_data_sample, 1)
 
 
-class TestSmrl1bFreqspec():
+class TestSmrl1bFreqspec:
 
     def test_get_frequency(self, frequency_grid):
         assert frequency_grid.shape == (8, 112)
@@ -67,7 +67,7 @@ class TestSmrl1bFreqspec():
             sequence_pattern == expected_sequence_pattern)
 
     def test_get_seq_pattern_mode17(self, scan_data_sample):
-        scan_data_sample['mode'] = 17 * scan_data_sample['mode'] / 127
+        scan_data_sample['mode'] = 17 * scan_data_sample['mode'] // 127
         smr_freq_spec = Smrl1bFreqspec()
         smr_freq_spec.get_frequency(scan_data_sample, 1)
         sequence_pattern = smr_freq_spec.get_seq_pattern()
@@ -79,7 +79,7 @@ class TestSmrl1bFreqspec():
             sequence_pattern == expected_sequence_pattern)
 
     def test_get_seq_pattern_mode0(self, scan_data_sample):
-        scan_data_sample['mode'] = 0 * scan_data_sample['mode'] / 127
+        scan_data_sample['mode'] = 0 * scan_data_sample['mode'] // 127
         smr_freq_spec = Smrl1bFreqspec()
         smr_freq_spec.get_frequency(scan_data_sample, 1)
         sequence_pattern = smr_freq_spec.get_seq_pattern()
@@ -91,7 +91,7 @@ class TestSmrl1bFreqspec():
             sequence_pattern == expected_sequence_pattern)
 
 
-class TestSmrl1bFreqsort():
+class TestSmrl1bFreqsort:
 
     def test_get_sorted_ac_spectrum(
             self, scan_data_sample, frequency_grid):

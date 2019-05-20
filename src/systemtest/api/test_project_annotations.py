@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import httplib
+import http.client
 import uuid
 
 import dateutil.parser
@@ -31,14 +31,14 @@ def project(odinapi_service):
 
 def test_get_empty_annotations(project, odinapi_service):
     response = requests.get(project + '/annotations')
-    assert response.status_code == httplib.OK
+    assert response.status_code == http.client.OK
     assert response.json()['Data'] == []
 
 
 def test_get_annotations_unknown_project(odinapi_service):
     project = make_project_url(odinapi_service, 'unknown')
     response = requests.get(project + '/annotations')
-    assert response.status_code == httplib.NOT_FOUND
+    assert response.status_code == http.client.NOT_FOUND
 
 
 def test_post(odinapi_service, project):
@@ -48,9 +48,9 @@ def test_post(odinapi_service, project):
         auth=('bob', encrypt_util.SECRET_KEY),
     )
     now = datetime.utcnow().replace(tzinfo=tzutc())
-    assert response.status_code == httplib.CREATED
+    assert response.status_code == http.client.CREATED
     response = requests.get(project + '/annotations')
-    assert response.status_code == httplib.OK
+    assert response.status_code == http.client.OK
     assert len(response.json()['Data']) == 1
     annotation = response.json()['Data'][0]
     assert annotation['Text'] == 'This is a freqmode'
@@ -74,7 +74,7 @@ def test_post_multiple(odinapi_service, project):
         auth=('bob', encrypt_util.SECRET_KEY),
     ).raise_for_status()
     response = requests.get(project + '/annotations')
-    assert response.status_code == httplib.OK
+    assert response.status_code == http.client.OK
     annotations = response.json()['Data']
     assert len(annotations) == 2
     assert annotations[0]['Text'] == 'This is a project'
@@ -98,7 +98,7 @@ def test_post_unknown_project(odinapi_service):
         json={'Text': 'This is a project'},
         auth=('bob', encrypt_util.SECRET_KEY),
     )
-    assert response.status_code == httplib.NOT_FOUND
+    assert response.status_code == http.client.NOT_FOUND
 
 
 def test_post_bad_text(odinapi_service, project):
@@ -107,7 +107,7 @@ def test_post_bad_text(odinapi_service, project):
         json={'Text': 0000},
         auth=('bob', encrypt_util.SECRET_KEY),
     )
-    assert response.status_code == httplib.BAD_REQUEST
+    assert response.status_code == http.client.BAD_REQUEST
 
 
 def test_post_no_text(odinapi_service, project):
@@ -116,7 +116,7 @@ def test_post_no_text(odinapi_service, project):
         json={},
         auth=('bob', encrypt_util.SECRET_KEY),
     )
-    assert response.status_code == httplib.BAD_REQUEST
+    assert response.status_code == http.client.BAD_REQUEST
 
 
 def test_post_bad_freqmode(odinapi_service, project):
@@ -125,7 +125,7 @@ def test_post_bad_freqmode(odinapi_service, project):
         json={'Text': 'xxx', 'FreqMode': 'abcd'},
         auth=('bob', encrypt_util.SECRET_KEY),
     )
-    assert response.status_code == httplib.BAD_REQUEST
+    assert response.status_code == http.client.BAD_REQUEST
 
 
 def test_post_no_credentials(odinapi_service, project):
@@ -133,7 +133,7 @@ def test_post_no_credentials(odinapi_service, project):
         project + '/annotations',
         json={'Text': 'This is a project'},
     )
-    assert response.status_code == httplib.UNAUTHORIZED
+    assert response.status_code == http.client.UNAUTHORIZED
 
 
 def test_post_bad_credentials(odinapi_service, project):
@@ -142,4 +142,4 @@ def test_post_bad_credentials(odinapi_service, project):
         json={'Text': 'This is a project'},
         auth=('bob', 'password'),
     )
-    assert response.status_code == httplib.UNAUTHORIZED
+    assert response.status_code == http.client.UNAUTHORIZED

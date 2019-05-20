@@ -5,7 +5,7 @@ handling of different api versions.
 import inspect
 from threading import Lock
 
-from flask import jsonify, abort, Response
+from flask import jsonify, Response
 from flask.views import MethodView
 
 NEW_BASEVIEW_LOCK = Lock()
@@ -38,6 +38,10 @@ def register_versions(role, versions=None):
         method._versions = versions
         return method
     return decorator
+
+
+def inspect_predicate(obj):
+    return inspect.ismethod(obj) or inspect.isfunction(obj)
 
 
 class BadRequest(Exception):
@@ -92,7 +96,8 @@ class BaseView(MethodView):
             cls.VERSION_TO_RETURNDATA = {}
             cls.VERSION_TO_SWAGGERSPEC = {}
             for method_name, method in inspect.getmembers(
-                    cls, predicate=inspect.ismethod):
+                cls, predicate=inspect_predicate
+            ):
                 if hasattr(method, '_role'):
                     if method._role == 'fetch':
                         lookup = cls.VERSION_TO_FETCHDATA
@@ -116,10 +121,24 @@ class BaseView(MethodView):
 
     def get(self, version, *args, **kwargs):
         if version not in self.SUPPORTED_VERSIONS:
-            abort(404)
+            return jsonify({
+                'Error': 'Version {} not supported only {}'.format(
+                    version, self.SUPPORTED_VERSIONS,
+                ),
+            }), 404
         if (version not in self.VERSION_TO_FETCHDATA or
                 version not in self.VERSION_TO_RETURNDATA):
-            abort(404)
+            return jsonify({
+                'Error':
+                'Version {} not supported only {} (restriction {})'.format(
+                    version,
+                    self.VERSION_TO_FETCHDATA
+                    if version not in self.VERSION_TO_FETCHDATA
+                    else self.VERSION_TO_RETURNDATA,
+                    'fetch data' if version not in self.VERSION_TO_FETCHDATA
+                    else 'return data'
+                ),
+            }), 404
         # TODO: Might want to add more method roles?
         try:
             data = getattr(self, self.VERSION_TO_FETCHDATA[version])(

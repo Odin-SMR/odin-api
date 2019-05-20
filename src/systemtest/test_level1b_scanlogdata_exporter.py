@@ -34,7 +34,7 @@ def scan_log_sample_data():
     }
 
 
-class TestScanInfoExporter():
+class TestScanInfoExporter:
 
     def test_get_scanids(self, scan_info_exporter, odinapi_service):
         stw_min = 7014769646

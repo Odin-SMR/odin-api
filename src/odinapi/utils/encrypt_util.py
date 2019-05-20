@@ -9,12 +9,16 @@ SECRET_KEY = '***REMOVED***'
 def encrypt(msg):
     msg = msg + ' '*(16 - (len(msg) % 16 or 16))
     cipher = AES.new(SECRET_KEY, AES.MODE_ECB)
-    return base64.urlsafe_b64encode(cipher.encrypt(msg))
+    return base64.urlsafe_b64encode(
+        cipher.encrypt(msg.encode())
+    ).decode()
 
 
 def decrypt(msg):
     cipher = AES.new(SECRET_KEY, AES.MODE_ECB)
-    return cipher.decrypt(base64.urlsafe_b64decode(str(msg))).strip()
+    return cipher.decrypt(
+        base64.urlsafe_b64decode(msg.encode())
+    ).decode().strip()
 
 
 def encode_level2_target_parameter(scanid, freqmode, project):

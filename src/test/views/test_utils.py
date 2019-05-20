@@ -14,7 +14,7 @@ def X_test_make_rfc5988_link():
     assert link == '<https://foo.bar/>; rel="alternate"; title="Foobar"'
 
 
-class TestOffsetAndLimitPagination(object):
+class TestOffsetAndLimitPagination:
 
     @pytest.fixture
     def pagination(self):

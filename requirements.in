@@ -24,7 +24,6 @@ pyproj
 python-dateutil
 requests
 scipy
-spacepy
 setuptools
 simpleflock
 sqlalchemy

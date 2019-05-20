@@ -76,7 +76,7 @@ def freq_corr_572(scan_sample_data):
         scan_sample_data['altitudes'])
 
 
-class TestFreqcorr572():
+class TestFreqcorr572:
 
     def test_altitude_check(self, odinapi_service, freq_corr_572):
         assert freq_corr_572.altitude_check() == 1

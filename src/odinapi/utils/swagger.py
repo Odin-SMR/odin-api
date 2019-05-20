@@ -39,7 +39,7 @@ from flask.views import MethodView
 from odinapi.views.baseview import BaseView
 
 
-class Swagger(object):
+class Swagger:
     """Class for handling of swagger type definitions, responses and
     parameters.
 
@@ -49,8 +49,6 @@ class Swagger(object):
     TYPE2SWAGGER = {
         int: 'integer',
         float: 'number',
-        basestring: 'string',
-        unicode: 'string',
         str: 'string',
         list: 'array',
         bool: 'boolean'

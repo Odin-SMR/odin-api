@@ -62,7 +62,7 @@ def nanitize(f):
     return _decoration
 
 
-class Sage3Data(object):
+class Sage3Data:
     def __init__(self, filename):
         self._hfile = h5py.File(filename, 'r')
         self.speciesData = {
@@ -104,7 +104,7 @@ class Sage3Data(object):
     def datetimes(self):
         timestamps = self.raw_timestamps
         datetimes = []
-        for n in xrange(timestamps.shape[0]):
+        for n in range(timestamps.shape[0]):
             if np.isnan(timestamps[n]).any():
                 datetimes.append(np.nan)
             else:
@@ -194,8 +194,8 @@ class Sage3Data(object):
         day = int(date[6: 8])
 
         time = timestamp.astype(np.int)[1]
-        hour = time / 10000
-        minute = (time - hour * 10000) / 100
+        hour = time // 10000
+        minute = (time - hour * 10000) // 100
         second = time - hour * 10000 - minute * 100
 
         return datetime(year, month, day, hour, minute, second)

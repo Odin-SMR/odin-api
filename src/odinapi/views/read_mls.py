@@ -18,10 +18,10 @@ def read_mls_file(mlsfile, date, species, file_index):
             fdata = fgr['HDFEOS']['SWATHS']['Temperature']
         else:
             fdata = fgr['HDFEOS']['SWATHS'][species]
-        for item in fdata['Data Fields'].keys():
+        for item in fdata['Data Fields']:
             data_fields[item] = np.array(fdata['Data Fields'][item])
 
-        for item in fdata['Geolocation Fields'].keys():
+        for item in fdata['Geolocation Fields']:
             geolocation_fields[item] = np.array(
                 fdata['Geolocation Fields'][item])
 
@@ -32,17 +32,17 @@ def read_mls_file(mlsfile, date, species, file_index):
         date_i = mls_date0 + relativedelta(seconds=time_i)
         mjd_i = date_i - datetime(1858, 11, 17)
         sec_per_day = 24*60*60.0
-        mjd.append(mjd_i.total_seconds()/sec_per_day)
+        mjd.append(mjd_i.total_seconds() / sec_per_day)
     geolocation_fields['MJD'] = np.array(mjd)
 
     data['data_fields'] = data_fields
     data['geolocation_fields'] = geolocation_fields
 
     # select data from the given index
-    for item in data['data_fields'].keys():
+    for item in data['data_fields']:
         data['data_fields'][item] = data['data_fields'][
             item][file_index].tolist()
-    for item in data['geolocation_fields'].keys():
+    for item in data['geolocation_fields']:
         if item not in ['Pressure']:
             data['geolocation_fields'][item] = data[
                 'geolocation_fields'][item][file_index].tolist()

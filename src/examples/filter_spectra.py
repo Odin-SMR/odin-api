@@ -27,7 +27,7 @@ def filter_by_param(spectra, low, high, param):
         inds = np.where(np.logical_and(low <= data, data <= high))
 
         # Remove unmatched indices:
-        for key, val in spectra.iteritems():
+        for key, val in spectra.items():
             if isinstance(val, list) or isinstance(val, np.ndarray):
                 spectra[key] = np.array(spectra[key])[inds]
 
@@ -116,7 +116,7 @@ def filter_by_quality(spectra, reject=0xFFFFFFFF, require=0x0):
             (data & require) == require, (data & reject) == 0x0))
 
         # Remove unmatched indices:
-        for key, val in spectra.iteritems():
+        for key, val in spectra.items():
             if isinstance(val, list) or isinstance(val, np.ndarray):
                 spectra[key] = np.array(spectra[key])[inds]
 
