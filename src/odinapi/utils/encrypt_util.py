@@ -1,9 +1,12 @@
+import os
 import json
 import base64
 from Crypto.Cipher import AES
 
-# TODO: Get secret from environ
-SECRET_KEY = '***REMOVED***'
+
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', '***REMOVED***'
+)
 
 
 def encrypt(msg):
