@@ -771,6 +771,30 @@ class TestReadLevel2:
         for a, b in zip(retl2, l2):
             self.assert_scansproduct_eq(a, b)
 
+    def test_get_scan_v5_failed_l2_processing(
+            self, odinapi_service):
+        data = get_test_data()
+        urlinfo = get_write_url(data, PROJECT_NAME, odinapi_service)
+        data['L2'] = []
+        data['L2C'] = 'processing failed.'
+        r = requests.post(urlinfo.url, json=data)
+        assert r.status_code == http.client.CREATED
+
+        url = make_dev_url(
+            '{host}/rest_api/{version}/level2/{project}/{freqmode}/{scanid}/'
+            .format(
+                host=odinapi_service, version='v5', project=PROJECT_NAME,
+                freqmode=urlinfo.freq_mode, scanid=urlinfo.scan_id
+            )
+        )
+        r1 = requests.get("{}L2c/".format(url))
+        r2 = requests.get(url)
+        delete_test_data(PROJECT_NAME, odinapi_service)
+        assert (
+            r1.json()['Data'][0] == 'processing failed.'
+            and r2.status_code == http.client.NOT_FOUND
+        )
+
     @pytest.mark.parametrize('part', ('L2i', 'L2c', 'L2'))
     def test_get_scan_v5_parts(self, odinapi_service, fake_data, part):
         urlinfo, _ = fake_data

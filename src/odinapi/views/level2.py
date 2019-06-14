@@ -660,6 +660,8 @@ class Level2ViewScan(Level2ProjectBaseView):
                 request.url_root, version, freqmode, scanno)
             info['Collocations'] = collocations
         if version >= 'v5':
+            if not L2:
+                abort(404)
             info['L2anc'] = get_ancillary_data(
                 DatabaseConnector(), info['L2'])
         return info
