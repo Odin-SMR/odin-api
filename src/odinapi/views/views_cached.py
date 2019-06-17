@@ -96,10 +96,6 @@ def get_scan_logdata_uncached(con, freqmode, scanid):
     for key in scan_log_data:
         logdata_asdict_withlists[key] = [scan_log_data[key]]
 
-    logdata_asdict_withlists["DateTime"][0] = (
-        str(logdata_asdict_withlists["DateTime"][0])
-    )
-
     return logdata_asdict_withlists
 
 

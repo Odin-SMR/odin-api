@@ -1,6 +1,22 @@
 import http.client
 import pytest
 import requests
+from datetime import datetime
+from pg import DB
+from odinapi.views.views_cached import (
+    get_scan_logdata_cached,  get_scan_logdata_uncached
+)
+
+
+class DatabaseConnector(DB):
+    def __init__(self, host, port):
+        DB.__init__(self, dbname='odin', user='odinop', host=host, port=port)
+
+
+@pytest.fixture(scope="session")
+def dbconnection(odin_postgresql):
+    host, port = odin_postgresql
+    return DatabaseConnector(host, port)
 
 
 class TestLevel1CachedViews:
@@ -142,3 +158,14 @@ class TestLevel1CachedViews:
         if r.status_code == http.client.OK:
             assert r.json()['Count'] == expect_count
             assert len(r.json()['Data'][0]["URLS"]) == expect_url_count
+
+
+def test_get_scan_logdata_cached_returns_consistent_datetime(dbconnection):
+    date = None
+    freqmode = 2
+    scanid = 7014785316
+    data1 = get_scan_logdata_uncached(dbconnection, freqmode, scanid)
+    data2 = get_scan_logdata_cached(
+        dbconnection, date, freqmode, scanid=scanid)
+    assert isinstance(data1["DateTime"][0], datetime)
+    assert data1["DateTime"] == data2["DateTime"]
