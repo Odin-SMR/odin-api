@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from netCDF4 import Dataset, chartostring, num2date
@@ -52,4 +53,39 @@ def read_mipas_file(
             except AttributeError:
                 data[key] = entry
 
+    return data
+
+
+def read_esa_mipas_file(
+        file,
+        date,
+        species,
+        basepath=os.path.join(
+            '/vds-data', 'MIP_NL__2P', 'v7.03',
+        )):
+
+    current_date = datetime.strptime(date, '%Y-%m-%d')
+    mipas_file = os.path.join(
+        basepath,
+        '{}'.format(current_date.year),
+        '{:02}'.format(current_date.month),
+        '{:02}'.format(current_date.day),
+        file
+    )
+    data = {
+        '{}_retrieval_mds'.format(species.lower()): {},
+        'scan_geolocation_ads': {}
+    }
+    with Dataset(mipas_file, 'r') as dataset:
+        for group_name in data:
+            group = dataset[group_name]
+            for variable in group.variables:
+                if len(group.variables[variable].shape) > 0:
+                    data[group_name][variable] = (
+                        group.variables[variable][:].tolist()
+                    )
+                else:
+                    data[group_name][variable] = (
+                        group.variables[variable][:].item()
+                    )
     return data

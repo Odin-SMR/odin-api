@@ -20,6 +20,15 @@ def test_vds_file4mipas_exists(odinapi_service):
     )
 
 
+def test_vds_file4mipas_esa_exists(odinapi_service):
+    url = '{}/rest_api/v4/config_data/data_files/'.format(odinapi_service)
+    data = requests.get(url).json()
+    assert (
+        data['data']['vds-files']['mipas_esa']['example-file']
+        == '/vds-data/MIP_NL__2P/v7.03/2002/07/31/MIP_NL__2PWDSI20020731_121351_000060462008_00124_02182_1000_11.nc'  # noqa
+    )
+
+
 def test_vds_file4mls_exists(odinapi_service):
     url = '{}/rest_api/v4/config_data/data_files/'.format(odinapi_service)
     data = requests.get(url).json()
@@ -83,6 +92,16 @@ def test_vds_file4mipas_is_readable(odinapi_service):
     data = requests.get(url).json()
     t0 = data['target'][0]
     assert t0 == pytest.approx(0.098, abs=0.001)
+
+
+def test_vds_file4mipas_esa_is_readable(odinapi_service):
+    url = (
+        '{}/rest_api/v4/vds_external/'.format(odinapi_service)
+        + 'mipas_esa/O3/2002-07-31/MIP_NL__2PWDSI20020731_121351_000060462008_00124_02182_1000_11.nc/0/'  # noqa
+    )
+    data = requests.get(url).json()
+    assert data['o3_retrieval_mds']['dsr_time'] == pytest.approx(
+        81433778.551209, abs=0.001)
 
 
 def test_vds_file4mls_is_readable(odinapi_service):

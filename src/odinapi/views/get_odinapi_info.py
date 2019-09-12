@@ -20,6 +20,15 @@ def get_vds_file_status():
         '02',
         'MIPAS-E_IMK.200702.V5R_O3_224.nc'
     )
+    mipas_esa_file = os.path.join(
+        '/vds-data',
+        'MIP_NL__2P',
+        'v7.03',
+        '2002',
+        '07',
+        '31',
+        'MIP_NL__2PWDSI20020731_121351_000060462008_00124_02182_1000_11.nc'
+    )
     mls_file = os.path.join(
         '/vds-data',
         'Aura_MLS_Level2',
@@ -64,6 +73,7 @@ def get_vds_file_status():
         'sageIII': sageiii_file,
         'smr': smr_file,
         'osiris': osiris_file,
+        'mipas_esa': mipas_esa_file,
     }
 
     for item in vds_files:

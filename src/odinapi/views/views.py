@@ -1,5 +1,3 @@
-""" doc
-"""
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -16,7 +14,7 @@ from .level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
 from .level1b_scanlogdata_exporter import get_scan_logdata
 from .read_apriori import get_apriori
 from .read_mls import read_mls_file
-from .read_mipas import read_mipas_file
+from .read_mipas import read_mipas_file, read_esa_mipas_file
 from .read_smiles import read_smiles_file
 from .read_sageIII import read_sageIII_file
 from .read_osiris import read_osiris_file
@@ -979,6 +977,8 @@ class VdsExtData(MethodView):
             data = read_mls_file(file, date, species, file_index)
         elif instrument == 'mipas':
             data = read_mipas_file(file, date, species, file_index)
+        elif instrument == 'mipas_esa':
+            data = read_esa_mipas_file(file, date, species)
         elif instrument == 'smiles':
             data = read_smiles_file(file, date, species, file_index)
         elif instrument == 'sageIII':
