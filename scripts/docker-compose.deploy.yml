@@ -31,7 +31,7 @@ services:
       - /misc/pearl/extdata/ERA-Interim:/ecmwf-data:rw
       - /db/zpt:/var/lib/odindata/ZPT:rw
       - /db:/var/lib/odindata:rw
-      - /odin/external/vds-data:/vds-data:ro
+      - /misc/pearl/vds-data:/vds-data:ro
       - /odin/osiris/Level2/Daily:/osiris-data:ro
       - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-1:/odin-smr-2-1-data:ro
       - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-0:/odin-smr-2-0-data:ro
@@ -41,5 +41,4 @@ services:
       - /db_sdb1/odin/l2netcdf:/data/odin-l2-data:rw
       - /db_sdb1/odin/MesosphEO:/data/MesosphEO:rw
     command: gunicorn odinapi.api:app
-    working_dir: /app/src/
     restart: unless-stopped
