@@ -44,7 +44,7 @@ class Msis90:
             + str(datetime.year * 10000 + datetime.month * 100 + datetime.day)
         )
         apavg, f107, f107a = cur.execute(selectstr).fetchall()[0]
-        ap = apavg * np.ones(7)
+        ap = apavg * np.ones(7, 'f')
         db.close()
         mass = 48
         iydd = datetime.timetuple().tm_yday
@@ -53,12 +53,15 @@ class Msis90:
         T = np.zeros(altitudes.shape)
         Z = altitudes
         for i, alt in enumerate(altitudes):
-            d, t = nrlmsis.gtd7(
+            d = np.zeros(9, 'f')
+            t = np.zeros(2, 'f')
+            nrlmsis.gtd7(
                 iydd, ut, alt, lat, lng, ut / 3600 - lng / 15, f107a, f107, ap,
-                mass,
+                mass, d, t,
             )
             T[i] = t[1]
             P[i] = (d.sum() - d[5]) * kB * t[1] / 100.
+
         return P, T, Z
 
     def extractPTZprofilefixedsolar(self, datetime, lat, lng, altitudes):

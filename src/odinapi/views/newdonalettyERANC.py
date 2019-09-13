@@ -6,7 +6,7 @@ from datetime import datetime
 from netCDF4 import Dataset
 import numpy as np
 from scipy.integrate import odeint
-from scipy.interpolate import splmake, spleval, spline
+from scipy.interpolate import BSpline, splrep
 from simpleflock import SimpleFlock
 
 import odinapi.views.msis90 as M90
@@ -85,19 +85,27 @@ class Donaletty:
                     0.0000059 * np.cos(2 * np.radians(lat)) ** 2
                 ) * (1 - 2. * z / geoid_radius(lat))
 
-            def func(_, z, xk, cval, k):
-                grad = spleval((xk, cval, k), z)
-                return grad
+            def func(_, z, bspl_eval):
+                return bspl_eval(z)
+
+            def spline(xk, yk, xnew):
+                t_i, c_i, k_i = splrep(xk, yk, k=3)
+                bspl_eval = BSpline(t_i, c_i, k_i)
+                return bspl_eval(xnew)
 
             newT = spline(z, T, newz)
             mbar_over_m0 = intermbar(newz) / m0
-            splinecoeff = splmake(newz, g(newz, lat) / newT * mbar_over_m0, 3)
-            integral = odeint(func, 0, newz, splinecoeff)
+            t_i, c_i, k_i = splrep(
+                newz, g(newz, lat) / newT * mbar_over_m0, k=3)
+            bspl_eval = BSpline(t_i, c_i, k_i)
+
+            integral = odeint(func, 0, newz, args=(bspl_eval,))
             integral = 3.483 * np.squeeze(integral.transpose())
             integral = newT[1] / newT * mbar_over_m0 * np.exp(-integral)
+
             normfactor = normrho / spline(newz, integral, normz)
             rho = normfactor * integral
-            nodens = rho, intermbar(newz) * AVOGADRO / 1e3
+            nodens = rho / intermbar(newz) * AVOGADRO / 1e3
             n2 = wn2 * mbar_over_m0 * nodens
             o2 = nodens * (mbar_over_m0 * (1 + wo2) - 1)
             o = 2 * (1 - mbar_over_m0) * nodens
@@ -141,10 +149,14 @@ class Donaletty:
                 date = self.datetime.date()
                 # file_time_index = ind
 
-            ecmwffilename = (
-                self.ecmwfpath + date.strftime('%Y/%m/') +
-                'ei_pl_' + date.strftime('%Y-%m-%d') +
-                '-' + hourstr + '.nc')
+            ecmwffilename = os.path.join(
+                self.ecmwfpath,
+                date.strftime('%Y/%m'),
+                'ei_pl_{}-{}.nc'.format(
+                    date.strftime('%Y-%m-%d'),
+                    hourstr
+                )
+            )
             # print ecmwffilename
             # TODO: Opening more than one netcdf file at the same time
             #       can result in segfault.
@@ -253,22 +265,18 @@ def load_zptfile(filepath, scanid):
 
 
 def get_filename(basedir, date, scanid):
+    return os.path.join(
+        basedir,
+        date.strftime('%Y/%m/'),
+        "ZPT_{0}.nc".format(scanid)
+    )
 
-    datedir = date.strftime('%Y/%m/')
-    datadir = basedir + datedir
-    filename = "ZPT_{0}.nc".format(scanid)
-    fullfile = datadir + filename
-    return fullfile
 
-
-def run_donaletty(mjd, midlat, midlon, scanid):
-
-    # this function can run donaletty for a given scan
-    basedir = '/var/lib/odindata'
-    # basedir = '/home/bengt/work/odin-api/data'
-    ecmwfpath = basedir + '/ECMWF/'
-    zptpath = basedir + '/ZPT/'
-    solardatafile = basedir + '/Solardata2.db'
+def run_donaletty(
+        mjd, midlat, midlon, scanid,
+        ecmwfpath='/var/lib/odindata/ECMWF',
+        solardatafile='/var/lib/odindata/Solardata2.db',
+        zptpath='/var/lib/odindata/ZPT'):
 
     date = mjd2datetime(mjd)
     filepath = get_filename(zptpath, date, scanid)
@@ -279,7 +287,7 @@ def run_donaletty(mjd, midlat, midlon, scanid):
     with SimpleFlock(filepath + '.lock', timeout=600):
         try:
             zpt = load_zptfile(filepath, scanid)
-        except (IOError, KeyError):
+        except (IOError, KeyError, FileNotFoundError):
             # create file
             donaletty = Donaletty(date, solardatafile, ecmwfpath)
             donaletty.loadecmwfdata()
