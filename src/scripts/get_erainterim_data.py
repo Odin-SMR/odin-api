@@ -9,7 +9,7 @@ import os
 from sys import argv
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from .ecmwfapi import ECMWFDataServer
+from ecmwfapi import ECMWFDataServer
 
 # command for retrieving parameters on pressure levels
 #
