@@ -84,44 +84,46 @@ def get_attitude_data(db_connection, scanno):
 
 def get_ancillary_data(db_connection, level2_data):
     """collect ancillary data for level2 data"""
+    anc_data = []
     attitude_data = get_attitude_data(
-        db_connection,
-        level2_data[0]["ScanID"])
-    sza_at_retrieval_pos = get_sza_at_retrieval_position(
-        level2_data[0]['Latitude'],
-        level2_data[0]['Longitude'],
-        np.array(attitude_data['latitude']),
-        np.array(attitude_data['longitude']),
-        np.array(attitude_data['sunzd']))
-    sza1d_at_retrieval_pos = get_sza_at_retrieval_position(
-        [level2_data[0]['Lat1D']],
-        [level2_data[0]['Lon1D']],
-        np.array(attitude_data['latitude']),
-        np.array(attitude_data['longitude']),
-        np.array(attitude_data['sunzd']))
-    theta = get_theta(
-        np.array(level2_data[0]['Pressure']),
-        np.array(level2_data[0]['Temperature']))
+        db_connection, level2_data[0]["ScanID"])
     orbit = get_orbit(attitude_data['orbit'])
-    lst_scan = get_solartime(
-        level2_data[0]["MJD"], level2_data[0]["Lon1D"])
-    return [{
-        "InvMode": level2_data[0]["InvMode"],
-        "FreqMode": level2_data[0]["FreqMode"],
-        "ScanID": level2_data[0]["ScanID"],
-        "MJD": level2_data[0]["MJD"],
-        "Orbit": orbit,
-        "Lat1D": level2_data[0]["Lat1D"],
-        "Lon1D": level2_data[0]["Lon1D"],
-        "Latitude": level2_data[0]["Latitude"],
-        "Longitude": level2_data[0]["Longitude"],
-        "Pressure": level2_data[0]["Pressure"],
-        "SZA1D": np.float(np.around(
-            sza1d_at_retrieval_pos, decimals=3)),
-        "SZA": np.around(
-            sza_at_retrieval_pos, decimals=3).tolist(),
-        "LST": np.float(np.around(
-            lst_scan, decimals=3)),
-        "Theta": np.around(
-            theta, decimals=3).tolist(),
-    }]
+    for product in level2_data:
+        sza_at_retrieval_pos = get_sza_at_retrieval_position(
+            product['Latitude'],
+            product['Longitude'],
+            np.array(attitude_data['latitude']),
+            np.array(attitude_data['longitude']),
+            np.array(attitude_data['sunzd']))
+        sza1d_at_retrieval_pos = get_sza_at_retrieval_position(
+            [product['Lat1D']],
+            [product['Lon1D']],
+            np.array(attitude_data['latitude']),
+            np.array(attitude_data['longitude']),
+            np.array(attitude_data['sunzd']))
+        theta = get_theta(
+            np.array(product['Pressure']),
+            np.array(product['Temperature']))
+        lst_scan = get_solartime(
+            product["MJD"], product["Lon1D"])
+        anc_data.append({
+            "InvMode": product["InvMode"],
+            "FreqMode": product["FreqMode"],
+            "ScanID": product["ScanID"],
+            "MJD": product["MJD"],
+            "Orbit": orbit,
+            "Lat1D": product["Lat1D"],
+            "Lon1D": product["Lon1D"],
+            "Latitude": product["Latitude"],
+            "Longitude": product["Longitude"],
+            "Pressure": product["Pressure"],
+            "SZA1D": np.float(np.around(
+                sza1d_at_retrieval_pos, decimals=3)),
+            "SZA": np.around(
+                sza_at_retrieval_pos, decimals=3).tolist(),
+            "LST": np.float(np.around(
+                lst_scan, decimals=3)),
+            "Theta": np.around(
+                theta, decimals=3).tolist(),
+        })
+    return anc_data
