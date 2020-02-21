@@ -700,6 +700,7 @@ SWAGGER.add_type('L2i', {
     "LOFreq": [float],
     "BlineOffset": [[float]],
     "FitSpectrum": [[float]],
+    'GenerationTime': str,
 })
 
 

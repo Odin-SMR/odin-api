@@ -11,7 +11,8 @@ from odinapi.database import mongo
 
 PRODUCT_ARRAY_KEYS = [
     'Altitude', 'Pressure', 'Latitude', 'Longitude', 'Temperature',
-    'ErrorTotal', 'ErrorNoise', 'MeasResponse', 'Apriori', 'VMR', 'AVK']
+    'ErrorTotal', 'ErrorNoise', 'MeasResponse', 'Apriori', 'VMR', 'AVK'
+]
 EARTH_EQ_RADIUS_KM = 6378.1
 
 # Set a hard limit on the number of L2 documents that can be returned.
@@ -188,18 +189,22 @@ class Level2DB:
         match = {'ScanID': scanid, 'FreqMode': freqmode}
         L2i = L2 = L2c = None
         L2i = self.L2i_collection.find_one(
-            match, {'_id': 0, 'ProcessingError': 0})
+            match, {'ProcessingError': 0})
         if L2i:
             L2c = L2i.pop('Comments', [])
             L2 = collapse_products(
                 list(self.L2_collection.find(
                     match, {'_id': 0, 'Location': 0})))
+            L2i = replace_id_with_generation_time(L2i)
         return L2i, L2, L2c
 
     def get_L2i(self, freqmode, scanid):
         match = {'ScanID': scanid, 'FreqMode': freqmode}
-        return self.L2i_collection.find_one(match, {
-            '_id': 0, 'Comments': 0, 'ProcessingError': 0})
+        L2i = self.L2i_collection.find_one(match, {
+           'Comments': 0, 'ProcessingError': 0})
+        if L2i:
+            L2i = replace_id_with_generation_time(L2i)
+        return L2i
 
     def get_L2c(self, freqmode, scanid):
         match = {'ScanID': scanid, 'FreqMode': freqmode}
@@ -520,3 +525,13 @@ def validate_lat_lon(lat, lon):
         raise ValueError('Latitude must be between -90 and 90')
     if not 0 <= lon <= 360:
         raise ValueError('Latitude must be between 0 and 360')
+
+
+def replace_id_with_generation_time(l2dict):
+    if '_id' not in l2dict:
+        return l2dict
+    l2dict["GenerationTime"] = (
+        l2dict['_id'].generation_time.replace(tzinfo=None)
+    ).strftime('%Y-%m-%dT%H:%M:%SZ')
+    l2dict.pop('_id')
+    return l2dict

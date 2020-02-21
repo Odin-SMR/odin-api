@@ -82,6 +82,16 @@ class TestGetScans:
     def test_count_scans_with_offset(self, level2db):
         assert level2db.count_scans(FREQMODE, offset=1) == 2
 
+    def test_get_l2i_of_scan(self, level2db):
+        l2i, _, _ = level2db.get_scan(FREQMODE, 1234)
+        assert set(l2i.keys()) == set(['ScanID', 'FreqMode', 'GenerationTime'])
+        assert isinstance(l2i['GenerationTime'], str)
+
+    def test_get_l2i(self, level2db):
+        l2i = level2db.get_L2i(FREQMODE, 1234)
+        assert set(l2i.keys()) == set(['ScanID', 'FreqMode', 'GenerationTime'])
+        assert isinstance(l2i['GenerationTime'], str)
+
 
 class TestGetFailedScans:
 
