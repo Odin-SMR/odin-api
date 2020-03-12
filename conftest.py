@@ -50,7 +50,7 @@ def odinapi_postgresq_responsive(host, port):
 @pytest.fixture(scope='session')
 def docker_compose_file(pytestconfig):
     return os.path.join(
-        os.path.dirname(__file__),
+        str(pytestconfig.rootdir),
         'docker-compose.systemtest.yml',
     )
 
@@ -69,7 +69,7 @@ def odin_postgresql(docker_ip, docker_services):
 @pytest.fixture(scope='session')
 def odinapi_service(docker_ip, docker_services):
     port = docker_services.port_for('odin', 80)
-    url = "http://localhost:{}".format(port)
+    url = "http://{}:{}".format(docker_ip, port)
     docker_services.wait_until_responsive(
         timeout=WAIT_FOR_SERVICE_TIME,
         pause=PAUSE_TIME,

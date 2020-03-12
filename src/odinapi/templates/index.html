@@ -14,6 +14,25 @@
       {% endif %}
 
 <div class="container-fluid">
+  <hr class="featurette-divider">
+
+      <div  class="row featurette">
+        <div class="col-md-7">
+          <h2 class="featurette-heading">Documentation Updated<span class="text-muted"> 2020-03-11</span></h2>
+          <p class="lead">
+            The Odin reprocessing project is soon to be closed, we have
+            reporcessed all data from the mission and updated the
+            documents that describes the datasets and the algorithms used
+            to process the data.
+          </p>
+
+          <p>All documents can be found <a href="#documents"> here </a></p>
+        </div>
+        <div class="col-md-5">
+          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/img2.gif') }}" alt="Odin aeronomy">
+        </div>
+      </div>
+
       <hr id="news" class="featurette-divider">
 
       <div  class="row featurette">
@@ -101,18 +120,24 @@ Esrange.  </p>
                     Algorithm Theoretical Basis Document - Level 1 Processing (PDF)
                  </a>
             <li> <a href="{{ url_for('static', filename='documents/L2_ATBD.pdf') }}">
-                    Draft Algorithm Theoretical Basis Document - Level 2 Processing (PDF)
+                    Algorithm Theoretical Basis Document - Level 2 Processing (PDF) (updated 2020-03-11)
                  </a>
             <li> <a href="{{ url_for('static', filename='documents/RBD.pdf') }}">
                     Odin/SMR Requirement Baseline Document (PDF)
                  </a>
             <li> <a href="{{ url_for('static', filename='documents/VDS.pdf') }}">
-                    Odin/SMR Verification Dataset: Technical Note (PDF)
+                    Odin/SMR Verification Dataset: Technical Note (PDF)  (updated 2020-03-11)
                  </a>
             <li> <a href="{{ url_for('static', filename='documents/DDS.pdf') }}">
                     Odin/SMR Diagnostic Dataset: Technical Note (PDF)
                  </a>
-          </ul>
+            <li> <a href="{{ url_for('static', filename='documents/DBMI.pdf') }}">
+                  Odin/SMR Database of metadata information relevant to future validation purposes (PDF) (new 2020-03-11)
+               </a>
+            <li> <a href="{{ url_for('static', filename='documents/CAD.pdf') }}">
+                  Odin/SMR Level 2 Completeness Analysis Document (PDF) (new 2020-03-11)
+             </a>
+      </ul>
           </p>
         </div>
         <div class="col-md-5 col-md-pull-7">
