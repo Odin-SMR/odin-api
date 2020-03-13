@@ -25,7 +25,7 @@ from odinapi.views.statistics import (
 from odinapi.views.smr_site import (
     ViewIndex, ViewScanSpec, ViewLevel1, ViewLevel2, ViewLevel2Scan,
     ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot,
-    ViewLevel2DevScan)
+    ViewLevel2DevScan, ViewDataAccess)
 from odinapi.views.data_info import FileInfo, LatestECMF
 
 SWAGGER.add_parameter('freqmode', 'path', int)
@@ -403,6 +403,10 @@ class Odin(Flask):
         self.add_url_rule(
             '/plot/<date>/<int:freqmode>',
             view_func=ViewFreqmodeInfoPlot.as_view('plotscans')
+        )
+        self.add_url_rule(
+            '/dataaccess',
+            view_func=ViewDataAccess.as_view('dataaccess')
         )
 
     def _add_stats_views(self):

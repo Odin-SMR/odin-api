@@ -17,7 +17,7 @@ from odinapi.utils.defs import FREQMODE_TO_BACKEND
 
 
 class ViewIndex(MethodView):
-    """View of all scans"""
+    """View for Index page"""
 
     def get(self):
         return render_template('index.html', data=str('ODIN_API_PRODUCTION' in
@@ -154,3 +154,11 @@ class ViewFreqmodeInfoPlot(MethodView):
         buf.seek(0)
         return send_file(buf, attachment_filename='plot.png',
                          mimetype='image/png')
+
+
+class ViewDataAccess(MethodView):
+    """View for Data access page"""
+
+    def get(self):
+        return render_template('dataaccess.html',
+                               data=str('ODIN_API_PRODUCTION' in environ))

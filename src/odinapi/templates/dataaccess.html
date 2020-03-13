@@ -1,0 +1,256 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="jumbotron">
+    <h1> Odin/SMR Data Access</h1>
+  </div>
+    <div class="container-fluid">
+
+      <div  class="row">
+        <div class="col-md-12">
+          <h2>Introduction</h2>
+<p>
+The primary way of accessing data from the Odin/SMR mission is through the
+Odin/SMR web-API. Data is also available for download as NetCDF files,
+accessible at
+<a href="http://odin.rss.chalmers.se/level2_download/">
+  http://odin.rss.chalmers.se/level2_download/</a>.
+</p>
+<p>
+This is a so called REST API, where the user makes a GET request to an
+API-endpoint, a URL provided by the API. The result of the request is a so
+called JSON-object. JSON is a text-based data exchange standard with
+key-value pairs, which can be interpreted by most modern programming languages,
+including Matlab and Python. In Python the JSON structure is mapped to a
+dictionary.
+</p>
+<p>
+While the API can be accessed directly in a web browser, this is not
+recommended. The user will typically access the data by making requests using a
+script or computer program, some examples of which are given below.
+</p>
+<p>
+The root URL of the API is <code>http://odin.rss.chalmers.se/rest_api/v5</code>.
+In the following, endpoints will be described relative to this root.
+</p>
+        </div>
+      </div>
+
+      <div  class="row">
+        <div class="col-md-12">
+          <h2>Data format specification</h2>
+<p>
+The various data structures that are returned by the API and used in the
+NetCDF files are documented in these PDF documents:
+<ul>
+  <li><a href="{{ url_for('static', filename='documents/L1_ATBD.pdf') }}">
+    Algorithm Theoretical Basis Document: Level 1 Processing</a>,
+  <li><a href="{{ url_for('static', filename='documents/L2_DATA.pdf') }}">
+    Level 2 Data - Format and overview</a>.
+</ul>
+</p>
+        </div>
+      </div>
+
+      <div  class="row">
+        <div class="col-md-12">
+          <h2>Endpoints for data access</h2>
+<p>
+Since the Level 1 data requires specialised knowledge about the Odin/SMR
+instrument, only access to the Level 2 data is covered here. For information on
+how to access Level 1 data, please see the
+<a href="{{ url_for('static', filename='documents/L1_ATBD.pdf') }}">L1 ATBD</a>.
+</p>
+
+          <h3>Getting project information</h3>
+<p>
+The Level 2 data sets are organised under "projects". To get a list of
+available projects, a request to the <code>/level2/projects/</code> endpoint is
+made. General information about a particular project can then be acquired by a
+request to the <code>/level2/{project}/</code> endpoint, where
+<code>{project}</code> is a project name from the project list.
+</p>
+<p>
+Each project may contain a number of different data products. To get a list of
+the available products for a given project, make a request to the
+<code>/level2/{project}/products/</code> endpoint.  The main entry points for
+getting data from the API are the locations, area and date endpoints,
+introduced below.
+</p>
+
+          <h3>Look up data by location</h3>
+<p>
+The locations endpoint lets you filter data to within a specified radius around
+one or more locations. The endpoint also requires the user to specify a date
+limit and one of either a pressure or an altitude interval. If one or more
+products are specified, only data for these will be returned, otherwise data
+for all available data products will be returned.
+</p>
+<p>
+The location endpoint is located at <code>/level2/{project}/locations</code>.
+Please note the lack of a trailing <code>/</code> in this endpoint.
+</p>
+<p>
+<h4>
+  Example query for project <em>ALL-Strat-v3.0.0</em>, product
+  <em>O3 / 545 GHz / 20 to 85 km</em> at a single location:
+</h4>
+<code>
+  /level2/ALL-Strat-v3.0.0/locations?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=0&max_altitude=100000&start_time=2012-01-01&end_time=2012-02-01&radius=100&location=42.0,142.0
+</code>
+</p>
+
+          <h3>Look up data by area</h3>
+<p>
+The area endpoint lets you filter data to within a specified area bounded by
+latitude and/or longitude limits. The endpoint also requires the user to
+specify a date limit and one of either a pressure or an altitude interval. If
+one or more products are specified, only data for these will be returned,
+otherwise data for all available data products will be returned.
+</p>
+<p>
+The location endpoint is located at <code>/level2/{project}/area</code>.
+Please note the lack of a trailing <code>/</code> in this endpoint.
+</p>
+<p>
+<h4>
+  Example query for project <em>ALL-Strat-v3.0.0</em>, product
+  <em>O3 / 545 GHz / 20 to 85 km</em> for equatorial latitudes:
+</h4>
+<code>
+  /level2/ALL-Strat-v3.0.0/area?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=0&max_altitude=100000&start_time=2012-02-11&end_time=2012-02-12&min_lat=-5&max_lat=5
+</code>
+</p>
+
+          <h3>Look up data by date</h3>
+<p>
+The date endpoint lets you access data for a single day. The endpoint also
+requires the user to specify one of either a pressure or an altitude interval.
+If one or more products are specified, only data for these will be returned,
+otherwise data for all available data products will be returned.
+</p>
+<p>
+The location endpoint is located at <code>/level2/{project}/{date}/</code>
+where <code>{date}</code> should be replaced with a date on the format
+<code>YYYY-MM-DD</code>.
+</p>
+<p>
+<h4>
+  Example query for project <em>ALL-Strat-v3.0.0</em>, product
+  <em>O3 / 545 GHz / 20 to 85 km</em>:
+</h4>
+<code>
+  /level2/ALL/2012-02-11/?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_pressure=10&max_pressure=100000
+</code>
+</p>
+
+          <h3>Other endpoints</h3>
+<p>
+Documentation for all endpoints available through the API is available in the
+<a href="/apidocs/index.html">API documentation</a>.
+</p>
+        </div>
+      </div>
+
+      <div  class="row">
+        <div class="col-md-12">
+          <h2>Examples</h2>
+<p>
+For most users the Level 2 data – consisting mainly of atmospheric profiles of
+different species concentrations at different locations – will be of most
+interest. An example of a minimal Python program for accessing the Level 2 API
+is given below.
+</p>
+<p>
+<pre>
+import requests
+
+API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+AREA_ENDPOINT = "/level2/{project}/area?{parameters}"
+
+
+def load_equatorial_ozone(start_date: str, end_date: str,
+                          project: str="ALL-Strat-v3.0.0") -> dict:
+    """Function for getting ozone data from the Odin REST API"""
+    # Set up parameters:
+    # product from /level2/{project}/products/ with spaces replaced by %20:
+    product = "product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km"
+
+    # Need only specify latitude limits:
+    area = "&min_lat=-5&max_lat=5"
+
+    # Altitude in meters:
+    altitude = "&min_altitude=0&max_altitude=85000"
+
+    # Period set from input to function:
+    period = "&start_time={0}&end_time={1}".format(start_date, end_date)
+
+    # Concatenate parameters:
+    parameters = product + area + altitude + period
+
+    # Construct request URL:
+    request_url = API_ROOT + AREA_ENDPOINT.format(project=project,
+                                                  parameters=parameters)
+    # Get data:
+    response = requests.get(request_url)
+
+    # Return data:
+    return response.json()
+</pre>
+</p>
+<!--p>
+A more complete example can be downloaded
+<a href="TODO">here</a>.
+</p-->
+<p>
+The Level 1 data consists of the spectra used in calculating the Level 2
+profiles. An example Python program for accessing the Level 1 spectra can be
+downloaded
+<a href="{{ url_for('static', filename='examples/get_l1b_for_period.py') }}">
+  here</a>.
+</p>
+</p>
+        </div>
+      </div>
+
+      <div  class="row">
+        <div class="col-md-12">
+          <h2>Recommended projects</h2>
+<p>
+The recommended projects to use with the different species are listed in the
+table below. Note that all spaces in the product names need to be replaced by
+<code>%20</code> in the request. For instance, to access the ozone profiles for
+the date 2012-03-11 you would make a call to the following URL:
+</p>
+<p>
+<code>
+http://odin.rss.chalmers.se/rest_api/v5/level2/ALL-Strat-v3.0.0/2012-03-11/?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=0&max_altitude=60000
+</code>
+</p>
+          <div>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td><b>Species:</b></td>
+                  <td><b>Project:</b></td>
+                  <td><b>Product name:</b></td>
+                </tr>
+                <tr>
+                  <td>Stratospheric ozone</td>
+                  <td>ALL-Strat-v3.0.0</td>
+                  <td>O3 / 545 GHz / 20 to 85 km</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

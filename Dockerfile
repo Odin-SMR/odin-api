@@ -21,6 +21,7 @@ COPY requirements_extra.txt /app
 RUN pip3 install -r requirements_extra.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
+COPY src/examples /app/odinapi/static/examples/
 COPY src/setup.py /app/setup.py
 RUN python3 setup.py install
 expose 5000
