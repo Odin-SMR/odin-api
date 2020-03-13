@@ -3,11 +3,11 @@
 *.swp
 .ropeproject
 *.orig
-*.json
 *.h5
 *.png
 *.coverage
 *.cache
+.vscode
 !src/odinapi/systemtest/testdata/*.json
 !/package.json
 env

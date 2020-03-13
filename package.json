@@ -13,16 +13,20 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "chromedriver": "^80.0.1",
     "eslint": "^5.10.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.14.0",
     "jasmine": "^3.3.1",
     "jasmine-core": "^3.3.0",
     "junit": "^1.4.9",
-    "karma": "^1.7.0",
+    "karma": "^4.4.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
     "karma-jasmine": "^2.0.0",
     "karma-junit-reporter": "^1.2.0"
+  },
+  "dependencies": {
+    "puppeteer": "^2.1.1"
   }
 }
