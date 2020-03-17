@@ -13,3 +13,12 @@ want to update the submodule:
 
     git submodule update --init --recursive
 
+## Running tests locally
+
+The file `requirements_ubuntu18.04.apt` includes the minimum set of libraries
+you need to run the unittests locally. (docker and docker-compose is also
+needed).
+
+To run the unittest only:
+
+    tox -- src/test

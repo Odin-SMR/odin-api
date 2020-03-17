@@ -2,29 +2,29 @@
 
 node() {
   def odinapiImage
+  def proxyImage
   try {
       stage('git') {
         checkout scm
       }
-      stage('python unit tests') {
-          sh "./run_unittests.sh -- --runslow"
-      }
       stage('javascript unit tests') {
           sh "npm install && npm update && npm test"
       }
-      stage('build') {
-        odinapiImage = docker.build("docker2.molflow.com/odin_redo/odin_api:${env.BUILD_TAG}")
+      stage('build odinapi') {
+        odinapiImage = docker.build("docker2.molflow.com/odin_redo/odin_api")
       }
-      stage('system tests') {
-          sh "./run_systemtests.sh -e system -- --runslow"
+      stage('build proxy') {
+        proxyImage = docker.build("docker2.molflow.com/odin_redo/proxy", "services/proxy")
       }
-      stage('proxy system tests') {
-          sh "./run_systemtests.sh -e proxy -- --runslow"
+      stage('tests') {
+          sh "tox -- --runslow"
       }
       if (env.GITREF == 'master') {
         stage('push') {
-          odinapiImage.push()
+          odinapiImage.push(env.BUILD_TAG)
           odinapiImage.push('latest')
+          proxyImage.push(env.BUILD_TAG)
+          proxyImage.push('latest')
         }
       }
   } catch (e) {

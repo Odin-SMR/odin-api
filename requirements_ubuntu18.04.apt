@@ -1,0 +1,6 @@
+# This is whats needed to run the unittest on ubuntu 18.04
+python3-pip
+libhdf4-dev
+libhdf5-dev
+libgfortran4
+libpq-dev

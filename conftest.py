@@ -2,11 +2,12 @@ import os
 
 from pg import DB, InternalError
 import pytest
+from pymongo import MongoClient
 import requests
 from requests.exceptions import RequestException
 
 WAIT_FOR_SERVICE_TIME = 60 * 5
-PAUSE_TIME = 0.1
+PAUSE_TIME = 5
 
 
 def pytest_addoption(parser):
@@ -61,9 +62,9 @@ def odin_postgresql(docker_ip, docker_services):
     docker_services.wait_until_responsive(
         timeout=WAIT_FOR_SERVICE_TIME,
         pause=PAUSE_TIME,
-        check=lambda: odinapi_postgresq_responsive(docker_ip, port),
+        check=lambda: odinapi_postgresq_responsive('localhost', port),
     )
-    return docker_ip, port
+    return 'localhost', port
 
 
 @pytest.fixture(scope='session')
@@ -76,3 +77,8 @@ def odinapi_service(docker_ip, docker_services):
         check=lambda: odinapi_is_responsive(url),
     )
     return url
+
+
+@pytest.fixture(scope='session')
+def docker_mongo(docker_db):
+    return MongoClient()

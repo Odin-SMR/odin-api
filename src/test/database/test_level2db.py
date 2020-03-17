@@ -6,9 +6,10 @@ FREQMODE = 42
 
 
 @pytest.fixture
-def level2db(mongodb):
-    level2db = Level2DB('projectfoo', mongodb['level2testdb'])
-    mongodb['level2testdb']['L2i_projectfoo'].insert_many([
+def level2db(docker_mongo):
+    level2db = Level2DB('projectfoo', docker_mongo.level2testdb)
+    docker_mongo.level2testdb['L2i_projectfoo'].drop()
+    docker_mongo.level2testdb['L2i_projectfoo'].insert_many([
         {
             'ScanID': 1234, 'FreqMode': FREQMODE, 'ProcessingError': False,
             'Comments': ["Foo", "Bar"]

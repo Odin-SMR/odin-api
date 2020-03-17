@@ -8,11 +8,16 @@ from odinapi.database.level2db import (
 )
 
 
+def get_empty_collection(col):
+    col.drop()
+    return col
+
+
 @pytest.fixture
-def projectdb(mongodb):
+def projectdb(docker_mongo):
     with patch(
         'odinapi.database.level2db.mongo.get_collection',
-        side_effect=lambda db, col: mongodb[db][col]
+        side_effect=lambda db, col: get_empty_collection(docker_mongo[db][col])
     ):
         yield ProjectsDB()
 

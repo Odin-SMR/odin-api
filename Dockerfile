@@ -1,9 +1,8 @@
-FROM ubuntu:18.04
-COPY requirements.apt /app/
+FROM python:3.6
+COPY requirements_python36.apt /app/
 WORKDIR /app
-RUN sed -i "s#archive.ubuntu.com#archive.mirror.blix.com#" /etc/apt/sources.list
 RUN set -x && \
-    apt-get update && xargs apt-get install -y < requirements.apt
+    apt-get update && xargs apt-get install -y < requirements_python36.apt
 
 COPY dependencies/ /dependencies/
 
@@ -16,13 +15,9 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     rm -rf swagger-ui*
 
 COPY requirements.txt /app
-RUN pip3 install --no-binary=h5py -r requirements.txt
-COPY requirements_extra.txt /app
-RUN pip3 install -r requirements_extra.txt
+RUN pip install --no-binary=h5py -r requirements.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
-COPY src/setup.py /app/setup.py
-RUN python3 setup.py install
-expose 5000
-cmd gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app
+EXPOSE 5000
+CMD gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app

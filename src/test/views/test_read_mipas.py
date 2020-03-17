@@ -25,7 +25,7 @@ def test_read_mipas_file(mipas_basepath_pattern):
         basepath_pattern=str(mipas_basepath_pattern)
     )
     expect = {
-        'MJD': 54132.00168981497,
+        'MJD': 54132.00168981482,
         'akm_diagonal': PartialListMatch(
             60,
             [0.0, -0.008270449936389923, 0.06216210126876831],
