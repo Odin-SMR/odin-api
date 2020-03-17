@@ -165,8 +165,8 @@ class QualityControl:
         for ind, stw in enumerate(self.specdata['stw']):
             if ind < 2:
                 continue
-            ind1 = np.nonzero((self.refdata['stw'] < stw))[0]
-            ind2 = np.nonzero((self.refdata['stw'] > stw))[0]
+            ind1 = np.atleast_1d(self.refdata['stw'] < stw).nonzero()[0]
+            ind2 = np.atleast_1d(self.refdata['stw'] > stw).nonzero()[0]
             if ind1.shape[0] == 0 or ind2.shape[0] == 0:
                 self.quality[ind] = self.quality[ind] + qual
                 continue
@@ -178,16 +178,16 @@ class QualityControl:
                     self.refdata['mech_type'][ind2[0]] != 'SK1'):
                 self.quality[ind] = self.quality[ind] + qual
                 continue
-            test1 = np.nonzero(
+            test1 = np.atleast_1d(
                 (self.refdata['skybeamhit'][ind1[-1]] & EARTH1 == EARTH1) |
                 (self.refdata['skybeamhit'][ind1[-1]] & MOON1 == MOON1) |
                 (self.refdata['skybeamhit'][ind1[-1]] & SUN1 == SUN1)
-            )[0]
-            test2 = np.nonzero(
+            ).nonzero()[0]
+            test2 = np.atleast_1d(
                 (self.refdata['skybeamhit'][ind2[0]] & EARTH1 == EARTH1) |
                 (self.refdata['skybeamhit'][ind2[0]] & MOON1 == MOON1) |
                 (self.refdata['skybeamhit'][ind2[0]] & SUN1 == SUN1)
-            )[0]
+            ).nonzero()[0]
             if test1.shape[0] != 0 or test2.shape[0] != 0:
                 self.quality[ind] = self.quality[ind] + qual
 

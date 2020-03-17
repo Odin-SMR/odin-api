@@ -72,11 +72,13 @@ def test_msis90_values(inputdatapath, parameter, index, expect):
     )
 
 
+@pytest.mark.slow
 def test_donaletty_returns_expected_parameters(ptz_data):
     assert set(ptz_data) == set([
         'ScanID', 'Z', 'P', 'T', 'latitude', 'longitude', 'datetime'])
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('parameter,expect', (
     ('ScanID', 7014821387),
     ('latitude', 11.1),
@@ -86,6 +88,7 @@ def test_donaletty_returns_expected_scalars(ptz_data, parameter, expect):
     assert ptz_data[parameter] == pytest.approx(expect, rel=1e-6)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('parameter,expect', (
     ('Z', (151,)),
     ('P', (151,)),
@@ -95,6 +98,7 @@ def test_donaletty_returns_expected_array_shapes(ptz_data, parameter, expect):
     assert ptz_data[parameter].shape == expect
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('parameter,index,expect', (
     ('Z', 0, 0),
     ('Z', 75, 75.),
