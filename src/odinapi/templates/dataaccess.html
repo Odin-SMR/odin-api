@@ -10,20 +10,21 @@
       <div  class="row">
         <div class="col-md-12">
           <h2>Introduction</h2>
-<p>
+<p class="lead">
 The primary way of accessing data from the Odin/SMR mission is through the
-Odin/SMR web-API. Data is also available for download as NetCDF files,
-accessible at
+<em>Odin/SMR web-API</em>. Data is also available for download as
+<em>NetCDF files</em>, accessible at
 <a href="http://odin.rss.chalmers.se/level2_download/">
   http://odin.rss.chalmers.se/level2_download/</a>.
 </p>
 <p>
-This is a so called REST API, where the user makes a GET request to an
-API-endpoint, a URL provided by the API. The result of the request is a so
-called JSON-object. JSON is a text-based data exchange standard with
-key-value pairs, which can be interpreted by most modern programming languages,
-including Matlab and Python. In Python the JSON structure is mapped to a
-dictionary.
+The Odin web-API is a so called <em>REST API</em>, where the user makes a
+<em>GET request</em> to an <em>API-endpoint</em>, a URI provided by the API.
+The result of the request is a so called <em>JSON-object</em>. JSON is a
+text-based data exchange standard with key-value pairs, which can be
+interpreted by most modern programming languages, including <em>Matlab</em> and
+<em>Python</em>. For instance, in Python the JSON structure is mapped to a
+so called <em>dictionary</em> object.
 </p>
 <p>
 While the API can be accessed directly in a web browser, this is not
@@ -31,7 +32,8 @@ recommended. The user will typically access the data by making requests using a
 script or computer program, some examples of which are given below.
 </p>
 <p>
-The root URL of the API is <code>http://odin.rss.chalmers.se/rest_api/v5</code>.
+The <em>root URI</em> of the API is
+<code>http://odin.rss.chalmers.se/rest_api/v5</code>.
 In the following, endpoints will be described relative to this root.
 </p>
         </div>
@@ -75,20 +77,72 @@ request to the <code>/level2/{project}/</code> endpoint, where
 Each project may contain a number of different data products. To get a list of
 the available products for a given project, make a request to the
 <code>/level2/{project}/products/</code> endpoint.  The main entry points for
-getting data from the API are the locations, area and date endpoints,
-introduced below.
+getting data from the API are the <em>locations</em>, <em>area</em> and
+<em>date</em> endpoints, introduced below.
+</p>
+<h4>
+  Example query for project <em>ALL-Strat-v3.0.0</em>:
+</h4>
+<code>
+  /level2/ALL-Strat-v3.0.0/products/
+</code>
+</p>
+<p>
+<h4>
+  Python code example:
+</h4>
+<pre>
+  import requests
+
+  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+  PROJECTS_ENDPOINT = "/level2/projects/"
+  PRODUCTS_ENDPOINT = "/level2/{project}/products/"
+
+
+  def get_projects():
+      """Function for getting projects from the Odin REST API"""
+
+      # Construct request URI:
+      request_url = API_ROOT + PROJECTS_ENDPOINT
+
+      # Get data:
+      response = requests.get(request_url)
+
+      # Return data:
+      return response.json()
+
+
+  def get_products(projec="ALL-Strat-v3.0.0"):
+      """Function for getting products from the Odin REST API"""
+
+      # Construct request URI:
+      request_url = API_ROOT + PRODUCTS_ENDPOINT
+
+      # Get data:
+      response = requests.get(request_url.format(project=project)
+
+      # Return data:
+      return response.json()
+
+
+  PROJECTS = get_projects()
+  PRODUCTS = get_products("ALL-Strat-v3.0.0")
+</pre>
 </p>
 
           <h3>Look up data by location</h3>
 <p>
-The locations endpoint lets you filter data to within a specified radius around
-one or more locations. The endpoint also requires the user to specify a date
-limit and one of either a pressure or an altitude interval. If one or more
-products are specified, only data for these will be returned, otherwise data
-for all available data products will be returned.
+The locations endpoint lets you filter data to within a specified
+<em>radius</em> (km) around one or more <em>locations</em>. The endpoint also
+requires the user to specify a <em>date limit</em> and one of either a
+<em>pressure</em> or an <em>altitude interval</em>. If one or more
+<em>products</em> are specified, only data for these will be returned,
+otherwise data for all available data products will be returned.
 </p>
 <p>
-The location endpoint is located at <code>/level2/{project}/locations</code>.
+The locations endpoint is located at <code>/level2/{project}/locations</code>.
+</p>
+<p>
 Please note the lack of a trailing <code>/</code> in this endpoint.
 </p>
 <p>
@@ -97,20 +151,61 @@ Please note the lack of a trailing <code>/</code> in this endpoint.
   <em>O3 / 545 GHz / 20 to 85 km</em> at a single location:
 </h4>
 <code>
-  /level2/ALL-Strat-v3.0.0/locations?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=0&max_altitude=100000&start_time=2012-01-01&end_time=2012-02-01&radius=100&location=42.0,142.0
+  /level2/ALL-Strat-v3.0.0/locations?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=20000&max_altitude=85000&start_time=2015-01-03&end_time=2015-01-04&radius=2600&location=90,0
 </code>
+</p>
+<p>
+<h4>
+  Python code example:
+</h4>
+<pre>
+  import requests
+
+  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+  LOCATIONS_ENDPOINT = "/level2/ALL-Strat-v3.0.0/locations"
+
+
+  def get_arctic_ozone(start_date, end_date):
+      """Function for getting ozone data from the Odin REST API"""
+
+      # Set up parameters:
+      parameters = {
+          "product": "O3 / 545 GHz / 20 to 85 km",
+          "location": "90,0",
+          "radius": 2600:
+          "min_altitude": 20000,
+          "max_altitude": 850000,
+          "start_time": start_date,
+          "end_time": end_date
+      }
+
+      # Construct request URI:
+      request_url = API_ROOT + LOCATIONS_ENDPOINT
+
+      # Get data:
+      response = requests.get(request_url, params=parameters)
+
+      # Return data:
+      return response.json()
+
+
+  DATA = get_arctic_ozone("2015-01-03", "2015-01-04")
+</pre>
 </p>
 
           <h3>Look up data by area</h3>
 <p>
 The area endpoint lets you filter data to within a specified area bounded by
-latitude and/or longitude limits. The endpoint also requires the user to
-specify a date limit and one of either a pressure or an altitude interval. If
-one or more products are specified, only data for these will be returned,
-otherwise data for all available data products will be returned.
+<em>latitude</em> and/or <em>longitude limits</em>. The endpoint also requires the user
+to specify a <em>date limit</em> and one of either a <em>pressure</em> or an
+<em>altitude interval</em>. If one or more <em>products</em> are specified,
+only data for these will be returned, otherwise data for all available data
+products will be returned.
 </p>
 <p>
-The location endpoint is located at <code>/level2/{project}/area</code>.
+The area endpoint is located at <code>/level2/{project}/area</code>.
+</p>
+<p>
 Please note the lack of a trailing <code>/</code> in this endpoint.
 </p>
 <p>
@@ -119,19 +214,58 @@ Please note the lack of a trailing <code>/</code> in this endpoint.
   <em>O3 / 545 GHz / 20 to 85 km</em> for equatorial latitudes:
 </h4>
 <code>
-  /level2/ALL-Strat-v3.0.0/area?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=0&max_altitude=100000&start_time=2012-02-11&end_time=2012-02-12&min_lat=-5&max_lat=5
+  /level2/ALL-Strat-v3.0.0/area?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_pressure=0&max_pressure=100000&start_time=2015-01-03&end_time=2015-01-04&min_lat=-5&max_lat=5
 </code>
+</p>
+<p>
+<h4>
+  Python code example:
+</h4>
+<pre>
+  import requests
+
+  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+  AREA_ENDPOINT = "/level2/ALL-Strat-v3.0.0/area"
+
+
+  def get_equatorial_ozone(start_date, end_date):
+      """Function for getting ozone data from the Odin REST API"""
+
+      # Set up parameters:
+      parameters = {
+          "product": "O3 / 545 GHz / 20 to 85 km",
+          "min_lat": -5,
+          "max_lat": 5,
+          "min_altitude": 20000,
+          "max_altitude": 85000,
+          "start_time": start_date,
+          "end_time": end_date
+      }
+
+      # Construct request URI:
+      request_url = API_ROOT + AREA_ENDPOINT
+
+      # Get data:
+      response = requests.get(request_url, params=parameters)
+
+      # Return data:
+      return response.json()
+
+
+  DATA = get_equatorial_ozone("2015-01-03", "2015-01-04")
+</pre>
 </p>
 
           <h3>Look up data by date</h3>
 <p>
 The date endpoint lets you access data for a single day. The endpoint also
-requires the user to specify one of either a pressure or an altitude interval.
-If one or more products are specified, only data for these will be returned,
-otherwise data for all available data products will be returned.
+requires the user to specify one of either a <em>pressure</em> or a
+<em>altitude interval</em>. If one or more <em>products</em> are specified,
+only data for these will be returned, otherwise data for all available data
+products will be returned.
 </p>
 <p>
-The location endpoint is located at <code>/level2/{project}/{date}/</code>
+The date endpoint is located at <code>/level2/{project}/{date}/</code>
 where <code>{date}</code> should be replaced with a date on the format
 <code>YYYY-MM-DD</code>.
 </p>
@@ -141,8 +275,42 @@ where <code>{date}</code> should be replaced with a date on the format
   <em>O3 / 545 GHz / 20 to 85 km</em>:
 </h4>
 <code>
-  /level2/ALL/2012-02-11/?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_pressure=10&max_pressure=100000
+  /level2/ALL-Strat-v3.0.0/2015-01-03/?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_pressure=10&max_pressure=100000
 </code>
+</p>
+<p>
+<h4>
+  Python code example:
+</h4>
+<pre>
+  import requests
+
+  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+  DATE_ENDPOINT = "/level2/ALL-Strat-v3.0.0/{date}/
+
+
+  def get_ozone_on_date(date_string):
+      """Function for getting ozone data from the Odin REST API"""
+
+      # Set up parameters:
+      parameters = {
+          "product": "O3 / 545 GHz / 20 to 85 km",
+          "min_altitude": 20000,
+          "max_altitude": 850000,
+      }
+
+      # Construct request URI:
+      request_url = API_ROOT + DATE_ENDPOINT.format(date_string)
+
+      # Get data:
+      response = requests.get(request_url, params=parameters)
+
+      # Return data:
+      return response.json()
+
+
+  DATA = get_ozone_on_date("2015-01-03")
+</pre>
 </p>
 
           <h3>Other endpoints</h3>
@@ -155,55 +323,20 @@ Documentation for all endpoints available through the API is available in the
 
       <div  class="row">
         <div class="col-md-12">
-          <h2>Examples</h2>
+          <h2>Downloadable examples</h2>
 <p>
-For most users the Level 2 data – consisting mainly of atmospheric profiles of
-different species concentrations at different locations – will be of most
-interest. An example of a minimal Python program for accessing the Level 2 API
-is given below.
-</p>
-<p>
-<pre>
-  import requests
+For most users the <em>Level 2 data</em> – consisting mainly of atmospheric
+profiles of different species concentrations at different locations – will be
+of most interest. An example of a Python program for accessing the
+<em>Level 2 API</em> can be downloaded
+<a href="{{ url_for('static', filename='examples/get_l2_data.py') }}">
+  here</a>.
 
-  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
-  AREA_ENDPOINT = "/level2/development/ALL-Strat-v3.0.0/area"
-  
-  
-  def load_equatorial_ozone(start_date, end_date):
-      """Function for getting ozone data from the Odin REST API"""
-  
-      # Set up parameters:
-      parameters = {
-        "product": "O3 / 545 GHz / 20 to 85 km",
-        "min_lat": -5,
-        "max_lat": 5,
-        "min_altitude": 0,
-        "max_altitude": 85000,
-        "start_time": start_date,
-        "end_time": end_date
-      }
-  
-      # Construct request URL:
-      request_url = API_ROOT + AREA_ENDPOINT
-  
-      # Get data:
-      response = requests.get(request_url, params=parameters)
-  
-      # Return data:
-      return response.json()
-  
-  DATA = load_equatorial_ozone('2015-01-03', '2015-01-04')
-</pre>
 </p>
-<!--p>
-A more complete example can be downloaded
-<a href="TODO">here</a>.
-</p-->
 <p>
-The Level 1 data consists of the spectra used in calculating the Level 2
-profiles. An example Python program for accessing the Level 1 spectra can be
-downloaded
+The <em>Level 1 data</em> consists of the spectra used in calculating the
+Level 2 profiles. An example Python program for accessing the Level 1 spectra
+can be downloaded
 <a href="{{ url_for('static', filename='examples/get_l1b_for_period.py') }}">
   here</a>.
 </p>
@@ -216,14 +349,17 @@ downloaded
           <h2>Recommended projects</h2>
 <p>
 The recommended projects to use with the different species are listed in the
-table below. Note that all spaces in the product names need to be replaced by
-<code>%20</code> in the request. For instance, to access the ozone profiles for
-the date 2012-03-11 you would make a call to the following URL:
+table below. For instance, to access the ozone profiles for the date
+<em>2015-01-03</em> you could make a call to the following URI:
 </p>
 <p>
 <code>
-http://odin.rss.chalmers.se/rest_api/v5/level2/ALL-Strat-v3.0.0/2012-03-11/?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_altitude=0&max_altitude=60000
+http://odin.rss.chalmers.se/rest_api/v5/level2/ALL-Strat-v3.0.0/2015-01-03/?product=O3%20%2F%20545%20GHz%20%2F%2020%20to%2085%20km&min_pressuree=0&max_pressure=100000
 </code>
+</p>
+<p>
+Note that all spaces in the product names need to be replaced by
+<code>%20</code> in the request.
 </p>
           <div>
             <table class="table">
