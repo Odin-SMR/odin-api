@@ -92,41 +92,41 @@ getting data from the API are the <em>locations</em>, <em>area</em> and
   Python code example:
 </h4>
 <pre>
-  import requests
+import requests
 
-  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
-  PROJECTS_ENDPOINT = "/level2/projects/"
-  PRODUCTS_ENDPOINT = "/level2/{project}/products/"
-
-
-  def get_projects():
-      """Function for getting projects from the Odin REST API"""
-
-      # Construct request URI:
-      request_url = API_ROOT + PROJECTS_ENDPOINT
-
-      # Get data:
-      response = requests.get(request_url)
-
-      # Return data:
-      return response.json()
+API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+PROJECTS_ENDPOINT = "/level2/projects/"
+PRODUCTS_ENDPOINT = "/level2/{project}/products/"
 
 
-  def get_products(projec="ALL-Strat-v3.0.0"):
-      """Function for getting products from the Odin REST API"""
+def get_projects():
+    """Function for getting projects from the Odin REST API"""
 
-      # Construct request URI:
-      request_url = API_ROOT + PRODUCTS_ENDPOINT
+    # Construct request URI:
+    request_url = API_ROOT + PROJECTS_ENDPOINT
 
-      # Get data:
-      response = requests.get(request_url.format(project=project)
+    # Get data:
+    response = requests.get(request_url)
 
-      # Return data:
-      return response.json()
+    # Return data:
+    return response.json()
 
 
-  PROJECTS = get_projects()
-  PRODUCTS = get_products("ALL-Strat-v3.0.0")
+def get_products(project="ALL-Strat-v3.0.0"):
+    """Function for getting products from the Odin REST API"""
+
+    # Construct request URI:
+    request_url = API_ROOT + PRODUCTS_ENDPOINT.format(project=project)
+
+    # Get data:
+    response = requests.get(request_url)
+
+    # Return data:
+    return response.json()
+
+
+PROJECTS = get_projects()
+PRODUCTS = get_products("ALL-Strat-v3.0.0")
 </pre>
 </p>
 
@@ -159,37 +159,37 @@ Please note the lack of a trailing <code>/</code> in this endpoint.
   Python code example:
 </h4>
 <pre>
-  import requests
+import requests
 
-  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
-  LOCATIONS_ENDPOINT = "/level2/ALL-Strat-v3.0.0/locations"
-
-
-  def get_arctic_ozone(start_date, end_date):
-      """Function for getting ozone data from the Odin REST API"""
-
-      # Set up parameters:
-      parameters = {
-          "product": "O3 / 545 GHz / 20 to 85 km",
-          "location": "90,0",
-          "radius": 2600:
-          "min_altitude": 20000,
-          "max_altitude": 850000,
-          "start_time": start_date,
-          "end_time": end_date
-      }
-
-      # Construct request URI:
-      request_url = API_ROOT + LOCATIONS_ENDPOINT
-
-      # Get data:
-      response = requests.get(request_url, params=parameters)
-
-      # Return data:
-      return response.json()
+API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+LOCATIONS_ENDPOINT = "/level2/ALL-Strat-v3.0.0/locations"
 
 
-  DATA = get_arctic_ozone("2015-01-03", "2015-01-04")
+def get_arctic_ozone(start_date, end_date):
+    """Function for getting ozone data from the Odin REST API"""
+
+    # Set up parameters:
+    parameters = {
+        "product": "O3 / 545 GHz / 20 to 85 km",
+        "location": "90,0",
+        "radius": 2600,
+        "min_altitude": 20000,
+        "max_altitude": 850000,
+        "start_time": start_date,
+        "end_time": end_date,
+    }
+
+    # Construct request URI:
+    request_url = API_ROOT + LOCATIONS_ENDPOINT
+
+    # Get data:
+    response = requests.get(request_url, params=parameters)
+
+    # Return data:
+    return response.json()
+
+
+DATA = get_arctic_ozone("2015-01-03", "2015-01-04")
 </pre>
 </p>
 
@@ -222,37 +222,37 @@ Please note the lack of a trailing <code>/</code> in this endpoint.
   Python code example:
 </h4>
 <pre>
-  import requests
+import requests
 
-  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
-  AREA_ENDPOINT = "/level2/ALL-Strat-v3.0.0/area"
-
-
-  def get_equatorial_ozone(start_date, end_date):
-      """Function for getting ozone data from the Odin REST API"""
-
-      # Set up parameters:
-      parameters = {
-          "product": "O3 / 545 GHz / 20 to 85 km",
-          "min_lat": -5,
-          "max_lat": 5,
-          "min_altitude": 20000,
-          "max_altitude": 85000,
-          "start_time": start_date,
-          "end_time": end_date
-      }
-
-      # Construct request URI:
-      request_url = API_ROOT + AREA_ENDPOINT
-
-      # Get data:
-      response = requests.get(request_url, params=parameters)
-
-      # Return data:
-      return response.json()
+API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+AREA_ENDPOINT = "/level2/ALL-Strat-v3.0.0/area"
 
 
-  DATA = get_equatorial_ozone("2015-01-03", "2015-01-04")
+def get_equatorial_ozone(start_date, end_date):
+    """Function for getting ozone data from the Odin REST API"""
+
+    # Set up parameters:
+    parameters = {
+        "product": "O3 / 545 GHz / 20 to 85 km",
+        "min_lat": -5,
+        "max_lat": 5,
+        "min_altitude": 20000,
+        "max_altitude": 85000,
+        "start_time": start_date,
+        "end_time": end_date,
+    }
+
+    # Construct request URI:
+    request_url = API_ROOT + AREA_ENDPOINT
+
+    # Get data:
+    response = requests.get(request_url, params=parameters)
+
+    # Return data:
+    return response.json()
+
+
+DATA = get_equatorial_ozone("2015-01-03", "2015-01-04")
 </pre>
 </p>
 
@@ -283,33 +283,33 @@ where <code>{date}</code> should be replaced with a date on the format
   Python code example:
 </h4>
 <pre>
-  import requests
+import requests
 
-  API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
-  DATE_ENDPOINT = "/level2/ALL-Strat-v3.0.0/{date}/
-
-
-  def get_ozone_on_date(date_string):
-      """Function for getting ozone data from the Odin REST API"""
-
-      # Set up parameters:
-      parameters = {
-          "product": "O3 / 545 GHz / 20 to 85 km",
-          "min_altitude": 20000,
-          "max_altitude": 850000,
-      }
-
-      # Construct request URI:
-      request_url = API_ROOT + DATE_ENDPOINT.format(date_string)
-
-      # Get data:
-      response = requests.get(request_url, params=parameters)
-
-      # Return data:
-      return response.json()
+API_ROOT = "http://odin.rss.chalmers.se/rest_api/v5"
+DATE_ENDPOINT = "/level2/ALL-Strat-v3.0.0/{date}/"
 
 
-  DATA = get_ozone_on_date("2015-01-03")
+def get_ozone_on_date(date_string):
+    """Function for getting ozone data from the Odin REST API"""
+
+    # Set up parameters:
+    parameters = {
+        "product": "O3 / 545 GHz / 20 to 85 km",
+        "min_altitude": 20000,
+        "max_altitude": 850000,
+    }
+
+    # Construct request URI:
+    request_url = API_ROOT + DATE_ENDPOINT.format(date=date_string)
+
+    # Get data:
+    response = requests.get(request_url, params=parameters)
+
+    # Return data:
+    return response.json()
+
+
+DATA = get_ozone_on_date("2015-01-03")
 </pre>
 </p>
 
