@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 
 
 SECRET_KEY = os.environ.get(
-    'SECRET_KEY', '***REMOVED***'
+    'SECRET_KEY', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 )
 
 

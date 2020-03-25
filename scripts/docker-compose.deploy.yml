@@ -25,6 +25,7 @@ services:
       - PGDBNAME=${PGDBNAME}
       - PGUSER=${PGUSER}
       - PGPASS=${PGPASS}
+      - SECRET_KEY=${SECRET_KEY}
       - GUNICORN_CMD_ARGS=-w 8 -b 0.0.0.0:5000 -k gevent --timeout 540 --log-level debug
     volumes:
       - /misc/pearl/extdata/ERA-Interim:/var/lib/odindata/ECMWF:rw
