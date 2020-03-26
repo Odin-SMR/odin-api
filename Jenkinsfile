@@ -16,7 +16,7 @@ node() {
   stage('tests') {
       sh "tox -- --runslow"
   }
-  if (env.GITREF == 'master') {
+  if (env.BRANCH_NAME == 'master') {
     stage('push') {
       odinapiImage.push(env.BUILD_TAG)
       odinapiImage.push('latest')
