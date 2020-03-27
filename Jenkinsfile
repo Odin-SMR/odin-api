@@ -18,10 +18,12 @@ node() {
   }
   if (env.BRANCH_NAME == 'master') {
     stage('push') {
-      odinapiImage.push(env.BUILD_TAG)
-      odinapiImage.push('latest')
-      proxyImage.push(env.BUILD_TAG)
-      proxyImage.push('latest')
+      withDockerRegistry([ credentialsId: "dockerhub-molflowbot", url: "" ]) {
+        odinapiImage.push(env.BUILD_TAG)
+        odinapiImage.push('latest')
+        proxyImage.push(env.BUILD_TAG)
+        proxyImage.push('latest')
+      }
     }
   }
 }
