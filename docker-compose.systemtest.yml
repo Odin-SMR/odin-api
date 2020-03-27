@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   postgresql:
-    image: docker2.molflow.com/odin_redo/odin_db:latest
+    image: odinsmr/odin_db:latest
     ports: ["5432"]
     restart: unless-stopped
 
@@ -24,7 +24,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: docker2.molflow.com/odin_redo/odin_api
+    image: odinsmr/odin_api
     volumes:
       - ./src/:/app:ro
       - ./data/vds-data:/vds-data:ro
