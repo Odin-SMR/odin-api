@@ -8,20 +8,22 @@ node() {
       sh "npm install && npm update && npm test"
   }
   stage('build odinapi') {
-    odinapiImage = docker.build("docker2.molflow.com/odin_redo/odin_api")
+    odinapiImage = docker.build("odinsmr/odin-api")
   }
   stage('build proxy') {
-    proxyImage = docker.build("docker2.molflow.com/odin_redo/proxy", "services/proxy")
+    proxyImage = docker.build("odinsmr/proxy", "services/proxy")
   }
   stage('tests') {
       sh "tox -- --runslow"
   }
   if (env.BRANCH_NAME == 'master') {
     stage('push') {
-      odinapiImage.push(env.BUILD_TAG)
-      odinapiImage.push('latest')
-      proxyImage.push(env.BUILD_TAG)
-      proxyImage.push('latest')
+      withDockerRegistry([ credentialsId: "dockerhub-molflowbot", url: "" ]) {
+        odinapiImage.push(env.BUILD_TAG)
+        odinapiImage.push('latest')
+        proxyImage.push(env.BUILD_TAG)
+        proxyImage.push('latest')
+      }
     }
   }
 }

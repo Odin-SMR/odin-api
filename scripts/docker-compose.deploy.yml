@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   httpd:
-    image: docker2.molflow.com/odin_redo/proxy:latest
+    image: odinsmr/proxy:latest
     ports:
       - 5000:80
     links:
@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
 
   webapi:
-    image: docker2.molflow.com/odin_redo/odin_api:latest
+    image: odinsmr/odin_api:latest
     extra_hosts:
       - "postgresql:129.16.69.112" # titan.rss.chalmers.se
       - "level2db:129.16.35.100" # bronze.rss.chalmers.se
