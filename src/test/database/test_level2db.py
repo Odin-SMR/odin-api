@@ -2,7 +2,8 @@ import pytest
 import os
 import json
 
-from odinapi.database.level2db import Level2DB, get_valid_collapsed_products
+from odinapi.database.level2db import (
+    Level2DB, get_valid_collapsed_products, get_next_min_scanid)
 
 FREQMODE = 42
 
@@ -172,7 +173,7 @@ class TestGetMeasurements:
             products, min_altitude=None, max_altitude=None,
             min_pressure=None, max_pressure=None,
             start_time=None, end_time=None, areas=None,
-            fields=None, min_scanid=min_scanid, limit=limit
+            fields=None, min_scanid=min_scanid, document_limit=limit
         )
         results = list(measurements)
         assert len(results) == expect
@@ -192,9 +193,20 @@ class TestGetMeasurements:
             products, min_altitude=None, max_altitude=None,
             min_pressure=None, max_pressure=None,
             start_time=None, end_time=None, areas=None,
-            fields=None, min_scanid=min_scanid, limit=limit
+            fields=None, min_scanid=min_scanid, document_limit=limit
         )
         results = list(measurements)
         collapsed_products = get_valid_collapsed_products(
             results, limit)
         assert len(collapsed_products) == expect
+
+    @pytest.mark.parametrize("limit,expect", (
+        (5, 11),
+        (10, 0),
+    ))
+    def test_get_next_min_scanid(self, limit, expect):
+        products = [
+            {"ScanID": 4}, {"ScanID": 4}, {"ScanID": 7},
+            {"ScanID": 7}, {"ScanID": 11}
+        ]
+        assert get_next_min_scanid(products, limit) == expect

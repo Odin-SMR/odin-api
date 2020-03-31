@@ -328,7 +328,8 @@ class Level2DB:
                          min_altitude=None, max_altitude=None,
                          min_pressure=None, max_pressure=None,
                          start_time=None, end_time=None, areas=None,
-                         fields=None, min_scanid=None, limit=HARD_LIMIT):
+                         fields=None, min_scanid=None,
+                         document_limit=HARD_LIMIT):
         if not products:
             products = self.L2_collection.distinct('Product')
         elif isinstance(products, str):
@@ -381,7 +382,7 @@ class Level2DB:
         sort = [('FreqMode', ASCENDING), ('ScanID', ASCENDING)]
 
         for conc in self.L2_collection.find(
-                query, fields, sort=sort, limit=limit):
+                query, fields, sort=sort, limit=document_limit):
             yield conc
 
 
@@ -446,14 +447,19 @@ def get_valid_collapsed_products(products, limit):
     """wraps around collapse_products and respecting a limit
        to ensure that uncomplete products are not collapsed
     """
-    limit_hit = True if len(products) == limit else False
-    scanids = [product["ScanID"] for product in products]
+    next_min_scanid = get_next_min_scanid(products, limit)
     collapsed_products = []
     for scanid, scan in groupby(products, itemgetter('ScanID')):
-        if limit_hit and scanid == scanids[-1]:
+        if scanid == next_min_scanid:
             continue
         collapsed_products.extend(collapse_products(list(scan)))
     return collapsed_products
+
+
+def get_next_min_scanid(products, limit):
+    if len(products) == limit:
+        return products[-1]["ScanID"]
+    return 0
 
 
 def expand_product(product):

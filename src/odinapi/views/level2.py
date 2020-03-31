@@ -24,7 +24,8 @@ from odinapi.utils import time_util
 from odinapi.database import level2db
 from odinapi.views.views import get_L2_collocations
 from odinapi.views.baseview import BaseView, register_versions, BadRequest
-from odinapi.views.utils import make_rfc5988_pagination_header
+from odinapi.views.utils import (
+    make_rfc5988_pagination_header, make_rfc5988_link)
 from odinapi.views.database import DatabaseConnector
 from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.utils.swagger import SWAGGER
@@ -38,7 +39,9 @@ logging.basicConfig(
 
 
 DEFAULT_LIMIT = 1000
+DOCUMENT_LIMIT = 50000
 DEFAULT_OFFSET = 0
+DEFAULT_MINSCANID = 0
 
 SWAGGER.add_response('Level2BadQuery', "Unsupported query", {"Error": str})
 
@@ -79,8 +82,20 @@ SWAGGER.add_parameter(
     'limit', 'query', int, default=DEFAULT_LIMIT,
     description="Number of scans to return.")
 SWAGGER.add_parameter(
+    'document_limit', 'query', int, default=DOCUMENT_LIMIT,
+    description="""
+        Maximum number of database documents to return.
+        One document corresponds to data from one pressure
+        level of one product from one scan. No uncomplete
+        products are returned.
+    """
+)
+SWAGGER.add_parameter(
     'offset', 'query', int, default=DEFAULT_OFFSET,
     description="Skip scans before returning.")
+SWAGGER.add_parameter(
+    'min_scanid', 'query', int, default=DEFAULT_MINSCANID,
+    description="Skip scans having a lower scanid than this.")
 
 
 def is_development_request(version):
@@ -1113,7 +1128,8 @@ class Level2ViewArea(Level2ProjectBaseView):
             ['level2'],
             ['project', 'product', 'min_lat', 'max_lat',
              'min_lon', 'max_lon', 'min_pressure', 'max_pressure',
-             'min_altitude', 'max_altitude', 'start_time', 'end_time'],
+             'min_altitude', 'max_altitude', 'start_time', 'end_time',
+             'min_scanid', 'document_limit'],
             {
                 "200": SWAGGER.get_type_response('L2', is_list=True),
                 "400": SWAGGER.get_response('Level2BadQuery')
@@ -1144,10 +1160,23 @@ class Level2ViewArea(Level2ProjectBaseView):
             param = parse_parameters()
         except ValueError as e:
             raise BadRequest(str(e))
+
         db = level2db.Level2DB(project)
+        products = param['products']
         meas_iter = db.get_measurements(param.pop('products'), **param)
-        # TODO: Limit/paging
-        return meas_iter
+        if version == 'v4':
+            return meas_iter
+        scans = level2db.get_valid_collapsed_products(
+            list(meas_iter), get_args.get_int('document_limit'))
+        next_min_scanid = level2db.get_next_min_scanid(
+            list(meas_iter), get_args.get_int('document_limit'))
+        url = url_for(
+            'level2viewarea', project=project, version=version,
+            _external=True)
+        link = get_level2view_paging_link(
+            url, param, products, next_min_scanid)
+        headers = {'Link': link}
+        return scans, 200, headers
 
     @register_versions('return', ['v4'])
     def _return(self, version, results, _):
@@ -1156,10 +1185,7 @@ class Level2ViewArea(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, results, _):
-        scans = []
-        for _, scan in groupby(results, itemgetter('ScanID')):
-            scans.extend(level2db.collapse_products(list(scan)))
-        return {'Data': scans, 'Type': 'L2', 'Count': len(scans)}
+        return {'Data': results, 'Type': 'L2', 'Count': len(results)}
 
 
 def parse_parameters(**kwargs):
@@ -1234,3 +1260,27 @@ def parse_parameters(**kwargs):
         'areas': circles or area,
         'fields': fields
     }
+
+
+def get_level2view_paging_link(
+        url, param, product, next_min_scanid):
+    parameters_for_link = [
+        'min_lat', 'max_lat',
+        'min_lon', 'max_lon',
+        'min_pressure', 'max_pressure',
+        'min_altitude', 'max_altitude',
+        'start_time', 'end_time',
+        'min_scanid', 'document_limit'
+    ]
+    parameters = {}
+    for parameter in parameters_for_link:
+        if parameter in param and param[parameter] is not None:
+            parameters[parameter] = param[parameter]
+    parameters['product'] = product
+    parameters['min_scanid'] = 0
+    link = {}
+    link['first'] = make_rfc5988_link(url, **parameters)
+    if next_min_scanid > 0:
+        parameters['min_scanid'] = next_min_scanid
+        link['next'] = make_rfc5988_link(url, **parameters)
+    return link
