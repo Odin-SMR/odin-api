@@ -40,6 +40,20 @@ def insert_test_data(project_name, host, file_name='odin_result.json'):
     return r, urlinfo
 
 
+def insert_lot_of_test_data(
+        project_name, host, file_name='odin_result.json'):
+    data = get_test_data(file_name)
+    urlinfos = []
+    for index in range(30):
+        for product in data["L2"]:
+            product['ScanID'] += 1
+        data["L2I"]["ScanID"] += 1
+        urlinfo = get_write_url(data, project_name, host)
+        requests.post(urlinfo.url, json=data)
+        urlinfos.append(urlinfo)
+    return urlinfos
+
+
 def insert_failed_scan(
         project_name, host, scanid=7123991206+1, freqmode=1,
         message=u'Error: This scan failed',

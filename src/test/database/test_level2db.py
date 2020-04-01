@@ -170,10 +170,7 @@ class TestGetMeasurements:
             "O3 / 501 GHz / 20 to 50 km",
         ]
         measurements = level2db_with_example_data.get_measurements(
-            products, min_altitude=None, max_altitude=None,
-            min_pressure=None, max_pressure=None,
-            start_time=None, end_time=None, areas=None,
-            fields=None, min_scanid=min_scanid, document_limit=limit
+            products, min_scanid=min_scanid, document_limit=limit
         )
         results = list(measurements)
         assert len(results) == expect
@@ -190,19 +187,16 @@ class TestGetMeasurements:
             "O3 / 501 GHz / 20 to 50 km",
         ]
         measurements = level2db_with_example_data.get_measurements(
-            products, min_altitude=None, max_altitude=None,
-            min_pressure=None, max_pressure=None,
-            start_time=None, end_time=None, areas=None,
-            fields=None, min_scanid=min_scanid, document_limit=limit
+            products, min_scanid=min_scanid, document_limit=limit
         )
         results = list(measurements)
-        collapsed_products = get_valid_collapsed_products(
+        collapsed_products, _ = get_valid_collapsed_products(
             results, limit)
         assert len(collapsed_products) == expect
 
     @pytest.mark.parametrize("limit,expect", (
         (5, 11),
-        (10, 0),
+        (10, None),
     ))
     def test_get_next_min_scanid(self, limit, expect):
         products = [

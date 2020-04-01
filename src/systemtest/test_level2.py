@@ -11,7 +11,7 @@ import pytest
 from odinapi.utils import encrypt_util
 from .level2_test_data import (
     insert_test_data, insert_failed_scan, delete_test_data, WRITE_URL,
-    get_test_data, get_write_url,
+    get_test_data, get_write_url, insert_lot_of_test_data
 )
 
 PROJECT_NAME = 'testproject'
@@ -41,6 +41,15 @@ def fake_data(odinapi_service):
 
     requests.delete(urlinfo.url).raise_for_status()
     requests.delete(urlinfo_failed.url).raise_for_status()
+
+
+@pytest.fixture
+def lot_of_fake_data(odinapi_service):
+    # Insert level2 data
+    urlinfos = insert_lot_of_test_data(PROJECT_NAME, odinapi_service)
+    yield urlinfos
+    for urlinfo in urlinfos:
+        requests.delete(urlinfo.url).raise_for_status()
 
 
 class TestProjects:
@@ -1205,6 +1214,80 @@ class TestReadLevel2:
         if param:
             url += '?%s' % urllib.parse.urlencode(param)
         self.validate_v5_results(url, nr_expected, expected_l2)
+
+    @pytest.mark.parametrize('min_scanid,expect_scanids', (
+        (0, range(7014791072, 7014791088)),
+        (7014791088, range(7014791088, 7014791102)),
+        (7014791101, [7014791101]),
+    ))
+    def test_get_area_v5_paging_returns_ok_data(
+            self, odinapi_service, lot_of_fake_data, min_scanid,
+            expect_scanids):
+        url = make_dev_url('{host}/rest_api/v5/level2/{project}/area'.format(
+            host=odinapi_service, project=PROJECT_NAME,
+        ))
+        param = dict(
+            start_time='2015-03-02', min_pressure=1, document_limit=1000,
+            min_scanid=min_scanid)
+        url += '?%s' % urllib.parse.urlencode(param)
+        r = requests.get(url)
+        products = r.json()["Data"]
+        assert(
+            set([product["ScanID"] for product in products])
+            == set(expect_scanids)
+        )
+
+    @pytest.mark.parametrize('min_scanid,expect_link,expect_url', (
+        (0, True, 'min_scanid=7014791088'),
+        (7014791088, False, None),
+    ))
+    def test_get_area_v5_paging_returns_ok_links(
+            self, odinapi_service, lot_of_fake_data, min_scanid,
+            expect_link, expect_url):
+        url = make_dev_url('{host}/rest_api/v5/level2/{project}/area'.format(
+            host=odinapi_service, project=PROJECT_NAME,
+        ))
+        param = dict(
+            start_time='2015-03-02', min_pressure=1, document_limit=1000,
+            min_scanid=min_scanid, min_lat=-90)
+        url += '?%s' % urllib.parse.urlencode(param)
+        r = requests.get(url)
+        if expect_link:
+            assert "link" in r.headers
+            assert expect_url in r.links["next"]["url"]
+            link = r.links["next"]["url"]
+            link = link.replace('testproject', 'development/testproject')
+            r = requests.get(link)
+            r.raise_for_status()
+            assert "link" not in r.headers
+        else:
+            assert "link" not in r.headers
+
+    @pytest.mark.parametrize('min_scanid,expect_link,expect_url', (
+        (0, True, 'min_scanid=7014791088'),
+        (7014791088, False, None),
+    ))
+    def test_get_locations_v5_paging_returns_ok_links(
+            self, odinapi_service, lot_of_fake_data, min_scanid,
+            expect_link, expect_url):
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/locations'.format(
+                host=odinapi_service, project=PROJECT_NAME))
+        param = dict(
+            start_time='2015-03-02', min_pressure=1, document_limit=1000,
+            min_scanid=min_scanid, radius=6371000, location="0,180")
+        url += '?%s' % urllib.parse.urlencode(param)
+        r = requests.get(url)
+        if expect_link:
+            assert "link" in r.headers
+            assert expect_url in r.links["next"]["url"]
+            link = r.links["next"]["url"]
+            link = link.replace('testproject', 'development/testproject')
+            r = requests.get(link)
+            r.raise_for_status()
+            assert "link" not in r.headers
+        else:
+            assert "link" not in r.headers
 
     @pytest.mark.parametrize('url,status,param', (
         # Not published

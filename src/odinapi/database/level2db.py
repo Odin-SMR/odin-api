@@ -17,8 +17,6 @@ PRODUCT_ARRAY_KEYS = [
 ]
 EARTH_EQ_RADIUS_KM = 6378.1
 
-# Set a hard limit on the number of L2 documents that can be returned.
-# TODO: Support paging
 HARD_LIMIT = 50000
 
 
@@ -329,7 +327,7 @@ class Level2DB:
                          min_pressure=None, max_pressure=None,
                          start_time=None, end_time=None, areas=None,
                          fields=None, min_scanid=None,
-                         document_limit=HARD_LIMIT):
+                         document_limit=None):
         if not products:
             products = self.L2_collection.distinct('Product')
         elif isinstance(products, str):
@@ -453,13 +451,14 @@ def get_valid_collapsed_products(products, limit):
         if scanid == next_min_scanid:
             continue
         collapsed_products.extend(collapse_products(list(scan)))
-    return collapsed_products
+    return collapsed_products, next_min_scanid
 
 
 def get_next_min_scanid(products, limit):
+    assert len(products) <= limit
     if len(products) == limit:
         return products[-1]["ScanID"]
-    return 0
+    return None
 
 
 def expand_product(product):
