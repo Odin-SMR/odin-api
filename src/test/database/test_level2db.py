@@ -51,9 +51,8 @@ def level2db_with_example_data(docker_mongo):
     docker_mongo.level2testdb['L2_projectfoo'].drop()
     docker_mongo.level2testdb['L2i_projectfoo'].drop()
     file_example_data = os.path.join(
-        os.path.dirname(__file__), '..' , '..', 'systemtest', 'testdata',
-        'odin_result.json'
-    )
+        os.path.dirname(__file__), '..', '..', 'systemtest', 'testdata',
+        'odin_result.json')
     with open(file_example_data, 'r') as the_file:
         data = json.load(the_file)
     L2 = data["L2"]
@@ -170,7 +169,7 @@ class TestGetMeasurements:
             "O3 / 501 GHz / 20 to 50 km",
         ]
         measurements = level2db_with_example_data.get_measurements(
-            products, min_scanid=min_scanid, document_limit=limit
+            products, limit, min_scanid=min_scanid
         )
         results = list(measurements)
         assert len(results) == expect
@@ -178,7 +177,6 @@ class TestGetMeasurements:
     @pytest.mark.parametrize("min_scanid,limit,expect", (
         (7014791071, 37, 2),
         (7014791071, 36, 0),
-
     ))
     def test_get_valid_collapsed_products(
             self, level2db_with_example_data, min_scanid, limit, expect):
@@ -187,12 +185,29 @@ class TestGetMeasurements:
             "O3 / 501 GHz / 20 to 50 km",
         ]
         measurements = level2db_with_example_data.get_measurements(
-            products, min_scanid=min_scanid, document_limit=limit
+            products, limit, min_scanid=min_scanid
         )
         results = list(measurements)
         collapsed_products, _ = get_valid_collapsed_products(
             results, limit)
         assert len(collapsed_products) == expect
+
+    @pytest.mark.parametrize("min_scanid,limit,expect", (
+        (7014791071, 37, None),
+        (7014791071, 36, 7014791071),
+    ))
+    def test_get_valid_collapsed_products_returns_next(
+            self, level2db_with_example_data, min_scanid, limit, expect):
+        products = [
+            "ClO / 501 GHz / 20 to 50 km",
+            "O3 / 501 GHz / 20 to 50 km",
+        ]
+        measurements = level2db_with_example_data.get_measurements(
+            products, limit, min_scanid=min_scanid
+        )
+        results = list(measurements)
+        _, next_scanid = get_valid_collapsed_products(results, limit)
+        assert next_scanid == expect
 
     @pytest.mark.parametrize("limit,expect", (
         (5, 11),

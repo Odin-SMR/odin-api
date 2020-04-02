@@ -1,9 +1,7 @@
 """Views for getting Level 2 data"""
 from datetime import datetime, timedelta
 import http.client
-from itertools import groupby
 import logging
-from operator import itemgetter
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -1032,19 +1030,17 @@ class Level2ViewLocations(Level2ProjectBaseView):
         except ValueError as err:
             raise BadRequest(str(err))
         db = level2db.Level2DB(project)
-        products = param['products']
-        meas_iter = db.get_measurements(param.pop('products'), **param)
+        limit = param.pop('document_limit')
+        meas_iter = db.get_measurements(
+            param.pop('products'), limit, **param)
         if version == 'v4':
             return meas_iter
         scans, next_min_scanid = level2db.get_valid_collapsed_products(
-            list(meas_iter), param['document_limit'])
-        url = url_for(
-            'level2viewlocations', project=project, version=version,
-            _external=True)
+            list(meas_iter), limit)
         headers = {}
-        if next_min_scanid:
+        if next_min_scanid is not None:
             link = get_level2view_paging_links(
-                url, param, products, next_min_scanid)
+                request.url, param['min_scanid'], next_min_scanid)
             headers = {'link': link}
         return scans, HTTPStatus.OK, headers
 
@@ -1072,7 +1068,8 @@ class Level2ViewDay(Level2ProjectBaseView):
         return SWAGGER.get_path_definition(
             ['level2'],
             ['project', 'date', 'product',
-             'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude'],
+             'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude',
+             'min_scanid', 'document_limit'],
             {
                 "200": SWAGGER.get_type_response('L2', is_list=True),
                 "400": SWAGGER.get_response('Level2BadQuery')
@@ -1102,8 +1099,19 @@ class Level2ViewDay(Level2ProjectBaseView):
         except ValueError as e:
             return jsonify({'Error': str(e)})
         db = level2db.Level2DB(project)
-        meas_iter = db.get_measurements(param.pop('products'), **param)
-        return meas_iter
+        limit = param.pop('document_limit')
+        meas_iter = db.get_measurements(
+            param.pop('products'), limit, **param)
+        if version == 'v4':
+            return meas_iter
+        scans, next_min_scanid = level2db.get_valid_collapsed_products(
+            list(meas_iter), limit)
+        headers = {}
+        if next_min_scanid is not None:
+            link = get_level2view_paging_links(
+                request.url, param['min_scanid'], next_min_scanid)
+            headers = {'link': link}
+        return scans, HTTPStatus.OK, headers
 
     @register_versions('return', ['v4'])
     def _return(self, version, results, *args, **kwargs):
@@ -1112,10 +1120,7 @@ class Level2ViewDay(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, results, *args, **kwargs):
-        scans = []
-        for _, scan in groupby(results, itemgetter('ScanID')):
-            scans.extend(level2db.collapse_products(list(scan)))
-        return {'Data': scans, 'Type': 'L2', 'Count': len(scans)}
+        return {'Data': results, 'Type': 'L2', 'Count': len(results)}
 
 
 class Level2ViewArea(Level2ProjectBaseView):
@@ -1176,19 +1181,16 @@ class Level2ViewArea(Level2ProjectBaseView):
             raise BadRequest(str(e))
 
         db = level2db.Level2DB(project)
-        products = param['products']
-        meas_iter = db.get_measurements(param.pop('products'), **param)
+        limit = param.pop('document_limit')
+        meas_iter = db.get_measurements(param.pop('products'), limit, **param)
         if version == 'v4':
             return meas_iter
         scans, next_min_scanid = level2db.get_valid_collapsed_products(
-            list(meas_iter), param['document_limit'])
-        url = url_for(
-            'level2viewarea', project=project, version=version,
-            _external=True)
+            list(meas_iter), limit)
         headers = {}
-        if next_min_scanid:
+        if next_min_scanid is not None:
             link = get_level2view_paging_links(
-                url, param, products, next_min_scanid)
+                request.url, param['min_scanid'], next_min_scanid)
             headers = {'link': link}
         return scans, HTTPStatus.OK, headers
 
@@ -1287,31 +1289,14 @@ def parse_parameters(**kwargs):
 
 
 def get_level2view_paging_links(
-        url, param, product, next_min_scanid, **kwargs):
-    parameters_for_link = [
-        'min_pressure', 'max_pressure',
-        'min_altitude', 'max_altitude',
-        'start_time', 'end_time',
-        'min_scanid', 'document_limit'
-    ]
-    parameters = {}
-    for parameter in parameters_for_link:
-        if parameter in param and param[parameter] is not None:
-            parameters[parameter] = param[parameter]
-    if param["areas"] is not None:
-        if isinstance(param["areas"], level2db.GeographicArea):
-            for para in ["min_lat", "max_lat", "min_lon", "max_lat"]:
-                value = get_args.get_string(para)
-                if value is not None:
-                    parameters[para] = value
-        else:
-            parameters["radius"] = get_args.get_float('radius')
-            parameters["location"] = get_args.get_list('location')[0]
-
-    if product is not None:
-        parameters['product'] = product
-    parameters['min_scanid'] = 0
-    first_link = f"{url}" + '?%s' % urllib.parse.urlencode(parameters)
-    parameters['min_scanid'] = next_min_scanid
-    next_link = f"{url}" + '?%s' % urllib.parse.urlencode(parameters)
+        url, current_min_scanid, next_min_scanid):
+    if "min_scanid" in url:
+        first_link = url.replace(
+            f"min_scanid={current_min_scanid}", "min_scanid=0")
+        next_link = url.replace(
+            f"min_scanid={current_min_scanid}",
+            f"min_scanid={next_min_scanid}")
+    else:
+        first_link = f"{url}&min_scanid=0"
+        next_link = f"{url}&min_scanid={next_min_scanid}"
     return f'<{first_link}>; rel="first", <{next_link}>; rel="next"'

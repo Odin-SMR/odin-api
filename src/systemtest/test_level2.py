@@ -1256,7 +1256,6 @@ class TestReadLevel2:
             assert "link" in r.headers
             assert expect_url in r.links["next"]["url"]
             link = r.links["next"]["url"]
-            link = link.replace('testproject', 'development/testproject')
             r = requests.get(link)
             r.raise_for_status()
             assert "link" not in r.headers
@@ -1282,7 +1281,33 @@ class TestReadLevel2:
             assert "link" in r.headers
             assert expect_url in r.links["next"]["url"]
             link = r.links["next"]["url"]
-            link = link.replace('testproject', 'development/testproject')
+            r = requests.get(link)
+            r.raise_for_status()
+            assert "link" not in r.headers
+        else:
+            assert "link" not in r.headers
+
+    @pytest.mark.parametrize('min_scanid,expect_link,expect_url', (
+        (0, True, 'min_scanid=7014791088'),
+        (7014791088, False, None),
+    ))
+    def test_get_date_v5_paging_returns_ok_links(
+            self, odinapi_service, lot_of_fake_data, min_scanid,
+            expect_link, expect_url):
+        date = '2015-04-01'
+        url = make_dev_url(
+            '{host}/rest_api/v5/level2/{project}/{date}'.format(
+                host=odinapi_service, project=PROJECT_NAME, date=date,
+            ),
+        )
+        param = dict(
+            min_pressure=1, document_limit=1000, min_scanid=min_scanid)
+        url += '?%s' % urllib.parse.urlencode(param)
+        r = requests.get(url)
+        if expect_link:
+            assert "link" in r.headers
+            assert expect_url in r.links["next"]["url"]
+            link = r.links["next"]["url"]
             r = requests.get(link)
             r.raise_for_status()
             assert "link" not in r.headers

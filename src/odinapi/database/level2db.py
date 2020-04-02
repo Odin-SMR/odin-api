@@ -322,12 +322,11 @@ class Level2DB:
         ]))
         return {count['_id']: count['count'] for count in counts}
 
-    def get_measurements(self, products,
+    def get_measurements(self, products, limit,
                          min_altitude=None, max_altitude=None,
                          min_pressure=None, max_pressure=None,
                          start_time=None, end_time=None, areas=None,
-                         fields=None, min_scanid=None,
-                         document_limit=None):
+                         fields=None, min_scanid=None):
         if not products:
             products = self.L2_collection.distinct('Product')
         elif isinstance(products, str):
@@ -380,7 +379,7 @@ class Level2DB:
         sort = [('FreqMode', ASCENDING), ('ScanID', ASCENDING)]
 
         for conc in self.L2_collection.find(
-                query, fields, sort=sort, limit=document_limit):
+                query, fields, sort=sort, limit=limit):
             yield conc
 
 
