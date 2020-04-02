@@ -10,14 +10,14 @@ from pymongo import ASCENDING
 
 from odinapi.utils.time_util import datetime2mjd, datetime2stw
 from odinapi.database import mongo
+from odinapi.views.level2 import DOCUMENT_LIMIT
+
 
 PRODUCT_ARRAY_KEYS = [
     'Altitude', 'Pressure', 'Latitude', 'Longitude', 'Temperature',
     'ErrorTotal', 'ErrorNoise', 'MeasResponse', 'Apriori', 'VMR', 'AVK'
 ]
 EARTH_EQ_RADIUS_KM = 6378.1
-
-HARD_LIMIT = 50000
 
 
 class ProjectError(Exception):
@@ -273,7 +273,7 @@ class Level2DB:
         self, freqmode, fields, start_time=None, end_time=None,
         comment=None, failed=False, limit=None, offset=None,
     ):
-        limit = HARD_LIMIT if limit is None else limit
+        limit = DOCUMENT_LIMIT if limit is None else limit
         offset = 0 if offset is None else offset
         query = self._build_query(
             freqmode, failed=failed, start_time=start_time, end_time=end_time,
