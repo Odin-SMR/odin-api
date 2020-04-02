@@ -23,4 +23,16 @@ needed).
 
 To run the unittest only:
 
-    tox -- src/test
+    tox -e py38
+
+To run lint only
+
+    tox -e lint
+
+To just run systemtests
+
+    tox -e system
+
+Or just proxy tests
+
+    tox -e proxy
