@@ -15,7 +15,7 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     rm -rf swagger-ui*
 
 COPY requirements.txt /app
-RUN pip install -r requirements.txt
+RUN pip install --no-binary=h5py -r requirements.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
