@@ -14,7 +14,7 @@ node() {
     proxyImage = docker.build("odinsmr/proxy", "services/proxy")
   }
   stage('tests') {
-      sh "tox -- --runslow"
+      sh "tox -r -- --runslow"
   }
   if (env.BRANCH_NAME == 'master') {
     stage('push') {
