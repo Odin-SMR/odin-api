@@ -14,8 +14,26 @@ python module nrlmsis ! in
             real :: f107
             real dimension(7) :: ap
             integer :: mass
-            real dimension(9) :: d
-            real dimension(2) :: t
+            real dimension(9),intent(out) :: d
+            real dimension(2),intent(out) :: t
+            real dimension(5) :: tn1
+            real dimension(4) :: tn2
+            real dimension(5) :: tn3
+            real dimension(2) :: tgn1
+            real dimension(2) :: tgn2
+            real dimension(2) :: tgn3
+            real dimension(10) :: ptm
+            real dimension(10,8) :: pdm
+            integer dimension(3) :: isd
+            integer dimension(2) :: ist
+            integer dimension(2) :: nam
+            real :: dm04
+            real :: dm16
+            real :: dm28
+            real :: dm32
+            real :: dm40
+            real :: dm01
+            real :: dm14
             real :: tlb
             real :: s
             real :: db04
@@ -33,14 +51,10 @@ python module nrlmsis ! in
             real :: dd
             real :: db14
             real :: tr12
-            real dimension(5) :: tn1
-            real dimension(4) :: tn2
-            real dimension(5) :: tn3
-            real dimension(2) :: tgn1
-            real dimension(2) :: tgn2
-            real dimension(2) :: tgn3
-            real dimension(10) :: ptm
-            real dimension(10,8) :: pdm
+            real dimension(10) :: pavgm
+            integer dimension(3) :: isdate
+            integer dimension(2) :: istime
+            integer dimension(2) :: name
             real dimension(150) :: pt
             real dimension(150,9) :: pd
             real dimension(150) :: ps
@@ -48,37 +62,23 @@ python module nrlmsis ! in
             real dimension(100,4) :: ptl
             real dimension(100,10) :: pma
             real dimension(100) :: sam
-            integer dimension(3) :: isd
-            integer dimension(2) :: ist
-            integer dimension(2) :: nam
-            integer dimension(3) :: isdate
-            integer dimension(2) :: istime
-            integer dimension(2) :: name
+            integer :: imr
             real dimension(25) :: sw
             integer :: isw
             real dimension(25) :: swc
-            real dimension(10) :: pavgm
-            real :: dm04
-            real :: dm16
-            real :: dm28
-            real :: dm32
-            real :: dm40
-            real :: dm01
-            real :: dm14
             real :: gsurf
             real :: re
-            integer :: imr
-            common /gts3c/ tlb,s,db04,db16,db28,db32,db40,db48,db01,za,t0,z0,g0,rl,dd,db14,tr12
             common /meso7/ tn1,tn2,tn3,tgn1,tgn2,tgn3
             common /lower7/ ptm,pdm
-            common /parm7/ pt,pd,ps,pdl,ptl,pma,sam
             common /datim7/ isd,ist,nam
-            common /datime/ isdate,istime,name
-            common /csw/ sw,isw,swc
-            common /mavg7/ pavgm
             common /dmix/ dm04,dm16,dm28,dm32,dm40,dm01,dm14
-            common /parmb/ gsurf,re
+            common /gts3c/ tlb,s,db04,db16,db28,db32,db40,db48,db01,za,t0,z0,g0,rl,dd,db14,tr12
+            common /mavg7/ pavgm
+            common /datime/ isdate,istime,name
+            common /parm7/ pt,pd,ps,pdl,ptl,pma,sam
             common /metsel/ imr
+            common /csw/ sw,isw,swc
+            common /parmb/ gsurf,re
         end subroutine gtd7
         subroutine gtd7d(iyd,sec,alt,glat,glong,stl,f107a,f107,ap,mass,d,t) ! in :nrlmsis:nrlmsise00_sub.for
             integer :: iyd
@@ -91,8 +91,8 @@ python module nrlmsis ! in
             real :: f107
             real dimension(7) :: ap
             integer :: mass
-            real dimension(9) :: d
-            real dimension(2) :: t
+            real dimension(9),intent(out) :: d
+            real dimension(2),intent(out) :: t
             integer :: imr
             common /metsel/ imr
         end subroutine gtd7d
@@ -106,14 +106,14 @@ python module nrlmsis ! in
             real :: f107a
             real :: f107
             real dimension(7) :: ap
-            real dimension(9) :: d
-            real dimension(2) :: t
+            real dimension(9),intent(out) :: d
+            real dimension(2),intent(out) :: t
             real :: press
+            integer :: imr
             real :: gsurf
             real :: re
-            integer :: imr
-            common /parmb/ gsurf,re
             common /metsel/ imr
+            common /parmb/ gsurf,re
         end subroutine ghp7
         subroutine glatf(lat,gv,reff) ! in :nrlmsis:nrlmsise00_sub.for
             real :: lat
@@ -149,6 +149,21 @@ python module nrlmsis ! in
             integer :: mass
             real dimension(9) :: d
             real dimension(2) :: t
+            real dimension(5) :: tn1
+            real dimension(4) :: tn2
+            real dimension(5) :: tn3
+            real dimension(2) :: tgn1
+            real dimension(2) :: tgn2
+            real dimension(2) :: tgn3
+            real dimension(10) :: ptm
+            real dimension(10,8) :: pdm
+            real :: dm04
+            real :: dm16
+            real :: dm28
+            real :: dm32
+            real :: dm40
+            real :: dm01
+            real :: dm14
             real :: tlb
             real :: s
             real :: db04
@@ -166,14 +181,7 @@ python module nrlmsis ! in
             real :: dd
             real :: db14
             real :: tr12
-            real dimension(5) :: tn1
-            real dimension(4) :: tn2
-            real dimension(5) :: tn3
-            real dimension(2) :: tgn1
-            real dimension(2) :: tgn2
-            real dimension(2) :: tgn3
-            real dimension(10) :: ptm
-            real dimension(10,8) :: pdm
+            integer :: imr
             real dimension(150) :: pt
             real dimension(150,9) :: pd
             real dimension(150) :: ps
@@ -188,22 +196,14 @@ python module nrlmsis ! in
             real :: gb
             real :: rout
             real dimension(15) :: tt
-            real :: dm04
-            real :: dm16
-            real :: dm28
-            real :: dm32
-            real :: dm40
-            real :: dm01
-            real :: dm14
-            integer :: imr
-            common /gts3c/ tlb,s,db04,db16,db28,db32,db40,db48,db01,za,t0,z0,g0,rl,dd,db14,tr12
             common /meso7/ tn1,tn2,tn3,tgn1,tgn2,tgn3
             common /lower7/ ptm,pdm
+            common /dmix/ dm04,dm16,dm28,dm32,dm40,dm01,dm14
+            common /gts3c/ tlb,s,db04,db16,db28,db32,db40,db48,db01,za,t0,z0,g0,rl,dd,db14,tr12
+            common /metsel/ imr
             common /parm7/ pt,pd,ps,pdl,ptl,pma,sam
             common /csw/ sw,isw,swc
             common /ttest/ tinfg,gb,rout,tt
-            common /dmix/ dm04,dm16,dm28,dm32,dm40,dm01,dm14
-            common /metsel/ imr
         end subroutine gts7
         subroutine meters(meter) ! in :nrlmsis:nrlmsise00_sub.for
             logical :: meter
@@ -229,10 +229,6 @@ python module nrlmsis ! in
             real :: f107
             real dimension(1) :: ap
             real dimension(1) :: p
-            real :: tinf
-            real :: gb
-            real :: rout
-            real dimension(15) :: t
             real dimension(25) :: sw
             integer :: isw
             real dimension(25) :: swc
@@ -251,22 +247,29 @@ python module nrlmsis ! in
             real :: apdf
             real dimension(4) :: apt
             real :: xlong
+            real :: tinf
+            real :: gb
+            real :: rout
+            real dimension(15) :: t
             real :: globe7
-            common /ttest/ tinf,gb,rout,t
             common /csw/ sw,isw,swc
             common /lpoly/ plg,ctloc,stloc,c2tloc,s2tloc,c3tloc,s3tloc,iyr,day,df,dfa,apd,apdf,apt,xlong
+            common /ttest/ tinf,gb,rout,t
         end function globe7
         subroutine tselec(sv) ! in :nrlmsis:nrlmsise00_sub.for
-            real dimension(1) :: sv
+            real dimension(1),intent(in) :: sv
             real dimension(25) :: sw
             integer :: isw
             real dimension(25) :: swc
-            real dimension(1) :: svv
+            real dimension(1),intent(out) :: svv
             common /csw/ sw,isw,swc
             entry tretrv(svv)
         end subroutine tselec
         function glob7s(p) ! in :nrlmsis:nrlmsise00_sub.for
             real dimension(1) :: p
+            real dimension(25) :: sw
+            integer :: isw
+            real dimension(25) :: swc
             real dimension(9,4) :: plg
             real :: ctloc
             real :: stloc
@@ -281,13 +284,10 @@ python module nrlmsis ! in
             real :: apd
             real :: apdf
             real dimension(4) :: apt
-            real :: long_bn
-            real dimension(25) :: sw
-            integer :: isw
-            real dimension(25) :: swc
+            integer :: long
             real :: glob7s
-            common /lpoly/ plg,ctloc,stloc,c2tloc,s2tloc,c3tloc,s3tloc,iyr,day,df,dfa,apd,apdf,apt,long_bn
             common /csw/ sw,isw,swc
+            common /lpoly/ plg,ctloc,stloc,c2tloc,s2tloc,c3tloc,s3tloc,iyr,day,df,dfa,apd,apdf,apt,long
         end function glob7s
         function densu(alt,dlb,tinf,tlb,xm,alpha,tz,zlb,s2,mn1,zn1,tn1,tgn1) ! in :nrlmsis:nrlmsise00_sub.for
             real :: alt
@@ -332,9 +332,6 @@ python module nrlmsis ! in
             real dimension(mn2) :: zn2
             real dimension(mn2),depend(mn2) :: tn2
             real dimension(2) :: tgn2
-            real :: gsurf
-            real :: re
-            real :: taf
             integer :: mp
             integer :: ii
             integer :: jg
@@ -345,10 +342,13 @@ python module nrlmsis ! in
             integer :: n
             integer :: j
             real dimension(60) :: dv
+            real :: gsurf
+            real :: re
+            real :: taf
             real :: densm
+            common /lsqv/ mp,ii,jg,lt,qpb,ierr,ifun,n,j,dv
             common /parmb/ gsurf,re
             common /fit/ taf
-            common /lsqv/ mp,ii,jg,lt,qpb,ierr,ifun,n,j,dv
         end function densm
         subroutine spline(x,y,n,yp1,ypn,y2) ! in :nrlmsis:nrlmsise00_sub.for
             real dimension(n) :: x
@@ -462,18 +462,18 @@ python module nrlmsis ! in
             real, optional,dimension(50) :: pz2=0.00000e+00
             real, optional,dimension(50) :: paa1=1.00000e+00
             real, optional,dimension(50) :: paa2=0.00000e+00
+            integer, optional :: imr=0
+            real, optional,dimension(10) :: pavgm=2.61000e+02
             real, optional,dimension(10) :: ptm=1.04130e+03
             real, optional,dimension(10,8) :: pdm=2.45600e+07
-            real, optional,dimension(10) :: pavgm=2.61000e+02
-            integer dimension(3) :: isdate
-            integer dimension(2) :: istime
-            integer dimension(2) :: name
-            integer, optional :: imr=0
+            integer, optional,dimension(3) :: isdate='01-f'
+            integer, optional,dimension(2) :: istime='15:4'
+            integer, optional,dimension(2) :: name='msis'
             common /parm7/ pt1,pt2,pt3,pa1,pa2,pa3,pb1,pb2,pb3,pc1,pc2,pc3,pd1,pd2,pd3,pe1,pe2,pe3,pf1,pf2,pf3,pg1,pg2,pg3,ph1,ph2,ph3,pi1,pi2,pi3,pj1,pj2,pj3,pk1,pl1,pl2,pm1,pm2,pn1,pn2,po1,po2,pp1,pp2,pq1,pq2,pr1,pr2,ps1,ps2,pu1,pu2,pv1,pv2,pw1,pw2,px1,px2,py1,py2,pz1,pz2,paa1,paa2
-            common /lower7/ ptm,pdm
-            common /mavg7/ pavgm
-            common /datim7/ isdate,istime,name
             common /metsel/ imr
+            common /mavg7/ pavgm
+            common /lower7/ ptm,pdm
+            common /datim7/ isdate,istime,name
         end block data gtd7bk
     end interface 
 end python module nrlmsis
