@@ -8,7 +8,7 @@ node() {
       sh "npm install && npm update && npm test"
   }
   stage('build odinapi') {
-    odinapiImage = docker.build("odinsmr/odin-api")
+    odinapiImage = docker.build("odinsmr/odin_api")
   }
   stage('build proxy') {
     proxyImage = docker.build("odinsmr/proxy", "services/proxy")
