@@ -10,7 +10,9 @@ from pymongo import ASCENDING
 
 from odinapi.utils.time_util import datetime2mjd, datetime2stw
 from odinapi.database import mongo
-from odinapi.views.level2 import DOCUMENT_LIMIT
+
+
+DOCUMENT_LIMIT = 50000
 
 
 PRODUCT_ARRAY_KEYS = [
