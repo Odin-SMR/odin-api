@@ -18,6 +18,7 @@ pycrypto
 pyephem
 pyflakes
 pygresql
+pyhdf
 pylint
 pymongo
 pyproj

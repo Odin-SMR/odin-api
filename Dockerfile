@@ -1,8 +1,8 @@
-FROM python:3.6
-COPY requirements_python36.apt /app/
+FROM python:3.8
+COPY requirements_python.apt /app/
 WORKDIR /app
 RUN set -x && \
-    apt-get update && xargs apt-get install -y < requirements_python36.apt
+    apt-get update && xargs apt-get install -y < requirements_python.apt
 
 COPY dependencies/ /dependencies/
 
@@ -15,7 +15,7 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     rm -rf swagger-ui*
 
 COPY requirements.txt /app
-RUN pip install --no-binary=h5py -r requirements.txt
+RUN pip install -r requirements.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
