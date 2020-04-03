@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 """
 A script that retrieves era-interim data
 from CDS data server. Note that a file
@@ -91,13 +91,12 @@ def download_data(date_start, date_end, levtype, hours):
             if not os.path.exists(target):
                 server = cdsapi.Client()
                 server.retrieve(dataset, settings, target)
-                exit(0)
         date_start += timedelta(days=1)
 
 
 def get_default_date_start():
     return (
-        datetime.utcnow().date() - timedelta(days=1000)
+        datetime.utcnow().date() - timedelta(days=365)
     ).strftime("%Y-%m-%d")
 
 
@@ -123,7 +122,7 @@ def cli():
         default=get_default_date_start(),
         help='''
             start date to download, Format YYYY-MM-DD,
-            default is 1000 days from now
+            default is 365 days before today
         '''
     )
     parser.add_argument(
@@ -135,7 +134,7 @@ def cli():
         help='''
             end date to download, Format YYYY-MM-DD,
             default is the last day in three months
-            from now
+            before today
         '''
     )
     parser.add_argument(
@@ -144,7 +143,7 @@ def cli():
         dest='time',
         type=str,
         default='00/06/12/18',
-        help='time to download, ',
+        help='time of day to download',
     )
     args = parser.parse_args()
     assert args.levtype in ["pl", "sfc"]
@@ -158,5 +157,4 @@ def cli():
 
 
 if __name__ == "__main__":
-
     cli()
