@@ -1,5 +1,6 @@
 coda
 coverage
+cdsapi
 cython
 dateutils
 flask

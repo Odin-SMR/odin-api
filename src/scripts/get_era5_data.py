@@ -2,7 +2,7 @@
 """
 A script that retrieves era-interim data
 from CDS data server. Note that a file
-named .ecmwfapirc, containg a key, should
+named .cdsapirc, containg a key, should
 be available in the user home directory.
 Updated 2020-03 för CDS server. Only
 pressure level part updated
@@ -23,7 +23,7 @@ import cdsapi
 # 203.128  : Ozone mass mixing ratio
 # 246.128  : Specific cloud liquid water content
 
-dataset='reanalysis-era5-pressure-levels'
+dataset = 'reanalysis-era5-pressure-levels'
 cmd_pl = {
     "class": "ea",
     "date": "2015-09-29",
@@ -161,4 +161,5 @@ if __name__ == "__main__":
             if not os.path.exists(target):
                 pass
                 server = cdsapi.Client()
-                server.retrieve(service,cmd,target)
+                service = "reanalysis-era5-pressure-levels"
+                server.retrieve(service, cmd, target)
