@@ -131,6 +131,12 @@ class TestLevel2Browser:
          'ClO / 501 GHz / 20 to 50 km',
         }
 
+    def test_freqmode_list(self, odinapi_service, chrome):
+        driver = self.get_lvl2page(chrome, odinapi_service)
+        freqmode_div = driver.find_element_by_id('freqmodeInfoTable')
+        assert freqmode_div is not None
+        assert freqmode_div.find_elements_by_tag_name('table')
+
 
 def import_level2data(host, offset=0):
     '''import level2 data'''
