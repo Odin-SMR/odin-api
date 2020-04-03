@@ -1,9 +1,7 @@
 """Views for getting Level 2 data"""
 from datetime import datetime, timedelta
 import http.client
-from itertools import groupby
 import logging
-from operator import itemgetter
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -13,6 +11,7 @@ from flask import request, abort, jsonify, redirect, url_for
 from flask.views import MethodView
 from flask_httpauth import HTTPBasicAuth
 from pymongo.errors import DuplicateKeyError
+from http import HTTPStatus
 
 from odinapi.utils.encrypt_util import (
     decode_level2_target_parameter, SECRET_KEY)
@@ -38,7 +37,10 @@ logging.basicConfig(
 
 
 DEFAULT_LIMIT = 1000
+DOCUMENT_LIMIT = level2db.DOCUMENT_LIMIT
+DOCUMENT_LIMIT_MIN = 1000
 DEFAULT_OFFSET = 0
+DEFAULT_MINSCANID = 0
 
 SWAGGER.add_response('Level2BadQuery', "Unsupported query", {"Error": str})
 
@@ -79,8 +81,22 @@ SWAGGER.add_parameter(
     'limit', 'query', int, default=DEFAULT_LIMIT,
     description="Number of scans to return.")
 SWAGGER.add_parameter(
+    'document_limit', 'query', int, default=DOCUMENT_LIMIT,
+    description="""
+        Maximum number of database documents to return.
+        One document corresponds to data from one pressure
+        level of one product from one scan. Lowest allowed value
+        of this parameter is 1000. No uncomplete
+        products are returned. Link to next piece of data is given
+        in the response headers, if the limit is hit.
+    """
+)
+SWAGGER.add_parameter(
     'offset', 'query', int, default=DEFAULT_OFFSET,
     description="Skip scans before returning.")
+SWAGGER.add_parameter(
+    'min_scanid', 'query', int, default=DEFAULT_MINSCANID,
+    description="Skip scans having a lower scanid than this.")
 
 
 def is_development_request(version):
@@ -156,8 +172,9 @@ class Level2Write(MethodView):
             try:
                 check_json(species, prototype=l2_prototype)
             except JsonModelError as e:
-                return jsonify(
-                    {'error': 'L2 species %d: %s' % (nr, e)}), 400
+                return (
+                    jsonify({'error': 'L2 species %d: %s' % (nr, e)}),
+                    HTTPStatus.BAD_REQUEST)
         L2i = data.pop('L2I') or {}
         if not isinstance(L2i, dict):
             logging.warning('Level2Write.post: L2I is not a dict')
@@ -166,7 +183,8 @@ class Level2Write(MethodView):
             try:
                 check_json(L2i, prototype=l2i_prototype)
             except JsonModelError as e:
-                return jsonify({'error': 'L2i: %s' % e}), 400
+                return jsonify(
+                    {'error': 'L2i: %s' % e}), HTTPStatus.BAD_REQUEST
             L2i['ProcessingError'] = False
         else:
             # Processing error, L2i is empty, we have to trust the provided
@@ -178,12 +196,12 @@ class Level2Write(MethodView):
             logging.warning('Level2Write.post: scanid mismatch')
             return jsonify(
                 {'error': 'ScanID missmatch (%r != %r)' % (
-                    scanid, L2i['ScanID'])}), 400
+                    scanid, L2i['ScanID'])}), HTTPStatus.BAD_REQUEST
         if freqmode != L2i['FreqMode']:
             logging.warning('Level2Write.post: freqmode mismatch')
             return jsonify(
                 {'error': 'FreqMode missmatch (%r != %r)' % (
-                    scanid, L2i['FreqMode'])}), 400
+                    scanid, L2i['FreqMode'])}), HTTPStatus.BAD_REQUEST
         projects = level2db.ProjectsDB()
         projects.add_project_if_not_exists(project)
         db = level2db.Level2DB(project)
@@ -202,7 +220,7 @@ class Level2Write(MethodView):
                 "for project={0}, FreqMode={1}, and ScanID={2} "
                 "but has now been replaced".format(
                     project, L2i['FreqMode'], L2i['ScanID']))
-        return '', 201
+        return '', HTTPStatus.CREATED
 
     def delete(self, version):
         """Delete level2 data for a scan id and freq mode"""
@@ -215,7 +233,7 @@ class Level2Write(MethodView):
             abort(400)
         db = level2db.Level2DB(project)
         db.delete(scanid, freqmode)
-        return '', 204
+        return '', HTTPStatus.NO_CONTENT
 
 
 SWAGGER.add_type('level2_project', {
@@ -452,7 +470,7 @@ class Level2ViewComments(Level2ProjectBaseView):
                 version=version, project=project, freqmode=freqmode
             ),
         }
-        return data, 200, headers
+        return data, HTTPStatus.OK, headers
 
     def _get_endpoint(self):
         return (
@@ -530,7 +548,7 @@ class Level2ViewScans(Level2ProjectBaseView):
                 version=version, project=project, freqmode=freqmode, **param
             )
         }
-        return data, 200, headers
+        return data, HTTPStatus.OK, headers
 
     def _get_endpoint(self):
         return (
@@ -611,7 +629,7 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
                 version=version, project=project, freqmode=freqmode, **param
             ),
         }
-        return data, 200, headers
+        return data, HTTPStatus.OK, headers
 
     def _get_endpoint(self):
         return (
@@ -983,7 +1001,7 @@ class Level2ViewLocations(Level2ProjectBaseView):
             ['level2'],
             ['project', 'product', 'location', 'radius',
              'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude',
-             'start_time', 'end_time'],
+             'start_time', 'end_time', 'min_scanid', 'document_limit'],
             {
                 "200": SWAGGER.get_type_response('L2', is_list=True),
                 "400": SWAGGER.get_response('Level2BadQuery')
@@ -1012,9 +1030,19 @@ class Level2ViewLocations(Level2ProjectBaseView):
         except ValueError as err:
             raise BadRequest(str(err))
         db = level2db.Level2DB(project)
-        # TODO: Limit/paging
-        meas_iter = db.get_measurements(param.pop('products'), **param)
-        return meas_iter
+        limit = param.pop('document_limit')
+        meas_iter = db.get_measurements(
+            param.pop('products'), limit, **param)
+        if version == 'v4':
+            return meas_iter
+        scans, next_min_scanid = level2db.get_valid_collapsed_products(
+            list(meas_iter), limit)
+        headers = {}
+        if next_min_scanid is not None:
+            link = get_level2view_paging_links(
+                request.url, param['min_scanid'], next_min_scanid)
+            headers = {'link': link}
+        return scans, HTTPStatus.OK, headers
 
     @register_versions('return', ['v4'])
     def _return(self, version, results, _):
@@ -1023,10 +1051,7 @@ class Level2ViewLocations(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, results, _):
-        scans = []
-        for _, scan in groupby(results, itemgetter('ScanID')):
-            scans.extend(level2db.collapse_products(list(scan)))
-        return {'Data': scans, 'Type': 'L2', 'Count': len(scans)}
+        return {'Data': results, 'Type': 'L2', 'Count': len(results)}
 
 
 class Level2ViewDay(Level2ProjectBaseView):
@@ -1043,7 +1068,8 @@ class Level2ViewDay(Level2ProjectBaseView):
         return SWAGGER.get_path_definition(
             ['level2'],
             ['project', 'date', 'product',
-             'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude'],
+             'min_pressure', 'max_pressure', 'min_altitude', 'max_altitude',
+             'min_scanid', 'document_limit'],
             {
                 "200": SWAGGER.get_type_response('L2', is_list=True),
                 "400": SWAGGER.get_response('Level2BadQuery')
@@ -1073,8 +1099,19 @@ class Level2ViewDay(Level2ProjectBaseView):
         except ValueError as e:
             return jsonify({'Error': str(e)})
         db = level2db.Level2DB(project)
-        meas_iter = db.get_measurements(param.pop('products'), **param)
-        return meas_iter
+        limit = param.pop('document_limit')
+        meas_iter = db.get_measurements(
+            param.pop('products'), limit, **param)
+        if version == 'v4':
+            return meas_iter
+        scans, next_min_scanid = level2db.get_valid_collapsed_products(
+            list(meas_iter), limit)
+        headers = {}
+        if next_min_scanid is not None:
+            link = get_level2view_paging_links(
+                request.url, param['min_scanid'], next_min_scanid)
+            headers = {'link': link}
+        return scans, HTTPStatus.OK, headers
 
     @register_versions('return', ['v4'])
     def _return(self, version, results, *args, **kwargs):
@@ -1083,10 +1120,7 @@ class Level2ViewDay(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, results, *args, **kwargs):
-        scans = []
-        for _, scan in groupby(results, itemgetter('ScanID')):
-            scans.extend(level2db.collapse_products(list(scan)))
-        return {'Data': scans, 'Type': 'L2', 'Count': len(scans)}
+        return {'Data': results, 'Type': 'L2', 'Count': len(results)}
 
 
 class Level2ViewArea(Level2ProjectBaseView):
@@ -1113,7 +1147,8 @@ class Level2ViewArea(Level2ProjectBaseView):
             ['level2'],
             ['project', 'product', 'min_lat', 'max_lat',
              'min_lon', 'max_lon', 'min_pressure', 'max_pressure',
-             'min_altitude', 'max_altitude', 'start_time', 'end_time'],
+             'min_altitude', 'max_altitude', 'start_time', 'end_time',
+             'min_scanid', 'document_limit'],
             {
                 "200": SWAGGER.get_type_response('L2', is_list=True),
                 "400": SWAGGER.get_response('Level2BadQuery')
@@ -1144,10 +1179,20 @@ class Level2ViewArea(Level2ProjectBaseView):
             param = parse_parameters()
         except ValueError as e:
             raise BadRequest(str(e))
+
         db = level2db.Level2DB(project)
-        meas_iter = db.get_measurements(param.pop('products'), **param)
-        # TODO: Limit/paging
-        return meas_iter
+        limit = param.pop('document_limit')
+        meas_iter = db.get_measurements(param.pop('products'), limit, **param)
+        if version == 'v4':
+            return meas_iter
+        scans, next_min_scanid = level2db.get_valid_collapsed_products(
+            list(meas_iter), limit)
+        headers = {}
+        if next_min_scanid is not None:
+            link = get_level2view_paging_links(
+                request.url, param['min_scanid'], next_min_scanid)
+            headers = {'link': link}
+        return scans, HTTPStatus.OK, headers
 
     @register_versions('return', ['v4'])
     def _return(self, version, results, _):
@@ -1156,10 +1201,7 @@ class Level2ViewArea(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, results, _):
-        scans = []
-        for _, scan in groupby(results, itemgetter('ScanID')):
-            scans.extend(level2db.collapse_products(list(scan)))
-        return {'Data': scans, 'Type': 'L2', 'Count': len(scans)}
+        return {'Data': results, 'Type': 'L2', 'Count': len(results)}
 
 
 def parse_parameters(**kwargs):
@@ -1223,6 +1265,14 @@ def parse_parameters(**kwargs):
     # Fields to return
     fields = get_args.get_list('field')
 
+    # Limit
+    document_limit = max(
+        get_args.get_int('document_limit') or DOCUMENT_LIMIT,
+        DOCUMENT_LIMIT_MIN)
+
+    # Offset in scanid
+    min_scanid = get_args.get_int('min_scanid') or DEFAULT_MINSCANID
+
     return {
         'products': products,
         'min_pressure': min_pressure,
@@ -1232,5 +1282,21 @@ def parse_parameters(**kwargs):
         'start_time': start_time,
         'end_time': end_time,
         'areas': circles or area,
-        'fields': fields
+        'fields': fields,
+        'document_limit': document_limit,
+        'min_scanid': min_scanid
     }
+
+
+def get_level2view_paging_links(
+        url, current_min_scanid, next_min_scanid):
+    if "min_scanid" in url:
+        first_link = url.replace(
+            f"min_scanid={current_min_scanid}", "min_scanid=0")
+        next_link = url.replace(
+            f"min_scanid={current_min_scanid}",
+            f"min_scanid={next_min_scanid}")
+    else:
+        first_link = f"{url}&min_scanid=0"
+        next_link = f"{url}&min_scanid={next_min_scanid}"
+    return f'<{first_link}>; rel="first", <{next_link}>; rel="next"'

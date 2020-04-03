@@ -142,6 +142,7 @@ function drawStatistics(year) {
             },
             xaxis: {
                 ticks: xticks,
+                tickDecimals: 0,
             },
             grid: {
                 hoverable: true,

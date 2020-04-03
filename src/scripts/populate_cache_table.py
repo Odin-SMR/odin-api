@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python3.8
 """
 Part of odin-api, tools to make it happen
 """

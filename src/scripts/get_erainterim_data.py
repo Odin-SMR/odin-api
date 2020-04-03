@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 """
 A script that retrieves era-interim data
 from ECMWF data server. Note that a file

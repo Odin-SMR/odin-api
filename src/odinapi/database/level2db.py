@@ -1,6 +1,8 @@
 from datetime import datetime
 from itertools import chain
 from collections import namedtuple
+from itertools import groupby
+from operator import itemgetter
 
 import numpy
 from pymongo.errors import DuplicateKeyError
@@ -9,15 +11,15 @@ from pymongo import ASCENDING
 from odinapi.utils.time_util import datetime2mjd, datetime2stw
 from odinapi.database import mongo
 
+
+DOCUMENT_LIMIT = 50000
+
+
 PRODUCT_ARRAY_KEYS = [
     'Altitude', 'Pressure', 'Latitude', 'Longitude', 'Temperature',
     'ErrorTotal', 'ErrorNoise', 'MeasResponse', 'Apriori', 'VMR', 'AVK'
 ]
 EARTH_EQ_RADIUS_KM = 6378.1
-
-# Set a hard limit on the number of L2 documents that can be returned.
-# TODO: Support paging
-HARD_LIMIT = 50000
 
 
 class ProjectError(Exception):
@@ -273,7 +275,7 @@ class Level2DB:
         self, freqmode, fields, start_time=None, end_time=None,
         comment=None, failed=False, limit=None, offset=None,
     ):
-        limit = HARD_LIMIT if limit is None else limit
+        limit = DOCUMENT_LIMIT if limit is None else limit
         offset = 0 if offset is None else offset
         query = self._build_query(
             freqmode, failed=failed, start_time=start_time, end_time=end_time,
@@ -322,11 +324,11 @@ class Level2DB:
         ]))
         return {count['_id']: count['count'] for count in counts}
 
-    def get_measurements(self, products,
+    def get_measurements(self, products, limit,
                          min_altitude=None, max_altitude=None,
                          min_pressure=None, max_pressure=None,
                          start_time=None, end_time=None, areas=None,
-                         fields=None):
+                         fields=None, min_scanid=None):
         if not products:
             products = self.L2_collection.distinct('Product')
         elif isinstance(products, str):
@@ -360,6 +362,9 @@ class Level2DB:
             query = {'$and': [
                 query, {'$or': [area.query for area in areas]}]}
 
+        if min_scanid:
+            query["ScanID"] = {}
+            query["ScanID"]['$gte'] = min_scanid
         # TODO:
         # Raise if indexes cannot be used proparly?
         # Examples when indexes are missing:
@@ -376,7 +381,7 @@ class Level2DB:
         sort = [('FreqMode', ASCENDING), ('ScanID', ASCENDING)]
 
         for conc in self.L2_collection.find(
-                query, fields, sort=sort, limit=HARD_LIMIT):
+                query, fields, sort=sort, limit=limit):
             yield conc
 
 
@@ -435,6 +440,26 @@ def collapse_products(products):
             for array_key in PRODUCT_ARRAY_KEYS:
                 prod[array_key].append(product[array_key])
     return list(prods.values())
+
+
+def get_valid_collapsed_products(products, limit):
+    """wraps around collapse_products and respecting a limit
+       to ensure that uncomplete products are not collapsed
+    """
+    next_min_scanid = get_next_min_scanid(products, limit)
+    collapsed_products = []
+    for scanid, scan in groupby(products, itemgetter('ScanID')):
+        if scanid == next_min_scanid:
+            continue
+        collapsed_products.extend(collapse_products(list(scan)))
+    return collapsed_products, next_min_scanid
+
+
+def get_next_min_scanid(products, limit):
+    assert len(products) <= limit
+    if len(products) == limit:
+        return products[-1]["ScanID"]
+    return None
 
 
 def expand_product(product):

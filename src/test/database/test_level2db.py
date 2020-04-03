@@ -1,6 +1,9 @@
 import pytest
+import os
+import json
 
-from odinapi.database.level2db import Level2DB
+from odinapi.database.level2db import (
+    Level2DB, get_valid_collapsed_products, get_next_min_scanid)
 
 FREQMODE = 42
 
@@ -39,6 +42,23 @@ def level2db(docker_mongo):
             'Comments': ["Or", "Me"]
         },
     ])
+    return level2db
+
+
+@pytest.fixture
+def level2db_with_example_data(docker_mongo):
+    level2db = Level2DB('projectfoo', docker_mongo.level2testdb)
+    docker_mongo.level2testdb['L2_projectfoo'].drop()
+    docker_mongo.level2testdb['L2i_projectfoo'].drop()
+    file_example_data = os.path.join(
+        os.path.dirname(__file__), '..', '..', 'systemtest', 'testdata',
+        'odin_result.json')
+    with open(file_example_data, 'r') as the_file:
+        data = json.load(the_file)
+    L2 = data["L2"]
+    L2i = data["L2I"]
+    L2c = data["L2C"]
+    level2db.store(L2, L2i, L2c)
     return level2db
 
 
@@ -134,3 +154,68 @@ class TestGetFailedScans:
     @pytest.mark.slow
     def test_count_failed_scans_with_offset(self, level2db):
         assert level2db.count_failed_scans(FREQMODE, offset=1) == 1
+
+
+class TestGetMeasurements:
+    @pytest.mark.parametrize("min_scanid,limit,expect", (
+        (7014791071, 50, 36),
+        (7014791071, 5, 5),
+        (7014791072, 20, 0),
+    ))
+    def test_get_measurements_respect_offset_and_limit(
+            self, level2db_with_example_data, min_scanid, limit, expect):
+        products = [
+            "ClO / 501 GHz / 20 to 50 km",
+            "O3 / 501 GHz / 20 to 50 km",
+        ]
+        measurements = level2db_with_example_data.get_measurements(
+            products, limit, min_scanid=min_scanid
+        )
+        results = list(measurements)
+        assert len(results) == expect
+
+    @pytest.mark.parametrize("min_scanid,limit,expect", (
+        (7014791071, 37, 2),
+        (7014791071, 36, 0),
+    ))
+    def test_get_valid_collapsed_products(
+            self, level2db_with_example_data, min_scanid, limit, expect):
+        products = [
+            "ClO / 501 GHz / 20 to 50 km",
+            "O3 / 501 GHz / 20 to 50 km",
+        ]
+        measurements = level2db_with_example_data.get_measurements(
+            products, limit, min_scanid=min_scanid
+        )
+        results = list(measurements)
+        collapsed_products, _ = get_valid_collapsed_products(
+            results, limit)
+        assert len(collapsed_products) == expect
+
+    @pytest.mark.parametrize("min_scanid,limit,expect", (
+        (7014791071, 37, None),
+        (7014791071, 36, 7014791071),
+    ))
+    def test_get_valid_collapsed_products_returns_next(
+            self, level2db_with_example_data, min_scanid, limit, expect):
+        products = [
+            "ClO / 501 GHz / 20 to 50 km",
+            "O3 / 501 GHz / 20 to 50 km",
+        ]
+        measurements = level2db_with_example_data.get_measurements(
+            products, limit, min_scanid=min_scanid
+        )
+        results = list(measurements)
+        _, next_scanid = get_valid_collapsed_products(results, limit)
+        assert next_scanid == expect
+
+    @pytest.mark.parametrize("limit,expect", (
+        (5, 11),
+        (10, None),
+    ))
+    def test_get_next_min_scanid(self, limit, expect):
+        products = [
+            {"ScanID": 4}, {"ScanID": 4}, {"ScanID": 7},
+            {"ScanID": 7}, {"ScanID": 11}
+        ]
+        assert get_next_min_scanid(products, limit) == expect
