@@ -68,7 +68,8 @@ def odin_postgresql(docker_ip, docker_services):
 
 
 @pytest.fixture(scope='session')
-def odinapi_service(docker_ip, docker_services):
+def odinapi_service(docker_ip, docker_services, docker_compose_file):
+    print(docker_compose_file)
     port = docker_services.port_for('odin', 80)
     url = "http://{}:{}".format(docker_ip, port)
     docker_services.wait_until_responsive(
@@ -76,7 +77,10 @@ def odinapi_service(docker_ip, docker_services):
         pause=PAUSE_TIME,
         check=lambda: odinapi_is_responsive(url),
     )
-    return url
+    yield url
+    logs = docker_services._docker_compose.execute('logs webapi')
+    for line in logs.decode().split('\n'):
+        print(line)
 
 
 @pytest.fixture(scope='session')
