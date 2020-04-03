@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 """
 A script that retrieves era-interim data
 from CDS data server. Note that a file
@@ -158,5 +158,4 @@ def cli():
 
 
 if __name__ == "__main__":
-
     cli()
