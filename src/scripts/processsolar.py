@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.8
 from fortranformat import FortranRecordReader
 import datetime as DT
 import sqlite3 as sqlite
