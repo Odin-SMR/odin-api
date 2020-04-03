@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.8
 """
-A script that retrieves era-interim data
-from CDS data server. Note that a file
+A script that retrieves era-5 reanalysis
+data from CDS data server. Note that a file
 named .cdsapirc, containg a key, should
 be available in the user home directory.
 """
@@ -30,9 +30,7 @@ PL = {
     "levelist": "1/2/3/5/7/10/20/30/50/70/100/125/150/175/200/225/250/300/350/400/450/500/550/600/650/700/750/775/800/825/850/875/900/925/950/975/1000",  # noqa
     "levtype": "pl",
     "param": "60.128/129.128/130.128/133.128/138.128/203.128/246.128",
-    "step": "0",
-    "stream": "oper",
-    "type": "an",
+    "product_type": "reanalysis",
     "format": "netcdf",
 }
 
@@ -48,17 +46,17 @@ SFC = {
     "grid": "0.75/0.75",
     "levtype": "sfc",
     "param": "134.128/165.128/166.128/235.128",
-    "step": "0",
-    "stream": "oper",
-    "type": "an",
+    "product_type": "reanalysis",
     "format": "netcdf",
 }
 
 
 def get_dataset_and_settings(levtype, date_start, hour):
     settings = {
-        'date': date_start.strftime("%Y-%m-%d"),
-        'time': hour,
+        'year': date_start.strftime("%Y"),
+        'month': date_start.strftime("%m"),
+        'day': date_start.strftime("%d"),
+        'time': f"{hour}:00",
     }
     if levtype == "pl":
         settings.update(PL)
@@ -84,8 +82,8 @@ def download_data(date_start, date_end, levtype, hours):
             target_file = "{}_{}_{}-{}.nc".format(
                 settings['class'],
                 settings['levtype'],
-                settings['date'],
-                settings['time'],
+                date_start.strftime("%Y-%m-%d"),
+                hour,
             )
             target = os.path.join(target_dir, target_file)
             if not os.path.exists(target):
