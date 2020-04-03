@@ -112,6 +112,8 @@
                 <!-- empty table -->
             </table>
           </div>
+
+          <div class="col-sm-9 col-md-9 col-ld-9" id="freqmodeInfoTable"></div>
         </div>
       </div>
    </div>
@@ -125,10 +127,11 @@
     <script type="text/javascript">
         // When the document is ready
         $(document).ready(function () {
-           $("#select-project").change(function() {
-              fillFreqmodeSelector();
-           });
-           initLevel2Dashboard();
+          $("#select-project").change(function() {
+            fillFreqmodeSelector();
+          });
+          initLevel2Dashboard();
+          renderFreqmodeInfoTable();
         });
     </script>
 {% endblock %}
