@@ -149,11 +149,12 @@ def cli():
     assert args.levtype in ["pl", "sfc"]
     assert set(args.time.split('/')).issubset(
         set(['00', '06', '12', '18']))
+    hours = args.time.split('/')
     date_start = datetime.strptime(
         args.date_start, '%Y-%m-%d')
     date_end = datetime.strptime(
         args.date_end, '%Y-%m-%d')
-    download_data(date_start, date_end, args.levtype, args.time)
+    download_data(date_start, date_end, args.levtype, hours)
 
 
 if __name__ == "__main__":
