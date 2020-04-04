@@ -38,7 +38,7 @@ services:
       - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-0:/odin-smr-2-0-data:ro
       - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-3:/odin-smr-2-3-data:ro
       - /odin/smr/Data/SMRl2/SMRhdf/Qsmr-2-4:/odin-smr-2-4-data:ro
-      - /home/odinop/.ecmwfapirc:/root/.ecmwfapirc:ro
+      - /home/odinop/.cdsapirc:/root/.cdsapirc:ro
       - /db_sdb1/odin/l2netcdf:/data/odin-l2-data:rw
       - /db_sdb1/odin/MesosphEO:/data/MesosphEO:rw
     command: gunicorn odinapi.api:app
