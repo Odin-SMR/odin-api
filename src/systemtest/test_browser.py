@@ -161,3 +161,14 @@ def delete_level2data(host, offset=0):
         PROJECT_NAME)
     url = WRITE_URL.format(host=host, version=VERSION, d=datastring)
     requests.delete(url)
+
+
+class TestSwaggerBrowser:
+    @pytest.fixture
+    def apidocs(self, chrome, odinapi_service):
+        chrome.get("{}/apidocs/index.html".format(odinapi_service))
+        return chrome
+
+    def test_has_expected_title(self, apidocs):
+        title = apidocs.find_element_by_class_name('info_title')
+        assert title.text == "Odin API"

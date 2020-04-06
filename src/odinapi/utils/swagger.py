@@ -351,6 +351,8 @@ class SwaggerSpecView(MethodView):
     def collect_path_specifications(self, version):
         paths = {}
         for rule in current_app.url_map.iter_rules():
+            if "/development/" in rule.rule or "/freqmode_raw/" in rule.rule:
+                continue
             endpoint = current_app.view_functions[rule.endpoint]
             if is_base_view(endpoint):
                 path = self.rule_to_swagger_path(rule, version)
