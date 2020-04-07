@@ -10,7 +10,7 @@ from scipy.interpolate import BSpline, splrep
 from simpleflock import SimpleFlock
 
 import odinapi.views.msis90 as M90
-from odinapi.views.NC4eraint import NCeraint
+from odinapi.views.NC4era import NCera
 from odinapi.views.date_tools import mjd2datetime, datetime2mjd
 
 
@@ -144,16 +144,12 @@ class Donaletty:
                 # we need to read data from one day later : time 00
                 date = self.datetime.date() + DT.timedelta(days=1)
                 hourstr = '00'
-                # file_time_index = 0
             else:
                 date = self.datetime.date()
-                # file_time_index = ind
-
             ecmwffilename = self.get_filepath(date, hourstr)
-            # print ecmwffilename
             # TODO: Opening more than one netcdf file at the same time
             #       can result in segfault.
-            self.ecm.append(NCeraint(ecmwffilename, 0))
+            self.ecm.append(NCera(ecmwffilename, 0))
 
         self.minlat = self.ecm[0]['lats'][0]
         self.latstep = np.mean(np.diff(self.ecm[0]['lats']))
