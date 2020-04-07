@@ -10,7 +10,7 @@ from scipy.interpolate import BSpline, splrep
 from simpleflock import SimpleFlock
 
 import odinapi.views.msis90 as M90
-from odinapi.views.NC4eraint import NCeraint
+from odinapi.views.NC4era import NCera
 from odinapi.views.date_tools import mjd2datetime, datetime2mjd
 
 
@@ -144,28 +144,31 @@ class Donaletty:
                 # we need to read data from one day later : time 00
                 date = self.datetime.date() + DT.timedelta(days=1)
                 hourstr = '00'
-                # file_time_index = 0
             else:
                 date = self.datetime.date()
-                # file_time_index = ind
-
-            ecmwffilename = os.path.join(
-                self.ecmwfpath,
-                date.strftime('%Y/%m'),
-                'ei_pl_{}-{}.nc'.format(
-                    date.strftime('%Y-%m-%d'),
-                    hourstr
-                )
-            )
-            # print ecmwffilename
+            ecmwffilename = self.get_filepath(date, hourstr)
             # TODO: Opening more than one netcdf file at the same time
             #       can result in segfault.
-            self.ecm.append(NCeraint(ecmwffilename, 0))
+            self.ecm.append(NCera(ecmwffilename, 0))
 
         self.minlat = self.ecm[0]['lats'][0]
         self.latstep = np.mean(np.diff(self.ecm[0]['lats']))
         self.minlon = self.ecm[0]['lons'][0]
         self.lonstep = np.mean(np.diff(self.ecm[0]['lons']))
+
+    def get_filepath(self, date, hour):
+        # ERA-Interim (ei) data is used before 2019-09-01,
+        # and ERA5 (ea) data afterwards
+        prefix = "ei" if date < datetime(2019, 9, 1).date() else "ea"
+        return os.path.join(
+            self.ecmwfpath,
+            date.strftime('%Y/%m'),
+            '{prefix}_pl_{date}-{hour}.nc'.format(
+                prefix=prefix,
+                date=date.strftime('%Y-%m-%d'),
+                hour=hour
+            )
+        )
 
     def makeprofile(self, midlat, midlon, scan_datetime, scanid):
 
