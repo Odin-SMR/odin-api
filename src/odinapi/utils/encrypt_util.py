@@ -11,14 +11,14 @@ SECRET_KEY = os.environ.get(
 
 def encrypt(msg):
     msg = msg + ' '*(16 - (len(msg) % 16 or 16))
-    cipher = AES.new(SECRET_KEY, AES.MODE_ECB)
+    cipher = AES.new(SECRET_KEY.encode(), AES.MODE_ECB)
     return base64.urlsafe_b64encode(
         cipher.encrypt(msg.encode())
     ).decode()
 
 
 def decrypt(msg):
-    cipher = AES.new(SECRET_KEY, AES.MODE_ECB)
+    cipher = AES.new(SECRET_KEY.encode(), AES.MODE_ECB)
     return cipher.decrypt(
         base64.urlsafe_b64decode(msg.encode())
     ).decode().strip()

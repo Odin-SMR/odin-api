@@ -15,7 +15,7 @@ netcdf4
 numpy
 psycopg2-binary
 pycodestyle
-pycrypto
+pycryptodome
 pyephem
 pyflakes
 pygresql
