@@ -48,7 +48,7 @@
             processing.
           </p>
 
-          <form action="javascript:;" onsubmit="javascript:searchLevel2Scans(this)">
+          <form action="javascript:;" onsubmit="javascript:odinlib.searchLevel2Scans(this)">
             <table class="search-form-table">
               <tr>
                 <td>Project:
@@ -128,10 +128,10 @@
         // When the document is ready
         $(document).ready(function () {
           $("#select-project").change(function() {
-            fillFreqmodeSelector();
+            odinlib.fillFreqmodeSelector();
           });
-          initLevel2Dashboard();
-          renderFreqmodeInfoTable();
+          odinlib.initLevel2Dashboard();
+          odinlib.renderFreqmodeInfoTable();
         });
     </script>
 {% endblock %}
