@@ -106,12 +106,10 @@ class DateInfo(BaseView):
         query_str = (
             "select freqmode, backend, count(distinct(stw)) "
             "from ac_cal_level1b "
-            # "join attitude_level1 using(backend,stw) "
             "where stw between {0} and {1} "
-            # "and mjd between {2} and {3} "
             "group by backend,freqmode "
             "order by backend,freqmode "
-            ).format(stw1, stw2, mjd1, mjd2)
+            ).format(stw1, stw2)
         return query_str
 
 
@@ -142,13 +140,11 @@ class DateBackendInfo(DateInfo):
         query_str = (
             "select freqmode, backend, count(distinct(stw)) "
             "from ac_cal_level1b "
-            # "join attitude_level1 using(backend,stw) "
             "where stw between {0} and {1} "
-            # "and mjd between {2} and {3} "
-            "and backend='{4}' "
+            "and backend='{2}' "
             "group by backend,freqmode "
             "order by backend,freqmode "
-            ).format(stw1, stw2, mjd1, mjd2, backend)
+            ).format(stw1, stw2, backend)
         return query_str
 
 

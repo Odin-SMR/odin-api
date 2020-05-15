@@ -1,5 +1,7 @@
-require( 'flot/jquery.flot' )
-require( 'flot/jquery.flot.errorbars' )
+require( 'datatables' );
+require( 'flot/jquery.flot' );
+require( 'flot/jquery.flot.resize');
+require( 'flot/jquery.flot.errorbars' );
 
 
 export function initLevel2Dashboard() {
@@ -171,13 +173,13 @@ export function searchLevel2Scans(form) {
     if (param)
         url += '?' + param;
 
-    var count = [];
+    var count;
     $.ajax({
         url: url,
         async: false,
         dataType: 'json',
         success: function (json) {
-            count = json.Count;
+            count = json.length;
         }
     });
     var lowerbound = parseInt(form.offset.value, 10) + 1;
@@ -316,7 +318,7 @@ function to_kilo(array) {
 
 function find_max(data, error) {
     var added = [];
-    for (i = 0; i < data.length; i++) {
+    for (var i = 0; i < data.length; i++) {
         added.push(data[i] + error[i]);
     }
     return Math.max.apply(Math, added);
@@ -325,7 +327,7 @@ function find_max(data, error) {
 
 function find_min(data, error) {
     var added = [];
-    for (i = 0; i < data.length; i++) {
+    for (var i = 0; i < data.length; i++) {
         added.push(data[i] - error[i]);
     }
     return Math.min.apply(Math, added);
@@ -333,7 +335,7 @@ function find_min(data, error) {
 
 
 export function plotAltitudeCrossSection(container_id, project_mode, project, scanid, freqmode) {
-    opt_vmr = {
+    var opt_vmr = {
         "grid": {
             "hoverable": true,
         },

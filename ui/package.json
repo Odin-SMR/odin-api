@@ -11,8 +11,6 @@
     "bootstrap": "^3.4.1",
     "bootstrap-datepicker": "^1.9.0",
     "css-loader": "^3.5.3",
-    "d3": "^4.2.6",
-    "d3-geo-projection": "^1.0.3",
     "datatables": "^1.10.9",
     "file-loader": "^6.0.0",
     "flot": "^0.8.3",
