@@ -153,7 +153,7 @@ describe("Tests DOM manipulation for project selection", function() {
 
         expect($(target)).toContainText('Data 1');
         expect($(target)).toContainText('Data 2');
-        expect($(target + " option").size()).toBe(3);
+        expect($(target + " option").length).toBe(3);
     });
 
     it("adds success data with title", function() {
@@ -181,7 +181,7 @@ describe("Tests DOM manipulation for project selection", function() {
         expect($(target)).toContainText('Title');
         expect($(target)).toContainText('Data 1');
         expect($(target)).toContainText('Data 2');
-        expect($(target + " option").size()).toBe(4);
+        expect($(target + " option").length).toBe(4);
     });
 
 	it("adds no-data if no data", function() {
@@ -201,7 +201,7 @@ describe("Tests DOM manipulation for project selection", function() {
         populateSelectWithDataOrSetNoData(settings, data);
 
         expect($(target)).toContainText('No data');
-        expect($(target + " option").size()).toBe(2);
+        expect($(target + " option").length).toBe(2);
 	});
 
 	it("adds fail if status code != 200", function() {
@@ -216,7 +216,7 @@ describe("Tests DOM manipulation for project selection", function() {
         populateSelectWithFailMessage(settings);
 
         expect($(target)).toContainText('Error');
-        expect($(target + " option").size()).toBe(2);
+        expect($(target + " option").length).toBe(2);
 	});
 
 	it("hides loader when single request is done", function() {
