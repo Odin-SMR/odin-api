@@ -5,7 +5,13 @@ export { getStartView, updateCalendar } from './level1calendar.js';
 export { initLevel1, clearLevel1Table, updateLevel1 } from './level1overview.js';
 export { initDataTable, updateDataTable, clearDataTable } from './level1scaninfo.js';
 export { drawStatistics, renderFreqmodeInfoTable } from './level1statistics.js';
-export { initLevel2Dashboard, fillFreqmodeSelector, searchLevel2Scans, plotAltitudeCrossSection} from './level2.js';
+export {
+    initLevel2Dashboard, handleSelectLoadingStatus,
+    populateSelectWithDataOrSetNoData, populateSelectWithFailMessage,
+    fillFreqmodeSelector, searchLevel2Scans,
+    plotAltitudeCrossSection, getOffsetValue, isPositiveInteger,
+    zip, to_ppm, to_kilo, find_max, find_min
+} from './level2.js';
 
 
 import '../../../../node_modules/bootstrap/dist/css/bootstrap.min.css';

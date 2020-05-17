@@ -21,7 +21,7 @@ module.exports = (config) => {
         files: [
             { pattern: 'node_modules/jquery/dist/jquery.js', watched: false },
             { pattern: 'spec/javascripts/helpers/*.js', watched: false },
-            { pattern: 'src/odinapi/static/js/*_utils.js', watched: false },
+            { pattern: 'src/odinapi/static/js/odinlib.js', watched: false },
             { pattern: 'spec/javascripts/*spec.js', watched: false },
         ],
 

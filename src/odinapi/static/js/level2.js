@@ -4,9 +4,6 @@ require( 'flot/jquery.flot.resize');
 require( 'flot/jquery.flot.errorbars' );
 
 
-import { getOffsetValue, zip, to_ppm, to_kilo, find_max, find_min } from './level2_utils'
-
-
 export function initLevel2Dashboard() {
     $('#select-project-loader').hide();
     $('#select-freqmode-loader').hide();
@@ -14,7 +11,7 @@ export function initLevel2Dashboard() {
 }
 
 
-function populateSelectWithDataOrSetNoData(settings, data) {
+export function populateSelectWithDataOrSetNoData(settings, data) {
     if (settings.title !== undefined) {
         $(settings.target).append(
             '<option disabled>-- ' + settings.title + ' --</option>');
@@ -42,7 +39,7 @@ function populateSelectWithDataOrSetNoData(settings, data) {
 }
 
 
-function populateSelectWithFailMessage(settings) {
+export function populateSelectWithFailMessage(settings) {
 
     if (settings.title !== undefined) {
         $(settings.target).append(
@@ -56,7 +53,7 @@ function populateSelectWithFailMessage(settings) {
 }
 
 
-function handleSelectLoadingStatus(settings, completeCheck) {
+export function handleSelectLoadingStatus(settings, completeCheck) {
     if (completeCheck.single !== true) {
         completeCheck.requestsEnded[settings.completionIndex] = true;
     }
@@ -181,13 +178,13 @@ export function searchLevel2Scans(form) {
     if (param)
         url += '?' + param;
 
-    var count;
+    var count = [];
     $.ajax({
         url: url,
         async: false,
         dataType: 'json',
         success: function (json) {
-            count = json.length;
+            count = json.Count;
         }
     });
     var lowerbound = parseInt(form.offset.value, 10) + 1;
@@ -285,6 +282,60 @@ export function searchLevel2Scans(form) {
         "destroy": true,
     });
 
+}
+
+
+export function getOffsetValue(value) {
+    if (!isPositiveInteger(value)) {
+        // only allow positive integers
+        // otherwise set it to 0,
+        // however, the template should help
+        // user to properly fill in the form
+        // and not end up here
+        return 0;
+    } else {
+        return value;
+    }
+}
+
+
+export function isPositiveInteger(n) {
+    return 0 === n % (!isNaN(parseFloat(n)) && 0 <= ~~n);
+}
+
+
+export function zip(arrays) {
+    return arrays[0].map(function(_,i){
+        return arrays.map(function(array){return array[i];});
+    });
+}
+
+
+export function to_ppm(array) {
+    return array.map(function(val){return val*1000000;});
+}
+
+
+export function to_kilo(array) {
+    return array.map(function(val){return val/1000;});
+}
+
+
+export function find_max(data, error) {
+    var added = [];
+    for (var i = 0; i < data.length; i++) {
+        added.push(data[i] + error[i]);
+    }
+    return Math.max.apply(Math, added);
+}
+
+
+export function find_min(data, error) {
+    var added = [];
+    for (var i = 0; i < data.length; i++) {
+        added.push(data[i] - error[i]);
+    }
+    return Math.min.apply(Math, added);
 }
 
 
