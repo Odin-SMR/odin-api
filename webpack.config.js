@@ -4,10 +4,10 @@ const webpack = require('webpack');
 
 module.exports = {
     entry: {
-        odinlib: './src/js/index'
+        odinlib: path.join(__dirname, 'src/odinapi/static/js/index'),
     },
     output: {
-        path: path.join(__dirname, "dist"),
+        path: path.join(__dirname, 'src/odinapi/static/js/'),
         filename: "[name].js",
         library: ["[name]"],
         libraryTarget: "umd"

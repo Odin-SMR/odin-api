@@ -1,6 +1,18 @@
 // Functions for updating overview table and plots:
 
-function initLevel1(date) {
+
+require( 'datatables' );
+require( 'moment' );
+require( 'flot/jquery.flot' )
+require( 'flot/jquery.flot.time' );
+require( 'flot/jquery.flot.resize' );
+require( 'flot/jquery.flot.crosshair' );
+
+
+import { clearDataTable, updateDataTable } from './level1scaninfo'
+
+
+export function initLevel1(date) {
     $('#level1-date').html(date);
 
     var table = $('#level1-date-table').DataTable({
@@ -70,7 +82,7 @@ function initLevel1(date) {
     });
 }
 
-function updateLevel1(date) {
+export function updateLevel1(date) {
     var table;
     table = $('#level1-date-table').DataTable();
     table.ajax.url('/rest_api/v5/freqmode_info/' + date + '/').load();
@@ -78,7 +90,7 @@ function updateLevel1(date) {
 }
 
 
-function clearLevel1Table() {
+export function clearLevel1Table() {
     var table;
     table = $('#level1-date-table').DataTable();
     table.clear();
@@ -117,10 +129,10 @@ function updatePlot(date, freq) {
     $.getJSON(
         '/rest_api/v5/freqmode_info/' + date + '/' + freq + '/',
         function(data) {
-            xticks =[];
+            var xticks =[];
             $.each(data.Data, function (index, data) {
-                time_point = moment;
-                datestring = data.DateTime;
+                var time_point = moment;
+                var datestring = data.DateTime;
                 var momentDate = moment.utc(datestring);
                 sun.push( [momentDate.toDate(), data.SunZD] );
                 lat.push( [momentDate.toDate(), data.LatStart] );

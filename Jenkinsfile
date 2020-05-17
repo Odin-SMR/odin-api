@@ -7,6 +7,9 @@ node() {
   stage('javascript unit tests') {
       sh "npm install && npm update && npm test"
   }
+  stage('build bundle for ui') {
+      sh "npm run build"
+  }
   stage('build odinapi') {
     odinapiImage = docker.build("odinsmr/odin_api")
   }

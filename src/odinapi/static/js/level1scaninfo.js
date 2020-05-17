@@ -1,6 +1,10 @@
 // Functions for updating scan info table and plots:
 
-function initDataTable(date, freq) {
+
+require( 'datatables' );
+
+
+export function initDataTable(date, freq) {
     if (freq === '') {
         freq = "2";
     }
@@ -80,7 +84,7 @@ function addOverview(url, id) {
 }
 
 
-function updateDataTable(date, freq) {
+export function updateDataTable(date, freq) {
     var table;
     table = $('#info-table').DataTable();
     table.ajax.url(
@@ -88,7 +92,7 @@ function updateDataTable(date, freq) {
 }
 
 
-function clearDataTable() {
+export function clearDataTable() {
     var table;
     table = $('#info-table').DataTable();
     table.clear();

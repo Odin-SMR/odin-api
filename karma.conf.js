@@ -19,9 +19,9 @@ module.exports = (config) => {
 
         // list of files / patterns to load in the browser
         files: [
-            { pattern: 'src/odinapi/static/js/jquery.js', watched: false },
+            { pattern: 'node_modules/jquery/dist/jquery.js', watched: false },
             { pattern: 'spec/javascripts/helpers/*.js', watched: false },
-            { pattern: 'src/odinapi/static/js/*.js', watched: false },
+            { pattern: 'src/odinapi/static/js/*_utils.js', watched: false },
             { pattern: 'spec/javascripts/*spec.js', watched: false },
         ],
 
