@@ -7,6 +7,10 @@
     "test": "./node_modules/karma/bin/karma start --single-run",
     "build": "webpack --config webpack.config.js"
   },
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/Odin-SMR/odin-api"
+  },
   "dependencies": {
     "bootstrap": "^3.4.1",
     "bootstrap-datepicker": "^1.9.0",

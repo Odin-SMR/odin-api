@@ -1,8 +1,8 @@
 // Functions used to populate calendar view:
 
 
-require( 'fullcalendar' );
-require( 'moment' );
+import * as fullcalendar from 'fullcalendar';
+import * as moment from 'moment';
 
 
 import './odin_api_common'

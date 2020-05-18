@@ -1,7 +1,7 @@
 // Functions for updating scan info table and plots:
 
 
-require( 'datatables' );
+import * as datatables from 'datatables';
 
 
 export function initDataTable(date, freq) {

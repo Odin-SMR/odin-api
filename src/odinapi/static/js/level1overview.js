@@ -1,12 +1,12 @@
 // Functions for updating overview table and plots:
 
 
-require( 'datatables' );
-require( 'moment' );
-require( 'flot/jquery.flot' )
-require( 'flot/jquery.flot.time' );
-require( 'flot/jquery.flot.resize' );
-require( 'flot/jquery.flot.crosshair' );
+import * as datatables from 'datatables';
+import * as moment from 'moment';
+import * as flot from  'flot/jquery.flot';
+import * as time from 'flot/jquery.flot.time';
+import * as resize from 'flot/jquery.flot.resize';
+import * as crosshair from 'flot/jquery.flot.crosshair';
 
 
 import { clearDataTable, updateDataTable } from './level1scaninfo'

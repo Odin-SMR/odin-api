@@ -1,7 +1,7 @@
-require( 'datatables' );
-require( 'flot/jquery.flot' );
-require( 'flot/jquery.flot.resize');
-require( 'flot/jquery.flot.errorbars' );
+import * as datatables from 'datatables';
+import * as flot from 'flot/jquery.flot';
+import * as resize from 'flot/jquery.flot.resize';
+import * as errorbars from 'flot/jquery.flot.errorbars';
 
 
 export function initLevel2Dashboard() {
