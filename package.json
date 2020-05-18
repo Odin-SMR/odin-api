@@ -8,8 +8,8 @@
     "build": "webpack --config webpack.config.js"
   },
   "repository": {
-      "type": "git",
-      "url": "https://github.com/Odin-SMR/odin-api"
+    "type": "git",
+    "url": "https://github.com/Odin-SMR/odin-api"
   },
   "dependencies": {
     "bootstrap": "^3.4.1",
