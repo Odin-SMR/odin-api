@@ -1,6 +1,14 @@
 // Functions used to populate calendar view:
 
-function getStartView(date) {
+
+import * as fullcalendar from 'fullcalendar';
+import * as moment from 'moment';
+
+
+import './odin_api_common'
+
+
+export function getStartView(date) {
     // Starting with date, which is a moment object, go back in time to find
     // the closest previous month with any data, but only recurse back to
     // 2001-02-20 at the earliest.
@@ -25,8 +33,9 @@ function getStartView(date) {
 }
 
 
-function updateCalendar(start) {
+export function updateCalendar(start) {
     var theDate = start;
+    var theEvent;
     // For ech day, get json from rest:
     if ($('#calendar').fullCalendar('clientEvents',
                 theDate.format()).length === 0) {

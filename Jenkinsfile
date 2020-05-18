@@ -4,8 +4,11 @@ node() {
   stage('git') {
     checkout scm
   }
+  stage('build bundle for ui') {
+      sh "npm install && npm update && npm run build"
+  }
   stage('javascript unit tests') {
-      sh "npm install && npm update && npm test"
+      sh "npm test"
   }
   stage('build odinapi') {
     odinapiImage = docker.build("odinsmr/odin_api")

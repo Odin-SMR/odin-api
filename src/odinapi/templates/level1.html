@@ -99,7 +99,7 @@
         $.fn.dataTable.ext.errMode = 'throw';
 
         $(document).ready(function () {
-            var startView = getStartView(date).toISOString().slice(0, 10);
+            var startView = odinlib.getStartView(date).toISOString().slice(0, 10);
             var startDate = '2001-02-20';
             var endDate = '2042-02-11';
 
@@ -115,14 +115,14 @@
                 editable: false,
                 eventLimit: true, // allow "more" link when too many events
                 events: function(start, end, timezone, callback) {
-                    updateCalendar(start);
+                    odinlib.updateCalendar(start);
                     callback();
                 },
                 eventClick: function(calEvent, jsEvent, view) {
                     $('#datepicker1')
                         .datepicker('setDate', calEvent.start.format('YYYY-MM-DD'));
-                    clearDataTable();
-                    updateDataTable(
+                    odinlib.clearDataTable();
+                    odinlib.updateDataTable(
                             calEvent.start.format(), calEvent.FreqMode);
                     return false;
                 },
@@ -138,12 +138,12 @@
                 startDate: startDate
             }).on('changeDate', function(e) {
                 $('#calendar').fullCalendar('gotoDate', e.format('yyyy-mm-dd'));
-                clearDataTable();
-                updateLevel1(e.format('yyyy-mm-dd'));
+                odinlib.clearDataTable();
+                odinlib.updateLevel1(e.format('yyyy-mm-dd'));
             });
 
-            initLevel1(startView);
-            initDataTable(startView, '');
+            odinlib.initLevel1(startView);
+            odinlib.initDataTable(startView, '');
 
         });
 

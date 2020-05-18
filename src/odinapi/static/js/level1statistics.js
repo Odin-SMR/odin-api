@@ -1,5 +1,15 @@
 // Functions for generating statistics page:
 
+
+import * as flot from 'flot/jquery.flot';
+import * as time from 'flot/jquery.flot.time';
+import * as reszie from 'flot/jquery.flot.resize';
+import * as pie from 'flot/jquery.flot.pie';
+
+
+import './odin_api_common'
+
+
 function labelFormatter(label, series) {
     var shortLabel = series.shortLabel;
     return "<div style='font-size:7pt; text-align:center; padding:2px; " +
@@ -8,10 +18,11 @@ function labelFormatter(label, series) {
 }
 
 
-function drawStatistics(year) {
+export function drawStatistics(year) {
     var data;
     var sum;
     var plotMode;
+    var xticks;
     var temp = '';
 
     if (year === '') {
@@ -222,8 +233,8 @@ function drawStatistics(year) {
 
 // Freqmode Info table:
 
-function renderFreqmodeInfoTable () {
-    theTable = "<table class='table'><tr><td></td><td><b>Frequency mode</b></td>" +
+export function renderFreqmodeInfoTable () {
+    var theTable = "<table class='table'><tr><td></td><td><b>Frequency mode</b></td>" +
         "<td><b>Frequency range [GHz]</b></td><td><b>Species</b></td></tr>";
     $.each(FREQMODE_INFO_TEXT, function(key, val) {
         theTable += "<tr>" +
