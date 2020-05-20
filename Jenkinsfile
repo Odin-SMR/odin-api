@@ -19,6 +19,9 @@ node() {
   stage('tests') {
       sh "tox -r -- --runslow"
   }
+  stage('cleanup') {
+      sh "rm -r .tox"
+  }
   if (env.BRANCH_NAME == 'master') {
     stage('push') {
       withDockerRegistry([ credentialsId: "dockerhub-molflowbot", url: "" ]) {
