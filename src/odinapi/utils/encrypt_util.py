@@ -2,6 +2,7 @@ import os
 import json
 import base64
 from Crypto.Cipher import AES
+from io import BytesIO
 
 
 SECRET_KEY = os.environ.get(
@@ -10,18 +11,24 @@ SECRET_KEY = os.environ.get(
 
 
 def encrypt(msg):
-    msg = msg + ' '*(16 - (len(msg) % 16 or 16))
-    cipher = AES.new(SECRET_KEY.encode(), AES.MODE_ECB)
-    return base64.urlsafe_b64encode(
-        cipher.encrypt(msg.encode())
-    ).decode()
+    cipher = AES.new(base64.b64decode(SECRET_KEY.encode()), AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(msg.encode())
+    bytes = BytesIO()
+    for x in (cipher.nonce, tag, ciphertext):
+        bytes.write(x)
+    bytes.seek(0)
+    return base64.urlsafe_b64encode(bytes.read()).decode('utf8')
 
 
 def decrypt(msg):
-    cipher = AES.new(SECRET_KEY.encode(), AES.MODE_ECB)
-    return cipher.decrypt(
-        base64.urlsafe_b64decode(msg.encode())
-    ).decode().strip()
+    bytes = BytesIO()
+    bytes.write(base64.urlsafe_b64decode(msg))
+    bytes.flush()
+    bytes.seek(0)
+    nonce, tag, ciphertext = [bytes.read(x) for x in (16, 16, -1)]
+    cipher = AES.new(
+        base64.b64decode(SECRET_KEY.encode()), AES.MODE_EAX, nonce)
+    return cipher.decrypt_and_verify(ciphertext, tag).decode('utf8')
 
 
 def encode_level2_target_parameter(scanid, freqmode, project):
