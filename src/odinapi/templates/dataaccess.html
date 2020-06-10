@@ -184,9 +184,15 @@ def get_arctic_ozone(start_date, end_date):
 
     # Get data:
     response = requests.get(request_url, params=parameters)
+    data = [response.json()]
 
-    # Return data:
-    return response.json()
+    # Note that there is a paging of this endpoint,
+    # and the loop below retrieves data from all pages:
+    while "next" in response.links:
+        response = requests.get(response.links["next"]["url"])
+        data.append(response.json())
+
+    return data
 
 
 DATA = get_arctic_ozone("2015-01-03", "2015-01-04")
@@ -247,9 +253,15 @@ def get_equatorial_ozone(start_date, end_date):
 
     # Get data:
     response = requests.get(request_url, params=parameters)
+    data = [response.json()]
 
-    # Return data:
-    return response.json()
+    # Note that there is a paging of this endpoint,
+    # and the loop below retrieves data from all pages:
+    while "next" in response.links:
+        response = requests.get(response.links["next"]["url"])
+        data.append(response.json())
+
+    return data
 
 
 DATA = get_equatorial_ozone("2015-01-03", "2015-01-04")
