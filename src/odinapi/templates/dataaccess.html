@@ -138,6 +138,10 @@ requires the user to specify a <em>date limit</em> and one of either a
 <em>pressure</em> or an <em>altitude interval</em>. If one or more
 <em>products</em> are specified, only data for these will be returned,
 otherwise data for all available data products will be returned.
+This endpoint is using pagination. Thus, a single request to this
+endpoint does not necessarily return all data matching your
+filter, but in this case the response contains information about where
+you can get next page of data, as shown in the Python code example below.
 </p>
 <p>
 The locations endpoint is located at <code>/level2/{project}/locations</code>.
@@ -186,7 +190,7 @@ def get_arctic_ozone(start_date, end_date):
     response = requests.get(request_url, params=parameters)
     data = [response.json()]
 
-    # Note that there is a paging of this endpoint,
+    # Note that this endpoint is paginated,
     # and the loop below retrieves data from all pages:
     while "next" in response.links:
         response = requests.get(response.links["next"]["url"])
@@ -206,7 +210,8 @@ The area endpoint lets you filter data to within a specified area bounded by
 to specify a <em>date limit</em> and one of either a <em>pressure</em> or an
 <em>altitude interval</em>. If one or more <em>products</em> are specified,
 only data for these will be returned, otherwise data for all available data
-products will be returned.
+products will be returned. The area endpoint is, as the locations endpoint,
+using pagination.
 </p>
 <p>
 The area endpoint is located at <code>/level2/{project}/area</code>.
@@ -255,7 +260,7 @@ def get_equatorial_ozone(start_date, end_date):
     response = requests.get(request_url, params=parameters)
     data = [response.json()]
 
-    # Note that there is a paging of this endpoint,
+    # Note that this endpoint is paginated,
     # and the loop below retrieves data from all pages:
     while "next" in response.links:
         response = requests.get(response.links["next"]["url"])
