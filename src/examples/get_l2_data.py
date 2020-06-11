@@ -63,9 +63,15 @@ def get_location(
 
     # Get data:
     response = requests.get(request_url, params=parameters)
+    data = [response.json()]
 
-    # Return data:
-    return response.json()
+    # Note that this endpoint is paginated,
+    # and the loop below retrieves data from all pages:
+    while "next" in response.links:
+        response = requests.get(response.links["next"]["url"])
+        data.append(response.json())
+
+    return data
 
 
 def get_area(
@@ -100,9 +106,15 @@ def get_area(
 
     # Get data:
     response = requests.get(request_url, params=parameters)
+    data = [response.json()]
 
-    # Return data:
-    return response.json()
+    # Note that this endpoint is paginated,
+    # and the loop below retrieves data from all pages:
+    while "next" in response.links:
+        response = requests.get(response.links["next"]["url"])
+        data.append(response.json())
+
+    return data
 
 
 def get_date(
