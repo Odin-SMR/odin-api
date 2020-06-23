@@ -75,15 +75,15 @@ class DateInfo(BaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, data, date):
-        return dict(Date=date, Info=data)
+        return jsonify(dict(Date=date, Info=data))
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, data, date):
-        return dict(
+        return jsonify(dict(
             Date=date,
             Data=data,
             Type='freqmode_info',
-            Count=len(data))
+            Count=len(data)))
 
     def gen_data(self, date, version, query_string):
         con = DatabaseConnector()
@@ -134,7 +134,7 @@ class DateBackendInfo(DateInfo):
 
     @register_versions('return')
     def _return(self, version, data, date, backend):
-        return dict(Date=date, Info=data)
+        return jsonify(dict(Date=date, Info=data))
 
     def gen_query(self, stw1, stw2, mjd1, mjd2, backend):
         query_str = (
@@ -249,13 +249,13 @@ class FreqmodeInfo(BaseView):
                         scanno=None):
         if scanno is None:
             try:
-                return {'Info': loginfo['Info']}
+                return jsonify({'Info': loginfo['Info']})
             except TypeError:
-                return {'Info': []}
+                return jsonify({'Info': []})
         else:
             for s in loginfo['Info']:
                 if s['ScanID'] == scanno:
-                    return {"Info": s}
+                    return jsonify({"Info": s})
 
 
 SWAGGER.add_type('Log', {
@@ -367,7 +367,7 @@ class FreqmodeInfoNoBackend(BaseView):
     def _return_data_v5(self, version, data, date, freqmode):
         if not data:
             data = []
-        return {'Data': data, 'Type': 'Log', 'Count': len(data)}
+        return jsonify({'Data': data, 'Type': 'Log', 'Count': len(data)})
 
 
 class ScanInfoNoBackend(FreqmodeInfoNoBackend):
@@ -390,7 +390,7 @@ class ScanInfoNoBackend(FreqmodeInfoNoBackend):
     def _return_data_v5(self, version, data, date, freqmode, scanno):
         for s in data:
             if s['ScanID'] == scanno:
-                return {'Data': s, 'Type': 'Log', 'Count': None}
+                return jsonify({'Data': s, 'Type': 'Log', 'Count': None})
         abort(404)
 
 
@@ -410,7 +410,7 @@ class ScanSpec(BaseView):
 
     @register_versions('return')
     def _to_return_format(self, version, datadict, *args, **kwargs):
-        return datadict
+        return jsonify(datadict)
 
 
 SWAGGER.add_type('L1b', {
@@ -488,7 +488,7 @@ class ScanSpecNoBackend(ScanSpec):
 
     @register_versions('return')
     def _to_return_format(self, version, data, *args, **kwargs):
-        return {'Data': data, 'Type': 'L1b', 'Count': None}
+        return jsonify({'Data': data, 'Type': 'L1b', 'Count': None})
 
 
 class ScanPTZ(BaseView):
@@ -530,7 +530,7 @@ class ScanPTZ(BaseView):
 
     @register_versions('return')
     def _to_return_format(self, version, datadict, *args, **kwargs):
-        return datadict
+        return jsonify(datadict)
 
 
 SWAGGER.add_type('ptz', {
@@ -570,7 +570,7 @@ class ScanPTZNoBackend(ScanPTZ):
 
     @register_versions('return')
     def _to_return_format(self, version, datadict, *args, **kwargs):
-        return {'Data': datadict, 'Type': 'ptz', 'Count': None}
+        return jsonify({'Data': datadict, 'Type': 'ptz', 'Count': None})
 
 
 SWAGGER.add_parameter(
@@ -606,7 +606,7 @@ class ScanAPR(BaseView):
 
     @register_versions('return')
     def _return_format(self, version, data, *args, **kwargs):
-        return data
+        return jsonify(data)
 
 
 SWAGGER.add_parameter('species', 'path', str)
@@ -645,7 +645,7 @@ class ScanAPRNoBackend(ScanAPR):
 
     @register_versions('return')
     def _return_format(self, version, datadict, *args, **kwargs):
-        return {'Data': datadict, 'Type': 'apriori', 'Count': None}
+        return jsonify({'Data': datadict, 'Type': 'apriori', 'Count': None})
 
 
 SWAGGER.add_type('collocation', {
@@ -677,8 +677,11 @@ class CollocationsView(BaseView):
 
     @register_versions('return')
     def _return(self, version, collocations, freqmode, scanno):
-        return {'Data': collocations, 'Type': 'collocation',
-                'Count': len(collocations)}
+        return jsonify({
+            'Data': collocations,
+            'Type': 'collocation',
+            'Count': len(collocations),
+        })
 
 
 def get_L2_collocations(root_url, version, freqmode, scanno):
@@ -1002,4 +1005,4 @@ class ConfigDataFiles(BaseView):
 
     @register_versions('return')
     def return_data(self, version, data):
-        return data
+        return jsonify(data)

@@ -269,12 +269,15 @@ class Level2ViewProjects(BaseView):
 
     @register_versions('return', ['v4'])
     def _return_data(self, version, projects):
-        return {'Info': {'Projects': projects}}
+        return jsonify({'Info': {'Projects': projects}})
 
     @register_versions('return', ['v5'])
     def _return_data_v5(self, version, projects):
-        return {'Data': projects, 'Type': 'level2_project',
-                'Count': len(projects)}
+        return jsonify({
+            'Data': projects,
+            'Type': 'level2_project',
+            'Count': len(projects),
+        })
 
 
 SWAGGER.add_type('level2_project_freqmode', {
@@ -324,15 +327,15 @@ class Level2ViewProject(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, info, project):
-        return {'Info': info}
+        return jsonify({'Info': info})
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, info, project):
-        return {
+        return jsonify({
             'Data': info['FreqModes'],
             'Type': 'level2_project_freqmode',
             'Count': len(info['FreqModes'])
-        }
+        })
 
 
 auth = HTTPBasicAuth()
@@ -480,14 +483,15 @@ class Level2ViewComments(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, data, project, freqmode):
-        return {'Info': data['info']}
+        return jsonify({'Info': data['info']})
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, data, project, freqmode):
-        return {
+        return jsonify({
             'Data': data['info']['Comments'],
             'Type': 'level2_scan_comment',
-            'Count': data['count']}
+            'Count': data['count'],
+        })
 
 
 SWAGGER.add_type('level2_scan_info', {
@@ -558,15 +562,17 @@ class Level2ViewScans(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, data, project, freqmode):
-        return {'Info': {'Count': data['count'], 'Scans': data['scans']}}
+        return jsonify(
+            {'Info': {'Count': data['count'], 'Scans': data['scans']}},
+        )
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, data, project, freqmode):
-        return {
+        return jsonify({
             'Data': data['scans'],
             'Type': 'level2_scan_info',
             'Count': data['count'],
-        }
+        })
 
 
 SWAGGER.add_type('level2_failed_scan_info', {
@@ -638,12 +644,17 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, data, project, freqmode):
-        return {'Info': {'Count': data['count'], 'Scans': data['scans']}}
+        return jsonify(
+            {'Info': {'Count': data['count'], 'Scans': data['scans']}},
+        )
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, data, project, freqmode):
-        return {'Data': data['scans'], 'Type': 'level2_failed_scan_info',
-                'Count': data['count']}
+        return jsonify({
+            'Data': data['scans'],
+            'Type': 'level2_failed_scan_info',
+            'Count': data['count'],
+        })
 
 
 class Level2ViewScan(Level2ProjectBaseView):
@@ -686,7 +697,7 @@ class Level2ViewScan(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, info, project, freqmode, scanno):
-        return {'Info': info}
+        return jsonify({'Info': info})
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, info, project, freqmode, scanno):
@@ -701,8 +712,11 @@ class Level2ViewScan(Level2ProjectBaseView):
                 'Data': info['L2anc'], 'Type': 'L2anc',
                 'Count': len(info['L2anc'])},
         }
-        return {'Data': data, 'Type': 'mixed',
-                'Count': None}
+        return jsonify({
+            'Data': data,
+            'Type': 'mixed',
+            'Count': None,
+        })
 
 
 SWAGGER.add_type('L2i', {
@@ -747,7 +761,7 @@ class L2iView(Level2ProjectBaseView):
 
     @register_versions('return')
     def _return(self, version, L2i, project, freqmode, scanno):
-        return {'Data': L2i, 'Type': 'L2i', 'Count': None}
+        return jsonify({'Data': L2i, 'Type': 'L2i', 'Count': None})
 
 
 SWAGGER.add_type('L2c', str)
@@ -777,7 +791,7 @@ class L2cView(Level2ProjectBaseView):
 
     @register_versions('return')
     def _return(self, version, L2c, project, freqmode, scanno):
-        return {'Data': L2c, 'Type': 'L2c', 'Count': len(L2c)}
+        return jsonify({'Data': L2c, 'Type': 'L2c', 'Count': len(L2c)})
 
 
 SWAGGER.add_type('L2anc', {
@@ -824,7 +838,7 @@ class L2ancView(Level2ProjectBaseView):
 
     @register_versions('return')
     def _return(self, version, L2anc, project, freqmode, scanno):
-        return {'Data': L2anc, 'Type': 'L2anc', 'Count': len(L2anc)}
+        return jsonify({'Data': L2anc, 'Type': 'L2anc', 'Count': len(L2anc)})
 
 
 SWAGGER.add_type('L2', {
@@ -876,7 +890,7 @@ class L2View(Level2ProjectBaseView):
 
     @register_versions('return')
     def _return(self, version, L2, project, freqmode, scanno):
-        return {'Data': L2, 'Type': 'L2', 'Count': len(L2)}
+        return jsonify({'Data': L2, 'Type': 'L2', 'Count': len(L2)})
 
 
 def get_scan_urls(version, project, freqmode, scanno):
@@ -932,7 +946,7 @@ class Level2ViewProducts(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, products, project):
-        return {'Info': {'Products': products}}
+        return jsonify({'Info': {'Products': products}})
 
     @register_versions('fetch', ['v5'])
     def _get_v5(self, version, project):
@@ -941,8 +955,11 @@ class Level2ViewProducts(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, products, project):
-        return {'Data': products, 'Type': 'level2_product_name',
-                'Count': len(products)}
+        return jsonify({
+            'Data': products,
+            'Type': 'level2_product_name',
+            'Count': len(products),
+        })
 
 
 class Level2ViewProductsFreqmode(Level2ProjectBaseView):
@@ -967,7 +984,7 @@ class Level2ViewProductsFreqmode(Level2ProjectBaseView):
 
     @register_versions('return', ['v4'])
     def _return(self, version, products, project, freqmode):
-        return {'Info': {'Products': products}}
+        return jsonify({'Info': {'Products': products}})
 
     @register_versions('fetch', ['v5'])
     def _get_v5(self, version, project, freqmode):
@@ -976,8 +993,11 @@ class Level2ViewProductsFreqmode(Level2ProjectBaseView):
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, products, project, freqmode):
-        return {'Data': products, 'Type': 'level2_product_name',
-                'Count': len(products)}
+        return jsonify({
+            'Data': products,
+            'Type': 'level2_product_name',
+            'Count': len(products),
+        })
 
 
 class Level2ViewLocations(Level2ProjectBaseView):
@@ -1047,11 +1067,11 @@ class Level2ViewLocations(Level2ProjectBaseView):
     @register_versions('return', ['v4'])
     def _return(self, version, results, _):
         results = list(results)
-        return {'Info': {'Nr': len(results), 'Results': results}}
+        return jsonify({'Info': {'Nr': len(results), 'Results': results}})
 
     @register_versions('return', ['v5'])
     def _return_v5(self, version, results, _):
-        return {'Data': results, 'Type': 'L2', 'Count': len(results)}
+        return jsonify({'Data': results, 'Type': 'L2', 'Count': len(results)})
 
 
 class Level2ViewDay(Level2ProjectBaseView):
