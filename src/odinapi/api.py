@@ -463,6 +463,8 @@ class ExtendedEncoder(JSONEncoder):
         if isinstance(obj, np.int_):
             return int(obj)
         if isinstance(obj, np.float_):
+            if not np.isfinite(obj):
+                return None
             return float(obj)
         return JSONEncoder.default(self, obj)
 
