@@ -27,6 +27,33 @@ class L2Type(Enum):
     l2anc = "l2anc"
 
 
+class DType(Enum):
+    i8 = "i8"
+    f4 = "f4"
+    double = "double"
+
+
+class Dimension(Enum):
+    d1 = ["time"]
+    d2 = ["time", "level"]
+    d3 = ["time", "level", "level"]
+
+
+class Units(Enum):
+    time = "days since 1858-11-17 00:00"
+    altitude = "m"
+    lat = "degrees north"
+    lon = "degrees east"
+    hours = "hours"
+    unitless = "-"
+    pressure = "Pa"
+    temperature = "K"
+    degrees = "degrees"
+    koverk = "K/K"
+    poverp = "%/%"
+    product = "product"
+
+
 @attr.s
 class Filter:
     residual = attr.ib(type=float)
@@ -36,10 +63,10 @@ class Filter:
 @attr.s
 class Parameter:
     name = attr.ib(type=str)
-    units = attr.ib(type=str)
+    units = attr.ib(type=Units)
     description = attr.ib(type=str)
-    dtype = attr.ib(type=str)
-    dimension = attr.ib(type=List[str])
+    dtype = attr.ib(type=DType)
+    dimension = attr.ib(type=Dimension)
     l2type = attr.ib(type=L2Type)
 
     def get_description(self, product: str) -> str:
@@ -51,13 +78,16 @@ class Parameter:
             )
         return self.description
 
-    def get_units(self, product: str) -> str:
-        if self.units != "product_specific":
+    def get_units(self, product: str) -> Units:
+        if self.name == "AVK":
+            return Units.koverk if "Temperature" in product else Units.poverp
+        elif self.units != Units.product:
             return self.units
-        elif self.name == "AVK":
-            return "K/K" if "Temperature" in product else "%/%"
         else:
-            return "K" if "Temperature" in product else "-"
+            return (
+                Units.temperature if "Temperature" in product
+                else Units.unitless
+            )
 
 
 @attr.s
@@ -84,6 +114,7 @@ class L2:
     Quality = attr.ib(type=float)
     Altitude = attr.ib(type=List[float])
     Pressure = attr.ib(type=List[float])
+    Profile = attr.ib(type=List[float])
     Latitude = attr.ib(type=List[float])
     Longitude = attr.ib(type=List[float])
     Temperature = attr.ib(type=List[float])
@@ -159,6 +190,7 @@ def to_l2(l2: Dict[str, Any]) -> L2:
         Quality=l2["Quality"],
         Altitude=l2["Altitude"],
         Pressure=l2["Pressure"],
+        Profile=l2["Profile"],
         Latitude=l2["Latitude"],
         Longitude=l2["Longitude"],
         Temperature=l2["Temperature"],
@@ -204,189 +236,189 @@ def generate_filename(
 L2FILE = L2File([
     Parameter(
         "GenerationTime",
-        "days since 1858-11-17 00:00",
+        Units.time,
         'Processing date.',
-        "f4",
-        ["time"],
+        DType.f4,
+        Dimension.d1,
         L2Type.l2i,
     ),
     Parameter(
         "Altitude",
-        "m",
+        Units.altitude,
         "Altitude of retrieved values.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "Apriori",
-        "product_specific",
+        Units.product,
         "A priori profile used in the inversion algorithm.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "AVK",
-        "product_specific",
+        Units.product,
         "Averaging kernel matrix.",
-        "f4",
-        ["time", "level", "level"],
+        DType.f4,
+        Dimension.d3,
         L2Type.l2
     ),
     Parameter(
         "ErrorNoise",
-        "product_specific",
+        Units.product,
         (
             "Error due to measurement thermal noise (square root of the "
             "diagonal elements of the corresponding error matrix)."
         ),
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "ErrorTotal",
-        "product_specific",
+        Units.product,
         (
             "Total retrieval error, corresponding to the error due to thermal"
             " noise and all interfering smoothing errors (square root of the"
             " diagonal elements of the corresponding error matrix)."
         ),
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "Lat1D",
-        "degrees north",
+        Units.lat,
         "A scalar representative latitude of the retrieval.",
-        "f4",
-        ["time"],
+        DType.f4,
+        Dimension.d1,
         L2Type.l2,
     ),
     Parameter(
         "Latitude",
-        "degrees north",
+        Units.lat,
         "Approximate latitude of each retrieval value.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "Lon1D",
-        "degrees east",
+        Units.lon,
         "A scalar representative longitude of the retrieval.",
-        "f4",
-        ["time"],
+        DType.f4,
+        Dimension.d1,
         L2Type.l2,
     ),
     Parameter(
         "Longitude",
-        "degrees east",
+        Units.lon,
         "Approximate longitude of each retrieval value.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "LST",
-        "hours",
+        Units.hours,
         "Mean local solar time for the scan.",
-        "f4",
-        ["time"],
+        DType.f4,
+        Dimension.d1,
         L2Type.l2anc,
     ),
     Parameter(
         "MeasResponse",
-        "-",
+        Units.unitless,
         (
             "Measurement response, defined as the row sum of the averaging"
             " kernel matrix."
         ),
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "Orbit",
-        "-",
+        Units.unitless,
         "Odin/SMR orbit number.",
-        "f4",
-        ["time"],
+        DType.f4,
+        Dimension.d1,
         L2Type.l2anc,
     ),
     Parameter(
         "Pressure",
-        "Pa",
+        Units.pressure,
         "Pressure grid of the retrieved profile.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "Profile",
-        "product_specific",
+        Units.product,
         "Retrieved temperature or volume mixing ratio profile.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "ScanID",
-        "-",
+        Units.unitless,
         "Satellite time word scan identifier.",
-        "i8",
-        ["time"],
+        DType.i8,
+        Dimension.d1,
         L2Type.l2,
     ),
     Parameter(
         "SZA1D",
-        "degrees",
+        Units.degrees,
         (
             "Mean solar zenith angle of the observations used in the"
             " retrieval process."
         ),
-        "f4",
-        ["time"],
+        DType.f4,
+        Dimension.d1,
         L2Type.l2anc,
     ),
     Parameter(
         "SZA",
-        "degrees",
+        Units.degrees,
         (
             "Approximate solar zenith angle corresponding to each retrieval"
             " value."
         ),
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2anc,
     ),
     Parameter(
         "Temperature",
-        "K",
+        Units.temperature,
         (
             "Estimate of the temperature profile (corresponding to the"
             " ZPT input data)."
         ),
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2,
     ),
     Parameter(
         "Theta",
-        "K",
+        Units.temperature,
         "Estimate of the potential temperature profile.",
-        "f4",
-        ["time", "level"],
+        DType.f4,
+        Dimension.d2,
         L2Type.l2anc,
     ),
     Parameter(
         "Time",
+        Units.time,
         "Mean time of the scan.",
-        "days since 1858-11-17 00:00",
-        "double",
-        ["time"],
+        DType.double,
+        Dimension.d1,
         L2Type.l2,
     )
 ])

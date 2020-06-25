@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+import os
+import datetime as dt
+import argparse
+import attr
+from typing import List, Dict, Any, Optional
+from dateutil.relativedelta import relativedelta
+from netCDF4 import Dataset, date2num
+
+from odinapi.database import level2db
+from odinapi.views.get_ancillary_data import get_ancillary_data
+from odinapi.views.database import DatabaseConnector
+from odinapi.utils import datamodel
+
+
+@attr.s
+class L2Getter:
+    freqmode = attr.ib(type=int)
+    product = attr.ib(type=str)
+    db1 = attr.ib(type=DatabaseConnector)
+    db2 = attr.ib(type=level2db.Level2DB)
+
+    def get_l2i(self, scanid: int) -> datamodel.L2i:
+        l2i = self.db2.get_L2i(self.freqmode, scanid)
+        return datamodel.to_l2i(l2i)
+
+    def get_l2anc(self, l2: Dict[str, Any]) -> datamodel.L2anc:
+        data = get_ancillary_data(self.db1, l2)[0]
+        return datamodel.to_l2anc(data)
+
+    def get_l2full(self, scanid: int) -> Optional[datamodel.L2Full]:
+        l2i = self.get_l2i(scanid)
+        if not l2i.isvalid():
+            return None
+        l2dict = self.db.get_L2(scanid, self.freqmode, self.product)
+        l2anc = get_ancillary_data(self.db1, l2dict)
+        return datamodel.L2Full(
+            l2i=l2i, l2anc=l2anc, l2=datamodel.to_l2(l2dict)
+        )
+
+    def get_data(self, scanids: List[int]) -> List[datamodel.L2Full]:
+        data = []
+        for scanid in scanids:
+            l2 = self.get_l2full(scanid)
+            if isinstance(l2, datamodel.L2Full):
+                data.append(l2)
+        return data
+
+    def get_scanids(self, start: dt.datetime, end: dt.datetime) -> List[int]:
+        scans = []
+        while start < end:
+            currentscans = self.db2.get_scans(
+                self.freqmode,
+                start_time=start,
+                end_time=start + relativedelta(days=1)
+            )
+            for scan in currentscans:
+                scans.append(scan["ScanID"])
+            start += relativedelta(days=1)
+        return scans
+
+
+@attr.s
+class L2FileCreater:
+    project = attr.ib(type=str)
+    freqmode = attr.ib(type=int)
+    product = attr.ib(type=str)
+    parameters = attr.ib(type=datamodel.L2File)
+    data = attr.ib(type=List[datamodel.L2Full])
+    outdir = attr.ib(type=str)
+
+    @property
+    def start(self) -> dt.datetime:
+        return self.data[0].l2.Time
+
+    @property
+    def end(self) -> dt.datetime:
+        return self.data[-1].l2.Time
+
+    @property
+    def ntimes(self) -> dt.datetime:
+        return len(self.data)
+
+    @property
+    def nlevels(self) -> dt.datetime:
+        return len(self.data[0].l2.Profile)
+
+    @property
+    def invmode(self) -> str:
+        return self.data[0].l2.InvMode
+
+    def filename(self):
+        if not os.path.isdir(self.outdir):
+            os.makedirs(self.outdir)
+        return os.path.join(
+            self.outdir,
+            datamodel.generate_filename(
+                self.project, self.product, self.start
+            )
+        )
+
+    @property
+    def header(self):
+        return datamodel.get_file_header_data(
+            self.freqmode, self.invmode, self.product, self.start, self.end
+        )
+
+    def write_to_file(self) -> None:
+        with Dataset(self.filename(), "w", fomat="NETCFD4") as ds:
+            ds.createDimension("time", self.ntimes)
+            ds.createDimension('level', self.nlevels)
+            for para in self.header:
+                setattr(ds, para, self.header[para])
+            for para in self.parameters:
+                nc_var = ds.createVariable(
+                    para.name,
+                    para.dtype.value,
+                    para.dimension.value,
+                    zlib=True
+                )
+                nc_var.description = para.get_description(self.product)
+                nc_var.units = para.get_units(self.product).value
+                if para.units == datamodel.Units.time:
+                    nc_var[:] = date2num(
+                        [d.get_data(para) for d in self.data],
+                        para.units.value,
+                        calendar='standard'
+                    )
+                else:
+                    nc_var[:] = [d.get_data(para) for d in self.data]
+
+
+def process_period(
+    db1: DatabaseConnector,
+    db2: level2db.Level2DB,
+    project: str,
+    product: str,
+    freqmode: int,
+    start: dt.datetime,
+    end: dt.datetime,
+    parameters: datamodel.L2File,
+    outdir: str
+) -> None:
+    l2getter = L2Getter(freqmode, product, db1, db2)
+    while start < end:
+        scanids = l2getter.get_scanids(start, start + relativedelta(months=1))
+        data = l2getter.get_data(scanids)
+        l2writer = L2FileCreater(
+            project, freqmode, product, parameters, data, parameters, outdir
+        )
+        l2writer.write_to_file()
+        start += relativedelta(months=1)
+
+
+def cli():
+    parser = argparse.ArgumentParser(
+        description='Generates Odin/SMR level2 monthly product files.'
+    )
+    parser.add_argument(
+        "project",
+        type=str,
+        help="project name"
+    )
+    parser.add_argument(
+        "product",
+        type=str,
+        nargs='+',
+        help="product name, can be more than one name"
+    )
+    parser.add_argument(
+        "freqmode",
+        type=int,
+        help="frequency mode"
+    )
+    parser.add_argument(
+        "date_start",
+        type=str,
+        help="start date: format: YYYY-MM-DD"
+    )
+    parser.add_argument(
+        "date_end",
+        type=str,
+        help="end date: format: YYYY-MM-DD"
+    )
+    parser.add_argument(
+        '-q',
+        '--outdir',
+        dest='outdir',
+        type=str,
+        default='/tmp',
+        help='data directory for saving output default is /tmp',
+    )
+
+    args = parser.parse_args()
+
+    date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
+    date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
+    db1 = level2db.Level2DB(args.project)
+    db2 = DatabaseConnector()
+    process_period(
+        db1,
+        db2,
+        args.project,
+        args.product,
+        args.freqmode,
+        date_start,
+        date_end,
+        datamodel.L2FILE.parameters,
+        args.outdir,
+    )
+
+
+if __name__ == "__main__":
+    cli()

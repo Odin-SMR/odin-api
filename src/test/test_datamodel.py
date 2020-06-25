@@ -45,6 +45,7 @@ def l2():
         "Apriori": [32., 33.],
         "VMR": [34., 35.],
         "AVK": [[36., 37.], [38., 39.]],
+        "Profile": [40., 41.],
     }
 
 
@@ -86,6 +87,7 @@ def test_to_l2_works(l2):
         Apriori=[32., 33.],
         VMR=[34., 35.],
         AVK=[[36., 37.], [38., 39.]],
+        Profile=[40., 41.]
     )
 
 
@@ -106,12 +108,16 @@ def test_parameter_get_description_works(name, product, expect):
 
 
 @pytest.mark.parametrize("name,product,units,expect", (
-    ("Lat", "Temperature", "degrees", "degrees"),
-    ("Lat", "O3", "degrees", "degrees"),
-    ("Profile", "O3", "product_specific", "-"),
-    ("Profile", "Temperature", "product_specific", "K"),
-    ("AVK", "O3", "product_specific", "%/%"),
-    ("AVK", "Temperature", "product_specific", "K/K"),
+    ("Lat", "Temperature", datamodel.Units.lat, datamodel.Units.lat),
+    ("Lat", "O3", datamodel.Units.lat, datamodel.Units.lat),
+    ("Profile", "O3", datamodel.Units.product, datamodel.Units.unitless),
+    (
+        "Profile", "Temperature",
+        datamodel.Units.product,
+        datamodel.Units.temperature
+    ),
+    ("AVK", "O3", datamodel.Units.product, datamodel.Units.poverp),
+    ("AVK", "Temperature", datamodel.Units.unitless, datamodel.Units.koverk),
 ))
 def test_parameter_get_units_works(name, product, units, expect):
     assert datamodel.Parameter(
