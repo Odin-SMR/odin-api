@@ -19,6 +19,15 @@ from odinapi.utils.time_util import datetime2stw
 FREQMODE = 42
 
 
+FAKE_ANC = {
+    "LST": 0.,
+    "Orbit": 1.,
+    "SZA1D": 2,
+    "SZA": [3, 4],
+    "Theta": [5, 6]
+}
+
+
 def l2anc(x: float):
     return to_l2anc({
         "LST": 0. + x,
@@ -114,10 +123,17 @@ def level2db_with_example_data(docker_mongo):
         'odin_result.json')
     with open(file_example_data, 'r') as the_file:
         data = json.load(the_file)
-    L2 = data["L2"]
-    L2i = data["L2I"]
-    L2c = data["L2C"]
-    level2db.store(L2, L2i, L2c)
+    # add data from two scans, make the residual valid for the second
+    for i, scanid in enumerate([7014791071, 7014791071 + 1]):
+        l2 = data["L2"]
+        for product in l2:
+            product["ScanID"] = scanid
+        l2i = data["L2I"]
+        l2i["ScanID"] = scanid
+        l2i["Residual"] = 1.662 if i == 0 else 1.462
+        l2i.pop("_id", None)
+        l2c = data["L2C"]
+        level2db.store(l2, l2i, l2c)
     return level2db
 
 
@@ -213,13 +229,7 @@ class TestL2Getter:
 
     @patch(
         'odinapi.utils.smrl2filewriter.get_ancillary_data',
-        return_value=[{
-            "LST": 0.,
-            "Orbit": 1.,
-            "SZA1D": 2,
-            "SZA": [3, 4],
-            "Theta": [5, 6]
-        }]
+        return_value=[FAKE_ANC]
     )
     def test_get_l2full_works(
         self, patched_get_ancillary_data, level2db_with_example_data
@@ -232,10 +242,24 @@ class TestL2Getter:
         )
         l2full = l2getter.get_l2full(7014791071)
         assert isinstance(l2full, L2Full)
-        
 
-    def test_get_data_works(self):
-        pass
+    @patch(
+        'odinapi.utils.smrl2filewriter.get_ancillary_data',
+        return_value=[FAKE_ANC]
+    )
+    def test_get_data_works(
+        self, patched_get_ancillary_data, level2db_with_example_data
+    ):
+        l2getter = smrl2filewriter.L2Getter(
+            1,
+            "ClO / 501 GHz / 20 to 50 km",
+            DatabaseConnector,
+            level2db_with_example_data
+        )
+        data = l2getter.get_data([7014791071, 7014791072])
+        assert len(data) == 1
+        assert isinstance(data[0], L2Full)
+        assert data[0].l2.ScanID == 7014791072
 
     @pytest.mark.parametrize("start,end,expect", (
         (
