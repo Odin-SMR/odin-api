@@ -1,6 +1,7 @@
 import os
 import datetime as dt
 import json
+from unittest.mock import patch
 
 import pytest  # type: ignore
 import numpy as np  # type: ignore
@@ -38,26 +39,28 @@ def l2i(x: float):
 
 
 def l2(x: float):
-    return to_l2({
-        "InvMode": "10",
-        "ScanID": 11 + int(np.ceil(x)),
-        "MJD": 12. + x,
-        "Lat1D": 13. + x,
-        "Lon1D": 14. + x,
-        "Quality": 15 + int(x),
-        "Altitude": [16. + x, 17. + x],
-        "Pressure": [18. + x, 19. + x],
-        "Latitude": [20. + x, 21. + x],
-        "Longitude": [22. + x, 23. + x],
-        "Temperature": [24. + x, 25. + x],
-        "ErrorTotal": [26. + x, 27. + x],
-        "ErrorNoise": [28. + x, 29. + x],
-        "MeasResponse": [30. + x, 31. + x],
-        "Apriori": [32. + x, 33. + x],
-        "VMR": [34. + x, 35. + x],
-        "AVK": [[36. + x, 37. + x], [38. + x, 39. + x]],
-        "Profile": [40. + x, 41. + x],
-    })
+    return to_l2(
+        {
+            "InvMode": "10",
+            "ScanID": 11 + int(np.ceil(x)),
+            "MJD": 12. + x,
+            "Lat1D": 13. + x,
+            "Lon1D": 14. + x,
+            "Quality": 15 + int(x),
+            "Altitude": [16. + x, 17. + x],
+            "Pressure": [18. + x, 19. + x],
+            "Latitude": [20. + x, 21. + x],
+            "Longitude": [22. + x, 23. + x],
+            "Temperature": [24. + x, 25. + x],
+            "ErrorTotal": [26. + x, 27. + x],
+            "ErrorNoise": [28. + x, 29. + x],
+            "MeasResponse": [30. + x, 31. + x],
+            "Apriori": [32. + x, 33. + x],
+            "VMR": [34. + x, 35. + x],
+            "AVK": [[36. + x, 37. + x], [38. + x, 39. + x]],
+        },
+        "Temperature",
+    )
 
 
 @pytest.fixture
@@ -167,9 +170,10 @@ class TestL2FileCreater:
     def test_write_profile_to_file_works(self, l2file):
         outfile = l2file.filename()
         with Dataset(outfile, "r") as ds:
+            # Should give data for Temperature
             assert np.all(
                 ds["Profile"][:]
-                == [[40., 41.], [40.5, 41.5], [41., 42.]]
+                == [[24., 25.], [24.5, 25.5], [25., 26.]]
             )
             assert (
                 ds["Profile"].description == "Retrieved volume mixing ratio."
@@ -207,8 +211,28 @@ class TestL2Getter:
     def test_get_l2anc_works(self):
         pass
 
-    def test_get_l2full_works(self):
-        pass
+    @patch(
+        'odinapi.utils.smrl2filewriter.get_ancillary_data',
+        return_value=[{
+            "LST": 0.,
+            "Orbit": 1.,
+            "SZA1D": 2,
+            "SZA": [3, 4],
+            "Theta": [5, 6]
+        }]
+    )
+    def test_get_l2full_works(
+        self, patched_get_ancillary_data, level2db_with_example_data
+    ):
+        l2getter = smrl2filewriter.L2Getter(
+            1,
+            "ClO / 501 GHz / 20 to 50 km",
+            DatabaseConnector,
+            level2db_with_example_data
+        )
+        l2full = l2getter.get_l2full(7014791071)
+        assert isinstance(l2full, L2Full)
+        
 
     def test_get_data_works(self):
         pass

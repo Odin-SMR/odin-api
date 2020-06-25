@@ -3,7 +3,7 @@ import os
 import datetime as dt
 import argparse
 import attr
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from dateutil.relativedelta import relativedelta
 from netCDF4 import Dataset, date2num
 
@@ -28,21 +28,19 @@ class L2Getter:
         data = get_ancillary_data(self.db1, l2)[0]
         return datamodel.to_l2anc(data)
 
-    def get_l2full(self, scanid: int) -> Optional[datamodel.L2Full]:
+    def get_l2full(self, scanid: int) -> datamodel.L2Full:
         l2i = self.get_l2i(scanid)
-        if not l2i.isvalid():
-            return None
-        l2dict = self.db.get_L2(scanid, self.freqmode, self.product)
+        l2dict = self.db2.get_L2(self.freqmode, scanid, self.product)[0]
         l2anc = get_ancillary_data(self.db1, l2dict)
         return datamodel.L2Full(
-            l2i=l2i, l2anc=l2anc, l2=datamodel.to_l2(l2dict)
+            l2i=l2i, l2anc=l2anc, l2=datamodel.to_l2(l2dict, self.product)
         )
 
     def get_data(self, scanids: List[int]) -> List[datamodel.L2Full]:
         data = []
         for scanid in scanids:
             l2 = self.get_l2full(scanid)
-            if isinstance(l2, datamodel.L2Full):
+            if l2.l2i.isvalid():
                 data.append(l2)
         return data
 

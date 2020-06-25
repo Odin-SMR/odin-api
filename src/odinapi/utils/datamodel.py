@@ -73,19 +73,19 @@ class Parameter:
         if self.name == "Profile":
             return (
                 "Retrieved temperature profile."
-                if "Temperature" in product
+                if is_temperature(product)
                 else "Retrieved volume mixing ratio."
             )
         return self.description
 
     def get_units(self, product: str) -> Units:
         if self.name == "AVK":
-            return Units.koverk if "Temperature" in product else Units.poverp
+            return Units.koverk if is_temperature(product) else Units.poverp
         elif self.units != Units.product:
             return self.units
         else:
             return (
-                Units.temperature if "Temperature" in product
+                Units.temperature if is_temperature(product)
                 else Units.unitless
             )
 
@@ -180,7 +180,11 @@ def get_file_header_data(
     return header_data
 
 
-def to_l2(l2: Dict[str, Any]) -> L2:
+def to_l2(l2: Dict[str, Any], product: str) -> L2:
+    profile = (
+        l2["Temperature"] if is_temperature(product)
+        else l2["VMR"]
+    )
     return L2(
         InvMode=l2["InvMode"],
         ScanID=l2["ScanID"],
@@ -190,7 +194,7 @@ def to_l2(l2: Dict[str, Any]) -> L2:
         Quality=l2["Quality"],
         Altitude=l2["Altitude"],
         Pressure=l2["Pressure"],
-        Profile=l2["Profile"],
+        Profile=profile,
         Latitude=l2["Latitude"],
         Longitude=l2["Longitude"],
         Temperature=l2["Temperature"],
@@ -231,6 +235,10 @@ def generate_filename(
         year=date_start.year,
         month=date_start.month
     )
+
+
+def is_temperature(product: str) -> bool:
+    return "Temperature" in product
 
 
 L2FILE = L2File([

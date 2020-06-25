@@ -45,8 +45,14 @@ def l2():
         "Apriori": [32., 33.],
         "VMR": [34., 35.],
         "AVK": [[36., 37.], [38., 39.]],
-        "Profile": [40., 41.],
     }
+
+
+def test_is_temperature_works():
+    product = "Bla-Bla-/ Temperature Bla"
+    assert datamodel.is_temperature(product)
+    product = "Bla-Bla-/ O3 Bla"
+    assert not datamodel.is_temperature(product)
 
 
 def test_to_l2anc_works(l2anc):
@@ -68,8 +74,12 @@ def test_to_l2i_works(l2i):
     )
 
 
-def test_to_l2_works(l2):
-    assert datamodel.to_l2(l2) == datamodel.L2(
+@pytest.mark.parametrize("product,expect", (
+    ("Temperature", [24., 25.]),
+    ("O3", [34., 35.]),
+))
+def test_to_l2_works(l2, product, expect):
+    assert datamodel.to_l2(l2, product) == datamodel.L2(
         InvMode="10",
         ScanID=11,
         Time=dt.datetime(1858, 11, 29, 0, 0),
@@ -87,7 +97,7 @@ def test_to_l2_works(l2):
         Apriori=[32., 33.],
         VMR=[34., 35.],
         AVK=[[36., 37.], [38., 39.]],
-        Profile=[40., 41.]
+        Profile=expect
     )
 
 
@@ -181,7 +191,7 @@ def test_l2i_isvalid_works(freqmode, residual, lmfactor):
 ))
 def test_l2full_get_data_works(l2, l2i, l2anc, para, expect):
     l2full = datamodel.L2Full(
-        l2=datamodel.to_l2(l2),
+        l2=datamodel.to_l2(l2, "O3"),
         l2i=datamodel.to_l2i(l2i),
         l2anc=datamodel.to_l2anc(l2anc)
     )
