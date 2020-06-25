@@ -162,10 +162,10 @@ def cli():
         help="project name"
     )
     parser.add_argument(
-        "product",
+        "products",
         type=str,
         nargs='+',
-        help="product name, can be more than one name"
+        help="product(s) name, can be more than one name"
     )
     parser.add_argument(
         "freqmode",
@@ -197,17 +197,18 @@ def cli():
     date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
     db1 = level2db.Level2DB(args.project)
     db2 = DatabaseConnector()
-    process_period(
-        db1,
-        db2,
-        args.project,
-        args.product,
-        args.freqmode,
-        date_start,
-        date_end,
-        datamodel.L2FILE.parameters,
-        args.outdir,
-    )
+    for product in args.products:
+        process_period(
+            db1,
+            db2,
+            args.project,
+            args.product,
+            args.freqmode,
+            date_start,
+            date_end,
+            datamodel.L2FILE.parameters,
+            args.outdir,
+        )
 
 
 if __name__ == "__main__":

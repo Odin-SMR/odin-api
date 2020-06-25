@@ -1,6 +1,6 @@
-
 import os
 import datetime as dt
+import json
 
 import pytest  # type: ignore
 import numpy as np  # type: ignore
@@ -8,12 +8,14 @@ from netCDF4 import Dataset, num2date  # type: ignore
 
 from odinapi.utils import smrl2filewriter
 from odinapi.utils.datamodel import (
-    L2Full,
-    to_l2,
-    to_l2i,
-    to_l2anc,
-    L2FILE
+    to_l2,  to_l2i, to_l2anc, L2Full, L2FILE, L2i
 )
+from odinapi.database.level2db import Level2DB
+from odinapi.views.database import DatabaseConnector
+from odinapi.utils.time_util import datetime2stw
+
+
+FREQMODE = 42
 
 
 def l2anc(x: float):
@@ -80,6 +82,40 @@ def l2file(tmpdir, l2data):
     )
     fc.write_to_file()
     return fc
+
+
+@pytest.fixture
+def level2db(docker_mongo):
+    level2db = Level2DB('projectfoo', docker_mongo.level2testdb)
+    docker_mongo.level2testdb['L2i_projectfoo'].drop()
+    docker_mongo.level2testdb['L2i_projectfoo'].insert_many([
+        {
+            'ScanID': datetime2stw(
+                dt.datetime(2009, 12, 31, 0, 0, 1) + dt.timedelta(days=day)),
+            'FreqMode': FREQMODE,
+            'ProcessingError': False,
+            'Comments': ["Foo", "Bar"]
+        }
+        for day in [0, 1, 2, 3, 32]
+    ])
+    return level2db
+
+
+@pytest.fixture
+def level2db_with_example_data(docker_mongo):
+    level2db = Level2DB('projectfoo', docker_mongo.level2testdb)
+    docker_mongo.level2testdb['L2_projectfoo'].drop()
+    docker_mongo.level2testdb['L2i_projectfoo'].drop()
+    file_example_data = os.path.join(
+        os.path.dirname(__file__), '..', 'systemtest', 'testdata',
+        'odin_result.json')
+    with open(file_example_data, 'r') as the_file:
+        data = json.load(the_file)
+    L2 = data["L2"]
+    L2i = data["L2I"]
+    L2c = data["L2C"]
+    level2db.store(L2, L2i, L2c)
+    return level2db
 
 
 class TestL2FileCreater:
@@ -153,3 +189,48 @@ class TestL2FileCreater:
         outfile = l2file.filename()
         with Dataset(outfile, "r") as ds:
             assert getattr(ds, para) == expect
+
+
+class TestL2Getter:
+
+    @pytest.mark.parametrize("para,expect", (
+        ("MinLmFactor", 1),
+        ("Residual", 1.662),
+    ))
+    def test_get_l2i_works(self, level2db_with_example_data, para, expect):
+        l2getter = smrl2filewriter.L2Getter(
+            1, "Prod1", DatabaseConnector, level2db_with_example_data)
+        l2i = l2getter.get_l2i(7014791071)
+        assert isinstance(l2i, L2i)
+        assert getattr(l2i, para) == pytest.approx(expect, abs=1e-3)
+
+    def test_get_l2anc_works(self):
+        pass
+
+    def test_get_l2full_works(self):
+        pass
+
+    def test_get_data_works(self):
+        pass
+
+    @pytest.mark.parametrize("start,end,expect", (
+        (
+            dt.datetime(2009, 12, 31),
+            dt.datetime(2010, 2, 2),
+            [4473654697, 4475037239, 4476419781, 4477802323, 4517896043],
+        ),
+        (
+            dt.datetime(2010, 1, 1),
+            dt.datetime(2010, 2, 2),
+            [4475037239, 4476419781, 4477802323, 4517896043],
+        ),
+        (
+            dt.datetime(2010, 1, 1),
+            dt.datetime(2010, 2, 1),
+            [4475037239, 4476419781, 4477802323],
+        ),
+    ))
+    def test_get_scanids_works(self, level2db, start, end, expect):
+        l2getter = smrl2filewriter.L2Getter(
+            FREQMODE, "Prod1", DatabaseConnector, level2db)
+        assert l2getter.get_scanids(start, end) == expect
