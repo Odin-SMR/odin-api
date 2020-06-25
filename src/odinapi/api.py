@@ -1,4 +1,6 @@
 """A simple datamodel implementation"""
+import  math
+
 from flask import Flask, Blueprint
 from flask.json import JSONEncoder
 import numpy as np
@@ -466,6 +468,9 @@ class ExtendedEncoder(JSONEncoder):
             if not np.isfinite(obj):
                 return None
             return float(obj)
+        if isinstance(obj, float) and not math.isfinite(obj):
+            return None
+
         return JSONEncoder.default(self, obj)
 
 

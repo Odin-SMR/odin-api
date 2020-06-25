@@ -11,7 +11,8 @@ import pytest
 from odinapi.utils import encrypt_util
 from .level2_test_data import (
     insert_test_data, insert_failed_scan, delete_test_data, WRITE_URL,
-    get_test_data, get_write_url, insert_lot_of_test_data
+    get_test_data, get_write_url, insert_lot_of_test_data,
+    insert_inf_test_data,
 )
 
 PROJECT_NAME = 'testproject'
@@ -41,6 +42,18 @@ def fake_data(odinapi_service):
 
     requests.delete(urlinfo.url).raise_for_status()
     requests.delete(urlinfo_failed.url).raise_for_status()
+
+
+@pytest.fixture
+def fake_data_with_inf(odinapi_service):
+    # Insert level2 data
+
+    r, urlinfo = insert_inf_test_data(PROJECT_NAME, odinapi_service)
+    assert r.status_code == http.client.CREATED
+
+    yield urlinfo
+
+    requests.delete(urlinfo.url).raise_for_status()
 
 
 @pytest.fixture
@@ -1406,6 +1419,18 @@ class TestReadLevel2:
             url += '?%s' % urllib.parse.urlencode(param)
         r = requests.get(odinapi_service + url)
         assert r.status_code == status
+
+    def test_doesnt_return_infs(
+        self, odinapi_service, fake_data_with_inf,
+    ):
+        scanid = fake_data_with_inf.scan_id,
+        freqmode = fake_data_with_inf.freq_mode
+        url = f'{odinapi_service}/rest_api/v5/level2/{PROJECT_NAME}/{freqmode}/{scanid}/'
+        print(url)
+        r = requests.get(url)
+        assert r.status_code == http.client.OK, r.text
+        assert 'NaN' not in r.text
+        assert '"MinLmFactor": null' in r.text
 
 
 class TestPublishProject:
