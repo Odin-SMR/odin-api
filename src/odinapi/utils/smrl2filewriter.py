@@ -76,18 +76,18 @@ class L2FileCreater:
         return self.data[-1].l2.Time
 
     @property
-    def ntimes(self) -> dt.datetime:
+    def ntimes(self) -> int:
         return len(self.data)
 
     @property
-    def nlevels(self) -> dt.datetime:
+    def nlevels(self) -> int:
         return len(self.data[0].l2.Profile)
 
     @property
     def invmode(self) -> str:
         return self.data[0].l2.InvMode
 
-    def filename(self):
+    def filename(self) -> str:
         if not os.path.isdir(self.outdir):
             os.makedirs(self.outdir)
         return os.path.join(
@@ -98,7 +98,7 @@ class L2FileCreater:
         )
 
     @property
-    def header(self):
+    def header(self) -> Dict[str, str]:
         return datamodel.get_file_header_data(
             self.freqmode, self.invmode, self.product, self.start, self.end
         )
@@ -128,12 +128,19 @@ class L2FileCreater:
                     nc_var[:] = [d.get_data(para) for d in self.data]
 
 
+def get_l2data(
+    l2getter: L2Getter, start: dt.datetime, end: dt.datetime
+) -> List[datamodel.L2Full]:
+    scanids = l2getter.get_scanids(start, start + relativedelta(months=1))
+    return l2getter.get_data(scanids)
+
+
 def process_period(
     db1: DatabaseConnector,
     db2: level2db.Level2DB,
     project: str,
-    product: str,
     freqmode: int,
+    product: str,
     start: dt.datetime,
     end: dt.datetime,
     parameters: datamodel.L2File,
@@ -141,44 +148,46 @@ def process_period(
 ) -> None:
     l2getter = L2Getter(freqmode, product, db1, db2)
     while start < end:
-        scanids = l2getter.get_scanids(start, start + relativedelta(months=1))
-        data = l2getter.get_data(scanids)
+        data = get_l2data(l2getter, start, start + relativedelta(months=1))
+        if len(data) == 0:
+            start += relativedelta(months=1)
+            continue
         l2writer = L2FileCreater(
-            project, freqmode, product, parameters, data, parameters, outdir
+            project, freqmode, product, parameters, data, outdir
         )
         l2writer.write_to_file()
         start += relativedelta(months=1)
 
 
-def cli():
+def cli(argv: List = []) -> None:
     parser = argparse.ArgumentParser(
-        description='Generates Odin/SMR level2 monthly product files.'
+        description="Generates Odin/SMR level2 monthly product files.",
     )
     parser.add_argument(
         "project",
         type=str,
-        help="project name"
+        help="project name",
     )
     parser.add_argument(
         "products",
         type=str,
         nargs='+',
-        help="product(s) name, can be more than one name"
+        help="product name(s), can be more than one name",
     )
     parser.add_argument(
         "freqmode",
-        type=int,
-        help="frequency mode"
+        type=str,
+        help="frequency mode",
     )
     parser.add_argument(
         "date_start",
         type=str,
-        help="start date: format: YYYY-MM-DD"
+        help="start date: format: YYYY-MM-DD",
     )
     parser.add_argument(
         "date_end",
         type=str,
-        help="end date: format: YYYY-MM-DD"
+        help="end date: format: YYYY-MM-DD",
     )
     parser.add_argument(
         '-q',
@@ -188,20 +197,19 @@ def cli():
         default='/tmp',
         help='data directory for saving output default is /tmp',
     )
-
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
     date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
-    db1 = level2db.Level2DB(args.project)
-    db2 = DatabaseConnector()
+    db1 = DatabaseConnector()
+    db2 = level2db.Level2DB(args.project)
     for product in args.products:
         process_period(
             db1,
             db2,
             args.project,
-            args.product,
             args.freqmode,
+            product,
             date_start,
             date_end,
             datamodel.L2FILE.parameters,

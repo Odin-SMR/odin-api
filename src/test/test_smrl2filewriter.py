@@ -1,7 +1,8 @@
 import os
 import datetime as dt
 import json
-from unittest.mock import patch
+from unittest.mock import patch, call, ANY
+
 
 import pytest  # type: ignore
 import numpy as np  # type: ignore
@@ -72,7 +73,6 @@ def l2(x: float):
     )
 
 
-@pytest.fixture
 def l2data():
     l2data = []
     for x in [0., 0.5, 1.0]:
@@ -81,16 +81,16 @@ def l2data():
 
 
 @pytest.fixture
-def filewriter(l2data):
+def filewriter():
     return smrl2filewriter.L2FileCreater(
-        "Proj1", 9, "O3", L2FILE.parameters, l2data, "/tmp"
+        "Proj1", 9, "O3", L2FILE.parameters, l2data(), "/tmp"
     )
 
 
 @pytest.fixture
-def l2file(tmpdir, l2data):
+def l2file(tmpdir):
     fc = smrl2filewriter.L2FileCreater(
-            "Proj1", 9, "O3", L2FILE.parameters, l2data, tmpdir
+            "Proj1", 9, "O3", L2FILE.parameters, l2data(), tmpdir
     )
     fc.write_to_file()
     return fc
@@ -282,3 +282,45 @@ class TestL2Getter:
         l2getter = smrl2filewriter.L2Getter(
             FREQMODE, "Prod1", DatabaseConnector, level2db)
         assert l2getter.get_scanids(start, end) == expect
+
+
+@patch('odinapi.utils.smrl2filewriter.get_l2data', return_value=[])
+def test_process_period_finishes_without_failure(patched_get_l2data, level2db):
+    smrl2filewriter.process_period(
+        DatabaseConnector,
+        level2db,
+        "noprojext",
+        0,
+        "noproduct",
+        dt.datetime(2010, 1, 1),
+        dt.datetime(2010, 2, 28),
+        L2FILE.parameters,
+        "/tmp"
+    )
+    patched_get_l2data.assert_has_calls(
+        [
+            call(ANY, dt.datetime(2010, 1, 1), dt.datetime(2010, 2, 1)),
+            call(ANY, dt.datetime(2010, 2, 1), dt.datetime(2010, 3, 1)),
+        ]
+    )
+
+
+@patch('odinapi.utils.smrl2filewriter.get_l2data', return_value=l2data())
+def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
+    expectfile = os.path.join(tmpdir, "Odin-SMR_L2_projx_prodx_1858-11.nc")
+    assert not os.path.isfile(expectfile)
+    smrl2filewriter.process_period(
+        DatabaseConnector,
+        level2db,
+        "projx",
+        0,
+        "prodx",
+        dt.datetime(2010, 1, 1),
+        dt.datetime(2010, 1, 31),
+        L2FILE.parameters,
+        tmpdir
+    )
+    patched_get_l2data.assert_has_calls(
+        [call(ANY, dt.datetime(2010, 1, 1), dt.datetime(2010, 2, 1))]
+    )
+    assert os.path.isfile(expectfile)
