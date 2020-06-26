@@ -110,12 +110,13 @@ class L2FileCreater:
                     para.dimension.value,
                     zlib=True
                 )
-                nc_var.description = para.get_description(self.product)
-                nc_var.units = para.get_units(self.product).value
-                if para.units == datamodel.Units.time:
+                istemp = datamodel.is_temperature(self.product)
+                nc_var.description = para.get_description(istemp)
+                nc_var.units = para.get_unit(istemp).value
+                if para.unit == datamodel.Unit.time:
                     nc_var[:] = date2num(
                         [d.get_data(para) for d in self.data],
-                        para.units.value,
+                        para.unit.value,
                         calendar='standard'
                     )
                 else:

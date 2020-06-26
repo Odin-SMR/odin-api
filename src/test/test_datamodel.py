@@ -1,5 +1,6 @@
 import pytest  # type: ignore
 import datetime as dt
+import numpy as np  # type: ignore
 
 from odinapi.utils import datamodel
 
@@ -109,35 +110,35 @@ def test_to_l2_works(l2, product, expect):
 def test_parameter_get_description_works(name, product, expect):
     assert datamodel.Parameter(
         name=name,
-        units="mm",
+        unit="mm",
         description="orig description",
         dtype="f4",
         dimension=["time"],
         l2type=datamodel.L2Type.l2,
-    ).get_description(product) == expect
+    ).get_description(datamodel.is_temperature(product)) == expect
 
 
-@pytest.mark.parametrize("name,product,units,expect", (
-    ("Lat", "Temperature", datamodel.Units.lat, datamodel.Units.lat),
-    ("Lat", "O3", datamodel.Units.lat, datamodel.Units.lat),
-    ("Profile", "O3", datamodel.Units.product, datamodel.Units.unitless),
+@pytest.mark.parametrize("name,product,unit,expect", (
+    ("Lat", "Temperature", datamodel.Unit.lat, datamodel.Unit.lat),
+    ("Lat", "O3", datamodel.Unit.lat, datamodel.Unit.lat),
+    ("Profile", "O3", datamodel.Unit.product, datamodel.Unit.unitless),
     (
         "Profile", "Temperature",
-        datamodel.Units.product,
-        datamodel.Units.temperature
+        datamodel.Unit.product,
+        datamodel.Unit.temperature
     ),
-    ("AVK", "O3", datamodel.Units.product, datamodel.Units.poverp),
-    ("AVK", "Temperature", datamodel.Units.unitless, datamodel.Units.koverk),
+    ("AVK", "O3", datamodel.Unit.product, datamodel.Unit.poverp),
+    ("AVK", "Temperature", datamodel.Unit.unitless, datamodel.Unit.koverk),
 ))
-def test_parameter_get_units_works(name, product, units, expect):
+def test_parameter_get_unit_works(name, product, unit, expect):
     assert datamodel.Parameter(
         name=name,
-        units=units,
+        unit=unit,
         description="fake",
         dtype="f4",
         dimension=["time"],
         l2type=datamodel.L2Type.l2,
-    ).get_units(product) == expect
+    ).get_unit(datamodel.is_temperature(product)) == expect
 
 
 @pytest.mark.parametrize("freqmode,expect", (
@@ -162,6 +163,27 @@ def test_l2i_filter_works(freqmode, expect):
 ))
 def test_l2i_isvalid_works(freqmode, residual, lmfactor):
     assert datamodel.L2i(
+        GenerationTime=dt.datetime(2000, 1, 2, 3, 4, 5),
+        Residual=residual,
+        MinLmFactor=lmfactor,
+        FreqMode=freqmode
+    ).isvalid()
+
+
+@pytest.mark.parametrize("freqmode,residual,lmfactor", (
+    (1, 1.5, 3),
+    (8, 1.5, 11),
+    (1, 1.6, 2),
+    (8, 1.6, 10),
+    (1, np.inf, 2),
+    (1, np.NINF, 2),
+    (1, np.NAN, 2),
+    (1, 1.5, np.inf),
+    (1, 1.5, np.NINF),
+    (1, 1.5, np.NAN),
+))
+def test_l2i_is_not_valid_works(freqmode, residual, lmfactor):
+    assert not datamodel.L2i(
         GenerationTime=dt.datetime(2000, 1, 2, 3, 4, 5),
         Residual=residual,
         MinLmFactor=lmfactor,

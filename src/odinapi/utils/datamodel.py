@@ -4,6 +4,8 @@ import datetime as dt
 from enum import Enum
 from dateutil.relativedelta import relativedelta
 
+import numpy as np  # type: ignore
+
 
 DATEFMT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -39,7 +41,7 @@ class Dimension(Enum):
     d3 = ["time", "level", "level"]
 
 
-class Units(Enum):
+class Unit(Enum):
     time = "days since 1858-11-17 00:00"
     altitude = "m"
     lat = "degrees north"
@@ -63,30 +65,30 @@ class Filter:
 @attr.s
 class Parameter:
     name = attr.ib(type=str)
-    units = attr.ib(type=Units)
+    unit = attr.ib(type=Unit)
     description = attr.ib(type=str)
     dtype = attr.ib(type=DType)
     dimension = attr.ib(type=Dimension)
     l2type = attr.ib(type=L2Type)
 
-    def get_description(self, product: str) -> str:
+    def get_description(self, istemperature: bool) -> str:
         if self.name == "Profile":
             return (
                 "Retrieved temperature profile."
-                if is_temperature(product)
+                if istemperature
                 else "Retrieved volume mixing ratio."
             )
         return self.description
 
-    def get_units(self, product: str) -> Units:
+    def get_unit(self, istemperature: bool) -> Unit:
         if self.name == "AVK":
-            return Units.koverk if is_temperature(product) else Units.poverp
-        elif self.units != Units.product:
-            return self.units
+            return Unit.koverk if istemperature else Unit.poverp
+        elif self.unit != Unit.product:
+            return self.unit
         else:
             return (
-                Units.temperature if is_temperature(product)
-                else Units.unitless
+                Unit.temperature if istemperature
+                else Unit.unitless
             )
 
 
@@ -142,7 +144,9 @@ class L2i:
 
     def isvalid(self) -> bool:
         return (
-            self.Residual <= self.filter.residual
+            np.isfinite(self.Residual)
+            and np.isfinite(self.MinLmFactor)
+            and self.Residual <= self.filter.residual
             and self.MinLmFactor <= self.filter.minlmfactor
         )
 
@@ -244,7 +248,7 @@ def is_temperature(product: str) -> bool:
 L2FILE = L2File([
     Parameter(
         "GenerationTime",
-        Units.time,
+        Unit.time,
         'Processing date.',
         DType.f4,
         Dimension.d1,
@@ -252,7 +256,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Altitude",
-        Units.altitude,
+        Unit.altitude,
         "Altitude of retrieved values.",
         DType.f4,
         Dimension.d2,
@@ -260,7 +264,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Apriori",
-        Units.product,
+        Unit.product,
         "A priori profile used in the inversion algorithm.",
         DType.f4,
         Dimension.d2,
@@ -268,7 +272,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "AVK",
-        Units.product,
+        Unit.product,
         "Averaging kernel matrix.",
         DType.f4,
         Dimension.d3,
@@ -276,7 +280,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "ErrorNoise",
-        Units.product,
+        Unit.product,
         (
             "Error due to measurement thermal noise (square root of the "
             "diagonal elements of the corresponding error matrix)."
@@ -287,7 +291,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "ErrorTotal",
-        Units.product,
+        Unit.product,
         (
             "Total retrieval error, corresponding to the error due to thermal"
             " noise and all interfering smoothing errors (square root of the"
@@ -299,7 +303,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Lat1D",
-        Units.lat,
+        Unit.lat,
         "A scalar representative latitude of the retrieval.",
         DType.f4,
         Dimension.d1,
@@ -307,7 +311,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Latitude",
-        Units.lat,
+        Unit.lat,
         "Approximate latitude of each retrieval value.",
         DType.f4,
         Dimension.d2,
@@ -315,7 +319,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Lon1D",
-        Units.lon,
+        Unit.lon,
         "A scalar representative longitude of the retrieval.",
         DType.f4,
         Dimension.d1,
@@ -323,7 +327,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Longitude",
-        Units.lon,
+        Unit.lon,
         "Approximate longitude of each retrieval value.",
         DType.f4,
         Dimension.d2,
@@ -331,7 +335,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "LST",
-        Units.hours,
+        Unit.hours,
         "Mean local solar time for the scan.",
         DType.f4,
         Dimension.d1,
@@ -339,7 +343,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "MeasResponse",
-        Units.unitless,
+        Unit.unitless,
         (
             "Measurement response, defined as the row sum of the averaging"
             " kernel matrix."
@@ -350,7 +354,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Orbit",
-        Units.unitless,
+        Unit.unitless,
         "Odin/SMR orbit number.",
         DType.f4,
         Dimension.d1,
@@ -358,7 +362,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Pressure",
-        Units.pressure,
+        Unit.pressure,
         "Pressure grid of the retrieved profile.",
         DType.f4,
         Dimension.d2,
@@ -366,7 +370,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Profile",
-        Units.product,
+        Unit.product,
         "Retrieved temperature or volume mixing ratio profile.",
         DType.f4,
         Dimension.d2,
@@ -374,7 +378,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "ScanID",
-        Units.unitless,
+        Unit.unitless,
         "Satellite time word scan identifier.",
         DType.i8,
         Dimension.d1,
@@ -382,7 +386,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "SZA1D",
-        Units.degrees,
+        Unit.degrees,
         (
             "Mean solar zenith angle of the observations used in the"
             " retrieval process."
@@ -393,7 +397,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "SZA",
-        Units.degrees,
+        Unit.degrees,
         (
             "Approximate solar zenith angle corresponding to each retrieval"
             " value."
@@ -404,7 +408,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Temperature",
-        Units.temperature,
+        Unit.temperature,
         (
             "Estimate of the temperature profile (corresponding to the"
             " ZPT input data)."
@@ -415,7 +419,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Theta",
-        Units.temperature,
+        Unit.temperature,
         "Estimate of the potential temperature profile.",
         DType.f4,
         Dimension.d2,
@@ -423,7 +427,7 @@ L2FILE = L2File([
     ),
     Parameter(
         "Time",
-        Units.time,
+        Unit.time,
         "Mean time of the scan.",
         DType.double,
         Dimension.d1,
