@@ -28,4 +28,5 @@ requests
 scipy
 setuptools
 simpleflock
+simplejson
 sqlalchemy

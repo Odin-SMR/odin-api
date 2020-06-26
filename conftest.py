@@ -79,8 +79,10 @@ def odinapi_service(docker_ip, docker_services, docker_compose_file):
     )
     yield url
     logs = docker_services._docker_compose.execute('logs webapi')
+    print("--- Start Docker Logs ---")
     for line in logs.decode().split('\n'):
         print(line)
+    print("--- End Docker Logs ---")
 
 
 @pytest.fixture(scope='session')

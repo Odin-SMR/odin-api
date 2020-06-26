@@ -1,8 +1,9 @@
 """Provide functions for inserting level2 test data to api"""
-import os
-import json
 from collections import namedtuple
 from copy import deepcopy
+import json
+import os
+import re
 
 import requests
 
@@ -35,6 +36,17 @@ def get_write_url(data, project_name, host):
 
 def insert_test_data(project_name, host, file_name='odin_result.json'):
     data = get_test_data(file_name)
+    urlinfo = get_write_url(data, project_name, host)
+    r = requests.post(urlinfo.url, json=data)
+    return r, urlinfo
+
+
+def insert_inf_test_data(
+    project_name: str, host: str, file_name: str = 'odin_result.json',
+):
+    with open(os.path.join(TEST_DATA_DIR, file_name)) as inp:
+        text = re.sub(r'"MinLmFactor": 1,', '"MinLmFactor": NaN,', inp.read())
+    data = json.loads(text)
     urlinfo = get_write_url(data, project_name, host)
     r = requests.post(urlinfo.url, json=data)
     return r, urlinfo
