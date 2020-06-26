@@ -21,12 +21,10 @@ class L2Getter:
     db2 = attr.ib(type=level2db.Level2DB)
 
     def get_l2i(self, scanid: int) -> datamodel.L2i:
-        l2i = self.db2.get_L2i(self.freqmode, scanid)
-        return datamodel.to_l2i(l2i)
+        return datamodel.to_l2i(self.db2.get_L2i(self.freqmode, scanid))
 
     def get_l2anc(self, l2: Dict[str, Any]) -> datamodel.L2anc:
-        data = get_ancillary_data(self.db1, l2)[0]
-        return datamodel.to_l2anc(data)
+        return datamodel.to_l2anc(get_ancillary_data(self.db1, [l2])[0])
 
     def get_l2full(self, scanid: int) -> datamodel.L2Full:
         l2i = self.get_l2i(scanid)
@@ -37,12 +35,8 @@ class L2Getter:
         )
 
     def get_data(self, scanids: List[int]) -> List[datamodel.L2Full]:
-        data = []
-        for scanid in scanids:
-            l2 = self.get_l2full(scanid)
-            if l2.l2i.isvalid():
-                data.append(l2)
-        return data
+        l2fulls = [self.get_l2full(scanid) for scanid in scanids]
+        return [l2full for l2full in l2fulls if l2full.l2i.isvalid()]
 
     def get_scanids(self, start: dt.datetime, end: dt.datetime) -> List[int]:
         scans = []

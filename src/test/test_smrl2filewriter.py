@@ -48,29 +48,30 @@ def l2i(x: float):
     })
 
 
+def l2dict(x: float):
+    return {
+        "InvMode": "10",
+        "ScanID": 11 + int(np.ceil(x)),
+        "MJD": 12. + x,
+        "Lat1D": 13. + x,
+        "Lon1D": 14. + x,
+        "Quality": 15 + int(x),
+        "Altitude": [16. + x, 17. + x],
+        "Pressure": [18. + x, 19. + x],
+        "Latitude": [20. + x, 21. + x],
+        "Longitude": [22. + x, 23. + x],
+        "Temperature": [24. + x, 25. + x],
+        "ErrorTotal": [26. + x, 27. + x],
+        "ErrorNoise": [28. + x, 29. + x],
+        "MeasResponse": [30. + x, 31. + x],
+        "Apriori": [32. + x, 33. + x],
+        "VMR": [34. + x, 35. + x],
+        "AVK": [[36. + x, 37. + x], [38. + x, 39. + x]],
+    }
+
+
 def l2(x: float):
-    return to_l2(
-        {
-            "InvMode": "10",
-            "ScanID": 11 + int(np.ceil(x)),
-            "MJD": 12. + x,
-            "Lat1D": 13. + x,
-            "Lon1D": 14. + x,
-            "Quality": 15 + int(x),
-            "Altitude": [16. + x, 17. + x],
-            "Pressure": [18. + x, 19. + x],
-            "Latitude": [20. + x, 21. + x],
-            "Longitude": [22. + x, 23. + x],
-            "Temperature": [24. + x, 25. + x],
-            "ErrorTotal": [26. + x, 27. + x],
-            "ErrorNoise": [28. + x, 29. + x],
-            "MeasResponse": [30. + x, 31. + x],
-            "Apriori": [32. + x, 33. + x],
-            "VMR": [34. + x, 35. + x],
-            "AVK": [[36. + x, 37. + x], [38. + x, 39. + x]],
-        },
-        "Temperature",
-    )
+    return to_l2(l2dict(x), "Temperature")
 
 
 def l2data():
@@ -224,8 +225,21 @@ class TestL2Getter:
         assert isinstance(l2i, L2i)
         assert getattr(l2i, para) == pytest.approx(expect, abs=1e-3)
 
-    def test_get_l2anc_works(self):
-        pass
+    @patch(
+        'odinapi.utils.smrl2filewriter.get_ancillary_data',
+        return_value=[FAKE_ANC]
+    )
+    def test_get_l2anc_get_called_as_expected(
+        self, patched_get_ancillary_data, level2db
+    ):
+        l2getter = smrl2filewriter.L2Getter(
+            1, "Prod1", DatabaseConnector, level2db)
+        fakel2dict = l2dict(0.)
+        l2anc = l2getter.get_l2anc(fakel2dict)
+        patched_get_ancillary_data.assert_has_calls(
+            [call(DatabaseConnector, [fakel2dict])]
+        )
+        assert l2anc == to_l2anc(FAKE_ANC)
 
     @patch(
         'odinapi.utils.smrl2filewriter.get_ancillary_data',
