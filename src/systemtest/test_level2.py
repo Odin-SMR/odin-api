@@ -1423,10 +1423,9 @@ class TestReadLevel2:
     def test_doesnt_return_infs(
         self, odinapi_service, fake_data_with_inf,
     ):
-        scanid = fake_data_with_inf.scan_id,
+        scanid, = fake_data_with_inf.scan_id,
         freqmode = fake_data_with_inf.freq_mode
-        url = f'{odinapi_service}/rest_api/v5/level2/{PROJECT_NAME}/{freqmode}/{scanid}/'
-        print(url)
+        url = f'{odinapi_service}/rest_api/v5/level2/development/{PROJECT_NAME}/{freqmode}/{scanid}/'  # noqa
         r = requests.get(url)
         assert r.status_code == http.client.OK, r.text
         assert 'NaN' not in r.text

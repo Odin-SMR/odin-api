@@ -1,9 +1,5 @@
 """A simple datamodel implementation"""
-import  math
-
 from flask import Flask, Blueprint
-from flask.json import JSONEncoder
-import numpy as np
 
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
@@ -458,20 +454,3 @@ blueprint = Blueprint(
     'swagger', __name__, static_url_path='/apidocs',
     static_folder='/swagger-ui')
 app.register_blueprint(blueprint)
-
-
-class ExtendedEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.int_):
-            return int(obj)
-        if isinstance(obj, np.float_):
-            if not np.isfinite(obj):
-                return None
-            return float(obj)
-        if isinstance(obj, float) and not math.isfinite(obj):
-            return None
-
-        return JSONEncoder.default(self, obj)
-
-
-app.json_encoder = ExtendedEncoder

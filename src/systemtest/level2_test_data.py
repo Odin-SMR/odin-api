@@ -2,7 +2,6 @@
 from collections import namedtuple
 from copy import deepcopy
 import json
-import math
 import os
 import re
 
