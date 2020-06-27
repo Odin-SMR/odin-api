@@ -1,7 +1,7 @@
 import attr
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Union
 import datetime as dt
-from enum import Enum
+from enum import Enum, unique, auto
 from dateutil.relativedelta import relativedelta
 
 import numpy as np  # type: ignore
@@ -23,24 +23,98 @@ COMMON_FILE_HEADER_DATA = {
 }
 
 
+@unique
 class L2Type(Enum):
-    l2 = "l2"
-    l2i = "l2i"
-    l2anc = "l2anc"
+    l2 = auto()
+    l2i = auto()
+    l2anc = auto()
 
 
+@unique
+class L2ancDesc(Enum):
+    LST = "Mean local solar time for the scan."
+    Orbit = "Odin/SMR orbit number."
+    SZA1D = (
+        "Mean solar zenith angle of the observations used in the retrieval "
+        "process.")
+    SZA = (
+        "Approximate solar zenith angle corresponding to each retrieval"
+        " value.")
+    Theta = "Estimate of the potential temperature profile."
+
+    @property
+    def l2type(self) -> L2Type:
+        return L2Type.l2anc
+
+
+@unique
+class L2Desc(Enum):
+    Altitude = "Altitude of retrieved values."
+    Apriori = "A priori profile used in the inversion algorithm."
+    AVK = "Averaging kernel matrix."
+    ErrorNoise = (
+        "Error due to measurement thermal noise (square root of the "
+        "diagonal elements of the corresponding error matrix).")
+    ErrorTotal = (
+        "Total retrieval error, corresponding to the error due to thermal"
+        " noise and all interfering smoothing errors (square root of the"
+        " diagonal elements of the corresponding error matrix).")
+    InvMode = "Inversion mode."
+    Lat1D = "A scalar representative latitude of the retrieval."
+    Latitude = "Approximate latitude of each retrieval value."
+    Lon1D = "A scalar representative longitude of the retrieval."
+    Longitude = "Approximate longitude of each retrieval value."
+    MeasResponse = (
+        "Measurement response, defined as the row sum of the averaging"
+        " kernel matrix.")
+    Pressure = "Pressure grid of the retrieved profile."
+    Profile = "Retrieved temperature or volume mixing ratio profile."
+    Quality = "Quality flag."
+    ScanID = "Satellite time word scan identifier."
+    Temperature = (
+        "Estimate of the temperature profile (corresponding to the"
+        " ZPT input data).")
+    Time = "Mean time of the scan."
+    VMR = "Volume mixing ratio or retrieved profile."
+
+    @property
+    def l2type(self):
+        return L2Type.l2
+
+
+@unique
+class L2iDesc(Enum):
+    GenerationTime = "Processing date."
+    Residual = (
+        "The difference between the spectra matching retrieved state and used "
+        "measurement spectra"
+    )
+    MinLmFactor = (
+        "The minimum value of the Levenberg - Marquardt factor during "
+        "the OEM iterations"
+    )
+    FreqMode = "Odin/SMR observation frequency mode."
+
+    @property
+    def l2type(self):
+        return L2Type.l2i
+
+
+@unique
 class DType(Enum):
     i8 = "i8"
     f4 = "f4"
     double = "double"
 
 
+@unique
 class Dimension(Enum):
     d1 = ["time"]
     d2 = ["time", "level"]
     d3 = ["time", "level", "level"]
 
 
+@unique
 class Unit(Enum):
     time = "days since 1858-11-17 00:00"
     altitude = "m"
@@ -57,31 +131,31 @@ class Unit(Enum):
 
 
 @attr.s
-class Filter:
-    residual = attr.ib(type=float)
-    minlmfactor = attr.ib(type=float)
-
-
-@attr.s
 class Parameter:
-    name = attr.ib(type=str)
+    description = attr.ib(type=Union[L2Desc, L2ancDesc, L2iDesc])
     unit = attr.ib(type=Unit)
-    description = attr.ib(type=str)
     dtype = attr.ib(type=DType)
     dimension = attr.ib(type=Dimension)
-    l2type = attr.ib(type=L2Type)
+
+    @property
+    def name(self) -> str:
+        return self.description.name
+
+    @property
+    def l2type(self) -> L2Type:
+        return self.description.l2type
 
     def get_description(self, istemperature: bool) -> str:
-        if self.name == "Profile":
+        if self.description == L2Desc.Profile:
             return (
                 "Retrieved temperature profile."
                 if istemperature
                 else "Retrieved volume mixing ratio."
             )
-        return self.description
+        return self.description.value
 
     def get_unit(self, istemperature: bool) -> Unit:
-        if self.name == "AVK":
+        if self.description == L2Desc.AVK:
             return Unit.koverk if istemperature else Unit.poverp
         elif self.unit != Unit.product:
             return self.unit
@@ -95,6 +169,12 @@ class Parameter:
 @attr.s
 class L2File:
     parameters = attr.ib(type=List[Parameter])
+
+
+@attr.s
+class Filter:
+    residual = attr.ib(type=float)
+    minlmfactor = attr.ib(type=float)
 
 
 @attr.s
@@ -156,6 +236,19 @@ class L2Full:
     l2i = attr.ib(type=L2i)
     l2anc = attr.ib(type=L2anc)
     l2 = attr.ib(type=L2)
+
+    # validators connect this class to L2iDesc, L2iDesc, L2Desc, and Parameter
+    @l2i.validator
+    def _check_includes_all_l2idesc_attributes(self, attribute, value):
+        assert all([hasattr(self.l2i, v.name) for v in L2iDesc])
+
+    @l2anc.validator
+    def _check_includes_all_l2ancdesc_attributes(self, attribute, value):
+        assert all([hasattr(self.l2anc, v.name) for v in L2ancDesc])
+
+    @l2.validator
+    def _check_includes_all_l2desc_attributes(self, attribute, value):
+        assert all([hasattr(self.l2, v.name) for v in L2Desc])
 
     def get_data(self, parameter: Parameter):
         if parameter.l2type == L2Type.l2i:
@@ -247,190 +340,66 @@ def is_temperature(product: str) -> bool:
 
 L2FILE = L2File([
     Parameter(
-        "GenerationTime",
-        Unit.time,
-        'Processing date.',
-        DType.f4,
-        Dimension.d1,
-        L2Type.l2i,
+        L2iDesc.GenerationTime, Unit.time, DType.f4, Dimension.d1
     ),
     Parameter(
-        "Altitude",
-        Unit.altitude,
-        "Altitude of retrieved values.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Altitude, Unit.altitude, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Apriori",
-        Unit.product,
-        "A priori profile used in the inversion algorithm.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Apriori, Unit.product, DType.f4, Dimension.d2
     ),
     Parameter(
-        "AVK",
-        Unit.product,
-        "Averaging kernel matrix.",
-        DType.f4,
-        Dimension.d3,
-        L2Type.l2
+        L2Desc.AVK, Unit.product, DType.f4, Dimension.d3
     ),
     Parameter(
-        "ErrorNoise",
-        Unit.product,
-        (
-            "Error due to measurement thermal noise (square root of the "
-            "diagonal elements of the corresponding error matrix)."
-        ),
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.ErrorNoise, Unit.product, DType.f4, Dimension.d2
     ),
     Parameter(
-        "ErrorTotal",
-        Unit.product,
-        (
-            "Total retrieval error, corresponding to the error due to thermal"
-            " noise and all interfering smoothing errors (square root of the"
-            " diagonal elements of the corresponding error matrix)."
-        ),
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.ErrorTotal, Unit.product, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Lat1D",
-        Unit.lat,
-        "A scalar representative latitude of the retrieval.",
-        DType.f4,
-        Dimension.d1,
-        L2Type.l2,
+        L2Desc.Lat1D, Unit.lat, DType.f4, Dimension.d1
     ),
     Parameter(
-        "Latitude",
-        Unit.lat,
-        "Approximate latitude of each retrieval value.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Latitude, Unit.lat, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Lon1D",
-        Unit.lon,
-        "A scalar representative longitude of the retrieval.",
-        DType.f4,
-        Dimension.d1,
-        L2Type.l2,
+        L2Desc.Lon1D, Unit.lon, DType.f4, Dimension.d1
     ),
     Parameter(
-        "Longitude",
-        Unit.lon,
-        "Approximate longitude of each retrieval value.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Longitude, Unit.lon, DType.f4, Dimension.d2
     ),
     Parameter(
-        "LST",
-        Unit.hours,
-        "Mean local solar time for the scan.",
-        DType.f4,
-        Dimension.d1,
-        L2Type.l2anc,
+        L2ancDesc.LST, Unit.hours, DType.f4, Dimension.d1
     ),
     Parameter(
-        "MeasResponse",
-        Unit.unitless,
-        (
-            "Measurement response, defined as the row sum of the averaging"
-            " kernel matrix."
-        ),
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.MeasResponse, Unit.unitless, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Orbit",
-        Unit.unitless,
-        "Odin/SMR orbit number.",
-        DType.f4,
-        Dimension.d1,
-        L2Type.l2anc,
+        L2ancDesc.Orbit, Unit.unitless, DType.f4, Dimension.d1
     ),
     Parameter(
-        "Pressure",
-        Unit.pressure,
-        "Pressure grid of the retrieved profile.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Pressure, Unit.pressure, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Profile",
-        Unit.product,
-        "Retrieved temperature or volume mixing ratio profile.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Profile, Unit.product, DType.f4, Dimension.d2
     ),
     Parameter(
-        "ScanID",
-        Unit.unitless,
-        "Satellite time word scan identifier.",
-        DType.i8,
-        Dimension.d1,
-        L2Type.l2,
+        L2Desc.ScanID, Unit.unitless, DType.i8, Dimension.d1
     ),
     Parameter(
-        "SZA1D",
-        Unit.degrees,
-        (
-            "Mean solar zenith angle of the observations used in the"
-            " retrieval process."
-        ),
-        DType.f4,
-        Dimension.d1,
-        L2Type.l2anc,
+        L2ancDesc.SZA1D, Unit.degrees, DType.f4, Dimension.d1
     ),
     Parameter(
-        "SZA",
-        Unit.degrees,
-        (
-            "Approximate solar zenith angle corresponding to each retrieval"
-            " value."
-        ),
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2anc,
+        L2ancDesc.SZA, Unit.degrees, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Temperature",
-        Unit.temperature,
-        (
-            "Estimate of the temperature profile (corresponding to the"
-            " ZPT input data)."
-        ),
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2,
+        L2Desc.Temperature, Unit.temperature, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Theta",
-        Unit.temperature,
-        "Estimate of the potential temperature profile.",
-        DType.f4,
-        Dimension.d2,
-        L2Type.l2anc,
+        L2ancDesc.Theta, Unit.temperature, DType.f4, Dimension.d2
     ),
     Parameter(
-        "Time",
-        Unit.time,
-        "Mean time of the scan.",
-        DType.double,
-        Dimension.d1,
-        L2Type.l2,
+        L2Desc.Time, Unit.time, DType.double, Dimension.d1
     )
 ])

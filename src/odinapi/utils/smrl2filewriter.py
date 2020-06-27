@@ -27,11 +27,11 @@ class L2Getter:
         return datamodel.to_l2anc(get_ancillary_data(self.db1, [l2])[0])
 
     def get_l2full(self, scanid: int) -> datamodel.L2Full:
-        l2i = self.get_l2i(scanid)
         l2dict = self.db2.get_L2(self.freqmode, scanid, self.product)[0]
-        l2anc = get_ancillary_data(self.db1, l2dict)
         return datamodel.L2Full(
-            l2i=l2i, l2anc=l2anc, l2=datamodel.to_l2(l2dict, self.product)
+            l2i=self.get_l2i(scanid),
+            l2anc=self.get_l2anc(l2dict),
+            l2=datamodel.to_l2(l2dict, self.product)
         )
 
     def get_data(self, scanids: List[int]) -> List[datamodel.L2Full]:

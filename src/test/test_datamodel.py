@@ -102,42 +102,105 @@ def test_to_l2_works(l2, product, expect):
     )
 
 
-@pytest.mark.parametrize("name,product,expect", (
-    ("Profile", "Temperature", "Retrieved temperature profile."),
-    ("Profile", "O3", "Retrieved volume mixing ratio."),
-    ("Latitude", "Temperature", "orig description"),
+@pytest.mark.parametrize("para,expect", (
+    (datamodel.L2Desc.Profile, "Profile"),
+    (datamodel.L2Desc.Latitude, "Latitude"),
+    (datamodel.L2iDesc.MinLmFactor, "MinLmFactor"),
+    (datamodel.L2iDesc.Residual, "Residual"),
+    (datamodel.L2ancDesc.LST, "LST"),
+    (datamodel.L2ancDesc.SZA, "SZA"),
 ))
-def test_parameter_get_description_works(name, product, expect):
+def test_parameter_name_works(para, expect):
     assert datamodel.Parameter(
-        name=name,
+        description=para,
+        unit=datamodel.Unit.product,
+        dtype=datamodel.DType.f4,
+        dimension=datamodel.Dimension.d2,
+    ).name == expect
+
+
+@pytest.mark.parametrize("para,expect", (
+    (datamodel.L2Desc.Profile, datamodel.L2Type.l2),
+    (datamodel.L2Desc.Latitude, datamodel.L2Type.l2),
+    (datamodel.L2iDesc.MinLmFactor, datamodel.L2Type.l2i),
+    (datamodel.L2iDesc.Residual, datamodel.L2Type.l2i),
+    (datamodel.L2ancDesc.LST, datamodel.L2Type.l2anc),
+    (datamodel.L2ancDesc.SZA, datamodel.L2Type.l2anc),
+))
+def test_parameter_l2type_works(para, expect):
+    assert datamodel.Parameter(
+        description=para,
+        unit=datamodel.Unit.product,
+        dtype=datamodel.DType.f4,
+        dimension=datamodel.Dimension.d2,
+    ).l2type == expect
+
+
+@pytest.mark.parametrize("para,product,expect", (
+    (
+        datamodel.L2Desc.Profile,
+        "Temperature",
+        "Retrieved temperature profile."
+    ),
+    (datamodel.L2Desc.Profile, "O3", "Retrieved volume mixing ratio."),
+    (
+        datamodel.L2Desc.Latitude,
+        "Temperature",
+        "Approximate latitude of each retrieval value."
+    ),
+))
+def test_parameter_get_description_works(para, product, expect):
+    assert datamodel.Parameter(
+        description=para,
         unit="mm",
-        description="orig description",
         dtype="f4",
         dimension=["time"],
-        l2type=datamodel.L2Type.l2,
     ).get_description(datamodel.is_temperature(product)) == expect
 
 
 @pytest.mark.parametrize("name,product,unit,expect", (
-    ("Lat", "Temperature", datamodel.Unit.lat, datamodel.Unit.lat),
-    ("Lat", "O3", datamodel.Unit.lat, datamodel.Unit.lat),
-    ("Profile", "O3", datamodel.Unit.product, datamodel.Unit.unitless),
     (
-        "Profile", "Temperature",
+        datamodel.L2Desc.Latitude,
+        "Temperature",
+        datamodel.Unit.lat,
+        datamodel.Unit.lat
+    ),
+    (
+        datamodel.L2Desc.Latitude,
+        "O3",
+        datamodel.Unit.lat,
+        datamodel.Unit.lat
+    ),
+    (
+        datamodel.L2Desc.Profile,
+        "O3",
+        datamodel.Unit.product,
+        datamodel.Unit.unitless),
+    (
+        datamodel.L2Desc.Profile,
+        "Temperature",
         datamodel.Unit.product,
         datamodel.Unit.temperature
     ),
-    ("AVK", "O3", datamodel.Unit.product, datamodel.Unit.poverp),
-    ("AVK", "Temperature", datamodel.Unit.unitless, datamodel.Unit.koverk),
+    (
+        datamodel.L2Desc.AVK,
+        "O3",
+        datamodel.Unit.product,
+        datamodel.Unit.poverp
+    ),
+    (
+        datamodel.L2Desc.AVK,
+        "Temperature",
+        datamodel.Unit.unitless,
+        datamodel.Unit.koverk
+    ),
 ))
 def test_parameter_get_unit_works(name, product, unit, expect):
     assert datamodel.Parameter(
-        name=name,
+        description=name,
         unit=unit,
-        description="fake",
         dtype="f4",
         dimension=["time"],
-        l2type=datamodel.L2Type.l2,
     ).get_unit(datamodel.is_temperature(product)) == expect
 
 
@@ -194,19 +257,19 @@ def test_l2i_is_not_valid_works(freqmode, residual, lmfactor):
 @pytest.mark.parametrize("para,expect", (
     (
         datamodel.Parameter(
-            "LST", "-", "-", "-", ["-"], datamodel.L2Type.l2anc
+             datamodel.L2ancDesc.LST, "-", "-", "-",
         ),
         0.,
     ),
     (
         datamodel.Parameter(
-            "Residual", "-", "-", "-", ["-"], datamodel.L2Type.l2i
+            datamodel.L2iDesc.Residual, "-", "-", "-",
         ),
         7.,
     ),
     (
         datamodel.Parameter(
-            "ScanID", "-", "-", "-", ["-"], datamodel.L2Type.l2
+            datamodel.L2Desc.ScanID, "-", "-", "-",
         ),
         11.,
     ),
