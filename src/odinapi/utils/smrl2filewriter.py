@@ -82,8 +82,7 @@ class L2FileCreater:
         return self.data[0].l2.InvMode
 
     def filename(self) -> str:
-        if not os.path.isdir(self.outdir):
-            os.makedirs(self.outdir)
+        os.makedirs(self.outdir, exist_ok=True)
         return os.path.join(
             self.outdir,
             datamodel.generate_filename(

@@ -78,7 +78,7 @@ class L2Desc(Enum):
     VMR = "Volume mixing ratio or retrieved profile."
 
     @property
-    def l2type(self):
+    def l2type(self) -> L2Type:
         return L2Type.l2
 
 
@@ -96,7 +96,7 @@ class L2iDesc(Enum):
     FreqMode = "Odin/SMR observation frequency mode."
 
     @property
-    def l2type(self):
+    def l2type(self) -> L2Type:
         return L2Type.l2i
 
 
@@ -251,9 +251,9 @@ class L2Full:
         assert all([hasattr(self.l2, v.name) for v in L2Desc])
 
     def get_data(self, parameter: Parameter):
-        if parameter.l2type == L2Type.l2i:
+        if parameter.l2type is L2Type.l2i:
             return getattr(self.l2i, parameter.name)
-        elif parameter.l2type == L2Type.l2anc:
+        elif parameter.l2type is L2Type.l2anc:
             return getattr(self.l2anc, parameter.name)
         return getattr(self.l2, parameter.name)
 
