@@ -7,6 +7,9 @@ from threading import Lock
 
 from flask import jsonify, Response
 from flask.views import MethodView
+import simplejson
+import numpy as np
+import datetime as dt
 
 NEW_BASEVIEW_LOCK = Lock()
 VERSIONS = ['v4', 'v5']
@@ -150,11 +153,19 @@ class BaseView(MethodView):
         elif isinstance(data, tuple):
             data, status, headers = data
         else:
-            status, headers = 200, {}
+            status = 200
+            headers = {}
         # Assume that we always want to return json and 200
-        return jsonify(
-            getattr(self, self.VERSION_TO_RETURNDATA[version])(
-                version, data, *args, **kwargs)), status, headers
+        payload = getattr(self, self.VERSION_TO_RETURNDATA[version])(
+            version, data, *args, **kwargs,
+        )
+        payload = simplejson.dumps(
+            payload,
+            default=default,
+            ignore_nan=True
+        )
+        headers['Content-Type'] = 'application/json'
+        return payload, status, headers
 
     def swagger_spec(self, version):
         """Return GET swagger spec for this view.
@@ -169,3 +180,15 @@ class BaseView(MethodView):
             return
         if version in self.VERSION_TO_SWAGGERSPEC:
             return getattr(self, self.VERSION_TO_SWAGGERSPEC[version])(version)
+
+
+def default(obj):
+    if isinstance(obj, np.int_):
+        return int(obj)
+    if isinstance(obj, np.float_):
+        if not np.isfinite(obj):
+            return None
+        return float(obj)
+    if isinstance(obj, dt.datetime) or isinstance(obj, dt.date):
+        return obj.isoformat()
+    raise ValueError(f'Dont know to handle {type(obj)} {obj}')

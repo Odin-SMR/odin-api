@@ -701,8 +701,8 @@ class Level2ViewScan(Level2ProjectBaseView):
                 'Data': info['L2anc'], 'Type': 'L2anc',
                 'Count': len(info['L2anc'])},
         }
-        return {'Data': data, 'Type': 'mixed',
-                'Count': None}
+        mixed = {'Data': data, 'Type': 'mixed', 'Count': None}
+        return mixed
 
 
 SWAGGER.add_type('L2i', {
