@@ -266,6 +266,22 @@ class TestL2Getter:
         'odinapi.utils.smrl2filewriter.get_ancillary_data',
         return_value=[FAKE_ANC]
     )
+    def test_get_l2full_returns_none_if_no_l2data(
+        self, patched_get_ancillary_data, level2db_with_example_data
+    ):
+        l2getter = smrl2filewriter.L2Getter(
+            1,
+            "ClO / 501 GHz / 20 to 50 km",
+            FakeDatabaseConnector,
+            level2db_with_example_data
+        )
+        l2full = l2getter.get_l2full(99999999)
+        assert l2full is None
+
+    @patch(
+        'odinapi.utils.smrl2filewriter.get_ancillary_data',
+        return_value=[FAKE_ANC]
+    )
     def test_get_data_works(
         self, patched_get_ancillary_data, level2db_with_example_data
     ):
@@ -275,7 +291,7 @@ class TestL2Getter:
             FakeDatabaseConnector,
             level2db_with_example_data
         )
-        data = l2getter.get_data([7014791071, 7014791072])
+        data = l2getter.get_data([7014791071, 7014791072, 9999999999])
         assert len(data) == 1
         assert isinstance(data[0], L2Full)
         assert data[0].l2.ScanID == 7014791072

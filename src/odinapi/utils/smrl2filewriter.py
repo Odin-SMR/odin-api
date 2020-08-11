@@ -4,7 +4,7 @@ import sys
 import datetime as dt
 import argparse
 import attr
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from dateutil.relativedelta import relativedelta
 from netCDF4 import Dataset, date2num
 
@@ -27,17 +27,22 @@ class L2Getter:
     def get_l2anc(self, l2: Dict[str, Any]) -> datamodel.L2anc:
         return datamodel.to_l2anc(get_ancillary_data(self.db1(), [l2])[0])
 
-    def get_l2full(self, scanid: int) -> datamodel.L2Full:
-        l2dict = self.db2.get_L2(self.freqmode, scanid, self.product)[0]
+    def get_l2full(self, scanid: int) -> Optional[datamodel.L2Full]:
+        l2 = self.db2.get_L2(self.freqmode, scanid, self.product)
+        if not l2:
+            return None
         return datamodel.L2Full(
             l2i=self.get_l2i(scanid),
-            l2anc=self.get_l2anc(l2dict),
-            l2=datamodel.to_l2(l2dict, self.product)
+            l2anc=self.get_l2anc(l2[0]),
+            l2=datamodel.to_l2(l2[0], self.product)
         )
 
     def get_data(self, scanids: List[int]) -> List[datamodel.L2Full]:
         l2fulls = [self.get_l2full(scanid) for scanid in scanids]
-        return [l2full for l2full in l2fulls if l2full.l2i.isvalid()]
+        return [
+            l2full for l2full in l2fulls
+            if l2full is not None and l2full.l2i.isvalid()
+        ]
 
     def get_scanids(self, start: dt.datetime, end: dt.datetime) -> List[int]:
         scans = []
