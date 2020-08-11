@@ -29,6 +29,11 @@ FAKE_ANC = {
 }
 
 
+class FakeDatabaseConnector(DatabaseConnector):
+    def __init__(self):
+        self.fake = True
+
+
 def l2anc(x: float):
     return to_l2anc({
         "LST": 0. + x,
@@ -233,11 +238,11 @@ class TestL2Getter:
         self, patched_get_ancillary_data, level2db
     ):
         l2getter = smrl2filewriter.L2Getter(
-            1, "Prod1", DatabaseConnector, level2db)
+            1, "Prod1", FakeDatabaseConnector, level2db)
         fakel2dict = l2dict(0.)
         l2anc = l2getter.get_l2anc(fakel2dict)
         patched_get_ancillary_data.assert_has_calls(
-            [call(DatabaseConnector, [fakel2dict])]
+            [call(ANY, [fakel2dict])]
         )
         assert l2anc == to_l2anc(FAKE_ANC)
 
@@ -251,7 +256,7 @@ class TestL2Getter:
         l2getter = smrl2filewriter.L2Getter(
             1,
             "ClO / 501 GHz / 20 to 50 km",
-            DatabaseConnector,
+            FakeDatabaseConnector,
             level2db_with_example_data
         )
         l2full = l2getter.get_l2full(7014791071)
@@ -267,7 +272,7 @@ class TestL2Getter:
         l2getter = smrl2filewriter.L2Getter(
             1,
             "ClO / 501 GHz / 20 to 50 km",
-            DatabaseConnector,
+            FakeDatabaseConnector,
             level2db_with_example_data
         )
         data = l2getter.get_data([7014791071, 7014791072])
@@ -338,3 +343,24 @@ def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
         [call(ANY, dt.datetime(2010, 1, 1), dt.datetime(2010, 2, 1))]
     )
     assert os.path.isfile(expectfile)
+
+
+@patch('odinapi.utils.smrl2filewriter.process_period', return_value=None)
+@patch('odinapi.utils.smrl2filewriter.level2db.Level2DB', return_value=None)
+def test_cli_works(patched_level2db, patched_process_period):
+    smrl2filewriter.cli([
+        "proj", "prod", "1", "2000-01-01", "2000-01-31", "-q", "/out"
+    ])
+    patched_process_period.assert_has_calls([
+        call(
+            ANY,
+            ANY,
+            "proj",
+            1,
+            "prod",
+            dt.datetime(2000, 1, 1),
+            dt.datetime(2000, 1, 31),
+            L2FILE.parameters,
+            "/out"
+        )
+    ])

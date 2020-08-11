@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import datetime as dt
 import argparse
 import attr
@@ -24,7 +25,7 @@ class L2Getter:
         return datamodel.to_l2i(self.db2.get_L2i(self.freqmode, scanid))
 
     def get_l2anc(self, l2: Dict[str, Any]) -> datamodel.L2anc:
-        return datamodel.to_l2anc(get_ancillary_data(self.db1, [l2])[0])
+        return datamodel.to_l2anc(get_ancillary_data(self.db1(), [l2])[0])
 
     def get_l2full(self, scanid: int) -> datamodel.L2Full:
         l2dict = self.db2.get_L2(self.freqmode, scanid, self.product)[0]
@@ -170,7 +171,7 @@ def cli(argv: List = []) -> None:
     )
     parser.add_argument(
         "freqmode",
-        type=str,
+        type=int,
         help="frequency mode",
     )
     parser.add_argument(
@@ -195,7 +196,7 @@ def cli(argv: List = []) -> None:
 
     date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
     date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
-    db1 = DatabaseConnector()
+    db1 = DatabaseConnector
     db2 = level2db.Level2DB(args.project)
     for product in args.products:
         process_period(
@@ -212,4 +213,4 @@ def cli(argv: List = []) -> None:
 
 
 if __name__ == "__main__":
-    cli()
+    cli(sys.argv[1:])
