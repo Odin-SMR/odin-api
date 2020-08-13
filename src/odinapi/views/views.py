@@ -803,7 +803,7 @@ class VdsInstrumentInfo(MethodView):
         datadict = {'VDS': []}
         for row in result:
             data = dict()
-            data['Date'] = row['date']
+            data['Date'] = row['date'].isoformat()
             data['Backend'] = row['backend']
             data['FreqMode'] = row['freqmode']
             data['Species'] = row['species']
