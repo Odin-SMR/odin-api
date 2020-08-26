@@ -10,7 +10,8 @@ module.exports = {
         path: path.join(__dirname, 'src/odinapi/static/js/'),
         filename: "[name].js",
         library: ["[name]"],
-        libraryTarget: "umd"
+        libraryTarget: "umd",
+        publicPath: '/static/js/',
     },
     module: {
         rules: [
