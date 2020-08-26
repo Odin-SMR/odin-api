@@ -7,10 +7,11 @@ module.exports = {
         odinlib: path.join(__dirname, 'src/odinapi/static/js/index'),
     },
     output: {
-        path: path.join(__dirname, 'src/odinapi/static/js/'),
+        path: path.join(__dirname, 'src/odinapi/static/assets/'),
         filename: "[name].js",
         library: ["[name]"],
-        libraryTarget: "umd"
+        libraryTarget: "umd",
+        publicPath: '/static/assets/',
     },
     module: {
         rules: [
