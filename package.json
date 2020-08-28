@@ -23,8 +23,7 @@
     "fullcalendar": "^2.5.0",
     "jquery": "^3.5.1",
     "lodash": "^4.17.20",
-    "moment": "^2.27.0",
-    "puppeteer": "^2.1.1"
+    "moment": "^2.27.0"
   },
   "author": "",
   "license": "ISC",
@@ -42,6 +41,7 @@
     "karma-coverage": "^2.0.3",
     "karma-jasmine": "^3.3.1",
     "karma-junit-reporter": "^2.0.1",
+    "puppeteer": "^2.1.1",
     "serialize-javascript": "^4.0.0",
     "style-loader": "^1.2.1",
     "webpack": "^4.44.1",
