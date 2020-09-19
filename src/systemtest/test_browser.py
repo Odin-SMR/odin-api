@@ -14,11 +14,16 @@ PROJECT_NAME = 'testproject'
 @pytest.fixture(scope='session')
 def chrome():
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.binary_location = './node_modules/chromium/lib/chromium/chrome-linux/chrome'
+    chrome_options.binary_location = (
+        './node_modules/chromium/lib/chromium/chrome-linux/chrome'
+    )
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome('./node_modules/chromedriver/bin/chromedriver', options=chrome_options)
+    driver = webdriver.Chrome(
+        './node_modules/chromedriver/bin/chromedriver',
+        options=chrome_options
+    )
     yield driver
     driver.quit()
 
