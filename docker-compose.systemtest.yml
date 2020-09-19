@@ -4,6 +4,7 @@ services:
   postgresql:
     image: odinsmr/odin_db:latest
     ports: ["5432"]
+    restart: unless-stopped
 
   odin:
     build: ./services/proxy
@@ -12,6 +13,7 @@ services:
       - webapi
     volumes:
       - ./services/proxy/testdata/:/data/odin-l2-data/:ro
+    restart: unless-stopped
 
   webapi:
     environment:
@@ -34,7 +36,9 @@ services:
     links:
       - postgresql
       - level2db
+    restart: unless-stopped
 
   level2db:
     image: mongo
     ports: ["27017"]
+    restart: unless-stopped
