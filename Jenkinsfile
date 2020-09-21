@@ -5,7 +5,7 @@ node() {
     checkout scm
   }
   stage('build bundle for ui') {
-      sh "npm install && npm update && npm run build"
+      sh "npm install && npm run build"
   }
   stage('javascript unit tests') {
       sh "npm test"
