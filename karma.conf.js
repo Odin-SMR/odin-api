@@ -2,9 +2,7 @@
 // Generated on Tue May 30 2017 17:11:30 GMT+0200 (CEST)
 //
 
-const puppeteer = require('puppeteer');
-
-process.env.CHROME_BIN = puppeteer.executablePath();
+process.env.CHROME_BIN = "node_modules/chromium/lib/chromium/chrome-linux/chrome";
 
 module.exports = (config) => {
     config.set({
