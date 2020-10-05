@@ -1,4 +1,4 @@
-#!/usr/bin/python3.8
+#!/usr/local/bin/python
 from fortranformat import FortranRecordReader
 import datetime as DT
 import sqlite3 as sqlite
@@ -100,3 +100,7 @@ def processsolar():
 
     db.commit()
     db.close()
+
+
+if __name__ == "__main__":
+    processsolar()
