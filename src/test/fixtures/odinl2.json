@@ -1,0 +1,116 @@
+{
+    "products": [
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "ClO / 501 GHz / 20 to 55 km",
+            "freqmode": "1",
+            "start": "2002-01-01",
+            "end": "2002-12-31",
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "N2O / 502 GHz / 15 to 50 km",
+            "freqmode": "1",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "O3 / 501 GHz / 20 to 50 km",
+            "freqmode": "1",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "HNO3 / 545 GHz / 20 to 50 km",
+            "freqmode": "2",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "O3 / 545 GHz / 20 to 85 km",
+            "freqmode": "2",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "Temperature / 545 GHz / 15 to 65 km",
+            "freqmode": "2",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "H2O / 488 GHz / 20 to 70 km",
+            "freqmode": "8",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Strat-v3.0.0",
+            "product": "O3 / 488 GHz / 20 to 60 km",
+            "freqmode": "8",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Strat-v3.0.0"
+        },
+        {
+            "project": "ALL-Meso-v3.0.0",
+            "product": "H2O - 557 GHz - 45 to 100 km",
+            "freqmode": "13",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Meso-v3.0.0"
+        },
+        {
+            "project": "ALL-Meso-v3.0.0",
+            "product": "O3 - 557 GHz - 45 to 90 km",
+            "freqmode": "13",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Meso-v3.0.0"
+        },
+        {
+            "project": "ALL-Meso-v3.0.0",
+            "product": "Temperature - 557 (Fmode 13) - 45 to 90 km",
+            "freqmode": "13",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL-Meso-v3.0.0"
+        },
+        {
+            "project": "ALL19lowTunc",
+            "product": "H2O - 557 GHz - 45 to 100 km",
+            "freqmode": "19",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL19lowTunc"
+        },
+        {
+            "project": "ALL19lowTunc",
+            "product": "O3 - 557 GHz - 45 to 90 km",
+            "freqmode": "19",
+            "start": "2002-01-01",
+            "end": null,
+            "outdir": "ALL19lowTunc"
+        },
+        {
+            "project": "ALL19lowTunc",
+            "product": "Temperature - 557 (Fmode 19) - 45 to 90 km",
+            "freqmode": "19",
+            "start": "2003-01-01",
+            "end": "2004-12-31",
+            "outdir": "ALL-Meso-v3.0.0"
+        }
+    ]
+}
