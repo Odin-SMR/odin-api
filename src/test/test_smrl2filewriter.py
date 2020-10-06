@@ -363,6 +363,27 @@ def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
     assert os.path.isfile(expectfile)
 
 
+@patch('odinapi.utils.smrl2filewriter.os.path.isfile', return_value=True)
+@patch('odinapi.utils.smrl2filewriter.get_l2data', return_value=l2data())
+def test_process_period_does_not_overwrite_file(
+    patched_get_l2data, patched_isfile, level2db, tmpdir
+):
+    smrl2filewriter.process_period(
+        DatabaseConnector,
+        level2db,
+        "projx",
+        0,
+        "prodx",
+        dt.datetime(2010, 1, 1),
+        dt.datetime(2010, 3, 31),
+        L2FILE.parameters,
+        tmpdir,
+        False
+    )
+    patched_isfile.assert_called()
+    patched_get_l2data.assert_not_called()
+
+
 @patch('odinapi.utils.smrl2filewriter.process_period', return_value=None)
 @patch('odinapi.utils.smrl2filewriter.level2db.Level2DB', return_value=None)
 def test_cli_works(patched_level2db, patched_process_period):

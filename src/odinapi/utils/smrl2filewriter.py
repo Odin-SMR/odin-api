@@ -131,15 +131,14 @@ class L2FileCreater:
 def get_l2data(
     l2getter: L2Getter, start: dt.datetime, end: dt.datetime
 ) -> List[datamodel.L2Full]:
-    # add some time margins when requesting scanids for a period,
+    # add some time margin when requesting scanids for a period,
     # a scanid has an associated time that corresponds to the
     # start time of the scan, while the time of the l2 data,
     # that is the one of interest here, corresponds more to the
     # mean time of the scan, so these times can differ
     minutes = 5
     scanids = l2getter.get_scanids(
-        start - relativedelta(minutes=minutes),
-        end + relativedelta(minutes=minutes)
+        start - relativedelta(minutes=minutes), end
     )
     data = l2getter.get_data(scanids)
     return [
