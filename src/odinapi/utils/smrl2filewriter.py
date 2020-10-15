@@ -131,8 +131,19 @@ class L2FileCreater:
 def get_l2data(
     l2getter: L2Getter, start: dt.datetime, end: dt.datetime
 ) -> List[datamodel.L2Full]:
-    scanids = l2getter.get_scanids(start, start + relativedelta(months=1))
-    return l2getter.get_data(scanids)
+    # add some time margin when requesting scanids for a period,
+    # a scanid has an associated time that corresponds to the
+    # start time of the scan, while the time of the l2 data,
+    # that is the one of interest here, corresponds more to the
+    # mean time of the scan, so these times can differ
+    minutes = 5
+    scanids = l2getter.get_scanids(
+        start - relativedelta(minutes=minutes), end
+    )
+    data = l2getter.get_data(scanids)
+    return [
+        d for d in data if d.l2.Time >= start and d.l2.Time < end
+    ]
 
 
 def process_period(
@@ -144,10 +155,17 @@ def process_period(
     start: dt.datetime,
     end: dt.datetime,
     parameters: datamodel.L2File,
-    outdir: str
+    outdir: str,
+    force: bool
 ) -> None:
     l2getter = L2Getter(freqmode, product, db1, db2)
     while start < end:
+        outfile = os.path.join(
+            outdir, datamodel.generate_filename(project, product, start)
+        )
+        if os.path.isfile(outfile) and not force:
+            start += relativedelta(months=1)
+            continue
         data = get_l2data(l2getter, start, start + relativedelta(months=1))
         if len(data) == 0:
             start += relativedelta(months=1)
@@ -197,6 +215,12 @@ def cli(argv: List = []) -> None:
         default='/tmp',
         help='data directory for saving output default is /tmp',
     )
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="flag for overwriting existing files",
+    )
     args = parser.parse_args(argv)
 
     date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
@@ -214,6 +238,7 @@ def cli(argv: List = []) -> None:
             date_end,
             datamodel.L2FILE.parameters,
             args.outdir,
+            args.force
         )
 
 
