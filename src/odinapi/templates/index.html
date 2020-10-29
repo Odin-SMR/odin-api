@@ -13,46 +13,58 @@
       {% endif %}
       {% endif %}
 
-<div class="container-fluid">
-  <hr class="featurette-divider">
+  <div class="container-fluid">
 
-      <div  class="row featurette">
-        <div class="col-md-7 col-md-push-5">
-          <h2 class="featurette-heading">Documentation updated<span class="text-muted"> 2020-03-11</span></h2>
-          <p class="lead">
-            The Odin reprocessing project is soon to be closed, we have
-            reporcessed all data from the mission and updated the
-            documents that describes the datasets and the algorithms used
-            to process the data.
-          </p>
-
-          <p>All documents can be found <a href="#documents"> here </a></p>
-        </div>
-        <div class="col-md-5 col-md-pull-7">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Odin at work">
-        </div>
+    <hr id="news" class="featurette-divider">
+    <div  class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading">Warning for <em>FM&nbsp;01</em> <span class="text-muted">for 2010–2018</span></h2>
+        <p class="lead">
+          Users are warned that data from FM&nbsp;01 may be unreliable between early 2010 and January 2018 due to a misbehaving local oscillator in the instrument. This has manifested itself by introducing asymmetric and broadened line shapes resulting in too low ozone and ClO values. We are looking at ways to mitigate the effect but until then please use FM&nbsp;01 data with caution.
+        </p>
       </div>
+      <div class="col-md-5">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/img2.gif') }}" alt="Odin exploded view">
+      </div>
+    </div>
 
-      <hr id="news" class="featurette-divider">
+    <div  class="row featurette">
+      <div class="col-md-7 col-md-push-5">
+        <h2 class="featurette-heading">Documentation updated<span class="text-muted"> 2020-03-11</span></h2>
+        <p class="lead">
+          The Odin reprocessing project is soon to be closed, we have
+          reprocessed all data from the mission and updated the
+          documents that describes the datasets and the algorithms used
+          to process the data.
+        </p>
 
-      <div  class="row featurette">
-        <div class="col-md-7">
-          <h2 class="featurette-heading">Monitoring the sky <span class="text-muted">from above</span></h2>
-          <p class="lead">The Odin satellite was launched in February 2001 and
-          was designed to combine two scientific disciplines on a single
-          spacecraft for studying of star formation and the early solar system
-          (astronomy) and the mechanisms behind the depletion of the ozone
-          layer in the Earth's atmosphere and the effects of global warming
-          (aeronomy).</p>
+        <p>All documents can be found <a href="#documents"> here </a></p>
+      </div>
+      <div class="col-md-5 col-md-pull-7">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Odin at work">
+      </div>
+    </div>
 
-          <p>The satellite has been used as a true observatory in order to best
-          respond to scientific challenges. The astronomy mission was
-          successfully concluded in the spring of 2007 and since then the
-          satellite has been used exclusively for studies of the Earth’s
-          atmosphere. During the first three years of the Odin mission, when
-          both astronomy and aeronomy observations were conducted, the
-          available observing time was shared equally between the two
-          disciplines.</p>
+    <hr class="featurette-divider">
+
+    <div  class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading">Monitoring the sky <span class="text-muted">from above</span></h2>
+        <p class="lead">The Odin satellite was launched in February 2001 and
+        was designed to combine two scientific disciplines on a single
+        spacecraft for studying of star formation and the early solar system
+        (astronomy) and the mechanisms behind the depletion of the ozone
+        layer in the Earth's atmosphere and the effects of global warming
+        (aeronomy).</p>
+
+        <p>The satellite has been used as a true observatory in order to best
+        respond to scientific challenges. The astronomy mission was
+        successfully concluded in the spring of 2007 and since then the
+        satellite has been used exclusively for studies of the Earth’s
+        atmosphere. During the first three years of the Odin mission, when
+        both astronomy and aeronomy observations were conducted, the
+        available observing time was shared equally between the two
+        disciplines.</p>
 
 <!--
 <p>The main instrument on Odin is an advanced radiometer using a 1.1 m
@@ -95,38 +107,38 @@ Esrange.  </p>
         <div class="col-md-7 col-md-push-5">
           <h2 class="featurette-heading">Documents <span class="text-muted">for download</span></h2>
           <p class="lead">
-          <ul>
-            <li> <a href="{{ url_for('static', filename='documents/L1_ATBD.pdf') }}">
-                    Algorithm Theoretical Basis Document - Level 1 Processing (PDF) (updated 2020-09-15)
-                 </a>/</li>
-            <li> <a href="{{ url_for('static', filename='documents/L2_ATBD.pdf') }}">
-                    Algorithm Theoretical Basis Document - Level 2 Processing (PDF) (updated 2020-03-11)
-                 </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/RBD.pdf') }}">
-                    Odin/SMR Requirement Baseline Document (PDF)
-                 </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/VDS.pdf') }}">
-                    Odin/SMR Verification Dataset: Technical Note (PDF)  (updated 2020-09-15)
-                 </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/L2_DATA.pdf') }}">
-                    L2 data - format and overview (PDF) (updated 2020-09-15)
-                 </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/DBMI.pdf') }}">
-                    Level2 processing configuration (PDF) (updated 2020-09-15)
-               </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/IODD.pdf') }}">
-                    Input/Output Data Definition Document: Level2 processor (PDF) (updated 2020-09-15)
-               </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/CAD.pdf') }}">
-                  Odin/SMR Level 2 Completeness Analysis Document (PDF) (updated 2020-09-15)
-             </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/PVER.pdf') }}">
-                  Odin/SMR Product Validation and Evolution Report (PDF) (draft; updated 2020-10-30)
-             </a></li>
-            <li> <a href="{{ url_for('static', filename='documents/astro_aero_programme159.xlsx') }}">
-              Programme planning spreadsheet for the Odin/SMR mission (XLSX) (new 2020-10-30)
-             </a></li>
-      </ul>
+            <ul>
+              <li> <a href="{{ url_for('static', filename='documents/L1_ATBD.pdf') }}">
+                      Algorithm Theoretical Basis Document - Level 1 Processing (PDF) (updated 2020-09-15)
+                  </a>/</li>
+              <li> <a href="{{ url_for('static', filename='documents/L2_ATBD.pdf') }}">
+                      Algorithm Theoretical Basis Document - Level 2 Processing (PDF) (updated 2020-03-11)
+                  </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/RBD.pdf') }}">
+                      Odin/SMR Requirement Baseline Document (PDF)
+                  </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/VDS.pdf') }}">
+                      Odin/SMR Verification Dataset: Technical Note (PDF)  (updated 2020-09-15)
+                  </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/L2_DATA.pdf') }}">
+                      L2 data - format and overview (PDF) (updated 2020-09-15)
+                  </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/DBMI.pdf') }}">
+                      Level2 processing configuration (PDF) (updated 2020-09-15)
+                </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/IODD.pdf') }}">
+                      Input/Output Data Definition Document: Level2 processor (PDF) (updated 2020-09-15)
+                </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/CAD.pdf') }}">
+                    Odin/SMR Level 2 Completeness Analysis Document (PDF) (updated 2020-09-15)
+              </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/PVER.pdf') }}">
+                    Odin/SMR Product Validation and Evolution Report (PDF) (draft; updated 2020-10-30)
+              </a></li>
+              <li> <a href="{{ url_for('static', filename='documents/astro_aero_programme159.xlsx') }}">
+                Programme planning spreadsheet for the Odin/SMR mission (XLSX) (new 2020-10-30)
+              </a></li>
+            </ul>
           </p>
         </div>
         <div class="col-md-5 col-md-pull-7">
