@@ -1,58 +1,135 @@
 {% extends "layout.html" %}
 
-
 {% block content %}
 <div class="container">
   <div class="jumbotron">
       <h1> Odin/SMR Project Portal</h1>
   </div>
 
-      {% if data %}
-      {% if data|string() is equalto "False" %}
-          <i class="fa fa-tachometer"></i>
-      {% endif %}
-      {% endif %}
+  {% if data %}
+  {% if data|string() is equalto "False" %}
+  <i class="fa fa-tachometer"></i>
+  {% endif %}
+  {% endif %}
 
-<div class="container-fluid">
-  <hr class="featurette-divider">
+  <div class="container-fluid">
 
-      <div  class="row featurette">
-        <div class="col-md-7 col-md-push-5">
-          <h2 class="featurette-heading">Documentation updated<span class="text-muted"> 2020-03-11</span></h2>
-          <p class="lead">
-            The Odin reprocessing project is soon to be closed, we have
-            reporcessed all data from the mission and updated the
-            documents that describes the datasets and the algorithms used
-            to process the data.
-          </p>
+    <hr id="news" class="featurette-divider">
 
-          <p>All documents can be found <a href="#documents"> here </a></p>
-        </div>
-        <div class="col-md-5 col-md-pull-7">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Odin at work">
-        </div>
+    <div  class="row featurette">
+      <div class="col-md-7 col-md-push-5">
+        <h2 class="featurette-heading">Version 3 released<span class="text-muted"> 2020-10-30</span></h2>
+        <p class="lead">
+          We are happy to announce the release of version 3 of the Odin
+          dataset.
+        </p>
+        <p>
+          This work has been supported by ESA and has involved the
+          following:
+          <ul>
+            <li>
+              A complete reprocessing of the level 0 data to level 1. This
+              included an improved algorithm for selection of background
+              spectra for calibration, a time and temperature dependent
+              frequency correction and automated removal of baseline.
+            </li>
+            <li>
+              An upgraded level 2 processing scheme where mesospheric and
+              stratospheric products were treated separately with optimised
+              retrieval settings and where necessary improved spectroscopic
+              parameters.
+            </li>
+            <li>
+              A comprehensive validation exercise against other instruments.
+            </li>
+          </ul>
+          Some highlights include:
+          <ul>
+            <li>
+              Recovery of the mesospheric carbon monoxide dataset for the
+              entire mission where a failed phase locked loop had caused the
+              frequency to drift and processing failure.
+            </li>
+
+            <li>
+              A greatly improved ozone dataset.
+            </li>
+
+            <li>
+              Better consistency between the two mesospheric water vapour
+              products.
+            </li>
+          </ul>
+        </p>
       </div>
+      <div class="col-md-5 col-md-pull-7">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/odinlaunch3.png') }}" alt="Odin launch">
+      </div>
+    </div>
 
-      <hr id="news" class="featurette-divider">
+    <hr class="featurette-divider">
 
-      <div  class="row featurette">
-        <div class="col-md-7">
-          <h2 class="featurette-heading">Monitoring the sky <span class="text-muted">from above</span></h2>
-          <p class="lead">The Odin satellite was launched in February 2001 and
+    <div  class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading">Warning for <em>FM&nbsp;01</em> <span class="text-muted">for 2010–2018</span></h2>
+        <p class="lead">
+          Users are warned that data from FM&nbsp;01 may be unreliable
+          between early 2010 and January 2018 due to a misbehaving local
+          oscillator in the instrument.
+        </p>
+        <p>
+          This has manifested itself by introducing asymmetric and broadened
+          line shapes resulting in too low ozone and chlorine monoxide values.
+          We are looking at ways to mitigate the effect but until then please
+          use FM&nbsp;01 data with caution.
+        </p>
+      </div>
+      <div class="col-md-5">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/img2.gif') }}" alt="Odin exploded view">
+      </div>
+    </div>
+
+    <hr class="featurette-divider">
+
+    <div  class="row featurette">
+      <div class="col-md-7 col-md-push-5">
+        <h2 class="featurette-heading">Documentation updated<span class="text-muted"> 2020-03-11</span></h2>
+        <p class="lead">
+          The Odin reprocessing project is soon to be closed, we have
+          reprocessed all data from the mission and updated the
+          documents that describes the datasets and the algorithms used
+          to process the data.
+        </p>
+        <p>All documents can be found <a href="#documents">here</a>.</p>
+      </div>
+      <div class="col-md-5 col-md-pull-7">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto8.jpg') }}" alt="Odin at work">
+      </div>
+    </div>
+
+    <hr class="featurette-divider">
+
+    <div  class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading">Monitoring the sky <span class="text-muted">from above</span></h2>
+        <p class="lead">
+          The Odin satellite was launched in February 2001 and
           was designed to combine two scientific disciplines on a single
           spacecraft for studying of star formation and the early solar system
           (astronomy) and the mechanisms behind the depletion of the ozone
           layer in the Earth's atmosphere and the effects of global warming
-          (aeronomy).</p>
-
-          <p>The satellite has been used as a true observatory in order to best
+          (aeronomy).
+        </p>
+        <p>
+          The satellite has been used as a true observatory in order to best
           respond to scientific challenges. The astronomy mission was
           successfully concluded in the spring of 2007 and since then the
           satellite has been used exclusively for studies of the Earth’s
-          atmosphere. During the first three years of the Odin mission, when
+          atmosphere. During the first six years of the Odin mission, when
           both astronomy and aeronomy observations were conducted, the
           available observing time was shared equally between the two
-          disciplines.</p>
+          disciplines.
+        </p>
 
 <!--
 <p>The main instrument on Odin is an advanced radiometer using a 1.1 m
@@ -83,62 +160,65 @@ participating countries. The satellite is operated from a ground station at
 Esrange.  </p>
 -->
 
-        </div>
-        <div class="col-md-5">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/odin665.jpg') }}" alt="Odin aeronomy">
-        </div>
       </div>
+      <div class="col-md-5">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/odin665.jpg') }}" alt="Odin aeronomy">
+      </div>
+    </div>
 
-      <hr id="documents" class="featurette-divider">
+    <hr id="documents" class="featurette-divider">
 
-      <div  class="row featurette">
-        <div class="col-md-7 col-md-push-5">
-          <h2 class="featurette-heading">Documents <span class="text-muted">for download</span></h2>
-          <p class="lead">
+    <div  class="row featurette">
+      <div class="col-md-7 col-md-push-5">
+        <h2 class="featurette-heading">Documents <span class="text-muted">for download</span></h2>
+        <p class="lead">
           <ul>
             <li> <a href="{{ url_for('static', filename='documents/L1_ATBD.pdf') }}">
                     Algorithm Theoretical Basis Document - Level 1 Processing (PDF) (updated 2020-09-15)
-                 </a>
+                </a>/</li>
             <li> <a href="{{ url_for('static', filename='documents/L2_ATBD.pdf') }}">
                     Algorithm Theoretical Basis Document - Level 2 Processing (PDF) (updated 2020-03-11)
-                 </a>
+                </a></li>
             <li> <a href="{{ url_for('static', filename='documents/RBD.pdf') }}">
                     Odin/SMR Requirement Baseline Document (PDF)
-                 </a>
+                </a></li>
             <li> <a href="{{ url_for('static', filename='documents/VDS.pdf') }}">
                     Odin/SMR Verification Dataset: Technical Note (PDF)  (updated 2020-09-15)
-                 </a>
+                </a></li>
             <li> <a href="{{ url_for('static', filename='documents/L2_DATA.pdf') }}">
                     L2 data - format and overview (PDF) (updated 2020-09-15)
-                 </a>
+                </a></li>
             <li> <a href="{{ url_for('static', filename='documents/DBMI.pdf') }}">
                     Level2 processing configuration (PDF) (updated 2020-09-15)
-               </a>
+              </a></li>
             <li> <a href="{{ url_for('static', filename='documents/IODD.pdf') }}">
                     Input/Output Data Definition Document: Level2 processor (PDF) (updated 2020-09-15)
-               </a>
+              </a></li>
             <li> <a href="{{ url_for('static', filename='documents/CAD.pdf') }}">
                   Odin/SMR Level 2 Completeness Analysis Document (PDF) (updated 2020-09-15)
-             </a>
+            </a></li>
             <li> <a href="{{ url_for('static', filename='documents/PVER.pdf') }}">
-                  Odin/SMR Product Validation and Evolution Report (PDF) (draft; new 2020-03-18)
-             </a>
-      </ul>
-          </p>
-        </div>
-        <div class="col-md-5 col-md-pull-7">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/ODIN_Flight_configuration16_small.jpg') }}" alt="Odin on Earth">
-        </div>
+                  Odin/SMR Product Validation and Evolution Report (PDF) (draft; updated 2020-10-30)
+            </a></li>
+            <li> <a href="{{ url_for('static', filename='documents/astro_aero_programme159.xlsx') }}">
+              Programme planning spreadsheet for the Odin/SMR mission (XLSX) (new 2020-10-30)
+            </a></li>
+          </ul>
+        </p>
       </div>
+      <div class="col-md-5 col-md-pull-7">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/ODIN_Flight_configuration16_small.jpg') }}" alt="Odin on Earth">
+      </div>
+    </div>
 
-      <hr id="sanoma" class="featurette-divider">
+    <hr id="sanoma" class="featurette-divider">
 
-      <div class="row featurette">
-        <div class="col-md-7">
-          <h2 class="featurette-heading"> NO empirical model <span
-                  class="text-muted">SANOMA</span></h2>
+    <div class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading"> NO empirical model <span
+                class="text-muted">SANOMA</span></h2>
 
-          <p>
+        <p>
           SANOMA is an empirical model of nitric oxide in the upper mesosphere
           and lower thermosphere, based on Odin/SMR measurements.  It provides
           the NO number density as a function of magnetic latitude (from -82.5
@@ -147,9 +227,9 @@ Esrange.  </p>
           as the associated coefficients, are available on this web page.
           These files are provided in MATLAB format. The coefficients are also
           available in text format for those who do not have MATLAB.
-          </p>
+        </p>
 
-          <p>
+        <p>
           We refer the users to the article <a
             href="https://doi.org/10.5194/acp-2018-39">"An empirical model of
             nitric oxide in the upper mesosphere and lower thermosphere based
@@ -159,113 +239,113 @@ Esrange.  </p>
           model, or for any other question about it, please contact Kristell
           Pérot (<a
             href="mailto:kristell.perot@chalmers.se">kristell.perot@chalmers.se</a>),
-          </p>
+        </p>
 
+        <p>
+          <ul>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_instructions.m') }}">
+                  General instructions</a>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_extraindices.m') }}">
+                  How to calculate the additional indices</a>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.mat') }}">
+                  Model coefficients (MATLAB)</a>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.txt') }}">
+                  Model coefficients (text)</a>
+          </ul>
+        </p>
+
+      </div>
+      <div class="col-md-5">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/8_odin.jpg') }}" alt="Odin making progress">
+      </div>
+    </div>
+
+    <hr id="consortium" class="featurette-divider">
+
+    <div class="row featurette">
+      <div class="col-md-7 col-md-push-5">
+        <h2 class="featurette-heading">
+            The consortium bringing data from space <span
+                class="text-muted">all the way to you </span></h2>
+
+        <p class="lead">
+        Since the launch of Odin in 2001 the Department of Earth and Space
+        Sciences at Chalmers has been responsible for processing the Level2
+        product. In september 2015 <a
+          href="https://earth.esa.int/web/sppa/home">ESA/SPPA</a> decided to
+        support the reprocessing of the Odin/SMR data set, which is now in
+        progress.
+        </p>
+
+        <p> The Odin mission has been supported by ESA since 2007. Odin is a
+        part of ESA's <a
+        href="https://earth.esa.int/web/guest/missions/3rd-party-missions/overview">Third
+        party misson program</a> within its Earthnet Programme.
+        </p>
+
+        <p>
+        <i class="fa fa-link"></i>
+        <a href="https://earth.esa.int/web/guest/missions/3rd-party-missions/overview">ESA third party missions</a>
+        </p>
+
+        <p>The reprocessing campaign is a cooperation between
+        <a href="http://www.chalmers.se">Chalmers</a> and
+        <a href="http://www.molflow.com">Molflow</a>.
+        </p>
+
+      </div>
+      <div class="col-md-5 col-md-pull-7">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto9.jpg') }}" alt="Odin in space">
+      </div>
+      </div>
+    </div>
+
+    <hr id="contact" class="featurette-divider">
+
+    <div class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading">Contact us, <span class="text-muted">you will find us here</span></h2>
+        <p class="lead">The mission scientist for ODIN/SMR is Prof. Donal
+        Murtagh (Chalmers) and ESA's contact is Angelika Dehn </p>
+
+        <div class="well">
+          <p><span class="fa fa-user"/> Prof. Donal Murtagh</p>
+          <p><span class="fa fa-envelope"/>
+            <a href="mailto:donal.murtagh@chalmers.se">donal.murtagh@chalmers.se</a>
+          </p>
           <p>
-            <ul>
-              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_instructions.m') }}">
-                    General instructions</a>
-              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_extraindices.m') }}">
-                    How to calculate the additional indices</a>
-              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.mat') }}">
-                    Model coefficients (MATLAB)</a>
-              <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.txt') }}">
-                    Model coefficients (text)</a>
-            </ul>
+          <span class="fa fa-map-marker"/>
+          Chalmers University of Technology </br>
+          Department of Earth and Space Sciences </br>
+          SE-412 96 Gothenburg </br>
+          Sweden
           </p>
-
         </div>
-        <div class="col-md-5">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/8_odin.jpg') }}" alt="Odin making progress">
-        </div>
-      </div>
 
-      <hr id="consortium" class="featurette-divider">
-
-      <div class="row featurette">
-        <div class="col-md-7 col-md-push-5">
-          <h2 class="featurette-heading">
-              The consortium bringing data from space <span
-                  class="text-muted">all the way to you </span></h2>
-
-          <p class="lead">
-          Since the launch of Odin in 2001 the Department of Earth and Space
-          Sciences at Chalmers has been responsible for processing the Level2
-          product. In september 2015 <a
-            href="https://earth.esa.int/web/sppa/home">ESA/SPPA</a> decided to
-          support the reprocessing of the Odin/SMR data set, which is now in
-          progress.
+        <div class="well">
+          <p><span class="fa fa-user"/> Angelika Dehn</p>
+          <p><span class="fa fa-envelope"/>
+            <a href="mailto:angelika.dehn@esa.int">angelika.dehn@esa.int</a>
           </p>
-
-          <p> The Odin mission has been supported by ESA since 2007. Odin is a
-          part of ESA's <a
-          href="https://earth.esa.int/web/guest/missions/3rd-party-missions/overview">Third
-          party misson program</a> within its Earthnet Programme.
-          </p>
-
           <p>
-          <i class="fa fa-link"></i>
-          <a href="https://earth.esa.int/web/guest/missions/3rd-party-missions/overview">ESA third party missions</a>
+          <span class="fa fa-map-marker"/>
+          ESA-ESRIN <br/>
+          Via Galileo Galilei Frascati (RM) <br/>
+          00044 Italy
           </p>
+        </div>
 
-          <p>The reprocessing campaign is a cooperation between
-          <a href="http://www.chalmers.se">Chalmers</a> and
-          <a href="http://www.molflow.com">Molflow</a>.
-          </p>
-
-        </div>
-        <div class="col-md-5 col-md-pull-7">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto9.jpg') }}" alt="Odin in space">
-        </div>
-        </div>
       </div>
-
-      <hr id="contact" class="featurette-divider">
-
-      <div class="row featurette">
-        <div class="col-md-7">
-          <h2 class="featurette-heading">Contact us, <span class="text-muted">you will find us here:</span></h2>
-          <p class="lead">The mission scientist for ODIN/SMR is Prof. Donal
-          Murtagh (Chalmers) and ESA's contact is Angelika Dehn </p>
-
-          <div class="well">
-            <p><span class="fa fa-user"/> Prof. Donal Murtagh</p>
-            <p><span class="fa fa-envelope"/>
-              <a href="mailto:donal.murtagh@chalmers.se">donal.murtagh@chalmers.se</a>
-            </p>
-            <p>
-            <span class="fa fa-map-marker"/>
-            Chalmers University of Technology </br>
-            Department of Earth and Space Sciences </br>
-            SE-412 96 Gothenburg </br>
-            Sweden
-            </p>
-          </div>
-
-          <div class="well">
-            <p><span class="fa fa-user"/> Angelika Dehn</p>
-            <p><span class="fa fa-envelope"/>
-              <a href="mailto:angelika.dehn@esa.int">angelika.dehn@esa.int</a>
-            </p>
-            <p>
-            <span class="fa fa-map-marker"/>
-            ESA-ESRIN <br/>
-            Via Galileo Galilei Frascati (RM) <br/>
-            00044 Italy
-            </p>
-          </div>
-
-        </div>
-        <div class="col-md-5">
-          <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/AS4-1-410HR.jpg') }}" alt="Home">
-        </div>
+      <div class="col-md-5">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/AS4-1-410HR.jpg') }}" alt="Home">
       </div>
-      <hr class="featurette-divider">
+    </div>
 
-      <!-- /END THE FEATURETTES -->
+    <hr class="featurette-divider">
 
+    <!-- /END THE FEATURETTES -->
 
-</div
+  </div>
 </div>
 {% endblock %}
 
