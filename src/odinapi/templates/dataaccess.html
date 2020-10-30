@@ -335,6 +335,14 @@ DATA = get_ozone_on_date("2015-01-03")
 Documentation for all endpoints available through the API is available in the
 <a href="/apidocs/index.html">API documentation</a>.
 </p>
+<p>
+There is also a dedicated API for the <em>Verification Data Set</em>, a data
+set used to compare Odin/SMR data with data from other instruments. This API is
+described in detail in the
+<a href="{{ url_for('static', filename='documents/VDS.pdf') }}">Odin/SMR Verification Dataset: Technical Note</a>.
+The code example from the appendix is available for download below for
+convience.
+</p>
         </div>
       </div>
 
@@ -348,7 +356,6 @@ of most interest. An example of a Python program for accessing the
 <em>Level 2 API</em> can be downloaded
 <a href="{{ url_for('static', filename='examples/get_l2_data.py') }}">
   here</a>.
-
 </p>
 <p>
 The <em>Level 1 data</em> consists of the spectra used in calculating the
@@ -357,6 +364,12 @@ can be downloaded
 <a href="{{ url_for('static', filename='examples/get_l1b_for_period.py') }}">
   here</a>.
 </p>
+<p>
+The <em>Verification Data Set</em> API provides functionality for comparing
+Odin/SMR data with data from other instruments. An example Python program
+illustrating its use can be dowloaded
+<a href="{{ url_for('static', filename='examples/vds_example.py') }}">
+  here</a>.
 </p>
         </div>
       </div>
