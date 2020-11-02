@@ -7,8 +7,8 @@ import requests
 r0 = requests.get("http://odin.rss.chalmers.se/rest_api/v4/vds/")
 
 # The request contains the returned JSON object, which in Python is a
-# dictionary.  This can be printed or inspected to find out its keys and
-# contents.  Let's assume that we have done that, or that we have read
+# dictionary. This can be printed or inspected to find out its keys and
+# contents. Let's assume that we have done that, or that we have read
 # the API documentation, so that we know that 'FreqMode' is a key.
 # Use this to single out the frequency mode of interest, in this case 2:
 FM2 = [
