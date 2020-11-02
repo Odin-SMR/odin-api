@@ -19,8 +19,8 @@ def chrome():
     )
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--window-size "1280,720"')
+    chrome_options.add_argument('--shm-size=1gb')
+    chrome_options.add_argument('--window-size=1280,720')
     driver = webdriver.Chrome(
         './node_modules/chromedriver/bin/chromedriver',
         options=chrome_options
