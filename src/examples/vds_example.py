@@ -37,7 +37,7 @@ r3 = requests.get(day['URL'])
 scanData = r3.json()['VDS']
 
 # scanData contains URIs for getting all the collocated Odin/SMR scans for
-# 2012-09-15, as well as the data from MLS.  As a final step, let's request
+# 2012-09-15, as well as the data from MLS. As a final step, let's request
 # the latter for the first of the collocated scans for our chosen frequency
 # mode, species, instrument and day:
 r4 = requests.get(scanData[0]['URLS']['URL-mls-O3'])
