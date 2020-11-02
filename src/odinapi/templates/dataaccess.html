@@ -22,7 +22,7 @@ The Odin web-API is a so called <em>REST API</em>, where the user makes a
 <em>GET request</em> to an <em>API-endpoint</em>, a URI provided by the API.
 The result of the request is a so called <em>JSON-object</em>. JSON is a
 text-based data exchange standard with key-value pairs, which can be
-interpreted by most modern programming languages, including <em>Matlab</em> and
+interpreted by most modern programming languages, including <em>MATLAB</em> and
 <em>Python</em>. For instance, in Python the JSON structure is mapped to a
 so called <em>dictionary</em> object.
 </p>
@@ -363,11 +363,11 @@ can be downloaded
 
       <div  class="row">
         <div class="col-md-12">
-          <h2>Recommended projects</h2>
+          <h2>Recommended projects and products</h2>
 <p>
-The recommended projects to use with the different species are listed in the
-table below. For instance, to access the ozone profiles for the date
-<em>2015-01-03</em> you could make a call to the following URI:
+The recommended projects and products to use for the different species are
+listed in the table below. For instance, to access the ozone profiles for the
+date <em>2015-01-03</em> you could make a call to the following URI:
 </p>
 <p>
 <code>
@@ -378,18 +378,75 @@ http://odin.rss.chalmers.se/rest_api/v5/level2/ALL-Strat-v3.0.0/2015-01-03/?prod
 Note that all spaces in the product names need to be replaced by
 <code>%20</code> in the request.
 </p>
+<p>
+For a detailed discussion of the different products, see the
+<a href="{{ url_for('static', filename='documents/PVER.pdf') }}">Odin/SMR Product Validation and Evolution Report</a>.
+</p>
           <div>
             <table class="table">
               <tbody>
                 <tr>
-                  <td><b>Species:</b></td>
-                  <td><b>Project:</b></td>
-                  <td><b>Product name:</b></td>
+                  <th>Species</th>
+                  <th>Project</th>
+                  <th>Product name</th>
+                  <th>Vertical coverage</th>
+                  <th>Comment</th>
                 </tr>
                 <tr>
-                  <td>Stratospheric ozone</td>
-                  <td>ALL-Strat-v3.0.0</td>
-                  <td>O3 / 545 GHz / 20 to 85 km</td>
+                  <td>Ozone</td>
+                  <td><code>ALL-Strat-v3.0.0</code></td>
+                  <td><code>O3 / 545 GHz / 20 to 85 km</code></td>
+                  <td>17–77 km</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>Chlorine monoxide</td>
+                  <td><code>ALL-Strat-v3.0.0</code></td>
+                  <td><code>ClO / 501 GHz / 20 to 55 km</code></td>
+                  <td>18–58 km</td>
+                  <td>Caution advised from early 2010 to January 2018</td>
+                </tr>
+                <tr>
+                  <td>Stratospheric water vapour</td>
+                  <td><code>ALL-Strat-v3.0.0</code></td>
+                  <td><code>H2O / 488 GHz / 20 to 70 km</code></td>
+                  <td>19–78 km</td>
+                  <td>Possible low bias of up to 15&nbsp;%</td>
+                </tr>
+                <tr>
+                  <td>Mesospheric water vapour</td>
+                  <td><code>ALL-Meso-v3.0.0</code></td>
+                  <td><code>H2O - 557 GHz - 45 to 100 km</code></td>
+                  <td>44–110 km</td>
+                  <td>Possible low bias of up to 15&nbsp;%</td>
+                </tr>
+                <tr>
+                  <td>Stratospheric temperature</td>
+                  <td><code>ALL-Strat-v3.0.0</code></td>
+                  <td><code>Temperature / 545 GHz / 15 to 65 km</code></td>
+                  <td>21–64 km</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>Mesospheric temperature</td>
+                  <td><code>ALL-Meso-v3.0.0</code></td>
+                  <td><code>Temperature - 557 (Fmode 13) - 45 to 90 km</code></td>
+                  <td>44–95 km</td>
+                  <td>Possible cold bias of 3–5&nbsp;K</td>
+                </tr>
+                <tr>
+                  <td>Nitric oxide</td>
+                  <td><code>meso21</code></td>
+                  <td><code>NO - 551 GHz - 45 to 115 km</code></td>
+                  <td>45–115 km</td>
+                  <td>Sporadic temporal coverage</td>
+                </tr>
+                <tr>
+                  <td>Carbon monoxide</td>
+                  <td><code>development/ALL</code></td>
+                  <td><code>CO - 576 GHz</code></td>
+                  <td>50–115 km</td>
+                  <td>Sporadic temporal coverage</td>
                 </tr>
               </tbody>
             </table>
