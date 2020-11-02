@@ -1,4 +1,3 @@
-from time import sleep
 import requests
 import pytest
 
@@ -118,7 +117,6 @@ class TestLevel2Browser:
                 "//a[@href='{0}']".format(test_ref))[0]
         href.click()
         driver.get("{}{}".format(odinapi_service, test_ref))
-        sleep(2)
         header = driver.find_element_by_class_name('page-header')
         assert (
             header.text
