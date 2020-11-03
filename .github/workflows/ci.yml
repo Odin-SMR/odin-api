@@ -32,4 +32,4 @@ jobs:
           npm test
       - name: Test
         run: |
-          tox -r -- --runslow
+          tox -- --runslow
