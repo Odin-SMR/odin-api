@@ -1,3 +1,3 @@
 [submodule "data"]
 	path = data
-	url = https://github.com/Odin-SMR/data4odinAPI.git
+	url = git@github.com:Odin-SMR/data4odinAPI.git
