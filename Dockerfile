@@ -1,3 +1,9 @@
+FROM node:10
+COPY ./ /odin/
+WORKDIR /odin
+RUN npm install
+RUN npm run build
+
 FROM python:3.8
 COPY requirements_python.apt /app/
 WORKDIR /app
@@ -21,6 +27,7 @@ RUN pip install --no-binary=h5py -r requirements.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
+COPY --from=0 /odin/src/odinapi/static/assets /app/odinapi/static/assets
 ENV PYTHONPATH "${PYTHONPATH}:/app/odinapi"
 EXPOSE 5000
 CMD gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app
