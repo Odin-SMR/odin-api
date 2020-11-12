@@ -22,7 +22,7 @@ def chrome():
         './node_modules/chromedriver/bin/chromedriver',
         options=chrome_options
     )
-    driver.implicitly_wait(2)
+    driver.implicitly_wait(4)
     yield driver
     driver.quit()
 
