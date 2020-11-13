@@ -107,6 +107,88 @@
       </div>
     </div>
 
+    <hr id="sanoma" class="featurette-divider">
+
+    <div class="row featurette">
+      <div class="col-md-7">
+        <h2 class="featurette-heading"> NO empirical model
+          <span class="text-muted">SANOMA</span></h2>
+
+        <p>
+          SANOMA is an empirical model of nitric oxide in the upper mesosphere
+          and lower thermosphere, based on Odin/SMR measurements.  It provides
+          the NO number density as a function of magnetic latitude (from -82.5
+          to +82.5 degrees) and altitude (from 85 to 118 km) for any day under
+          consideration.  Basic instructions on how to use this model, as well
+          as the associated coefficients, are available on this web page.
+          These files are provided in MATLAB format. The coefficients are also
+          available in text format for those who do not have MATLAB.
+        </p>
+
+        <p>
+          We refer the users to the article <a
+            href="https://doi.org/10.5194/acp-2018-39">"An empirical model of
+            nitric oxide in the upper mesosphere and lower thermosphere based
+            on 12 years of Odin-SMR measurements"</a>, by J. Kiviranta, K.
+          Pérot, P. Eriksson and D. Murtagh, published in Atmospheric Chemistry
+          and Physics in 2018, for further details.  If you wish to use this
+          model, or for any other question about it, please contact Kristell
+          Pérot (<a
+            href="mailto:kristell.perot@chalmers.se">kristell.perot@chalmers.se</a>),
+        </p>
+
+        <p>
+          <ul>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_instructions.m') }}">
+                  General instructions</a>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_extraindices.m') }}">
+                  How to calculate the additional indices</a>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.mat') }}">
+                  Model coefficients (MATLAB)</a>
+            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.txt') }}">
+                  Model coefficients (text)</a>
+          </ul>
+        </p>
+
+      </div>
+      <div class="col-md-5">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/8_odin.jpg') }}" alt="Odin making progress">
+      </div>
+    </div>
+
+    <hr id="mesospheo" class="featurette-divider">
+
+    <div class="row featurette">
+      <div class="col-md-7 col-md-push-5">
+        <h2 class="featurette-heading"> ESA mesosphEO
+          <span class="text-muted">project</span></h2>
+
+          <p>
+          Between 2014 and 2017, the SMR team took part in the ESA MesosphEO
+          project, whose goal was to provide the atmospheric science
+          community with a comprehensive data set of Level 2–3 covering a
+          time period of at least 10 years from satellite instruments on the
+          Envisat, Odin and SCISAT platforms. A common file format and
+          variable names have been used for all the project’s data products,
+          making them easy to use. Merged mesospheric products, including SMR
+          H<sub>2</sub>O and temperature observations, have also been created.
+          All data are available on the <a
+          href="http://mesospheo.fmi.fi/data_service.html">project’s data
+          service page</a> together with product specification documents.
+        </p>
+        <p>
+          The project participants have also produced a number of mesospheric
+          overviews and surveys, as well as a user requirement definition
+          document for mesospheric observations. All these documents are
+          available on the <a href="http://mesospheo.fmi.fi/">project
+          website</a>.
+        </p>
+      </div>
+      <div class="col-md-5 col-md-pull-7">
+        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/mesospheo_logo.jpg') }}" alt="ESA MesosphEO">
+      </div>
+    </div>
+
     <hr class="featurette-divider">
 
     <div  class="row featurette">
@@ -211,59 +293,11 @@ Esrange.  </p>
       </div>
     </div>
 
-    <hr id="sanoma" class="featurette-divider">
-
-    <div class="row featurette">
-      <div class="col-md-7">
-        <h2 class="featurette-heading"> NO empirical model <span
-                class="text-muted">SANOMA</span></h2>
-
-        <p>
-          SANOMA is an empirical model of nitric oxide in the upper mesosphere
-          and lower thermosphere, based on Odin/SMR measurements.  It provides
-          the NO number density as a function of magnetic latitude (from -82.5
-          to +82.5 degrees) and altitude (from 85 to 118 km) for any day under
-          consideration.  Basic instructions on how to use this model, as well
-          as the associated coefficients, are available on this web page.
-          These files are provided in MATLAB format. The coefficients are also
-          available in text format for those who do not have MATLAB.
-        </p>
-
-        <p>
-          We refer the users to the article <a
-            href="https://doi.org/10.5194/acp-2018-39">"An empirical model of
-            nitric oxide in the upper mesosphere and lower thermosphere based
-            on 12 years of Odin-SMR measurements"</a>, by J. Kiviranta, K.
-          Pérot, P. Eriksson and D. Murtagh, published in Atmospheric Chemistry
-          and Physics in 2018, for further details.  If you wish to use this
-          model, or for any other question about it, please contact Kristell
-          Pérot (<a
-            href="mailto:kristell.perot@chalmers.se">kristell.perot@chalmers.se</a>),
-        </p>
-
-        <p>
-          <ul>
-            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_instructions.m') }}">
-                  General instructions</a>
-            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_extraindices.m') }}">
-                  How to calculate the additional indices</a>
-            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.mat') }}">
-                  Model coefficients (MATLAB)</a>
-            <li> <a href="{{ url_for('static', filename='documents/SANOMA/SANOMA_indices.txt') }}">
-                  Model coefficients (text)</a>
-          </ul>
-        </p>
-
-      </div>
-      <div class="col-md-5">
-        <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/8_odin.jpg') }}" alt="Odin making progress">
-      </div>
-    </div>
 
     <hr id="consortium" class="featurette-divider">
 
     <div class="row featurette">
-      <div class="col-md-7 col-md-push-5">
+      <div class="col-md-7">
         <h2 class="featurette-heading">
             The consortium bringing data from space <span
                 class="text-muted">all the way to you </span></h2>
@@ -294,7 +328,7 @@ Esrange.  </p>
         </p>
 
       </div>
-      <div class="col-md-5 col-md-pull-7">
+      <div class="col-md-5">
         <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/Odin_Auto9.jpg') }}" alt="Odin in space">
       </div>
       </div>
@@ -303,7 +337,7 @@ Esrange.  </p>
     <hr id="contact" class="featurette-divider">
 
     <div class="row featurette">
-      <div class="col-md-7">
+      <div class="col-md-7 col-md-push-5">
         <h2 class="featurette-heading">Contact us, <span class="text-muted">you will find us here</span></h2>
         <p class="lead">The mission scientist for ODIN/SMR is Prof. Donal
         Murtagh (Chalmers) and ESA's contact is Angelika Dehn </p>
@@ -336,7 +370,7 @@ Esrange.  </p>
         </div>
 
       </div>
-      <div class="col-md-5">
+      <div class="col-md-5 col-md-pull-7">
         <img class="featurette-image img-responsive center-block" src="{{ url_for('static', filename='images/AS4-1-410HR.jpg') }}" alt="Home">
       </div>
     </div>
