@@ -533,7 +533,7 @@ class Level2ViewScans(Level2ProjectBaseView):
             db.get_scans(freqmode, limit=limit, offset=offset, **param))
         for scan in scans:
             scan['Date'] = time_util.stw2datetime(
-                scan['ScanID']).date().isoformat()
+                scan['ScanID']).isoformat()
             scan['URLS'] = get_scan_urls(
                 version, project, freqmode, scan['ScanID'])
         count = db.count_scans(freqmode, **param)

@@ -422,6 +422,7 @@ class TestReadLevel2:
                 ])
 
             assert scan['ScanID'] == urlinfo.scan_id
+            assert scan['Date'] == '2015-01-12T00:25:03.220790'
 
     @pytest.mark.parametrize('version,comment,expected_scans', (
         (
