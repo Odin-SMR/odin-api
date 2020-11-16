@@ -493,6 +493,7 @@ class Level2ViewComments(Level2ProjectBaseView):
 SWAGGER.add_type('level2_scan_info', {
     "ScanID": int,
     "Date": str,
+    "StartTime": str,
     "URLS": {
         "URL-level2": str,
         "URL-spectra": str,
@@ -534,6 +535,8 @@ class Level2ViewScans(Level2ProjectBaseView):
         for scan in scans:
             scan['Date'] = time_util.stw2datetime(
                 scan['ScanID']).date().isoformat()
+            scan['StartTime'] = time_util.stw2datetime(
+                scan['ScanID']).time().isoformat()
             scan['URLS'] = get_scan_urls(
                 version, project, freqmode, scan['ScanID'])
         count = db.count_scans(freqmode, **param)
