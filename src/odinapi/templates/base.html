@@ -16,6 +16,11 @@
     </div>
 {% endblock %}
     <script type="text/javascript" src="{{ url_for('static', filename='assets/odinlib.js') }}"></script>
+    <script>
+      $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+      });
+    </script>
 {% block script %}
 {% endblock %}
   </body>
