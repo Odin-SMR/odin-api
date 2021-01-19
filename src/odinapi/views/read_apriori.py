@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import scipy.io as sio
+from typing import Tuple
 
 
 DAYS_PER_YEAR = 365  # neglect leap year
@@ -33,40 +34,26 @@ def get_datadict(data, source):
     }
 
 
-def get_interpolation_weights(xs, x, doy_interpolation=False):
+def get_interpolation_weights(
+    xs: np.array, x: float, doy_interpolation: bool = False
+) -> Tuple[int, int, float, float]:
     if x >= xs[-1]:
-        # if x is greater than values in dataset
-        if not doy_interpolation:
-            # give all weight to last element
-            ind2 = xs.size - 1
-            ind1 = ind2 - 1
-            return ind1, ind2, 0., 1.
-        # interpolate between last and first elements
-        ind1 = 0
-        ind2 = xs.size - 1
-        dx = xs[0] + (DAYS_PER_YEAR - xs[-1])
-        w1 = (min(x, DAYS_PER_YEAR) - xs[-1]) / dx
-        w2 = 1. - w1
-        return ind1, ind2, w1, w2
+        if doy_interpolation:
+            dx = xs[0] + (DAYS_PER_YEAR - xs[-1])
+            w1 = (min(x, DAYS_PER_YEAR) - xs[-1]) / dx
+            return 0, xs.size - 1, w1, 1. - w1
+        return 0, xs.size - 1, 0., 1.
     if x <= xs[0]:
-        # if x is smaller than values in dataset
-        if not doy_interpolation:
-            # give all weight to first element
-            return 0, 1, 1., 0
-        # interpolate between first and last elements
-        ind1 = 0
-        ind2 = xs.size - 1
-        dx = xs[0] + (DAYS_PER_YEAR - xs[-1])
-        w2 = (xs[0] - x) / dx
-        w1 = 1. - w2
-        return ind1, ind2, w1, w2
-    # x is found within values in dataset
+        if doy_interpolation:
+            dx = xs[0] + (DAYS_PER_YEAR - xs[-1])
+            w2 = (xs[0] - x) / dx
+            return 0, xs.size - 1, 1. - w2, w2
+        return 0, xs.size - 1, 1., 0.
     ind2 = np.argmax(x <= xs)
     ind1 = ind2 - 1
     dx = xs[ind2] - xs[ind1]
     w1 = (xs[ind2] - x) / dx
-    w2 = 1. - w1
-    return ind1, ind2, w1, w2
+    return ind1, ind2, w1, 1. - w1
 
 
 def get_vmr_interpolated_for_doy(vmr, doys, doy):
