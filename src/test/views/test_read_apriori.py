@@ -41,6 +41,7 @@ def test_returns_altitude_for_mipas(co_mipas):
     (-80., (0, 1, 1.0, 0.0)),
     (-60., (0, 1, 0.5, 0.5)),
     (-40., (0, 1, 0.0, 1.0)),
+    (-30., (1, 2, 0.75, 0.25)),
     (-20., (1, 2, 0.5, 0.5)),
     (60., (3, 4, 0.5, 0.5)),
     (80., (3, 4, 0.0, 1.0)),
@@ -49,6 +50,20 @@ def test_returns_altitude_for_mipas(co_mipas):
 def test_get_interpolation_weights(x, expect):
     xs = np.array([-80, -40, 0, 40, 80])
     id1, id2, w1, w2 = read_apriori.get_interpolation_weights(xs, x)
+    assert (id1, id2, w1, w2) == expect
+
+
+@pytest.mark.parametrize("x,expect", (
+    (0, (0, 3, 0.5, 0.5)),
+    (5, (0, 3, 1.0, 0.0)),
+    (360, (0, 3, 0., 1.0)),
+    (365, (0, 3, 0.5, 0.5)),
+    (366, (0, 3, 0.5, 0.5)),
+))
+def test_get_interpolation_weights_using_doy(x, expect):
+    xs = np.array([5, 10, 355, 360])
+    id1, id2, w1, w2 = read_apriori.get_interpolation_weights(
+        xs, x, doy_interpolation=True)
     assert (id1, id2, w1, w2) == expect
 
 
