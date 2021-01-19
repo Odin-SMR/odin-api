@@ -30,36 +30,36 @@ def get_datadict(data, source):
     }
 
 
+def get_interpolation_weights(xs, x):
+    if x >= xs[-1]:
+        # give all weight to last element
+        ind2 = xs.size - 1
+        ind1 = ind2 - 1
+        return ind1, ind2, 0., 1.
+    if x <= xs[0]:
+        # give all weight to first element
+        return 0, 1, 1., 0.
+    ind2 = np.argmax(x <= xs)
+    ind1 = ind2 - 1
+    dx = xs[ind2] - xs[ind1]
+    w1 = (xs[ind2] - x) / dx
+    w2 = 1. - w1
+    return ind1, ind2, w1, w2
+
+
 def get_vmr_interpolated_for_doy(vmr, doys, doy):
-    deltas = np.min(
-        [
-            (doys[:, 0].astype(float) - doy) % 365,
-            (doy - doys[:, 0].astype(float)) % 365,
-        ],
-        axis=0,
+    ind1, ind2, w1, w2 = get_interpolation_weights(
+        doys.flatten(), doy
     )
-    ind1, ind2 = np.arange(deltas.size)[np.argsort(deltas)][:2]
-    doy1 = float(doys[ind1].item())
-    doy2 = float(doys[ind2].item())
-    ddoy = min((doy1 - doy2) % 365, (doy2 - doy1) % 365)
-    w1 = deltas[ind2] / ddoy
-    w2 = deltas[ind1] / ddoy
     vmr = vmr[:, :, :, ind1] * w1 + vmr[:, :, :, ind2] * w2
     return vmr[:, :, 0]
 
 
 def get_vmr_interpolated_for_lat(vmr, latitudes, latitude):
-    deltas = np.abs(latitudes[:, 0] - latitude)
-    ind1, ind2 = np.arange(deltas.size)[np.argsort(deltas)][:2]
-    lat1 = latitudes[ind1].item()
-    lat2 = latitudes[ind2].item()
-    if np.sign(lat1 - latitude) != np.sign(lat2 - latitude):
-        dlat = np.abs(lat1 - lat2)
-        w1 = deltas[ind2] / dlat
-        w2 = deltas[ind1] / dlat
-        return vmr[:, ind1] * w1 + vmr[:, ind2] * w2
-
-    return vmr[:, ind1]
+    ind1, ind2, w1, w2 = get_interpolation_weights(
+        latitudes.flatten(), latitude
+    )
+    return vmr[:, ind1] * w1 + vmr[:, ind2] * w2
 
 
 def get_apriori(

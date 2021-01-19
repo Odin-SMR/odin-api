@@ -36,6 +36,22 @@ def test_returns_altitude_for_mipas(co_mipas):
     assert altitudes == list(range(18000, 50000, 1000))
 
 
+@pytest.mark.parametrize("x,expect", (
+    (-90., (0, 1, 1.0, 0.0)),
+    (-80., (0, 1, 1.0, 0.0)),
+    (-60., (0, 1, 0.5, 0.5)),
+    (-40., (0, 1, 0.0, 1.0)),
+    (-20., (1, 2, 0.5, 0.5)),
+    (60., (3, 4, 0.5, 0.5)),
+    (80., (3, 4, 0.0, 1.0)),
+    (90., (3, 4, 0.0, 1.0)),
+))
+def test_get_interpolation_weights(x, expect):
+    xs = np.array([-80, -40, 0, 40, 80])
+    id1, id2, w1, w2 = read_apriori.get_interpolation_weights(xs, x)
+    assert (id1, id2, w1, w2) == expect
+
+
 def test_returns_expected_data_keys():
     species = 'CO2'
     day_of_year = 14
