@@ -179,8 +179,8 @@ def test_returns_expected_pressure():
 def test_get_apriori_co2_vmr_does_not_vary(
     species, doy, latitude, source, expect
 ):
-    # CO is constant for a given altitude in the used apriori data.
-    # Check that returned data is constant for CO, but not constant
+    # CO2 is constant for a given altitude in the used apriori data.
+    # Check that returned data is constant for CO2, but not constant
     # for all species.
     data = read_apriori.get_apriori(
         species, doy, latitude, source=source, datadir=DATADIR,
