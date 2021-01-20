@@ -37,18 +37,15 @@ def get_datadict(data, source):
 def get_interpolation_weights(
     xs: np.array, x: float, doy_interpolation: bool = False
 ) -> Tuple[int, int, float, float]:
-    if x >= xs[-1]:
-        if doy_interpolation:
-            dx = xs[0] + (DAYS_PER_YEAR - xs[-1])
-            w1 = (min(x, DAYS_PER_YEAR) - xs[-1]) / dx
-            return 0, xs.size - 1, w1, 1. - w1
-        return 0, xs.size - 1, 0., 1.
-    if x <= xs[0]:
-        if doy_interpolation:
-            dx = xs[0] + (DAYS_PER_YEAR - xs[-1])
-            w2 = (xs[0] - x) / dx
-            return 0, xs.size - 1, 1. - w2, w2
+    if x <= xs[0] and not doy_interpolation:
         return 0, xs.size - 1, 1., 0.
+    if x >= xs[-1] and not doy_interpolation:
+        return 0, xs.size - 1, 0., 1.
+    if (x >= xs[-1] or x <= xs[0]) and doy_interpolation:
+        dx = DAYS_PER_YEAR + xs[0] - xs[xs.size - 1]
+        xi = min(x, DAYS_PER_YEAR)  # neglect leap year
+        w1 = ((xi - xs[xs.size - 1]) % DAYS_PER_YEAR) / dx
+        return 0, xs.size - 1, w1, 1. - w1
     ind2 = np.argmax(x <= xs)
     ind1 = ind2 - 1
     dx = xs[ind2] - xs[ind1]

@@ -58,7 +58,7 @@ def test_get_interpolation_weights(doy, doy_interpolation, expect):
     doys = np.array([5, 10, 15, 350, 355, 360])
     id1, id2, w1, w2 = read_apriori.get_interpolation_weights(
         doys, doy, doy_interpolation=doy_interpolation)
-    assert (id1, id2, w1, w2) == expect
+    np.testing.assert_allclose((id1, id2, w1, w2), expect, atol=1e-6)
 
 
 def test_returns_expected_data_keys():
