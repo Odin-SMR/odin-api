@@ -35,17 +35,9 @@ def get_datadict(data, source):
 
 
 def get_interpolation_weights(
-    xs: np.array, x: float, doy_interpolation: bool = False
+    xs: np.array, x: float
 ) -> Tuple[int, int, float, float]:
-    if x <= xs[0] and not doy_interpolation:
-        return 0, xs.size - 1, 1., 0.
-    if x >= xs[-1] and not doy_interpolation:
-        return 0, xs.size - 1, 0., 1.
-    if (x >= xs[-1] or x <= xs[0]) and doy_interpolation:
-        dx = DAYS_PER_YEAR + xs[0] - xs[xs.size - 1]
-        xi = min(x, DAYS_PER_YEAR)  # neglect leap year
-        w1 = ((xi - xs[xs.size - 1]) % DAYS_PER_YEAR) / dx
-        return 0, xs.size - 1, w1, 1. - w1
+    assert x > xs[0] and x <= xs[-1]
     ind2 = np.argmax(x <= xs)
     ind1 = ind2 - 1
     dx = xs[ind2] - xs[ind1]
@@ -53,16 +45,37 @@ def get_interpolation_weights(
     return ind1, ind2, w1, 1. - w1
 
 
+def get_interpolation_weights_for_lat(
+    lats: np.array, lat: float
+) -> Tuple[int, int, float, float]:
+    if lat <= lats[0]:
+        return 0, lats.size - 1, 1., 0.
+    if lat >= lats[-1]:
+        return 0, lats.size - 1, 0., 1.
+    return get_interpolation_weights(lats, lat)
+
+
+def get_interpolation_weights_for_doy(
+    xs: np.array, x: float
+) -> Tuple[int, int, float, float]:
+    if (x <= xs[0] or x >= xs[-1]):
+        dx = DAYS_PER_YEAR + xs[0] - xs[-1]
+        xi = min(x, DAYS_PER_YEAR)  # neglect leap year
+        w1 = ((xi - xs[-1]) % DAYS_PER_YEAR) / dx
+        return 0, xs.size - 1, w1, 1. - w1
+    return get_interpolation_weights(xs, x)
+
+
 def get_vmr_interpolated_for_doy(vmr, doys, doy):
-    ind1, ind2, w1, w2 = get_interpolation_weights(
-        doys.flatten(), doy, doy_interpolation=True
+    ind1, ind2, w1, w2 = get_interpolation_weights_for_doy(
+        doys.flatten(), doy
     )
     vmr = vmr[:, :, :, ind1] * w1 + vmr[:, :, :, ind2] * w2
     return vmr[:, :, 0]
 
 
 def get_vmr_interpolated_for_lat(vmr, latitudes, latitude):
-    ind1, ind2, w1, w2 = get_interpolation_weights(
+    ind1, ind2, w1, w2 = get_interpolation_weights_for_lat(
         latitudes.flatten(), latitude
     )
     return vmr[:, ind1] * w1 + vmr[:, ind2] * w2
@@ -85,10 +98,6 @@ def get_apriori(
     doy = float(day_of_year)
     vmr = get_vmr_interpolated_for_doy(datadict['vmr'], datadict['doy'], doy)
 
-    # a priori data is gridded on a latitude grid
-    # covering -85 to 85:
-    # below we make sure latitude is within these limits
-    latitude = max(min(float(latitude), 85.0), -85.0)
     vmr = get_vmr_interpolated_for_lat(vmr, datadict['latitude'], latitude)
 
     return {
