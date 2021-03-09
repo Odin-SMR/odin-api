@@ -16,7 +16,7 @@
     "bootstrap-datepicker": "^1.9.0",
     "css-loader": "^3.6.0",
     "datatables": "^1.10.9",
-    "elliptic": "^6.5.3",
+    "elliptic": "^6.5.4",
     "file-loader": "^6.1.0",
     "flot": "^0.8.3",
     "font-awesome": "^4.7.0",
