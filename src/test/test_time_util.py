@@ -84,17 +84,7 @@ class TestTimeConversions():
     def test_mjd2datetime(self, mjd, expect):
         date = time_util.mjd2datetime(mjd)
         assert (
-            date.year == expect.year
-            and date.month == expect.month
-            and date.day == expect.day
-            and date.hour == expect.hour
-            and date.minute == expect.minute
-        )
-        assert (
-            date.second + date.microsecond * 1e-6
-            == pytest.approx(
-                expect.second + expect.microsecond * 1e-6, abs=1
-            )
+            (date - expect).total_seconds() == pytest.approx(0, abs=1)
         )
 
     @pytest.mark.parametrize("date,mjd", (
@@ -119,13 +109,5 @@ class TestTimeConversions():
     def test_stw2datetime(self, stw, expect):
         date = time_util.stw2datetime(stw)
         assert (
-            date.year == expect.year
-            and date.month == expect.month
-            and date.day == expect.day
-            and date.hour == expect.hour
-        )
-        assert (
-            date.minute * 60 + date.second
-            == pytest.approx(expect.minute * 60 + expect.second, abs=1e2)
-
+            (date - expect).total_seconds() == pytest.approx(0, abs=1e2)
         )

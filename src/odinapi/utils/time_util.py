@@ -5,25 +5,21 @@ MJD_ODIN_REBOOT = 59247
 MJD_START_DATE = datetime(1858, 11, 17)
 
 
-def datetime2mjd(dt):
-    diff = dt - MJD_START_DATE
+def datetime2mjd(dt: datetime) -> float:
     return (
-        diff.days
-        + (
-              diff.seconds +
-              diff.microseconds * 1e-6
-        ) * datetime2mjd.days_per_second
+        (dt - MJD_START_DATE).total_seconds()
+        * datetime2mjd.days_per_second
     )
 
 
 datetime2mjd.days_per_second = 1. / 60 / 60 / 24
 
 
-def datetime2stw(dt):
+def datetime2stw(dt: datetime) -> int:
     return mjd2stw(datetime2mjd(dt))
 
 
-def mjd2stw(mjd):
+def mjd2stw(mjd: float) -> int:
     """
     Convert from mjd (modified julian date) to stw (satellite time word
     or the internal time of Odin). The conversion is not exact so the
@@ -44,7 +40,7 @@ def mjd2stw(mjd):
     return int(a + b * mjd + c * mjd ** 2 + d * mjd ** 3)
 
 
-def stw2mjd(stw):
+def stw2mjd(stw: int) -> float:
     """
     Convert from stw to mjd in an approximate manner.
     """
@@ -62,9 +58,9 @@ def stw2mjd(stw):
     return (a + b * stw + c * stw ** 2 + d * stw ** 3)
 
 
-def mjd2datetime(mjd):
+def mjd2datetime(mjd: float) -> datetime:
     return MJD_START_DATE + timedelta(days=mjd)
 
 
-def stw2datetime(stw):
+def stw2datetime(stw: int) -> datetime:
     return mjd2datetime(stw2mjd(stw))
