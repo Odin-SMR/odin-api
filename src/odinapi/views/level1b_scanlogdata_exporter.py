@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa
 from matplotlib import dates  # noqa
 from odinapi.views.level1b_scandata_exporter_v2 import get_scan_data_v2  # noqa
-from odinapi.views.date_tools import mjd2stw, datetime2mjd, mjd2datetime  # noqa
+from odinapi.utils.time_util import mjd2stw, datetime2mjd, mjd2datetime  # noqa
 
 
 class ScanInfoExporter:

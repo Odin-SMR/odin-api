@@ -8,7 +8,7 @@ from numpy import around
 # Activate Agg, must be done before imports below
 from odinapi.utils import use_agg
 
-from .date_tools import date2mjd, mjd2stw
+from odinapi.utils.time_util import datetime2mjd, mjd2stw
 from .geoloc_tools import get_geoloc_info
 from .level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
 from .level1b_scanlogdata_exporter import get_scan_logdata
@@ -66,8 +66,8 @@ class DateInfo(BaseView):
         except ValueError:
             abort(404)
         date2 = date1 + relativedelta(days=+1)
-        mjd1 = date2mjd(date1)
-        mjd2 = date2mjd(date2)
+        mjd1 = int(datetime2mjd(date1))
+        mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
         query_str = self.gen_query(stw1, stw2, mjd1, mjd2)
@@ -125,8 +125,8 @@ class DateBackendInfo(DateInfo):
         except ValueError:
             abort(404)
         date2 = date1 + relativedelta(days=+1)
-        mjd1 = date2mjd(date1)
-        mjd2 = date2mjd(date2)
+        mjd1 = int(datetime2mjd(date1))
+        mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
         query_str = self.gen_query(stw1, stw2, mjd1, mjd2, backend)

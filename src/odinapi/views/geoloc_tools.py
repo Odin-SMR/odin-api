@@ -1,5 +1,5 @@
 import numpy as N
-from odinapi.views.date_tools import mjd2datetime
+from odinapi.utils.time_util import mjd2datetime
 
 
 def sph2cart(azimuth, elevation, radius):

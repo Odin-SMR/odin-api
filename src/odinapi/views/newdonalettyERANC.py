@@ -11,7 +11,7 @@ from simpleflock import SimpleFlock
 
 import odinapi.views.msis90 as M90
 from odinapi.views.NC4era import NCera
-from odinapi.views.date_tools import mjd2datetime, datetime2mjd
+from odinapi.utils.time_util import mjd2datetime, datetime2mjd
 
 
 AVOGADRO = 6.02282e23  # [mol^-1] aovogadros number

@@ -1,7 +1,7 @@
 import numpy as np
 import ephem
 from odinapi.views.geoloc_tools import sph2cart
-from odinapi.views.date_tools import mjd2datetime
+from odinapi.utils.time_util import mjd2datetime
 
 
 def get_theta(pressure, temperature):
