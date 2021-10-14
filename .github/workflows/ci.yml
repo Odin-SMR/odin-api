@@ -30,6 +30,15 @@ jobs:
           npm install
           npm run build
           npm test
-      - name: Test
+      - name: Lint
         run: |
-          tox -- --runslow
+          tox -e lint
+      - name: Unit test
+        run: |
+          tox -e py38 -- --runslow
+      - name: System test
+        run: |
+          tox -e system -- --runslow
+      - name: Proxy test
+        run: |
+          tox -e proxy
