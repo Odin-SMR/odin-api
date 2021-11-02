@@ -10,8 +10,7 @@ import 'flot/jquery.flot.stack';
 import './odin_api_common';
 
 function labelFormatter(label, series) {
-    return `<div style='font-size:7pt;text-align:center;padding:2px;color:white;'>${series.shortLabel}`
-        + `<br/>${Math.round(series.percent)}%</div>`;
+    return `<div style='font-size:7pt;text-align:center;padding:2px;color:white;'>${series.shortLabel}<br/>${Math.round(series.percent)}%</div>`;
 }
 
 export function drawStatistics(year) {
@@ -68,13 +67,11 @@ export function drawStatistics(year) {
             }
 
             $(`#fmStats${plotMode}Label`).html(
-                `${"<span style='font-weight:bold;'>"
-                + 'Total number of scans by frequency mode'}${temp}:</span>`,
+                `<span style='font-weight:bold;'>Total number of scans by frequency mode${temp}:</span>`,
             );
 
             $(`#fmStats${plotMode}Hover`).html(
-                `${"<span style='font-weight:bold;'>"
-                + 'Total number of scans'}${temp}: ${sum}</span>`,
+                `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
             );
         });
 
@@ -87,8 +84,7 @@ export function drawStatistics(year) {
 
         if (!obj) {
             $(`#fmStats${plotMode}Hover`).html(
-                `${"<span style='font-weight:bold;'>"
-                + 'Total number of scans'}${temp}: ${sum}</span>`,
+                `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
             );
             return;
         }
@@ -155,9 +151,7 @@ export function drawStatistics(year) {
             }
 
             $(`#timelineStats${plotMode}Label`).html(
-                `${"<span style='font-weight:bold;'>"
-                + 'Number of scans and frequency '
-                + 'mode distribution per '}${temp}:</span>`,
+                `<span style='font-weight:bold;'>Number of scans and frequency mode distribution per ${temp}:</span>`,
             );
 
             if (plotMode === 'Total') {
@@ -167,8 +161,7 @@ export function drawStatistics(year) {
             }
 
             $(`#timelineStats${plotMode}Hover`).html(
-                `${"<span style='font-weight:bold;'>"
-                + 'Total number of scans'}${temp}: ${sum}</span>`,
+                `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
             );
         });
 
@@ -182,8 +175,7 @@ export function drawStatistics(year) {
                 }
 
                 $(`#timelineStats${plotMode}Hover`).html(
-                    `${"<span style='font-weight:bold;'>"
-                    + 'Total number of scans'}${temp}: ${sum}</span>`,
+                    `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
                 );
                 return;
             }
@@ -217,8 +209,8 @@ export function renderFreqmodeInfoTable() {
     let theTable = "<table class='table'><tr><td></td><td><b>Frequency mode</b></td>"
         + '<td><b>Frequency range [GHz]</b></td><td><b>Species</b></td></tr>';
     $.each(FREQMODE_INFO_TEXT, (key, val) => {
-        theTable += `${'<tr>'
-            + "<td bgcolor='"}${FREQMODE_COLOURS[key]}'> </td>`
+        theTable += '<tr>'
+            + `<td bgcolor='${FREQMODE_COLOURS[key]}'></td>`
             + `<td>${key}</td>`
             + `<td>${val[0]}</td>`
             + `<td>${val[1]}</td>`
