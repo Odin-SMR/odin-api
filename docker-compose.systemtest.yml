@@ -31,7 +31,7 @@ services:
       - ./data/apriori:/var/lib/odindata/apriori:ro
       - ./data/ptz-data/Solardata2.db:/var/lib/odindata/Solardata2.db:ro
       - ./data/ptz-data/ERA-Interim:/var/lib/odindata/ECMWF:ro
-    links:
+    depends_on:
       - postgresql
       - level2db
 

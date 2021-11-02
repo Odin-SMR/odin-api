@@ -4,7 +4,7 @@ WORKDIR /odin
 RUN npm install
 RUN npm run build
 
-FROM python:3.8
+FROM python:3.8-buster
 COPY requirements_python.apt /app/
 WORKDIR /app
 RUN set -x && \
