@@ -246,7 +246,7 @@ export function renderFreqmodeInfoTable () {
             "</tr>";
     });
 
-    theTable += "</table> SHIBOLEET";
+    theTable += "</table>";
 
     $('#freqmodeInfoTable').html(theTable);
 }
