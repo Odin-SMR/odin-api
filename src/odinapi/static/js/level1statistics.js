@@ -225,7 +225,7 @@ export function renderFreqmodeInfoTable() {
             + '</tr>';
     });
 
-    theTable += '</table>';
+    theTable += "</table>";
 
     $('#freqmodeInfoTable').html(theTable);
 }
