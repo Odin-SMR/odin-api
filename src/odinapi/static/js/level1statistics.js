@@ -1,5 +1,4 @@
 // Functions for generating statistics page:
-
 import $ from 'jquery';
 import 'flot/jquery.flot';
 import 'flot/jquery.flot.time';
@@ -216,8 +215,6 @@ export function renderFreqmodeInfoTable() {
             + `<td>${val[1]}</td>`
             + '</tr>';
     });
-
-    theTable += "</table>";
-
+    theTable += '</table>';
     $('#freqmodeInfoTable').html(theTable);
 }
