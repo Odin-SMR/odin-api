@@ -1,13 +1,14 @@
 // Functions for generating statistics page:
 
 
-import * as flot from 'flot/jquery.flot';
-import * as time from 'flot/jquery.flot.time';
-import * as reszie from 'flot/jquery.flot.resize';
-import * as pie from 'flot/jquery.flot.pie';
+import 'flot/jquery.flot';
+import 'flot/jquery.flot.time';
+import 'flot/jquery.flot.resize';
+import 'flot/jquery.flot.pie';
+import 'flot/jquery.flot.stack';
 
 
-import './odin_api_common'
+import './odin_api_common';
 
 
 function labelFormatter(label, series) {
@@ -245,7 +246,7 @@ export function renderFreqmodeInfoTable () {
             "</tr>";
     });
 
-    theTable += "</table>";
+    theTable += "</table> SHIBOLEET";
 
     $('#freqmodeInfoTable').html(theTable);
 }
