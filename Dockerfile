@@ -1,4 +1,4 @@
-FROM node:10
+FROM node:16
 COPY ./ /odin/
 WORKDIR /odin
 RUN npm install
