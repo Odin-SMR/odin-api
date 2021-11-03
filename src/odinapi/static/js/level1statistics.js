@@ -19,68 +19,62 @@ export function drawStatistics(year) {
     // Generate freqmode statistics plot:
     let data = [];
     let sum = 0;
-    $.getJSON(`/rest_api/v5/statistics/freqmode/?year=${year}`,
-        (rawdata) => {
-            $.each(rawdata.Data, (ind, val) => {
-                data[ind] = {
-                    color: FREQMODE_COLOURS[val.freqmode],
-                    data: val.sum,
-                    label: `FM ${val.freqmode} (${val.sum})`,
-                    shortLabel: `FM ${val.freqmode}`,
-                    longLabel: `Frequency mode ${val.freqmode}: ${val.sum} scans`,
-                };
-                sum += val.sum;
-            });
+    $.getJSON(`/rest_api/v5/statistics/freqmode/?year=${year}`, (rawdata) => {
+        $.each(rawdata.Data, (ind, val) => {
+            data[ind] = {
+                color: FREQMODE_COLOURS[val.freqmode],
+                data: val.sum,
+                label: `FM ${val.freqmode} (${val.sum})`,
+                shortLabel: `FM ${val.freqmode}`,
+                longLabel: `Frequency mode ${val.freqmode}: ${val.sum} scans`,
+            };
+            sum += val.sum;
+        });
 
-            $.plot($(`#fmStats${plotMode}`), data, {
-                series: {
-                    pie: {
+        $.plot($(`#fmStats${plotMode}`), data, {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                    innerRadius: 0.382,
+                    label: {
+                        formatter: labelFormatter,
                         show: true,
-                        radius: 1,
-                        innerRadius: 0.382,
-                        label: {
-                            formatter: labelFormatter,
-                            show: true,
-                            threshold: 0.05,
-                            radius: 0.764,
-                            background: {
-                                opacity: 0.236,
-                                color: '#101010',
-                            },
+                        threshold: 0.05,
+                        radius: 0.764,
+                        background: {
+                            opacity: 0.236,
+                            color: '#101010',
                         },
                     },
                 },
-                grid: {
-                    hoverable: true,
-                },
-                legend: {
-                    show: false,
-                },
-            });
-
-            if (plotMode === 'Total') {
-                temp = '';
-                $('#totalNumberLabel').html(`The data base contains a total of ${sum} scans`);
-            } else {
-                temp = ` for ${year}`;
-            }
-
-            $(`#fmStats${plotMode}Label`).html(
-                `<span style='font-weight:bold;'>Total number of scans by frequency mode${temp}:</span>`,
-            );
-
-            $(`#fmStats${plotMode}Hover`).html(
-                `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
-            );
+            },
+            grid: {
+                hoverable: true,
+            },
+            legend: {
+                show: false,
+            },
         });
 
-    $(`#fmStats${plotMode}`).bind('plothover', (event, pos, obj) => {
         if (plotMode === 'Total') {
             temp = '';
+            $('#totalNumberLabel').html(`The database contains a total of ${sum} scans`);
         } else {
             temp = ` for ${year}`;
         }
 
+        $(`#fmStats${plotMode}Label`).html(
+            `<span style='font-weight:bold;'>Total number of scans by frequency mode${temp}:</span>`,
+        );
+
+        $(`#fmStats${plotMode}Hover`).html(
+            `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
+        );
+    });
+
+    $(`#fmStats${plotMode}`).bind('plothover', (event, pos, obj) => {
+        temp = plotMode === 'Total' ? '' : ` for ${year}`;
         if (!obj) {
             $(`#fmStats${plotMode}Hover`).html(
                 `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
@@ -96,101 +90,72 @@ export function drawStatistics(year) {
 
     // Generate yearly statistics plot:
     data = [];
-    let xticks = [];
-    $.getJSON(`/rest_api/v5/statistics/freqmode/timeline/?year=${year}`,
-        (rawdata) => {
-            $.each(rawdata.Data, (key, val) => {
-                data.push({
-                    data: val,
-                    color: FREQMODE_COLOURS[key],
-                    shortLabel: `FM ${key}`,
-                    label: `FM ${key}`,
-                    longLabel: `Frequency mode ${key}`,
-                });
+    $.getJSON(`/rest_api/v5/statistics/freqmode/timeline/?year=${year}`, (rawdata) => {
+        $.each(rawdata.Data, (key, val) => {
+            data.push({
+                data: val,
+                color: FREQMODE_COLOURS[key],
+                shortLabel: `FM ${key}`,
+                label: `FM ${key}`,
+                longLabel: `Frequency mode ${key}`,
             });
+        });
 
-            if (plotMode === 'Total') {
-                xticks = rawdata.Years;
-            } else {
-                xticks = rawdata.Months;
-            }
+        const xticks = plotMode === 'Total' ? rawdata.Years : rawdata.Months;
 
-            $.plot($(`#timelineStats${plotMode}`), data, {
-                series: {
-                    stack: true,
-                    lines: {
-                        show: false,
-                        fill: true,
-                        steps: false,
-                    },
-                    bars: {
-                        show: true,
-                        barWidth: 0.618,
-                        fill: 0.764,
-                        color: '#101010',
-                    },
-                },
-                legend: {
+        $.plot($(`#timelineStats${plotMode}`), data, {
+            series: {
+                stack: true,
+                lines: {
                     show: false,
+                    fill: true,
+                    steps: false,
                 },
-                xaxis: {
-                    ticks: xticks,
-                    tickDecimals: 0,
+                bars: {
+                    show: true,
+                    barWidth: 0.618,
+                    fill: 0.764,
+                    color: '#101010',
                 },
-                grid: {
-                    hoverable: true,
-                    clickable: true,
-                },
-            });
+            },
+            legend: {
+                show: false,
+            },
+            xaxis: {
+                ticks: xticks,
+                tickDecimals: 0,
+            },
+            grid: {
+                hoverable: true,
+                clickable: true,
+            },
+        });
 
-            if (plotMode === 'Total') {
-                temp = 'year';
-            } else {
-                temp = `month for ${year}`;
-            }
+        temp = plotMode === 'Total' ? '' : `month for ${year}`;
+        $(`#timelineStats${plotMode}Label`).html(
+            `<span style='font-weight:bold;'>Number of scans and frequency mode distribution per ${temp}:</span>`,
+        );
 
-            $(`#timelineStats${plotMode}Label`).html(
-                `<span style='font-weight:bold;'>Number of scans and frequency mode distribution per ${temp}:</span>`,
-            );
+        temp = plotMode === 'Total' ? '' : ` for ${year}`;
+        $(`#timelineStats${plotMode}Hover`).html(
+            `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
+        );
+    });
 
-            if (plotMode === 'Total') {
-                temp = '';
-            } else {
-                temp = ` for ${year}`;
-            }
-
+    $(`#timelineStats${plotMode}`).bind('plothover', (event, pos, obj) => {
+        if (!obj) {
+            temp = plotMode === 'Total' ? '' : ` for ${year}`;
             $(`#timelineStats${plotMode}Hover`).html(
                 `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
             );
-        });
-
-    $(`#timelineStats${plotMode}`).bind('plothover',
-        (event, pos, obj) => {
-            if (!obj) {
-                if (plotMode === 'Total') {
-                    temp = '';
-                } else {
-                    temp = ` for ${year}`;
-                }
-
-                $(`#timelineStats${plotMode}Hover`).html(
-                    `<span style='font-weight:bold;'>Total number of scans${temp}: ${sum}</span>`,
-                );
-                return;
-            }
-
-            const scans = obj.datapoint[1] - obj.datapoint[2];
-
-            if (plotMode === 'Total') {
-                [temp] = obj.datapoint;
-            } else {
-                temp = MONTH_NAMES[obj.datapoint[0]];
-            }
-
-            $(`#timelineStats${plotMode}Hover`).html(
-                `<span style='font-weight:bold;'>${obj.series.longLabel}, ${temp}: ${scans} scans</span>`,
-            );
-        });
+            return;
+        }
+        const scans = obj.datapoint[1] - obj.datapoint[2];
+        temp = plotMode === 'Total' ? obj.datapoint[0] : MONTH_NAMES[obj.datapoint[0]];
+        $(`#timelineStats${plotMode}Hover`).html(
+            `<span style='font-weight:bold;'>${obj.series.longLabel}, ${temp}: ${scans} scans</span>`,
+        );
+    });
 
     if (plotMode === 'Total') {
         $(`#timelineStats${plotMode}`).bind('plotclick',
