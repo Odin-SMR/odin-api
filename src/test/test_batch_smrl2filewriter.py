@@ -34,6 +34,7 @@ CONFIG_FILE = os.path.join(
             start=dt.datetime(2003, 1, 1),
             end=dt.datetime(2004, 12, 31),
             outdir="ALL-Meso-v3.0.0",
+            product_label="Temperature - 557 (Fmode 19) - 45 to 90 km",
         ),
     ),
 ))
@@ -63,7 +64,6 @@ def test_cli(patched_smrl2filewriter_cli):
             '1',
             '2002-01-01',
             '2002-12-31',
-            '-p',
             'ClO / FM1 / 501 GHz / 20 to 55 km',
             '-q',
             'savedir/ALL-Strat-v3.0.0',
@@ -75,8 +75,7 @@ def test_cli(patched_smrl2filewriter_cli):
             '19',
             '2003-01-01',
             '2004-12-31',
-            '-p',
-            None,
+            'Temperature - 557 (Fmode 19) - 45 to 90 km',
             '-q',
             'savedir/ALL-Meso-v3.0.0',
         ])

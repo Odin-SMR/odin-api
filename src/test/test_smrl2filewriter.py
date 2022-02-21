@@ -330,6 +330,7 @@ def test_process_period_finishes_without_failure(patched_get_l2data, level2db):
         "noprojext",
         0,
         "noproduct",
+        "noproduct",
         dt.datetime(2010, 1, 1),
         dt.datetime(2010, 2, 28),
         L2FILE.parameters,
@@ -354,6 +355,7 @@ def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
         "projx",
         0,
         "prodx",
+        "prodx",
         dt.datetime(2010, 1, 1),
         dt.datetime(2010, 1, 31),
         L2FILE.parameters,
@@ -377,6 +379,7 @@ def test_process_period_does_not_overwrite_file(
         "projx",
         0,
         "prodx",
+        "prodx",
         dt.datetime(2010, 1, 1),
         dt.datetime(2010, 3, 31),
         L2FILE.parameters,
@@ -391,7 +394,15 @@ def test_process_period_does_not_overwrite_file(
 @patch('odinapi.utils.smrl2filewriter.level2db.Level2DB', return_value=None)
 def test_cli_works(patched_level2db, patched_process_period):
     smrl2filewriter.cli([
-        "proj", "prod", "1", "2000-01-01", "2000-01-31", "-q", "/out", "-f"
+        "proj",
+        "prod",
+        "1",
+        "2000-01-01",
+        "2000-01-31",
+        "prod-fm1",
+        "-q",
+        "/out",
+        "-f",
     ])
     patched_process_period.assert_has_calls([
         call(
@@ -400,6 +411,7 @@ def test_cli_works(patched_level2db, patched_process_period):
             "proj",
             1,
             "prod",
+            "prod-fm1",
             dt.datetime(2000, 1, 1),
             dt.datetime(2000, 1, 31),
             L2FILE.parameters,

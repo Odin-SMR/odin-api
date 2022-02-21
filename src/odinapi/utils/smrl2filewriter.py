@@ -218,15 +218,9 @@ def cli(argv: List = []) -> None:
         help="end date: format: YYYY-MM-DD",
     )
     parser.add_argument(
-        '-p',
-        '--product-label',
-        dest='product_label',
-        type=Optional[str],
-        default=None,
-        help="""
-            product name (in filename, defaults to database name
-            if not given)
-        """,
+        'product_label',
+        type=str,
+        help="product name (for filename generation)",
     )
     parser.add_argument(
         '-q',
@@ -243,10 +237,6 @@ def cli(argv: List = []) -> None:
         help="flag for overwriting existing files",
     )
     args = parser.parse_args(argv)
-    product_label = (
-        args.product if args.product_label is None
-        else args.product_label
-    )
     date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
     date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
     db1 = DatabaseConnector
@@ -257,7 +247,7 @@ def cli(argv: List = []) -> None:
         args.project,
         args.freqmode,
         args.product,
-        product_label,
+        args.product_label,
         date_start,
         date_end,
         datamodel.L2FILE.parameters,
