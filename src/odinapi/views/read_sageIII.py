@@ -188,12 +188,12 @@ class Sage3Data:
                 ['Nitrogen Dioxide profiles'].value)
 
     def _parse_timestamp(self, timestamp):
-        date = str(timestamp.astype(np.int)[0])
+        date = str(timestamp.astype(int)[0])
         year = int(date[0: 4])
         month = int(date[4: 6])
         day = int(date[6: 8])
 
-        time = timestamp.astype(np.int)[1]
+        time = timestamp.astype(int)[1]
         hour = time // 10000
         minute = (time - hour * 10000) // 100
         second = time - hour * 10000 - minute * 100

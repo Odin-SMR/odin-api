@@ -273,7 +273,7 @@ class Smrl1bFreqsort:
 def get_bad_ssb_modules(backend, spectra, freqvec, debug=False):
     '''get bad ssb modules'''
     if debug:
-        bad_modules = np.array([], dtype=np.int)
+        bad_modules = np.array([], dtype=int)
     else:
         if backend == 1:
             bad_modules = np.array([1, 2])
