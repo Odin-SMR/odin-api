@@ -3,10 +3,10 @@ name: Publish DockerHub image
 on:
   push:
     branches:
-      - 'main'
+      - 'master'
   pull_request:
     branches:
-      - 'main'
+      - 'master'
 
 jobs:
   docker:
