@@ -89,14 +89,14 @@ def l2data():
 @pytest.fixture
 def filewriter():
     return smrl2filewriter.L2FileCreater(
-        "Proj1", 9, "O3", L2FILE.parameters, l2data(), "/tmp"
+        "Proj1", 9, "O3", "O3-FM9", L2FILE.parameters, l2data(), "/tmp"
     )
 
 
 @pytest.fixture
 def l2file(tmpdir):
     fc = smrl2filewriter.L2FileCreater(
-            "Proj1", 9, "O3", L2FILE.parameters, l2data(), tmpdir
+            "Proj1", 9, "O3", "O3-FM9", L2FILE.parameters, l2data(), tmpdir
     )
     fc.write_to_file()
     return fc
@@ -161,7 +161,10 @@ class TestL2FileCreater:
         assert filewriter.invmode == "10"
 
     def test_get_filename_works(self, filewriter):
-        assert filewriter.filename() == "/tmp/Odin-SMR_L2_Proj1_O3_1858-11.nc"
+        assert (
+            filewriter.filename()
+            == "/tmp/Odin-SMR_L2_Proj1_O3-FM9_1858-11.nc"
+        )
 
     def test_get_header_works(self, filewriter):
         assert set({

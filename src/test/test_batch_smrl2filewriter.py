@@ -22,6 +22,7 @@ CONFIG_FILE = os.path.join(
             start=dt.datetime(2002, 1, 1),
             end=dt.datetime(2002, 12, 31),
             outdir="ALL-Strat-v3.0.0",
+            product_label="ClO / FM1 / 501 GHz / 20 to 55 km",
         ),
     ),
     (
@@ -62,8 +63,10 @@ def test_cli(patched_smrl2filewriter_cli):
             '1',
             '2002-01-01',
             '2002-12-31',
+            '-p',
+            'ClO / FM1 / 501 GHz / 20 to 55 km',
             '-q',
-            'savedir/ALL-Strat-v3.0.0'
+            'savedir/ALL-Strat-v3.0.0',
         ]),
         ANY, ANY, ANY, ANY, ANY, ANY, ANY, ANY, ANY, ANY, ANY, ANY,
         call([
@@ -72,7 +75,9 @@ def test_cli(patched_smrl2filewriter_cli):
             '19',
             '2003-01-01',
             '2004-12-31',
+            '-p',
+            None,
             '-q',
-            'savedir/ALL-Meso-v3.0.0'
+            'savedir/ALL-Meso-v3.0.0',
         ])
     ])

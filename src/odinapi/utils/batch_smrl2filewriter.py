@@ -21,6 +21,7 @@ class ProductConf:
     start = attr.ib(type=dt.datetime)
     end = attr.ib(type=dt.datetime)
     outdir = attr.ib(type=str)
+    product_label = attr.ib(type=Optional[str], default=None)
 
 
 def set_end(end: Optional[str]) -> dt.datetime:
@@ -45,6 +46,7 @@ def load_config(configfile: str) -> List[ProductConf]:
             dt.datetime.strptime(product["start"], '%Y-%m-%d'),
             set_end(product["end"]),
             product["outdir"],
+            product.get("product_label"),
         )
         for product in data["products"]
     ]
@@ -94,8 +96,10 @@ def cli(argv: List = []) -> None:
             str(conf.freqmode),
             conf.start.strftime("%Y-%m-%d"),
             conf.end.strftime("%Y-%m-%d"),
+            "-p",
+            conf.product_label,
             "-q",
-            os.path.join(args.baseoutdir, conf.outdir)
+            os.path.join(args.baseoutdir, conf.outdir),
         ])
 
 

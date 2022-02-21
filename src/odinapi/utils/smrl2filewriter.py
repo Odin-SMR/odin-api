@@ -63,6 +63,7 @@ class L2FileCreater:
     project = attr.ib(type=str)
     freqmode = attr.ib(type=int)
     product = attr.ib(type=str)
+    product_label = attr.ib(type=str)
     parameters = attr.ib(type=datamodel.L2File)
     data = attr.ib(type=List[datamodel.L2Full])
     outdir = attr.ib(type=str)
@@ -92,7 +93,9 @@ class L2FileCreater:
         return os.path.join(
             self.outdir,
             datamodel.generate_filename(
-                self.project, self.product, self.start
+                self.project,
+                self.product_label,
+                self.start,
             )
         )
 
@@ -152,16 +155,18 @@ def process_period(
     project: str,
     freqmode: int,
     product: str,
+    product_label: str,
     start: dt.datetime,
     end: dt.datetime,
     parameters: datamodel.L2File,
     outdir: str,
-    force: bool
+    force: bool,
 ) -> None:
     l2getter = L2Getter(freqmode, product, db1, db2)
     while start < end:
         outfile = os.path.join(
-            outdir, datamodel.generate_filename(project, product, start)
+            outdir,
+            datamodel.generate_filename(project, product_label, start),
         )
         if os.path.isfile(outfile) and not force:
             start += relativedelta(months=1)
@@ -171,7 +176,13 @@ def process_period(
             start += relativedelta(months=1)
             continue
         l2writer = L2FileCreater(
-            project, freqmode, product, parameters, data, outdir
+            project,
+            freqmode,
+            product,
+            product_label,
+            parameters,
+            data,
+            outdir,
         )
         l2writer.write_to_file()
         start += relativedelta(months=1)
@@ -187,10 +198,9 @@ def cli(argv: List = []) -> None:
         help="project name",
     )
     parser.add_argument(
-        "products",
+        "product",
         type=str,
-        nargs='+',
-        help="product name(s), can be more than one name",
+        help="product name (database name)",
     )
     parser.add_argument(
         "freqmode",
@@ -208,6 +218,17 @@ def cli(argv: List = []) -> None:
         help="end date: format: YYYY-MM-DD",
     )
     parser.add_argument(
+        '-p',
+        '--product-label',
+        dest='product_label',
+        type=Optional[str],
+        default=None,
+        help="""
+            product name (in filename, defaults to database name
+            if not given)
+        """,
+    )
+    parser.add_argument(
         '-q',
         '--outdir',
         dest='outdir',
@@ -222,24 +243,27 @@ def cli(argv: List = []) -> None:
         help="flag for overwriting existing files",
     )
     args = parser.parse_args(argv)
-
+    product_label = (
+        args.product if args.product_label is None
+        else args.product_label
+    )
     date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
     date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
     db1 = DatabaseConnector
     db2 = level2db.Level2DB(args.project)
-    for product in args.products:
-        process_period(
-            db1,
-            db2,
-            args.project,
-            args.freqmode,
-            product,
-            date_start,
-            date_end,
-            datamodel.L2FILE.parameters,
-            args.outdir,
-            args.force
-        )
+    process_period(
+        db1,
+        db2,
+        args.project,
+        args.freqmode,
+        args.product,
+        product_label,
+        date_start,
+        date_end,
+        datamodel.L2FILE.parameters,
+        args.outdir,
+        args.force,
+    )
 
 
 if __name__ == "__main__":

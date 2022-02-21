@@ -6,7 +6,8 @@
             "freqmode": "1",
             "start": "2002-01-01",
             "end": "2002-12-31",
-            "outdir": "ALL-Strat-v3.0.0"
+            "outdir": "ALL-Strat-v3.0.0",
+            "product_label": "ClO / FM1 / 501 GHz / 20 to 55 km"
         },
         {
             "project": "ALL-Strat-v3.0.0",
