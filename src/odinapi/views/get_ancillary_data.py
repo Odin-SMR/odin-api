@@ -117,11 +117,11 @@ def get_ancillary_data(db_connection, level2_data):
             "Latitude": product["Latitude"],
             "Longitude": product["Longitude"],
             "Pressure": product["Pressure"],
-            "SZA1D": np.float(np.around(
+            "SZA1D": float(np.around(
                 sza1d_at_retrieval_pos, decimals=3)),
             "SZA": np.around(
                 sza_at_retrieval_pos, decimals=3).tolist(),
-            "LST": np.float(np.around(
+            "LST": float(np.around(
                 lst_scan, decimals=3)),
             "Theta": np.around(
                 theta, decimals=3).tolist(),

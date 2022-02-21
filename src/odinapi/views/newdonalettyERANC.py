@@ -177,8 +177,8 @@ class Donaletty:
         # extract T and P for the mid lat and long of each scan
         if midlon > 180:
             midlon = midlon - 360
-        latpt = np.int(np.floor((midlat - self.minlat) / self.latstep))
-        lonpt = np.int(np.floor((midlon - self.minlon) / self.lonstep))
+        latpt = int(np.floor((midlat - self.minlat) / self.latstep))
+        lonpt = int(np.floor((midlon - self.minlon) / self.lonstep))
         if midlon < 0:
             midlon = midlon + 360
         hour = scan_datetime.hour
