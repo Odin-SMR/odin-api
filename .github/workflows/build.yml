@@ -36,7 +36,7 @@ jobs:
           images: odinsmr/odin_api
           tags: |
               type=ref,event=branch
-              type=raw,value=pr
+              type=ref,event=pr
       -
         name: Build and push
         uses: docker/build-push-action@v2
