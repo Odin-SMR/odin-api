@@ -89,14 +89,14 @@ def l2data():
 @pytest.fixture
 def filewriter():
     return smrl2filewriter.L2FileCreater(
-        "Proj1", 9, "O3", L2FILE.parameters, l2data(), "/tmp"
+        "Proj1", 9, "O3", "O3-FM9", L2FILE.parameters, l2data(), "/tmp"
     )
 
 
 @pytest.fixture
 def l2file(tmpdir):
     fc = smrl2filewriter.L2FileCreater(
-            "Proj1", 9, "O3", L2FILE.parameters, l2data(), tmpdir
+            "Proj1", 9, "O3", "O3-FM9", L2FILE.parameters, l2data(), tmpdir
     )
     fc.write_to_file()
     return fc
@@ -161,7 +161,10 @@ class TestL2FileCreater:
         assert filewriter.invmode == "10"
 
     def test_get_filename_works(self, filewriter):
-        assert filewriter.filename() == "/tmp/Odin-SMR_L2_Proj1_O3_1858-11.nc"
+        assert (
+            filewriter.filename()
+            == "/tmp/Odin-SMR_L2_Proj1_O3-FM9_1858-11.nc"
+        )
 
     def test_get_header_works(self, filewriter):
         assert set({
@@ -327,6 +330,7 @@ def test_process_period_finishes_without_failure(patched_get_l2data, level2db):
         "noprojext",
         0,
         "noproduct",
+        "noproduct",
         dt.datetime(2010, 1, 1),
         dt.datetime(2010, 2, 28),
         L2FILE.parameters,
@@ -351,6 +355,7 @@ def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
         "projx",
         0,
         "prodx",
+        "prodx",
         dt.datetime(2010, 1, 1),
         dt.datetime(2010, 1, 31),
         L2FILE.parameters,
@@ -374,6 +379,7 @@ def test_process_period_does_not_overwrite_file(
         "projx",
         0,
         "prodx",
+        "prodx",
         dt.datetime(2010, 1, 1),
         dt.datetime(2010, 3, 31),
         L2FILE.parameters,
@@ -388,7 +394,15 @@ def test_process_period_does_not_overwrite_file(
 @patch('odinapi.utils.smrl2filewriter.level2db.Level2DB', return_value=None)
 def test_cli_works(patched_level2db, patched_process_period):
     smrl2filewriter.cli([
-        "proj", "prod", "1", "2000-01-01", "2000-01-31", "-q", "/out", "-f"
+        "proj",
+        "prod",
+        "1",
+        "2000-01-01",
+        "2000-01-31",
+        "prod-fm1",
+        "-q",
+        "/out",
+        "-f",
     ])
     patched_process_period.assert_has_calls([
         call(
@@ -397,6 +411,7 @@ def test_cli_works(patched_level2db, patched_process_period):
             "proj",
             1,
             "prod",
+            "prod-fm1",
             dt.datetime(2000, 1, 1),
             dt.datetime(2000, 1, 31),
             L2FILE.parameters,
