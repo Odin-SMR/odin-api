@@ -29,11 +29,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and push
+        name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: odinsmr/odin_api
+          tags: |
+              type=ref,event=branch
+              type=ref,event=pr
+      -
+        name: Build and push pull request
         uses: docker/build-push-action@v2
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           context: .
           file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Build and push master             
+        uses: docker/build-push-action@v2
+        if: ${{ github.event_name != 'pull_request' }}
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true                                      
           tags: odinsmr/odin_api:latest
-
