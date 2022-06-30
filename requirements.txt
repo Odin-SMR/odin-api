@@ -18,7 +18,7 @@ certifi==2019.11.28
     # via requests
 cftime==1.1.0
     # via netcdf4
-chardet==3.0.4
+charset-normalizer==2.1.0
     # via requests
 click==7.1.1
     # via flask
@@ -113,7 +113,7 @@ python-dateutil==2.8.1
     #   matplotlib
 pytz==2019.3
     # via dateutils
-requests==2.23.0
+requests==2.28.1
     # via
     #   -r requirements.in
     #   cdsapi
