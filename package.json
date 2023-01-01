@@ -14,7 +14,7 @@
   "dependencies": {
     "bootstrap": "^3.4.1",
     "bootstrap-datepicker": "^1.9.0",
-    "css-loader": "^3.6.0",
+    "css-loader": "^6.7.3",
     "datatables": "^1.10.9",
     "elliptic": "^6.5.4",
     "file-loader": "^6.1.0",
@@ -28,7 +28,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "babel-loader": "^8.1.0",
+    "babel-loader": "^8.3.0",
     "chromedriver": "^94.0.0",
     "chromium": "^3.0.2",
     "eslint": "^6.8.0",
