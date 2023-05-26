@@ -84,7 +84,7 @@ class MongoInstance(ec2.Instance):
         # attach large ebs volume
         ec2.CfnVolumeAttachment(
             scope,
-            "OdinMongVolumeAttachment",
+            "OdinMongoVolumeAttachment",
             device="/dev/sdf",
             instance_id=self.instance_id,
             volume_id=ODIN_MONGO_DATA_VOLUME,
