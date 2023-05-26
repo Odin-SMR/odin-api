@@ -3,27 +3,27 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_s3_assets as s3_assets
 from constructs import Construct
 
-from odin_config import (
+from odin_api_stack.config import (
     ODIN_AVAILABILITY_ZONE,
-    ODIN_FLASK_EIP,
-    ODIN_FLASK_IP,
+    ODIN_API_EIP,
+    ODIN_API_IP,
     ODIN_KEY_PAIR,
     ODIN_PUBLIC_SUBNET,
     ODIN_VPC,
 )
 
 
-class FlaskInstance(ec2.Instance):
+class APIInstance(ec2.Instance):
     def __init__(self, scope: Construct, id: str) -> None:
-        vpc = ec2.Vpc.from_lookup(scope, "OdinFlaskVPC", vpc_id=ODIN_VPC)
+        vpc = ec2.Vpc.from_lookup(scope, "OdinAPIVPC", vpc_id=ODIN_VPC)
         subnet = ec2.Subnet.from_subnet_attributes(
             scope,
-            "OdinFlaskPublicSubnet",
+            "OdinAPIPublicSubnet",
             subnet_id=ODIN_PUBLIC_SUBNET,
             availability_zone=ODIN_AVAILABILITY_ZONE,
         )
         security_group = ec2.SecurityGroup(
-            scope, "OdinFlaskSecurityGroup", vpc=vpc
+            scope, "OdinAPISecurityGroup", vpc=vpc
         )
         security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22))
         security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(80))
@@ -31,7 +31,7 @@ class FlaskInstance(ec2.Instance):
         # Create IAM role for EC2 instances
         role = iam.Role(
             scope,
-            "OdinFlaskInstanceRole",
+            "OdinAPIInstanceRole",
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
         )
         role.add_managed_policy(
@@ -41,7 +41,7 @@ class FlaskInstance(ec2.Instance):
         )
         code_asset = s3_assets.Asset(
             scope,
-            "FlaskCodeAsset",
+            "APICodeAsset",
             path="./",
             exclude=["**/.git/*", "**/cdk.out/*"],
         )
@@ -80,7 +80,7 @@ class FlaskInstance(ec2.Instance):
             vpc=vpc,
             instance_name=id,
             key_name=ODIN_KEY_PAIR,
-            private_ip_address=ODIN_FLASK_IP,
+            private_ip_address=ODIN_API_IP,
             role=role,
             security_group=security_group,
             user_data=user_data,
@@ -88,7 +88,7 @@ class FlaskInstance(ec2.Instance):
         )
         ec2.CfnEIPAssociation(
             scope,
-            "OdinFlaskEIPAssoc",
-            allocation_id=ODIN_FLASK_EIP,
+            "OdinAPIEIPAssoc",
+            allocation_id=ODIN_API_EIP,
             instance_id=self.instance_id,
         )

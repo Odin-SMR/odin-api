@@ -1,4 +1,4 @@
-from odin_config import (
+from odin_api_stack.config import (
     ODIN_AVAILABILITY_ZONE,
     ODIN_KEY_PAIR,
     ODIN_MONGO_DATA_VOLUME,
