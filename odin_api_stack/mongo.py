@@ -1,3 +1,4 @@
+import textwrap
 from odin_api_stack.config import (
     ODIN_AVAILABILITY_ZONE,
     ODIN_KEY_PAIR,
@@ -25,6 +26,9 @@ class MongoInstance(ec2.Instance):
             scope, "OdinMongoSecurityGroup", vpc=vpc
         )
         security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22))
+        security_group.add_ingress_rule(
+            ec2.Peer.any_ipv4(), ec2.Port.tcp(27017)
+        )
 
         # Create IAM role for EC2 instances
         role = iam.Role(
@@ -32,24 +36,27 @@ class MongoInstance(ec2.Instance):
             "OdinMongoInstanceRole",
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
         )
-        mongodb_repo = """
+        mongodb_repo = textwrap.dedent(
+            """
             [mongodb-org-6.0]
             name=MongoDB Repository
             baseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/6.0/x86_64/
             gpgcheck=1
             enabled=1
             gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc
-        """
+            """
+        )
         user_data = ec2.UserData.for_linux()
         user_data.add_commands(
             f"echo '{mongodb_repo}' > /etc/yum.repos.d/mongodb-org-6.0.repo",
             "yum update -y",
-            "yum install -y mongodb",
+            "yum install -y mongodb-org",
             "service mongod stop",
             "mkdir -p /data/mongodb",
             "mount /dev/sdf /data/mongodb",
             "chown mongod:mongod /data/mongodb",
             'sed -i "s|/var/lib/mongo|/data/mongodb|g" /etc/mongod.conf',
+            'sed -i "s|127.0.0.1|0.0.0.0|g" /etc/mongod.conf',
             "service mongod start",
         )
         super().__init__(
