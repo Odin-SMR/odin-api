@@ -1,27 +1,19 @@
 import textwrap
+
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from constructs import Construct
+
 from odin_api_stack.config import (
     ODIN_AVAILABILITY_ZONE,
     ODIN_KEY_PAIR,
-    ODIN_MONGO_DATA_VOLUME,
-    ODIN_MONGO_IP,
-    ODIN_PRIVATE_SUBNET,
-    ODIN_VPC,
+    ODIN_MONGO_DATA_VOLUME
 )
 
 
-from aws_cdk import aws_ec2 as ec2, aws_iam as iam
-from constructs import Construct
-
-
 class MongoInstance(ec2.Instance):
-    def __init__(self, scope: Construct, id: str) -> None:
-        vpc = ec2.Vpc.from_lookup(scope, "OdinMongoVPC", vpc_id=ODIN_VPC)
-        subnet = ec2.Subnet.from_subnet_attributes(
-            scope,
-            "OdinMongoPrivateSubnet",
-            subnet_id=ODIN_PRIVATE_SUBNET,
-            availability_zone=ODIN_AVAILABILITY_ZONE,
-        )
+    def __init__(self, scope: Construct, id: str, vpc=ec2.Vpc) -> None:
+        vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED)
         security_group = ec2.SecurityGroup(
             scope, "OdinMongoSecurityGroup", vpc=vpc
         )
@@ -71,11 +63,10 @@ class MongoInstance(ec2.Instance):
             vpc=vpc,
             instance_name=id,
             key_name=ODIN_KEY_PAIR,
-            private_ip_address=ODIN_MONGO_IP,
             role=role,
             security_group=security_group,
             user_data=user_data,
-            vpc_subnets=ec2.SubnetSelection(subnets=[subnet]),
+            vpc_subnets=vpc_subnets,
         )
         # Attach existing EBS volume to MongoDB EC2 instance
         volume = ec2.Volume.from_volume_attributes(

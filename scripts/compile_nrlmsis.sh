@@ -5,5 +5,5 @@
 DIRECTORY=$(find . -name msis90.py)
 VIEWS=$(dirname $DIRECTORY)
 cd $VIEWS \
-    && python -m numpy.f2py nrlmsise00/nrlmsise00_sub.for -m nrlmsis -h nrlmsis.pyf --overwrite-signature \
-    && python -m numpy.f2py -c nrlmsis.pyf nrlmsise00/nrlmsise00_sub.for
+    && python3.8 -m numpy.f2py nrlmsise00/nrlmsise00_sub.for -m nrlmsis -h nrlmsis.pyf --overwrite-signature \
+    && python3.8 -m numpy.f2py -c nrlmsis.pyf nrlmsise00/nrlmsise00_sub.for

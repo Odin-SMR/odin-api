@@ -29,5 +29,5 @@ COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
 COPY --from=0 /odin/src/odinapi/static/assets /app/odinapi/static/assets
 ENV PYTHONPATH "${PYTHONPATH}:/app/odinapi"
-EXPOSE 5000
-CMD gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app
+EXPOSE 8000
+CMD gunicorn odinapi.api:app

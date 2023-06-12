@@ -1,6 +1,8 @@
 """A simple datamodel implementation"""
+import logging
+from pathlib import Path
 from flask import Flask, Blueprint
-
+from yaml import safe_load
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
@@ -25,6 +27,7 @@ from odinapi.views.smr_site import (
     ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot,
     ViewLevel2DevScan, ViewDataAccess)
 from odinapi.views.data_info import FileInfo, LatestECMF
+
 
 SWAGGER.add_parameter('freqmode', 'path', int)
 SWAGGER.add_parameter('scanno', 'path', int)
@@ -447,6 +450,10 @@ class Odin(Flask):
         )
 
 
+log_config = Path(__file__).parent / "log_conf.yaml"
+with open(log_config) as f:
+    logconf_dict = safe_load(f)
+logging.config.dictConfig(logconf_dict)
 app = Odin(__name__)
 
 # Swagger ui will be available at /apidocs/index.html
