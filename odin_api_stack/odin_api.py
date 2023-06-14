@@ -1,24 +1,27 @@
-from aws_cdk import Stack, Duration
+from aws_cdk import Stack, aws_route53
 from aws_cdk import aws_ec2 as ec2
-from aws_cdk import aws_ecs as ecs
-from aws_cdk import aws_ecs_patterns as ecs_patterns
-from aws_cdk import aws_logs as logs
-from aws_cdk import aws_ssm as ssm
 from constructs import Construct
 
-from odin_api_stack.api import APIInstance
+from odin_api_stack.admin_host import AdminInstance
 from odin_api_stack.config import ODIN_API_EIP
 from odin_api_stack.mongo import MongoInstance
+from odin_api_stack.odin_cluster import OdinService
 
 
 class OdinAPIStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-        vpc = ec2.Vpc(
+
+        nat_gateway_provider = ec2.NatProvider.instance(
+            instance_type=ec2.InstanceType("t3.small")
+        )
+        vpc: ec2.IVpc = ec2.Vpc(
             self,
             "OdinVPC",
+            nat_gateway_provider=nat_gateway_provider,
             max_azs=2,
             nat_gateways=1,
+            vpc_name="OdinVPC",
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="OdinPublicSubnet",
@@ -38,87 +41,38 @@ class OdinAPIStack(Stack):
             ],
         )
 
-        ec2.CfnNatGateway(
+        ec2.CfnEIPAssociation(
             self,
-            "OdinNatGateway",
+            "OdinNATEIPAssociation",
             allocation_id=ODIN_API_EIP,
-            subnet_id=vpc.public_subnets[0].subnet_id,
-        )
-        mongo: ec2.Instance = MongoInstance(self, "OdinMongo", vpc=vpc)
-        #        odin_api = APIInstance(self, "OdinAPI", vpc=vpc)
-        logging = ecs.AwsLogDriver(
-            stream_prefix="Odin/OdinAPI", log_retention=logs.RetentionDays.ONE_MONTH
+            instance_id=nat_gateway_provider.configured_gateways[0].gateway_id,
         )
 
-        odin_cluster = ecs.Cluster(self, "OdinCluster", vpc=vpc)
-
-        odinapi_task: ecs.FargateTaskDefinition = ecs.FargateTaskDefinition(
+        private_zone = aws_route53.PrivateHostedZone(
             self,
-            "OdinAPITaskDefinition",
+            "OdinPrivateZone",
+            vpc=vpc,
+            zone_name="odin",
         )
-        odin_secret_key = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinSecretKey", "/odin-api/secret-key"
-        ).string_value
-        odin_mongo_user = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinMongoUser", "/odin/mongo/user"
-        ).string_value
-        odin_mongo_password = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinMongoPassword", "/odin/mongo/password"
-        ).string_value
-        odin_pghost = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinPGHOST", "/odin/psql/host"
-        ).string_value
-        odin_pguser = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinPGUSER", "/odin/psql/user"
-        ).string_value
-        odin_pgdbname = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinPGDBNAME", "/odin/psql/db"
-        ).string_value
-        odin_pgpass = ssm.StringParameter.from_string_parameter_name(
-            self, "OdinPGPASS", "/odin/psql/password"
-        ).string_value
+        mongo: ec2.IInstance = MongoInstance(self, "OdinMongo", vpc)
+        admin: ec2.IInstance = AdminInstance(self, "OdinAdmin", vpc)
+        OdinService(self, "OdinService", vpc, mongo)
 
-        odinapi_task.add_container(
-            "OdinAPIContainer",
-            image=ecs.ContainerImage.from_asset("./"),
-            memory_limit_mib=1024,
-            cpu=512,
-            port_mappings=[
-                ecs.PortMapping(container_port=8000, protocol=ecs.Protocol.TCP),
-            ],
-            environment={
-                "SECRET_KEY": odin_secret_key,
-                "ODIN_API_PRODUCTION": "1",
-                "ODINAPI_MONGODB_USERNAME": odin_mongo_user,
-                "ODINAPI_MONGODB_PASSWORD": odin_mongo_password,
-                "ODINAPI_MONGODB_HOST": mongo.instance_private_ip,
-                "PGHOST": odin_pghost,
-                "PGDBNAME": odin_pgdbname,
-                "PGUSER": odin_pguser,
-                "PGPASS": odin_pgpass,
-                "GUNICORN_CMD_ARGS": "-w 4 -b 0.0.0.0 -k gevent --timeout 60 --log-level debug",
-            },
-            health_check=ecs.HealthCheck(
-                command=["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"],
-                interval=Duration.seconds(60),
-                start_period=Duration.seconds(10),
-            ),
-            logging=logging,
-        )
-
-        odin_service: ecs_patterns.ApplicationLoadBalancedFargateService = ecs_patterns.ApplicationLoadBalancedFargateService(
+        aws_route53.ARecord(
             self,
-            "OdinAPIFargateService",
-            task_subnets=ec2.SubnetSelection(
-                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            "OdinMongoPrivateAliasRecord",
+            zone=private_zone,
+            target=aws_route53.RecordTarget.from_ip_addresses(
+                mongo.instance_private_ip,
             ),
-            cluster=odin_cluster,
-            cpu=1024,
-            desired_count=1,
-            task_definition=odinapi_task,
-            memory_limit_mib=4096,
-            public_load_balancer=True,
-            listener_port=80,
-            health_check_grace_period=Duration.seconds(20),
+            record_name="mongo.odin",
         )
-        odin_service.target_group.configure_health_check(path="/", port="8000")
+        aws_route53.ARecord(
+            self,
+            "OdinAdminPrivateAliasRecord",
+            zone=private_zone,
+            target=aws_route53.RecordTarget.from_ip_addresses(
+                admin.instance_private_ip,
+            ),
+            record_name="admin.odin",
+        )

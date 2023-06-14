@@ -1,0 +1,116 @@
+from aws_cdk import (
+    Duration,
+    RemovalPolicy,
+    Stack,
+    aws_certificatemanager,
+    aws_ec2,
+    aws_ecs,
+    aws_ecs_patterns,
+    aws_elasticloadbalancingv2,
+    aws_logs,
+    aws_route53,
+    aws_ssm
+)
+
+from odin_api_stack.config import ODIN_CERTIFICATE_ARN
+from odin_api_stack.mongo import MongoInstance
+
+
+class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
+    def __init__(self, scope: Stack, id: str, vpc: aws_ec2.IVpc, mongo: MongoInstance):
+        log_group = aws_logs.LogGroup(
+            scope,
+            "OdinClusterLogGroup",
+            log_group_name="/Odin/OdinApi",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=aws_logs.RetentionDays.SIX_MONTHS,
+        )
+
+        logging = aws_ecs.AwsLogDriver(stream_prefix="OdinAPI", log_group=log_group)
+
+        odinapi_task: aws_ecs.FargateTaskDefinition = aws_ecs.FargateTaskDefinition(
+            scope,
+            "OdinAPITaskDefinition",
+            cpu=1024,
+            memory_limit_mib=4096,
+        )
+        odin_secret_key = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinSecretKey", "/odin-api/secret-key"
+        ).string_value
+        odin_mongo_user = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinMongoUser", "/odin/mongo/user"
+        ).string_value
+        odin_mongo_password = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinMongoPassword", "/odin/mongo/password"
+        ).string_value
+        odin_pghost = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinPGHOST", "/odin/psql/host"
+        ).string_value
+        odin_pguser = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinPGUSER", "/odin/psql/user"
+        ).string_value
+        odin_pgdbname = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinPGDBNAME", "/odin/psql/db"
+        ).string_value
+        odin_pgpass = aws_ssm.StringParameter.from_string_parameter_name(
+            scope, "OdinPGPASS", "/odin/psql/password"
+        ).string_value
+
+        odinapi_task.add_container(
+            "OdinAPIContainer",
+            image=aws_ecs.ContainerImage.from_asset("./"),
+            memory_limit_mib=2048,
+            cpu=512,
+            port_mappings=[
+                aws_ecs.PortMapping(container_port=8000, protocol=aws_ecs.Protocol.TCP),
+            ],
+            environment={
+                "SECRET_KEY": odin_secret_key,
+                "ODIN_API_PRODUCTION": "1",
+                "ODINAPI_MONGODB_USERNAME": odin_mongo_user,
+                "ODINAPI_MONGODB_PASSWORD": odin_mongo_password,
+                "ODINAPI_MONGODB_HOST": mongo.instance_private_ip,
+                "PGHOST": odin_pghost,
+                "PGDBNAME": odin_pgdbname,
+                "PGUSER": odin_pguser,
+                "PGPASS": odin_pgpass,
+                "GUNICORN_CMD_ARGS": "-w 4 -b 0.0.0.0 -k gevent --timeout 60 --log-level debug",
+            },
+            health_check=aws_ecs.HealthCheck(
+                command=["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"],
+                interval=Duration.minutes(5),
+                start_period=Duration.minutes(5),
+                timeout=Duration.seconds(10),
+            ),
+            logging=logging,
+        )
+
+        hosted_zone = aws_route53.HostedZone.from_lookup(
+            scope, "OdinHostedZone", domain_name="odin-smr.org"
+        )
+        cert = aws_certificatemanager.Certificate.from_certificate_arn(
+            scope,
+            "OdinSiteCertificate",
+            certificate_arn=ODIN_CERTIFICATE_ARN,
+        )
+
+        super().__init__(
+            scope,
+            "OdinAPIFargateService",
+            task_subnets=aws_ec2.SubnetSelection(
+                subnet_type=aws_ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),
+            cpu=1024,
+            desired_count=1,
+            task_definition=odinapi_task,
+            target_protocol=aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
+            memory_limit_mib=2048,
+            public_load_balancer=True,
+            protocol=aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
+            domain_name="odin-smr.org",
+            domain_zone=hosted_zone,
+            certificate=cert,
+            vpc=vpc,
+            redirect_http=False,
+        )
+        # self.target_group.configure_health_check(path="/", port="8000")
