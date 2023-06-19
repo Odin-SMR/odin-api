@@ -18,7 +18,7 @@ LOG_GROUP = "/Odin/Mongo"
 
 
 class MongoInstance(ec2.Instance):
-    def __init__(self, scope: Construct, id: str, vpc:ec2.IVpc) -> None:
+    def __init__(self, scope: Construct, id: str, vpc: ec2.IVpc) -> None:
         vpc_subnets = ec2.SubnetSelection(
             subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
         )
@@ -105,4 +105,3 @@ class MongoInstance(ec2.Instance):
             removal_policy=RemovalPolicy.DESTROY,
             retention=logs.RetentionDays.SIX_MONTHS,
         )
-  

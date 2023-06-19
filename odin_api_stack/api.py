@@ -71,8 +71,7 @@ def odin_api(asset: s3_assets.Asset):
         f"aws s3 cp {asset.s3_object_url} " f"/home/ec2-user/flask_app.zip",
         "unzip /home/ec2-user/flask_app.zip -d /home/ec2-user/odin-api",
         "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash",
-        ". ~/.bashrc"
-        "nvm install 16",
+        ". ~/.bashrc" "nvm install 16",
         "LD_LIBRARY_PATH=/usr/lib64/hdf pip3.8 install -r /home/ec2-user/odin-api/requirements.txt",
         f"echo '{unit_file}' > /etc/systemd/system/odinapi.service",
         "cd /home/ec2-user/odin-api",
@@ -86,7 +85,9 @@ def odin_api(asset: s3_assets.Asset):
 
 class APIInstance(ec2.Instance):
     def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc) -> None:
-        vpc_subnets = ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS)
+        vpc_subnets = ec2.SubnetSelection(
+            subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+        )
         security_group = ec2.SecurityGroup(scope, "OdinAPISecurityGroup", vpc=vpc)
         security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22))
         security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(8000))

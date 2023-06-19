@@ -90,7 +90,7 @@ class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
                 command=["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"],
                 interval=Duration.seconds(30),
                 start_period=Duration.seconds(5),
-                timeout=Duration.seconds(5),                
+                timeout=Duration.seconds(5),
             ),
             logging=logging,
         )

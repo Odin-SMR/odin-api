@@ -15,7 +15,7 @@ LOG_GROUP = "/Odin/Admin"
 
 
 class AdminInstance(ec2.Instance):
-    def __init__(self, scope: Construct, id: str, vpc:ec2.IVpc) -> None:
+    def __init__(self, scope: Construct, id: str, vpc: ec2.IVpc) -> None:
         vpc_subnets = ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
         security_group = ec2.SecurityGroup(scope, "OdinAdminSecurityGroup", vpc=vpc)
         security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22))
