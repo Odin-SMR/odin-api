@@ -1,5 +1,6 @@
 attrs
 aws-cdk-lib
+awscli
 cdsapi
 coda
 coverage

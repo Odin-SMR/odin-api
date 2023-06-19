@@ -449,11 +449,8 @@ class Odin(Flask):
             view_func=VdsExtData.as_view('vdsextdata')
         )
 
-
-log_config = Path(__file__).parent / "log_conf.yaml"
-with open(log_config) as f:
-    logconf_dict = safe_load(f)
-logging.config.dictConfig(logconf_dict)
+logger = logging.getLogger(__name__)
+logger.info("Starting OdinAPI")
 app = Odin(__name__)
 
 # Swagger ui will be available at /apidocs/index.html

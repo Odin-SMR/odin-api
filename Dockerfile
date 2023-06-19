@@ -20,14 +20,19 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     sed -i 's#http://petstore.swagger.io/v2/swagger.json#/rest_api/v5/spec#g' /swagger-ui/index.html && \
     rm -rf swagger-ui*
 
-COPY requirements.txt /app
+COPY requirements.txt /app/
+COPY gunicorn.conf.py /app/
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+COPY logconf.yaml /app/
 # --no-binary=h5py is needed because in some ways it may get installed
 # netcdf doesn't work if h5py is imported before it in the project
-RUN pip install --no-binary=h5py -r requirements.txt
+RUN pip install -r requirements.txt
 COPY src/odinapi /app/odinapi/
 COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
 COPY --from=0 /odin/src/odinapi/static/assets /app/odinapi/static/assets
 ENV PYTHONPATH "${PYTHONPATH}:/app/odinapi"
+ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8000
-CMD gunicorn odinapi.api:app
+CMD gunicorn

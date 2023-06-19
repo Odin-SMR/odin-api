@@ -9,7 +9,8 @@ from aws_cdk import (
     aws_elasticloadbalancingv2,
     aws_logs,
     aws_route53,
-    aws_ssm
+    aws_s3,
+    aws_ssm,
 )
 
 from odin_api_stack.config import ODIN_CERTIFICATE_ARN
@@ -28,12 +29,17 @@ class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
 
         logging = aws_ecs.AwsLogDriver(stream_prefix="OdinAPI", log_group=log_group)
 
+        psql_bucket = aws_s3.Bucket.from_bucket_name(
+            scope, "OdinPsqlBucket", "odin-psql"
+        )
+
         odinapi_task: aws_ecs.FargateTaskDefinition = aws_ecs.FargateTaskDefinition(
             scope,
             "OdinAPITaskDefinition",
             cpu=1024,
             memory_limit_mib=4096,
         )
+        psql_bucket.grant_read_write(odinapi_task.task_role)
         odin_secret_key = aws_ssm.StringParameter.from_string_parameter_name(
             scope, "OdinSecretKey", "/odin-api/secret-key"
         ).string_value
@@ -62,7 +68,11 @@ class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
             memory_limit_mib=2048,
             cpu=512,
             port_mappings=[
-                aws_ecs.PortMapping(container_port=8000, protocol=aws_ecs.Protocol.TCP),
+                aws_ecs.PortMapping(
+                    container_port=8000,
+                    app_protocol=aws_ecs.AppProtocol.http2,
+                    name="odinapi",
+                ),
             ],
             environment={
                 "SECRET_KEY": odin_secret_key,
@@ -78,9 +88,9 @@ class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
             },
             health_check=aws_ecs.HealthCheck(
                 command=["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"],
-                interval=Duration.minutes(5),
-                start_period=Duration.minutes(5),
-                timeout=Duration.seconds(10),
+                interval=Duration.seconds(30),
+                start_period=Duration.seconds(5),
+                timeout=Duration.seconds(5),                
             ),
             logging=logging,
         )
@@ -103,7 +113,6 @@ class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
             cpu=1024,
             desired_count=1,
             task_definition=odinapi_task,
-            target_protocol=aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
             memory_limit_mib=2048,
             public_load_balancer=True,
             protocol=aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
@@ -111,6 +120,5 @@ class OdinService(aws_ecs_patterns.ApplicationLoadBalancedFargateService):
             domain_zone=hosted_zone,
             certificate=cert,
             vpc=vpc,
-            redirect_http=False,
+            redirect_http=True,
         )
-        # self.target_group.configure_health_check(path="/", port="8000")
