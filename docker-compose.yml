@@ -10,7 +10,7 @@ services:
   httpd:
     build: ./services/proxy
     ports:
-      - 5000:80
+      - 8000:80
     links:
       - webapi
     volumes:

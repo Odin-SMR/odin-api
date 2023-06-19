@@ -4,7 +4,7 @@ services:
   httpd:
     image: odinsmr/proxy:latest
     ports:
-      - 5000:80
+      - 8000:80
     links:
       - webapi
     volumes:
@@ -26,7 +26,7 @@ services:
       - PGUSER=${PGUSER}
       - PGPASS=${PGPASS}
       - SECRET_KEY=${SECRET_KEY}
-      - GUNICORN_CMD_ARGS=-w 8 -b 0.0.0.0:5000 -k gevent --timeout 540 --log-level debug
+      - GUNICORN_CMD_ARGS=-w 8 -b 0.0.0.0:8000 -k gevent --timeout 540 --log-level debug
     volumes:
       - /misc/pearl/extdata/ERA-Interim:/var/lib/odindata/ECMWF:rw
       - /misc/pearl/extdata/ERA-Interim:/ecmwf-data:rw
