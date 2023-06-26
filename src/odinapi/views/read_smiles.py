@@ -1,13 +1,14 @@
 from datetime import datetime
 
+import numpy as np
+import s3fs
 from dateutil.relativedelta import relativedelta
 from h5py import File
-import numpy as np
 
 
 def read_smiles_file(
     file, date, species, file_index,
-    smiles_basepath_pattern='/vds-data/ISS_SMILES_Level2/{0}/v2.4',
+    smiles_basepath_pattern='s3://odin-vds-data/ISS_SMILES_Level2/{0}/v2.4',
 ):
 
     file_index = int(file_index)
@@ -21,16 +22,17 @@ def read_smiles_file(
     data = dict()
     data_fields = dict()
     geolocation_fields = dict()
+    s3 = s3fs.S3FileSystem()
+    with s3.open(ifile, "r") as s3f:
+        with File(s3f) as f:
+            fdata = f['HDFEOS']['SWATHS'][species] # type: ignore
 
-    with File(ifile, 'r') as f:
-        fdata = f['HDFEOS']['SWATHS'][species]
+            for key in fdata['Data Fields']: # type: ignore
+                data_fields[key] = np.array(fdata['Data Fields'][key]) # type: ignore
 
-        for key in fdata['Data Fields']:
-            data_fields[key] = np.array(fdata['Data Fields'][key])
-
-        for key in fdata['Geolocation Fields']:
-            geolocation_fields[key] = np.array(
-                fdata['Geolocation Fields'][key])
+            for key in fdata['Geolocation Fields']: # type: ignore
+                geolocation_fields[key] = np.array(
+                    fdata['Geolocation Fields'][key]) # type: ignore
 
     # transform the mls date to MJD and add to dict
     mjd = []

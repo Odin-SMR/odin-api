@@ -11,7 +11,7 @@ attrs==23.1.0
     #   -r requirements.in
     #   cattrs
     #   jsii
-aws-cdk-asset-awscli-v1==2.2.191
+aws-cdk-asset-awscli-v1==2.2.198
     # via aws-cdk-lib
 aws-cdk-asset-kubectl-v20==2.1.2
     # via aws-cdk-lib
@@ -19,13 +19,14 @@ aws-cdk-asset-node-proxy-agent-v5==2.0.165
     # via aws-cdk-lib
 aws-cdk-lib==2.84.0
     # via -r requirements.in
-awscli==1.27.153
+awscli==1.27.157
     # via -r requirements.in
 blinker==1.6.2
     # via flask
-botocore==1.29.153
+botocore==1.29.157
     # via
     #   awscli
+    #   s3fs
     #   s3transfer
 cached-property==1.5.2
     # via coda
@@ -48,7 +49,7 @@ coda==0.1.0
     # via -r requirements.in
 colorama==0.4.4
     # via awscli
-constructs==10.2.52
+constructs==10.2.55
     # via aws-cdk-lib
 contourpy==1.1.0
     # via matplotlib
@@ -80,6 +81,8 @@ fonttools==4.40.0
     # via matplotlib
 fortranformat==2.0.0
     # via -r requirements.in
+fsspec==2023.6.0
+    # via s3fs
 gems==0.4.0
     # via coda
 gevent==22.10.2
@@ -90,11 +93,11 @@ greenlet==2.0.2
     #   sqlalchemy
 gunicorn==20.1.0
     # via -r requirements.in
-h5py==3.8.0
+h5py==3.9.0
     # via -r requirements.in
 idna==3.4
     # via requests
-importlib-metadata==6.6.0
+importlib-metadata==6.7.0
     # via flask
 importlib-resources==5.12.0
     # via
@@ -139,13 +142,19 @@ numpy==1.24.3
     #   h5py
     #   matplotlib
     #   netcdf4
+    #   pandas
     #   pyhdf
     #   scipy
+    #   xarray
 packaging==23.1
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   xarray
+pandas==2.0.2
+    # via xarray
 pillow==9.5.0
     # via matplotlib
-platformdirs==3.5.3
+platformdirs==3.7.0
     # via pylint
 psycopg2-binary==2.9.6
     # via -r requirements.in
@@ -177,7 +186,7 @@ pymongo==4.3.3
     # via
     #   -r requirements.in
     #   coda
-pyparsing==3.0.9
+pyparsing==3.1.0
     # via matplotlib
 pyproj==3.5.0
     # via -r requirements.in
@@ -188,8 +197,11 @@ python-dateutil==2.8.2
     #   dateutils
     #   jsii
     #   matplotlib
+    #   pandas
 pytz==2023.3
-    # via dateutils
+    # via
+    #   dateutils
+    #   pandas
 pyyaml==5.4.1
     # via
     #   -r requirements.in
@@ -200,6 +212,8 @@ requests==2.31.0
     #   cdsapi
 rsa==4.7.2
     # via awscli
+s3fs==0.4.2
+    # via -r requirements.in
 s3transfer==0.6.1
     # via awscli
 scipy==1.10.1
@@ -233,6 +247,8 @@ typing-extensions==4.6.3
     #   jsii
     #   pylint
     #   sqlalchemy
+tzdata==2023.3
+    # via pandas
 urllib3==1.26.16
     # via
     #   botocore
@@ -241,6 +257,8 @@ werkzeug==2.3.6
     # via flask
 wrapt==1.15.0
     # via astroid
+xarray==2023.1.0
+    # via -r requirements.in
 zipp==3.15.0
     # via
     #   importlib-metadata

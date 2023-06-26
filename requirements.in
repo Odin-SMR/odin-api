@@ -34,3 +34,4 @@ setuptools
 simpleflock
 simplejson
 sqlalchemy
+s3fs
