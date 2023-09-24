@@ -734,7 +734,7 @@ def plot_spectrum(spectra):
         spectra['altitude'][2::3],
         spectra['spectrum'][2::3],
     ):
-        plt.plot(freqvec, spei, '.', label=np.int(np.around(ztan / 1e3)))
+        plt.plot(freqvec, spei, '.', label=int(np.around(ztan / 1e3)))
     ax1.grid(True)
     ax1.minorticks_on()
     plt.legend(bbox_to_anchor=(1.02, 0.95), loc=2, borderaxespad=0.)

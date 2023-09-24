@@ -299,7 +299,7 @@ python module nrlmsis ! in
             real :: tz
             real :: zlb
             real :: s2
-            integer, optional,check(len(zn1)>=mn1),depend(zn1) :: mn1=len(zn1)
+            integer, optional,check(shape(zn1, 0) == mn1),depend(zn1) :: mn1=shape(zn1, 0)
             real dimension(mn1) :: zn1
             real dimension(mn1),depend(mn1) :: tn1
             real dimension(2) :: tgn1
@@ -324,11 +324,11 @@ python module nrlmsis ! in
             real :: d0
             real :: xm
             real :: tz
-            integer, optional,check(len(zn3)>=mn3),depend(zn3) :: mn3=len(zn3)
+            integer, optional,check(shape(zn3, 0) == mn3),depend(zn3) :: mn3=shape(zn3, 0)
             real dimension(mn3) :: zn3
             real dimension(mn3),depend(mn3) :: tn3
             real dimension(2) :: tgn3
-            integer, optional,check(len(zn2)>=mn2),depend(zn2) :: mn2=len(zn2)
+            integer, optional,check(shape(zn2, 0) == mn2),depend(zn2) :: mn2=shape(zn2, 0)
             real dimension(mn2) :: zn2
             real dimension(mn2),depend(mn2) :: tn2
             real dimension(2) :: tgn2
@@ -353,7 +353,7 @@ python module nrlmsis ! in
         subroutine spline(x,y,n,yp1,ypn,y2) ! in :nrlmsis:nrlmsise00/nrlmsise00_sub.for
             real dimension(n) :: x
             real dimension(n),depend(n) :: y
-            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            integer, optional,check(shape(x, 0) == n),depend(x) :: n=shape(x, 0)
             real :: yp1
             real :: ypn
             real dimension(n),depend(n) :: y2
@@ -362,7 +362,7 @@ python module nrlmsis ! in
             real dimension(n) :: xa
             real dimension(n),depend(n) :: ya
             real dimension(n),depend(n) :: y2a
-            integer, optional,check(len(xa)>=n),depend(xa) :: n=len(xa)
+            integer, optional,check(shape(xa, 0) == n),depend(xa) :: n=shape(xa, 0)
             real :: x
             real :: y
         end subroutine splint
@@ -370,7 +370,7 @@ python module nrlmsis ! in
             real dimension(n) :: xa
             real dimension(n),depend(n) :: ya
             real dimension(n),depend(n) :: y2a
-            integer, optional,check(len(xa)>=n),depend(xa) :: n=len(xa)
+            integer, optional,check(shape(xa, 0) == n),depend(xa) :: n=shape(xa, 0)
             real :: x
             real :: yi
         end subroutine splini
@@ -478,5 +478,6 @@ python module nrlmsis ! in
     end interface 
 end python module nrlmsis
 
-! This file was auto-generated with f2py (version:2).
-! See http://cens.ioc.ee/projects/f2py2e/
+! This file was auto-generated with f2py (version:1.23.0).
+! See:
+! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e

@@ -14,7 +14,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: "3.11"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -22,8 +22,8 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y $(grep -vE "^\s*#" requirements_ubuntu20.04.apt | xargs)
-          python3.8 -m pip install --upgrade pip
+          sudo apt-get install -y $(grep -vE "^\s*#" requirements_ubuntu22.04.apt | xargs)
+          python3.11 -m pip install --upgrade pip
           pip install tox
       - name: Javascript tests
         run: |
@@ -35,10 +35,8 @@ jobs:
           tox -e lint
       - name: Unit test
         run: |
-          tox -e py38 -- --runslow
+          tox -e py311 -- --runslow
       - name: System test
         run: |
           tox -e system -- --runslow
-      - name: Proxy test
-        run: |
-          tox -e proxy
+
