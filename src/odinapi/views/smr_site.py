@@ -121,7 +121,7 @@ class ViewScanSpec(MethodView):
         buf.seek(0)
 
         return send_file(
-            buf, attachment_filename='plot.png', mimetype='image/png')
+            buf, download_name='plot.png', mimetype='image/png')
 
 
 class ViewFreqmodeInfoPlot(MethodView):
@@ -152,7 +152,7 @@ class ViewFreqmodeInfoPlot(MethodView):
         buf = io.BytesIO()
         fig.savefig(buf, format='png')
         buf.seek(0)
-        return send_file(buf, attachment_filename='plot.png',
+        return send_file(buf, download_name='plot.png',
                          mimetype='image/png')
 
 

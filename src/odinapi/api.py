@@ -1,6 +1,7 @@
 """A simple datamodel implementation"""
+import logging
+from pathlib import Path
 from flask import Flask, Blueprint
-
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
@@ -25,6 +26,7 @@ from odinapi.views.smr_site import (
     ViewLevel2PeriodOverview, ViewLevel1Stats, ViewFreqmodeInfoPlot,
     ViewLevel2DevScan, ViewDataAccess)
 from odinapi.views.data_info import FileInfo, LatestECMF
+
 
 SWAGGER.add_parameter('freqmode', 'path', int)
 SWAGGER.add_parameter('scanno', 'path', int)
@@ -446,7 +448,8 @@ class Odin(Flask):
             view_func=VdsExtData.as_view('vdsextdata')
         )
 
-
+logger = logging.getLogger(__name__)
+logger.info("Starting OdinAPI")
 app = Odin(__name__)
 
 # Swagger ui will be available at /apidocs/index.html

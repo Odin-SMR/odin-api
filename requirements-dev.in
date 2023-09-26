@@ -1,0 +1,16 @@
+black
+boto3-stubs[essential]
+matplotlib-stubs
+mypy
+pip-tools
+pytest
+pytest_docker_tools
+pytest-docker
+pytest-freezegun
+requests
+selenium
+tox
+types-PyYAML
+types-requests
+types-simplejson
+webdriver_manager

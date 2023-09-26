@@ -13,7 +13,7 @@ h5py
 matplotlib
 mock
 netcdf4
-numpy>=1.23.0
+numpy
 psycopg2-binary
 pycodestyle
 pycryptodome
