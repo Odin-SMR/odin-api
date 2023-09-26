@@ -22,14 +22,18 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     sed -i 's#http://petstore.swagger.io/v2/swagger.json#/rest_api/v5/spec#g' /swagger-ui/index.html && \
     rm -rf swagger-ui*
 
-COPY requirements.txt /app
+COPY requirements.txt /app/
+COPY gunicorn.conf.py /app/
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+COPY logconf.yaml /app/
 
 RUN pip install -r requirements.txt
 COPY src/odinapi /app/odinapi/
-COPY src/scripts /app/scripts/
 COPY src/examples /app/odinapi/static/examples/
 COPY --from=0 /odin/src/odinapi/static /app/odinapi/static
 COPY scripts/compile_nrlmsis.sh .
 RUN ./compile_nrlmsis.sh
-EXPOSE 5000
-CMD gunicorn -w 4 -b 0.0.0.0:5000 -k gevent --timeout 540 odinapi.api:app
+ENTRYPOINT [ "/entrypoint.sh" ]
+EXPOSE 8000
+CMD gunicorn

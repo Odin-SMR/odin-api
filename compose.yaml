@@ -21,13 +21,13 @@ services:
       webapi:
         condition: service_healthy
     
-
   webapi:
     environment:
       - PGHOST=postgresql
       - PGDBNAME=odin
       - PGUSER=odinop
       - PGPASS=odinop
+      - PGSSLMODE=disable
     build:
       context: .
       dockerfile: Dockerfile
@@ -38,8 +38,9 @@ services:
       - ./data/apriori:/var/lib/odindata/apriori:ro
       - ./data/ptz-data/Solardata2.db:/var/lib/odindata/Solardata2.db:ro
       - ./data/ptz-data/ERA-Interim:/var/lib/odindata/ECMWF:ro
+    entrypoint: []
     healthcheck:
-      test: curl --fail http://localhost:5000 || exit 1
+      test: curl --fail http://localhost:8000 || exit 1
       interval: 15s
       timeout: 5s
       retries: 3

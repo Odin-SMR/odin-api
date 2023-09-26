@@ -2,6 +2,7 @@
 import logging
 from pathlib import Path
 from flask import Flask, Blueprint
+from yaml import safe_load
 from odinapi.utils.swagger import SwaggerSpecView, SWAGGER
 from odinapi.views.views import (
     DateInfo, DateBackendInfo, ScanSpec, FreqmodeInfo,
@@ -37,6 +38,7 @@ DESCRIPTION = (
     "* Latitude: -90 to 90\n"
     "* Longitude: 0 to 360")
 
+LOG_CONFIG = Path(__file__).parent.parent / "logconf.yaml"
 
 class Odin(Flask):
     """The main app running the odin site"""
@@ -447,7 +449,9 @@ class Odin(Flask):
             '/<date>/<file>/<file_index>/',
             view_func=VdsExtData.as_view('vdsextdata')
         )
-
+with open(LOG_CONFIG) as f:
+    logconf_dict = safe_load(f)
+logging.config.dictConfig(logconf_dict)  # type: ignore
 logger = logging.getLogger(__name__)
 logger.info("Starting OdinAPI")
 app = Odin(__name__)
