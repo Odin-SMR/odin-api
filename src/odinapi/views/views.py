@@ -285,8 +285,8 @@ class FreqmodeInfoNoBackend(BaseView):
     LOCK = Lock()
 
     @classmethod
-    def _acquire_lock(cls) -> bool:
-        return cls.LOCK.acquire(timeout=1)
+    def _acquire_lock(cls, timeout: int = 1) -> bool:
+        return cls.LOCK.acquire(timeout=timeout)
 
     @classmethod
     def _release_lock(cls) -> None:
