@@ -7,16 +7,12 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
 
 from odinapi.utils import encrypt_util
 
 from .level2_test_data import VERSION, WRITE_URL, get_test_data
 
 PROJECT_NAME = "testproject"
-
-os.environ["GH_TOKEN"] = "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"
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +22,6 @@ def chrome():
         "./node_modules/chromium/lib/chromium/chrome-linux/chrome"
     )
     chrome_options.add_argument("--headless")
-    # chrome_options.add_argument('--no-sandbox')
     driver = webdriver.Chrome(
         service=ChromeService("./node_modules/chromedriver/bin/chromedriver"),
         options=chrome_options,
@@ -122,11 +117,7 @@ class TestLevel2Browser:
         driver.find_element(By.NAME, "offset").send_keys("1")
         driver.find_element(By.CLASS_NAME, "search-form-table").submit()
         search_results = driver.find_element(By.ID, "search-results")
-        assert (
-            search_results.find_elements(By.TAG_NAME, "td")[0]
-            .text
-            == "7014791071"
-        )
+        assert search_results.find_elements(By.TAG_NAME, "td")[0].text == "7014791071"
         test_ref = "/level2/development/testproject/1/7014791071"
         href = driver.find_element(By.ID, "search-results").find_elements(
             By.XPATH, "//a[@href='{0}']".format(test_ref)
