@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 from flask import request, jsonify, abort
 from flask.views import MethodView
 from numpy import around
+from threading import Lock
 
 # Activate Agg, must be done before imports below
 from odinapi.utils import use_agg
@@ -281,15 +282,15 @@ SWAGGER.add_type('Log', {
 
 class FreqmodeInfoNoBackend(BaseView):
     SUPPORTED_VERSIONS = ['v5']
-    BUSY = False
+    LOCK = Lock()
 
     @classmethod
-    def _get_lock_state(cls) -> bool:
-        return cls.BUSY
-    
+    def _acquire_lock(cls) -> bool:
+        return cls.LOCK.acquire(timeout=1)
+
     @classmethod
-    def _set_lock_state(cls, state: bool) -> None:
-        cls.BUSY = state
+    def _release_lock(cls) -> None:
+        cls.LOCK.release()
 
     @register_versions('swagger')
     def _swagger_def(self, version):
@@ -308,9 +309,8 @@ class FreqmodeInfoNoBackend(BaseView):
         except KeyError:
             abort(404)
         
-        if self._get_lock_state():
+        if not self._acquire_lock():
             abort(429)
-        self._set_lock_state(True)
         try:
             con = DatabaseConnector()
             loginfo = {}
@@ -327,7 +327,7 @@ class FreqmodeInfoNoBackend(BaseView):
         except Exception as err:
             raise(err)
         finally:
-            self._set_lock_state(False)
+            self._release_lock()
 
         try:
             for index in range(len(loginfo['ScanID'])):
