@@ -10,9 +10,16 @@ black==23.9.1
     # via -r requirements-dev.in
 blinker==1.6.2
     # via flask
-boto3-stubs==1.28.53
+boto3==1.28.54
+    # via -r requirements.in
+boto3-stubs==1.28.54
     # via -r requirements-dev.in
-botocore-stubs==1.31.53
+botocore==1.31.54
+    # via
+    #   boto3
+    #   s3fs
+    #   s3transfer
+botocore-stubs==1.31.54
     # via boto3-stubs
 build==1.0.3
     # via pip-tools
@@ -81,6 +88,8 @@ fortranformat==2.0.0
     # via -r requirements.in
 freezegun==1.2.2
     # via pytest-freezegun
+fsspec==2023.9.2
+    # via s3fs
 gems==0.4.0
     # via coda
 gevent==23.9.1
@@ -107,6 +116,10 @@ itsdangerous==2.1.2
     # via flask
 jinja2==3.1.2
     # via flask
+jmespath==1.0.1
+    # via
+    #   boto3
+    #   botocore
 kiwisolver==1.4.5
     # via matplotlib
 lazy-object-proxy==1.9.0
@@ -203,7 +216,7 @@ pygresql==5.2.5
     # via -r requirements.in
 pyhdf==0.11.3
     # via -r requirements.in
-pylint==2.17.5
+pylint==2.17.6
     # via -r requirements.in
 pymongo==4.5.0
     # via
@@ -234,6 +247,7 @@ pytest-freezegun==0.4.2
 python-dateutil==2.8.2
     # via
     #   -r requirements.in
+    #   botocore
     #   dateutils
     #   freezegun
     #   matplotlib
@@ -244,6 +258,8 @@ pytz==2023.3.post1
     # via
     #   dateutils
     #   pandas
+pyyaml==6.0.1
+    # via -r requirements.in
 requests==2.31.0
     # via
     #   -r requirements-dev.in
@@ -251,9 +267,13 @@ requests==2.31.0
     #   cdsapi
     #   docker
     #   webdriver-manager
+s3fs==0.4.2
+    # via -r requirements.in
+s3transfer==0.6.2
+    # via boto3
 scipy==1.11.2
     # via -r requirements.in
-selenium==4.12.0
+selenium==4.13.0
     # via -r requirements-dev.in
 simpleflock==0.0.3
     # via -r requirements.in
@@ -283,7 +303,7 @@ types-awscrt==0.19.1
     # via botocore-stubs
 types-pyyaml==6.0.12.12
     # via -r requirements-dev.in
-types-requests==2.31.0.4
+types-requests==2.31.0.5
     # via -r requirements-dev.in
 types-s3transfer==0.6.2
     # via boto3-stubs
@@ -305,14 +325,15 @@ typing-extensions==4.8.0
     #   sqlalchemy
 tzdata==2023.3
     # via pandas
-urllib3==2.0.5
+urllib3==1.26.16
     # via
+    #   botocore
     #   docker
     #   requests
     #   selenium
 virtualenv==20.24.5
     # via tox
-webdriver-manager==4.0.0
+webdriver-manager==4.0.1
     # via -r requirements-dev.in
 websocket-client==1.6.3
     # via docker

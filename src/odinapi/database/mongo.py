@@ -16,39 +16,35 @@ Example:
 """
 
 from os import environ
+import logging
+from typing import Optional
 
 from pymongo import MongoClient
 
-CLIENT = None
+CLIENT: Optional[MongoClient] = None
+
+logger = logging.getLogger("Mongo")
 
 
 def get_connection():
     """Return MongoClient object"""
     global CLIENT
     if not CLIENT:
-        CLIENT = MongoClient(
-            environ.get('ODINAPI_MONGODB_HOST', 'level2db'),
-            int(environ.get('ODINAPI_MONGODB_PORT', 27017)),
-            serverSelectionTimeoutMS=int(
-                environ.get('ODINAPI_MONGODB_SERVER_TIMEOUT', 180000)
-            )
-        )
+        logger.debug("Creating a new Client")
+        host = environ.get("ODINAPI_MONGODB_HOST", "level2db")
+        port = int(environ.get("ODINAPI_MONGODB_PORT", 27017))
+        timeout = int(environ.get("ODINAPI_MONGODB_SERVER_TIMEOUT", 180000))
+        logger.info(f"Connecing to {host}:{port}")
+        CLIENT = MongoClient(host, port, serverSelectionTimeoutMS=timeout)
+    logger.debug(f"Using connection to {CLIENT.server_info}")
     return CLIENT
 
 
 def get_database(db_name):
     """Return Database object"""
-    return auth(get_connection()[db_name])
+    return get_connection()[db_name]
 
 
 def get_collection(database, collection):
     """Return Collection object"""
     return get_database(database)[collection]
-
-
-def auth(db):
-    username = environ.get('ODINAPI_MONGODB_USERNAME')
-    if username:
-        db.authenticate(
-            username, password=environ.get('ODINAPI_MONGODB_PASSWORD'))
-    return db
