@@ -1,9 +1,9 @@
 # This is whats needed to run the tests on ubuntu 20.04
-python3.8
-python3.8-dev
+python3.11
+python3.11-dev
 libhdf4-dev
 libhdf5-dev
-gfortran-7
+gfortran
 libpq-dev
 
 #chromedriver and chromium-browser (from npm)

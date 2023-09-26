@@ -12,6 +12,7 @@
 !/package.json
 env
 ghostdriver.log
+systemtest.log
 result.xml
 /node_modules
 /HeadlessChrome*

@@ -78,8 +78,8 @@ flags.switches[0]=0
 for i in np.arange(23)+1:
 	flags.switches[i]=1
 flags.switches[9]=-1	
-print flags
-print flags.switches[:]
+print(flags)
+print(flags.switches[:])
 
 #aph=ap_array()
 for i in range(7):
@@ -100,15 +100,15 @@ inputt.f107A=150.;
 inputt.f107=150.;
 inputt.ap=4.;
 inputt.ap_a=ctypes.pointer(aph)
-print inputt
+print(inputt)
 
 msis=ctypes.CDLL('./nrlmsis.so')
 msis.gtd7.argtypes=[ctypes.POINTER(nrlmsise_input),ctypes.POINTER(nrlmsise_flags),ctypes.POINTER(nrlmsise_output)]
 msis.gtd7(ctypes.byref(inputt),ctypes.byref(flags),ctypes.byref(outputt))
-print flags.sw[:]
-print flags.swc[:]
-print outputt.d[:]
-print outputt.t[:]
-print inputt.ap
-print inputt.ap_a
+print(flags.sw[:])
+print(flags.swc[:])
+print(outputt.d[:])
+print(outputt.t[:])
+print(inputt.ap)
+print(inputt.ap_a)
 

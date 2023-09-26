@@ -1,5 +1,7 @@
+import json
 import pytest
 import requests
+import simplejson
 
 
 def test_vds_file4ace_exists(odinapi_service):
@@ -129,7 +131,8 @@ def test_vds_file4sageIII_is_readable(odinapi_service):
         '{}/rest_api/v4/vds_external/'.format(odinapi_service)
         + 'sageIII/O3/2002-09-01/g3a.ssp.00386710v04.h5/0/'
     )
-    data = requests.get(url).json()
+    data_as_string = requests.get(url).text
+    data = simplejson.loads(data_as_string, allow_nan=True)
     t0 = data['Temperature'][0]
     assert t0 == pytest.approx(274.028, abs=0.001)
 
