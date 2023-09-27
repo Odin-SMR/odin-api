@@ -11,4 +11,5 @@ secure_scheme_headers = {"X-FORWARDED-PROTO": "https"}
 timeout = 350
 worker_class = "gevent"
 workers = 4
-wsgi_app = "odinapi.api:app"
+preload_app = True
+wsgi_app = "odinapi.run:app"

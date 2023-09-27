@@ -37,7 +37,8 @@ import odinapi.utils.get_args as get_args
 
 # Make linter happy
 use_agg
-
+SWAGGER.add_parameter("freqmode", "path", int)
+SWAGGER.add_parameter("scanno", "path", int)
 SWAGGER.add_parameter('date', 'path', str, string_format='date')
 SWAGGER.add_type('freqmode_info', {
     'Backend': str,
