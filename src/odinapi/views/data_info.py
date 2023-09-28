@@ -4,28 +4,28 @@
 import os.path
 from flask import jsonify
 from flask.views import MethodView
-from .database import DatabaseConnector
+from sqlalchemy import text
 from . import newdonalettyERANC
+from ..api import db
 
 
 class FileInfo(MethodView):
     """plots information"""
     def get(self, version):
         """GET"""
-        db_connection = DatabaseConnector()
         result_dict = {}
         for file_ending in ['ac1', 'ac2', 'shk', 'fba', 'att']:
-            query = (
+            query = text((
                 "select created from level0_files_imported "
                 "where file ~ '.*{0}' "
                 "order by created desc limit 1"
-                ).format(file_ending)
-            db_result = db_connection.query(query)
-            try:
-                result_dict[file_ending] = db_result.getresult()[0][0]
-            except IndexError:
+                ).format(file_ending))
+            db_result = db.session.execute(query)
+            first_row = db_result.first()
+            if first_row is not None:
+                result_dict[file_ending] = first_row[0]
+            else:
                 result_dict[file_ending] = None
-        db_connection.close()
         return jsonify(**result_dict)
 
 

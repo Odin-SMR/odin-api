@@ -23,17 +23,20 @@ RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
     rm -rf swagger-ui*
 
 COPY requirements.txt /app/
-COPY gunicorn.conf.py /app/
-COPY entrypoint.sh /
-RUN chmod +x /entrypoint.sh
-COPY logconf.yaml /app/
-
 RUN pip install -r requirements.txt
+
 COPY src/odinapi /app/odinapi/
-COPY src/examples /app/odinapi/static/examples/
-COPY --from=0 /odin/src/odinapi/static /app/odinapi/static
 COPY scripts/compile_nrlmsis.sh .
 RUN ./compile_nrlmsis.sh
+COPY src/examples /app/odinapi/static/examples/
+COPY --from=0 /odin/src/odinapi/static /app/odinapi/static
+
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
+COPY gunicorn.conf.py /app/
+COPY logconf.yaml /app/
+
 ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8000
 CMD gunicorn

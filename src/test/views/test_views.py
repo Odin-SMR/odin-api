@@ -1,12 +1,15 @@
 from http.client import OK
+import unittest
 
 from flask import Flask
-from mock import patch, MagicMock
+
+from odinapi.run import app
+from mock import patch
 import numpy as np
 import pytest
 
 from odinapi.views import views
-from odinapi.views import data_info
+
 
 
 class TestAPR:
@@ -56,28 +59,18 @@ class TestAPR:
         get_apriori.assert_called_with('CO2', 15, 16, source='mipas')
 
 
-class TestFileInfo:
+class TestFileInfo(unittest.TestCase):
 
-    @pytest.fixture
-    def client(self):
-        app = Flask(__name__)
-        app.add_url_rule(
-            '/rest_api/<version>/file_info/',
-            view_func=data_info.FileInfo.as_view('apriorinobackend'),
-        )
+    def setUp(self):
+        self.client = app.test_client()
 
-        results_mock = MagicMock(getresult=MagicMock(return_value=[]))
-        query_mock = MagicMock(return_value=results_mock)
-        con = MagicMock(query=query_mock)
-
-        with patch(
-            'odinapi.views.data_info.DatabaseConnector',
-            return_value=con
-        ):
-            yield app.test_client()
-
-    def test_get_file_info(self, client):
-        resp = client.get('/rest_api/v4/file_info/')
+    @patch('odinapi.views.data_info.db.session.execute')
+    def test_get_file_info(self, mock_execute):
+        # mocks result = db.session.execute('query')
+        mock_result = mock_execute.return_value
+        # mocks result.first()
+        mock_result.first.return_value = None
+        resp = self.client.get('/rest_api/v4/file_info/')
         assert resp.status_code == OK
         assert resp.json == {
             'ac1': None, 'ac2': None, 'att': None, 'fba': None, 'shk': None,

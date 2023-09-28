@@ -1,17 +1,26 @@
 """A complex datamodel implementation"""
 import logging
-from pathlib import Path
+import logging.config
+from os import environ
 
 from flask import Flask
-from yaml import safe_load
+from flask_sqlalchemy import SQLAlchemy
 
 
-LOG_CONFIG = Path(__file__).parent.parent / "logconf.yaml"
+host = environ.get("PGHOST")
+dbname = environ.get("PGDBNAME")
+user = environ.get("PGUSER")
+passwd = environ.get("PGPASS")
+sslmode = environ.get("PGSSLMODE", "verify-full")
 
-
-with open(LOG_CONFIG) as f:
-    logconf_dict = safe_load(f)
-logging.config.dictConfig(logconf_dict)  # type: ignore
 logger = logging.getLogger(__name__)
+
 logger.info("Starting OdinAPI")
 app = Flask(__name__)
+app.config[
+    "SQLALCHEMY_DATABASE_URI"
+] = f"postgresql://{user}:{passwd}@{host}/{dbname}?sslmode={sslmode}"
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = dict(
+    pool_size=3, max_overflow=5, pool_recycle=3600
+)
+db = SQLAlchemy(app)
