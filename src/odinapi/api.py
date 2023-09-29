@@ -21,6 +21,6 @@ app.config[
     "SQLALCHEMY_DATABASE_URI"
 ] = f"postgresql://{user}:{passwd}@{host}/{dbname}?sslmode={sslmode}"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = dict(
-    pool_size=3, max_overflow=5, pool_recycle=3600
+    pool_size=3, max_overflow=5, pool_recycle=300
 )
 db = SQLAlchemy(app)
