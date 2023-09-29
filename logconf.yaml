@@ -5,7 +5,7 @@ formatters:
     format: "[%(levelname)s] %(name)s: %(message)s"
 handlers:
   default:
-    level: DEBUG
+    level: INFO
     formatter: standard
     class: logging.StreamHandler
     stream: ext://flask.logging.wsgi_errors_stream
@@ -14,24 +14,25 @@ root:
     - default
   level: DEBUG
 loggers:
-  __main__:
-    handlers:
-      - default
-    level: DEBUG
-    propagate: False,
+  flask:
+    level: INFO
+  flask.app:
+    level: INFO
+  flask.request:
+    level: INFO
+  flask.response:
+    level: INFO
   gunicorn:
-    handlers:
-      - default
-    level: WARNING
-    propagate: False
+    level: INFO
   gunicorn.error:
-    handlers:
-      - default
-    level: DEBUG
-    propagate: False
+    level: INFO
   gunicorn.access:
-    handlers:
-      - default
-    level: DEBUG
-    propagate: False
-
+    level: INFO
+  sqlalchemy:
+    level: INFO
+  sqlalchemy.engine:
+    level: INFO
+  sqlalchemy.pool:
+    level: INFO
+  matplotlib:
+    level: INFO

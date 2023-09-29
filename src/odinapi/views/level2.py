@@ -348,7 +348,7 @@ class Level2ProjectPublish(MethodView):
         except level2db.ProjectError:
             abort(http.client.NOT_FOUND)
         return redirect(
-            url_for('level2viewproject', project=project, version='v5'),
+            url_for('level2_production.level2viewproject', project=project, version='v5'),
             code=http.client.CREATED,
         )
 
@@ -474,8 +474,8 @@ class Level2ViewComments(Level2ProjectBaseView):
 
     def _get_endpoint(self):
         return (
-            'level2devviewcomments' if self.development
-            else 'level2viewcomments'
+            'level2_development.level2devviewcomments' if self.development
+            else 'level2_production.level2viewcomments'
         )
 
     @register_versions('return', ['v4'])
@@ -552,8 +552,8 @@ class Level2ViewScans(Level2ProjectBaseView):
 
     def _get_endpoint(self):
         return (
-            'level2devviewscans' if self.development
-            else 'level2viewscans'
+            'level2_development.level2devviewscans' if self.development
+            else 'level2_production.level2viewscans'
         )
 
     @register_versions('return', ['v4'])
@@ -633,7 +633,9 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
 
     def _get_endpoint(self):
         return (
-            'level2devviewfailed' if self.development else 'level2viewfailed'
+            'level2_development.level2devviewfailed' 
+            if self.development
+            else 'level2_production.level2viewfailed'
         )
 
     @register_versions('return', ['v4'])
