@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 from dateutil.relativedelta import relativedelta
 from flask import request, jsonify, abort
@@ -46,6 +47,8 @@ SWAGGER.add_type('freqmode_info', {
     'NumScan': int,
     'URL': str
 })
+
+logger = logging.getLogger(__name__)
 
 
 class DateInfo(BaseView):
@@ -311,7 +314,10 @@ class FreqmodeInfoNoBackend(BaseView):
             abort(404)
         
         if not self._acquire_lock():
+            logging.debug("could not acquire raw lock")
             abort(429)
+        logging.debug("raw lock acquired")
+
         try:
             con = DatabaseConnector()
             loginfo = {}
@@ -329,6 +335,7 @@ class FreqmodeInfoNoBackend(BaseView):
             raise(err)
         finally:
             self._release_lock()
+            logging.debug("raw lock released")
 
         try:
             for index in range(len(loginfo['ScanID'])):
