@@ -35,7 +35,5 @@ class LatestECMF(MethodView):
 
     def get(self, version):
         file_name = newdonalettyERANC.get_latest_ecmf_file()
-        if not file_name:
-            abort(400)
         date = newdonalettyERANC.get_ecmf_file_date(file_name)
         return jsonify(dict(File=os.path.basename(file_name), Date=date))

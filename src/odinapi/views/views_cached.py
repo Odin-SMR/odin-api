@@ -629,10 +629,7 @@ class L1LogCachedList(FreqmodeInfoCachedNoBackend):
     def _fetch_data(self, version, freqmode):
         start_time = get_args.get_datetime('start_time')
         end_time = get_args.get_datetime('end_time')
-        if start_time and end_time:
-            if start_time > end_time:
-                abort(400)
-        else:
+        if start_time and end_time and start_time > end_time:
             abort(400)
 
         apriori = get_args.get_list('apriori')

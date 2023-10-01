@@ -9,7 +9,7 @@ import urllib.error
 import dateutil.tz
 from flask import request, abort, jsonify, redirect, url_for
 from flask.views import MethodView
-from flask_httpauth import HTTPBasicAuth  # type: ignore
+from flask_httpauth import HTTPBasicAuth
 from pymongo.errors import DuplicateKeyError
 from http import HTTPStatus
 
@@ -258,7 +258,7 @@ class Level2ViewProjects(BaseView):
     @register_versions('fetch')
     def _get_projects(self, version):
         db = level2db.ProjectsDB()
-        projects = db.get_projects(development=bool(is_development_request(version)))
+        projects = db.get_projects(development=is_development_request(version))
         base_url = get_base_url(version)
         return [{
             'Name': p['name'],
@@ -376,11 +376,8 @@ class Level2ProjectAnnotations(BaseView):
 
     @auth.login_required
     def post(self, project):
-        text = ""
-        freqmode = 0
-        if request.json:
-            text = request.json.get('Text')
-            freqmode = request.json.get('FreqMode')
+        text = request.json.get('Text')
+        freqmode = request.json.get('FreqMode')
         if text is None or not isinstance(text, str):
             abort(http.client.BAD_REQUEST)
         if freqmode is not None and not isinstance(freqmode, int):
@@ -1095,8 +1092,6 @@ class Level2ViewDay(Level2ProjectBaseView):
         try:
             start_time = get_args.get_datetime(val=date)
         except ValueError:
-            abort(400)
-        if not start_time:
             abort(400)
         end_time = start_time + timedelta(hours=24)
         try:

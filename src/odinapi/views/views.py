@@ -508,7 +508,7 @@ class ScanSpecNoBackend(ScanSpec):
         except ValueError:
             abort(400)
 
-        return self._get_v4(version, backend, freqmode, scanno, bool(debug))
+        return self._get_v4(version, backend, freqmode, scanno, debug)
 
     @register_versions('return')
     def _to_return_format(self, version, data, *args, **kwargs):

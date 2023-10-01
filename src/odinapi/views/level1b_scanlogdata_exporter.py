@@ -161,7 +161,7 @@ def get_scan_logdata(backend, datei, freqmode=-1, dmjd=0.25):
     date_start = datetime.strptime(datei, '%Y-%m-%dT%H:%M:%S')
     mjd_start = datetime2mjd(date_start)
     mjd_end = mjd_start + dmjd
-    date_end = date_start + relativedelta(days=+int(dmjd))
+    date_end = date_start + relativedelta(days=+dmjd)
     # extract scanids within the given time ranges
     # (make sure the stws are outside the true range,
     # since mjd2stw is only an approximate converter)
