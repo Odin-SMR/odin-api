@@ -1,15 +1,19 @@
 from datetime import datetime
 import logging
+from textwrap import dedent
+from typing import TypedDict
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # type: ignore
 from flask import request, jsonify, abort
 from flask.views import MethodView
 from numpy import around
 from threading import Lock
+from sqlalchemy import text
 
 # Activate Agg, must be done before imports below
 from odinapi.utils import use_agg
 
+from  ..pg_database import db
 from odinapi.utils.time_util import datetime2mjd, mjd2stw
 from .geoloc_tools import get_geoloc_info
 from .level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
@@ -23,7 +27,6 @@ from .read_osiris import read_osiris_file
 from .read_odinsmr2_old import read_qsmr_file
 from .read_ace import read_ace_file
 from .newdonalettyERANC import run_donaletty
-from .database import DatabaseConnector
 from odinapi.utils.defs import SPECIES
 from .get_odinapi_info import get_config_data_files
 
@@ -51,9 +54,23 @@ SWAGGER.add_type('freqmode_info', {
 logger = logging.getLogger(__name__)
 
 
+class QueryParams(TypedDict, total=False):
+    stw1: int
+    stw2: int
+    backend: str | None
+
+
 class DateInfo(BaseView):
     """Get scan counts for a day"""
 
+    query_str = text(
+        "select freqmode, backend, count(distinct(stw)) "
+        "from ac_cal_level1b "
+        "where stw between :stw1 and :stw2 "
+        "group by backend,freqmode "
+        "order by backend,freqmode "
+        )
+    
     @register_versions('swagger', ['v5'])
     def _swagger_def(self, version):
         return SWAGGER.get_path_definition(
@@ -75,8 +92,7 @@ class DateInfo(BaseView):
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        query_str = self.gen_query(stw1, stw2, mjd1, mjd2)
-        return self.gen_data(date, version, query_str)
+        return self.gen_data(date, version , QueryParams(stw1=stw1, stw2=stw2))
 
     @register_versions('return', ['v4'])
     def _return(self, version, data, date):
@@ -90,38 +106,34 @@ class DateInfo(BaseView):
             Type='freqmode_info',
             Count=len(data))
 
-    def gen_data(self, date, version, query_string):
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+    def gen_data(self, date, version, params: QueryParams):
+        result = db.session.execute(self.query_str, params=params)
         info_list = []
         for row in result:
             info_dict = {}
-            info_dict['Backend'] = row['backend']
-            info_dict['FreqMode'] = row['freqmode']
-            info_dict['NumScan'] = row['count']
+            info_dict['Backend'] = row.backend
+            info_dict['FreqMode'] = row.freqmode
+            info_dict['NumScan'] = row.count
             info_dict['URL'] = get_freqmode_raw_url(
-                request.url_root, version, date, row['backend'],
-                row['freqmode'])
+                request.url_root, version, date, row.backend,
+                row.freqmode)
             info_list.append(info_dict)
         return info_list
 
-    def gen_query(self, stw1, stw2, mjd1, mjd2):
-        query_str = (
-            "select freqmode, backend, count(distinct(stw)) "
-            "from ac_cal_level1b "
-            "where stw between {0} and {1} "
-            "group by backend,freqmode "
-            "order by backend,freqmode "
-            ).format(stw1, stw2)
-        return query_str
 
 
 class DateBackendInfo(DateInfo):
     """Get scan counts for a day and backend"""
 
     SUPPORTED_VERSIONS = ['v4']
+    query_str = text(dedent("""\
+        select freqmode, backend, count(distinct(stw))
+        from ac_cal_level1b
+        where stw between :stw1 and :stw2
+            and backend=:backend
+        group by backend,freqmode
+        order by backend,freqmode"""
+    ))
 
     @register_versions('fetch')
     def _get(self, version, date, backend):
@@ -134,23 +146,12 @@ class DateBackendInfo(DateInfo):
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        query_str = self.gen_query(stw1, stw2, mjd1, mjd2, backend)
-        return self.gen_data(date, version, query_str)
+        return self.gen_data(date, version, QueryParams(stw1=stw1, stw2=stw2, backend=backend))
 
     @register_versions('return')
     def _return(self, version, data, date, backend):
         return dict(Date=date, Info=data)
 
-    def gen_query(self, stw1, stw2, mjd1, mjd2, backend):
-        query_str = (
-            "select freqmode, backend, count(distinct(stw)) "
-            "from ac_cal_level1b "
-            "where stw between {0} and {1} "
-            "and backend='{2}' "
-            "group by backend,freqmode "
-            "order by backend,freqmode "
-            ).format(stw1, stw2, backend)
-        return query_str
 
 
 class FreqmodeInfo(BaseView):
@@ -177,14 +178,12 @@ class FreqmodeInfo(BaseView):
     @register_versions('fetch', ['v4'])
     def _fetch_data_v4(self, version, date, backend, freqmode, scanno=None):
 
-        con = DatabaseConnector()
         loginfo = {}
         keylist = self.KEYS_V4
 
         loginfo, _, _ = get_scan_logdata(
-            con, backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
+            backend, date+'T00:00:00', freqmode=int(freqmode), dmjd=1,
             )
-        con.close()
 
         try:
             for index in range(len(loginfo['ScanID'])):
@@ -319,18 +318,15 @@ class FreqmodeInfoNoBackend(BaseView):
         logging.debug("raw lock acquired")
 
         try:
-            con = DatabaseConnector()
             loginfo = {}
             keylist = FreqmodeInfo.KEYS_V4
 
             loginfo, _, _ = get_scan_logdata(
-                con,
                 backend,
                 date+'T00:00:00',
                 freqmode=int(freqmode),
                 dmjd=1,
             )
-            con.close()
         except Exception as err:
             raise(err)
         finally:
@@ -430,9 +426,7 @@ class ScanSpec(BaseView):
 
     @register_versions('fetch', ['v4'])
     def _get_v4(self, version, backend, freqmode, scanno, debug=False):
-        con = DatabaseConnector()
-        spectra = get_scan_data_v2(con, backend, freqmode, scanno, debug)
-        con.close()
+        spectra = get_scan_data_v2(backend, freqmode, scanno, debug)
         if spectra == {}:
             abort(404)
         # spectra is a dictionary containing the relevant data
@@ -514,7 +508,7 @@ class ScanSpecNoBackend(ScanSpec):
         except ValueError:
             abort(400)
 
-        return self._get_v4(version, backend, freqmode, scanno, debug)
+        return self._get_v4(version, backend, freqmode, scanno, bool(debug))
 
     @register_versions('return')
     def _to_return_format(self, version, data, *args, **kwargs):
@@ -529,9 +523,7 @@ class ScanPTZ(BaseView):
     @register_versions('fetch', ['v4'])
     def _get_ptz_v4(self, version, date, backend, freqmode, scanno):
 
-        con = DatabaseConnector()
-        loginfo = get_scan_log_data(con, freqmode, scanno)
-        con.close()
+        loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             abort(404)
         mjd, _, midlat, midlon = get_geoloc_info(loginfo)
@@ -616,9 +608,7 @@ class ScanAPR(BaseView):
 
     @register_versions('fetch', ['v4'])
     def _get_v4(self, version, species, date, backend, freqmode, scanno):
-        con = DatabaseConnector()
-        loginfo = get_scan_log_data(con, freqmode, scanno)
-        con.close()
+        loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             abort(404)
         _, day_of_year, midlat, _ = get_geoloc_info(loginfo)
@@ -733,23 +723,25 @@ def get_L2_collocations(root_url, version, freqmode, scanno):
 
 class VdsInfo(MethodView):
     """verification data set scan info"""
+
+    query = text(dedent(
+        """select backend, freqmode, count(distinct(scanid))
+        from collocations group by backend,freqmode"""
+    ))
+
     def get(self, version):
         """GET-method"""
         if version not in ['v4']:
             abort(404)
-        query_string = '''select backend, freqmode, count(distinct(scanid))
-                          from collocations group by backend,freqmode'''
-        datadict = self.gen_data(query_string, version)
+        datadict = self.gen_data(version)
         return jsonify(datadict)
 
-    def gen_data(self, query_string, version):
+    def gen_data(self, version):
 
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+        result = db.session.execute(self.query)
         datadict = {'VDS': []}
-        for row in result:
+        for row_result in result:
+            row = row_result._asdict()
             data = dict()
             data['Backend'] = row['backend']
             data['FreqMode'] = row['freqmode']
@@ -768,27 +760,29 @@ class VdsInfo(MethodView):
 
 class VdsFreqmodeInfo(MethodView):
     """verification data set scan info"""
+    
+    query = text(dedent(
+        """\
+        select backend,freqmode,species,instrument,count(*)
+        from collocations
+        where backend=:backend and freqmode=:freqmode
+        group by backend, freqmode, species, instrument"""
+    ))
     def get(self, version, backend, freqmode):
         """GET-method"""
         if version not in ['v4']:
             abort(404)
-        query_string = (
-            "select backend,freqmode,species,instrument,count(*) "
-            "from collocations "
-            "where backend='{0}' and freqmode={1} "
-            "group by backend, freqmode, species, instrument"
-            "").format(backend, freqmode)
-        datadict = self.gen_data(query_string, version)
+        datadict = self.gen_data(
+            version,
+            dict(backend=backend, freqmode=freqmode)
+        )
         return jsonify(datadict)
 
-    def gen_data(self, query_string, version):
-
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+    def gen_data(self, version, params):
+        result = db.session.execute(self.query,params=params)
         datadict = {'VDS': []}
-        for row in result:
+        for row_result in result:
+            row = row_result._asdict()
             data = dict()
             data['Backend'] = row['backend']
             data['FreqMode'] = row['freqmode']
@@ -808,30 +802,38 @@ class VdsFreqmodeInfo(MethodView):
 
 class VdsInstrumentInfo(MethodView):
     """verification data set scan info"""
+    query = text(dedent(
+        """\
+        select date, backend, freqmode,species, instrument, count(*)
+        from collocations
+        where backend=:backend and
+            freqmode=:freqmode and
+            species=:species and
+            instrument=:instrument
+        group by date, backend, freqmode, species, instrument
+        order by date"""
+    ))
     def get(self, version, backend, freqmode, instrument, species):
         """GET-method"""
         if version not in ['v4']:
             abort(404)
-        query_string = '''select date, backend, freqmode,
-                          species, instrument, count(*) from collocations
-                          where backend='{0}' and
-                                freqmode={1} and
-                                species='{2}' and
-                                instrument='{3}'
-                          group by date, backend, freqmode, species, instrument
-                          order by date'''.format(backend, freqmode, species,
-                                                  instrument)
-        datadict = self.gen_data(query_string, version)
+        datadict = self.gen_data(
+            version,
+            dict(
+                backend=backend,
+                freqmode=freqmode,
+                instrument=instrument,
+                species=species
+            )
+        )
         return jsonify(datadict)
 
-    def gen_data(self, query_string, version):
+    def gen_data(self, version, params):
 
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+        result = db.session.execute(self.query, params=params)
         datadict = {'VDS': []}
-        for row in result:
+        for row_result in result:
+            row = row_result._asdict()
             data = dict()
             data['Date'] = row['date'].isoformat()
             data['Backend'] = row['backend']
@@ -853,29 +855,37 @@ class VdsInstrumentInfo(MethodView):
 
 class VdsDateInfo(MethodView):
     """verification data set scan info"""
+
+    query = text(dedent(
+        '''select * from collocations
+        where backend=:backend and
+        freqmode=:freqmode and
+        species=:species and
+        instrument=:instrument
+        and date=:date '''
+    ))
+
     def get(self, version, backend, freqmode, species, instrument, date):
         """GET-method"""
         if version not in ['v4']:
             abort(404)
-        query_string = '''select * from collocations
-                          where backend='{0}' and
-                                freqmode={1} and
-                                species='{2}' and
-                                instrument='{3}'
-                                and date='{4}' '''.format(backend, freqmode,
-                                                          species, instrument,
-                                                          date)
-        datadict = self.gen_data(query_string, version, backend, freqmode,
+        datadict = self.gen_data(version, backend, freqmode,
                                  species, instrument, date)
         return jsonify(datadict)
 
-    def gen_data(self, query_string, version, backend, freqmode, species,
+    def gen_data(self, version, backend, freqmode, species,
                  instrument, date):
 
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+        result = db.session.execute(
+            self.query, 
+            params=dict(
+                backend=backend,
+                freqmode=freqmode,
+                species=species,
+                instrument=instrument,
+                date=date
+            )
+        )
         datadict = {'VDS': []}
         odin_keys = [
             'Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
@@ -887,7 +897,8 @@ class VdsDateInfo(MethodView):
             'File', 'File_Index', 'DMJD', 'DTheta',
         ]
 
-        for row in result:
+        for row_data in result:
+            row = row_data._asdict()
             data = dict()
             odin = dict()
             for key in odin_keys:
@@ -932,25 +943,26 @@ class VdsDateInfo(MethodView):
 
 class VdsScanInfo(MethodView):
     """verification data set scan info"""
+
+    query = text(dedent(
+        '''\
+        select distinct(scanid), date, freqmode, backend,
+        altend, altstart, latend, latstart, lonend, lonstart,
+        mjdend, mjdstart, numspec, sunzd
+        from collocations
+        where backend=:backend and freqmode=:freqmode'''
+    ))
+
     def get(self, version, backend, freqmode):
         """GET-method"""
         if version not in ['v4']:
             abort(404)
-        query_string = '''select distinct(scanid), date, freqmode, backend,
-                          altend, altstart, latend, latstart, lonend, lonstart,
-                          mjdend, mjdstart, numspec, sunzd
-                          from collocations
-                          where backend='{0}' and freqmode={1}
-                          '''.format(backend, freqmode)
-        datadict = self.gen_data(query_string, version, backend, freqmode)
+        datadict = self.gen_data(version, backend, freqmode)
         return jsonify(datadict)
 
-    def gen_data(self, query_string, version, backend, freqmode):
+    def gen_data(self, version, backend, freqmode):
 
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+        result = db.session.execute(self.query, params=dict(backend=backend, freqmode=freqmode))
         datadict = {'VDS': []}
         odin_keys = [
             'Date', 'FreqMode', 'Backend', 'ScanID', 'AltEnd',
@@ -958,9 +970,9 @@ class VdsScanInfo(MethodView):
             'MJDEnd', 'MJDStart', 'NumSpec', 'SunZD',
         ]
 
-        for row in result:
+        for row_data in result:
+            row = row_data._asdict()
             data, odin = dict(), dict()
-
             for key in odin_keys:
                 odin[key] = row[key.lower()]
             data['Info'] = odin

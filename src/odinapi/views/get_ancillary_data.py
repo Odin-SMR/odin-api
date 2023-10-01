@@ -1,7 +1,9 @@
 import numpy as np
 import ephem
+from sqlalchemy import text  # type: ignore
 from odinapi.views.geoloc_tools import sph2cart
 from odinapi.utils.time_util import mjd2datetime
+from odinapi.pg_database import db
 
 
 def get_theta(pressure, temperature):
@@ -62,31 +64,31 @@ def get_orbit(orbit):
     return int(np.floor(np.mean(orbit)))
 
 
-def get_attitude_data(db_connection, scanno):
+def get_attitude_data(scanno):
     """get attitude data from level1 database"""
-    query = db_connection.query(
-        '''select stw, latitude, longitude,
+    result = db.session.execute(text(dedent('''\
+        select stw, latitude, longitude,
         sunzd, orbit
         from ac_level1b
         join attitude_level1 using (stw)
-        where calstw = {0}
-        order by stw'''.format(scanno))
-    result = query.dictresult()
-    db_connection.close()
-    return {
-        'stw': [row['stw'] for row in result],
-        'latitude': [row['latitude'] for row in result],
-        'longitude': [row['longitude'] for row in result],
-        'sunzd': [row['sunzd'] for row in result],
-        'orbit': [row['orbit'] for row in result],
-    }
+        where calstw = :s
+        order by stw''')), params=dict(s=scanno))
+    dict_list = dict(stw=[],latitude=[],longitude=[], sunzd=[], orbit=[])
+    for row in result:
+        dict_list['stw'].append(row.stw)
+        dict_list['latitude'].append(row.latitude)
+        dict_list['longitude'].append(row.longitude)
+        dict_list['sunzd'].append(row.sunzd)
+        dict_list['orbit'].append(row.orbit)
+    
+    return dict_list
 
 
-def get_ancillary_data(db_connection, level2_data):
+def get_ancillary_data(level2_data):
     """collect ancillary data for level2 data"""
     anc_data = []
     attitude_data = get_attitude_data(
-        db_connection, level2_data[0]["ScanID"])
+        level2_data[0]["ScanID"])
     orbit = get_orbit(attitude_data['orbit'])
     for product in level2_data:
         sza_at_retrieval_pos = get_sza_at_retrieval_position(

@@ -1,10 +1,11 @@
 import os.path
+from textwrap import dedent
 
-from flask import jsonify
+from flask import abort, jsonify
 from flask.views import MethodView
 from sqlalchemy import text
 
-from ..api import db
+from ..pg_database import db
 from . import newdonalettyERANC
 
 
@@ -15,11 +16,11 @@ class FileInfo(MethodView):
         """GET"""
         result_dict = {}
         for file_ending in ["ac1", "ac2", "shk", "fba", "att"]:
-            query = text(
-                "select created from level0_files_imported "
-                "where file ~ :f "
-                "order by created desc limit 1"
-            )
+            query = text(dedent("""\
+                select created from level0_files_imported
+                where file ~ :f
+                order by created desc limit 1"""
+            ))
             db_result = db.session.execute(query, params=dict(f=".*" + file_ending))
             first_row = db_result.first()
             if first_row is not None:
@@ -34,5 +35,7 @@ class LatestECMF(MethodView):
 
     def get(self, version):
         file_name = newdonalettyERANC.get_latest_ecmf_file()
+        if not file_name:
+            abort(400)
         date = newdonalettyERANC.get_ecmf_file_date(file_name)
         return jsonify(dict(File=os.path.basename(file_name), Date=date))

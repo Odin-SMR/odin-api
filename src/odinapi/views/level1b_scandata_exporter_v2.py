@@ -1,9 +1,11 @@
 # pylint: disable=E0401,C0413,C0302,R0912,R0914
 '''extract scan data from odin database and display on webapi'''
 from datetime import datetime
+from textwrap import dedent
 import numpy as np
 from dateutil.relativedelta import relativedelta
 import matplotlib
+from sqlalchemy import text
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt  # noqa
@@ -20,13 +22,13 @@ from odinapi.views.smr_frequency import (  # noqa
     get_bad_ssb_modules,
     doppler_corr
 )
+from ..pg_database import db
 
 
 class ScandataExporter:
     '''class derived to extract and decode scan data from odin database'''
-    def __init__(self, backend, con):
+    def __init__(self, backend):
         self.backend = backend
-        self.con = con
         self.calstw = 0
         self.refdata = []
         self.specdata = []
@@ -37,8 +39,8 @@ class ScandataExporter:
         '''export scan data from database tables'''
         self.calstw = calstw
         # extract all target spectrum data for the scan
-        temp = [self.backend, calstw, freqmode]
-        query = self.con.query('''
+        temp = dict(b=self.backend, c=calstw, f=freqmode)
+        result = db.session.execute(text(dedent('''\
               select ac_level1b.stw, calstw, ac_level1b.backend, orbit,
               mjd, lst, intmode, mode, spectra, alevel, version, channels,
               skyfreq, lofreq, restfreq, maxsuppression, tsys, sourcemode,
@@ -54,12 +56,11 @@ class ScandataExporter:
               join shk_level1 on ac_level1b.stw = shk_level1.stw and
               ac_level1b.backend = shk_level1.backend and
               ac_level1b.frontend = shk_level1.frontendsplit
-              where calstw = {1} and ac_level1b.backend = '{0}' and
-              version = 8 and sig_type = 'SIG' and freqmode = {2}
-              order by stw asc, intmode asc'''.format(*temp))
-        result = query.dictresult()
+              where calstw = :c and ac_level1b.backend = :b and
+              version = 8 and sig_type = 'SIG' and freqmode = :f
+              order by stw asc, intmode asc''')),params=temp).all()
         # extract all calibration spectrum data for the scan
-        query2 = self.con.query('''
+        result2 = db.session.execute(text(dedent('''\
                select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
                mjd, lst, intmode, mode, spectra, alevel, version, channels,
                spectype, skyfreq, lofreq, restfreq, maxsuppression,
@@ -75,13 +76,12 @@ class ScandataExporter:
                join shk_level1 on ac_cal_level1b.stw = shk_level1.stw and
                ac_cal_level1b.backend = shk_level1.backend and
                ac_cal_level1b.frontend = shk_level1.frontendsplit
-               where ac_cal_level1b.stw = {1} and
-               ac_cal_level1b.backend = '{0}'
-               and version = 8 and freqmode = {2}
-               order by stw asc, intmode asc, spectype asc'''.format(*temp))
-        result2 = query2.dictresult()
+               where ac_cal_level1b.stw = :c and
+               ac_cal_level1b.backend = :b
+               and version = 8 and freqmode = :f
+               order by stw asc, intmode asc, spectype asc''')), params=temp).all()
         if result2 == []:
-            query2 = self.con.query('''
+            result2 = db.session.execute(text(dedent('''\
                select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
                mjd, lst, intmode, mode, spectra, alevel, version, channels,
                spectype, skyfreq, lofreq, restfreq, maxsuppression,
@@ -96,13 +96,12 @@ class ScandataExporter:
                join ac_level0 using (backend, stw)
                join shk_level1 on ac_cal_level1b.stw = shk_level1.stw and
                ac_cal_level1b.backend = shk_level1.backend
-               where ac_cal_level1b.stw = {1} and
-               ac_cal_level1b.backend = '{0}'
-               and version = 8 and freqmode = {2}
-               order by stw asc, intmode asc, spectype asc'''.format(*temp))
-            result2 = query2.dictresult()
+               where ac_cal_level1b.stw = :c and
+               ac_cal_level1b.backend = :b
+               and version = 8 and freqmode = :f
+               order by stw asc, intmode asc, spectype asc''')), params=temp).all()
             if result2 == []:
-                query2 = self.con.query('''
+                result2 = db.session.execute(text(dedent('''\
                    select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
                    mjd, lst, intmode, mode, spectra, alevel, version, channels,
                    spectype, skyfreq, lofreq, restfreq, maxsuppression,
@@ -117,47 +116,45 @@ class ScandataExporter:
                    join ac_level0  using (backend, stw)
                    join shk_level1 on ac_cal_level1b.stw = shk_level1.stw and
                    ac_cal_level1b.backend = shk_level1.backend
-                   where ac_cal_level1b.stw = {1} and
-                   ac_cal_level1b.backend = '{0}' and
-                   version = 8 and freqmode = {2}
+                   where ac_cal_level1b.stw = :c and
+                   ac_cal_level1b.backend = :b and
+                   version = 8 and freqmode = :f
                    order by stw asc, intmode asc,
-                   spectype asc'''.format(*temp))
-                result2 = query2.dictresult()
+                   spectype asc''')), params=temp).all()
         # extract all reference spectrum data for the scan
+        stw_offset = 0
         if self.backend == 'AC1':
             stw_offset = -1
-        elif self.backend == 'AC2':
-            stw_offset = 0
-        stw1 = result[0]['stw'] - 256
-        stw2 = result[-1]['stw'] + 256
-        query = self.con.query('''
+        stw1 = result[0].stw - 256
+        stw2 = result[-1].stw + 256
+        refdata = db.session.execute(text(dedent('''
                   select backend, frontend, ac_level0.stw, inttime, cc,
                   sig_type, mech_type, skybeamhit
                   from ac_level0
                   join attitude_level1  using (backend, stw)
-                  join fba_level0 on fba_level0.stw = ac_level0.stw+{2}
-                  where ac_level0.stw between {0} and {1}
+                  join fba_level0 on fba_level0.stw = ac_level0.stw+ :so
+                  where ac_level0.stw between :s1 and :s2
                   and sig_type = 'REF'
                   order by ac_level0.stw
-                             '''.format(*[stw1, stw2, stw_offset]))
-        self.refdata = query.dictresult()
+                             ''')), params=dict(s1=stw1, s2=stw2, so=stw_offset))
+        self.refdata = [row._asdict() for row in refdata]
 
-        if result == [] or result2 == [] or self.refdata == []:
+        if result == []  or result2 == [] or self.refdata == []:
             return 0
         # combine target and calibration data
         self.specdata = []  # list of both target and calibration spectrum data
         self.scaninfo = []  # list of calstw tells which scan a spectrum belong
         for ind, row2 in enumerate(result2):
             # fist add calibration spectrum
-            self.specdata.append(row2)
-            self.scaninfo.append(row2['stw'])
+            self.specdata.append(row2._asdict())
+            self.scaninfo.append(row2.stw)
             if ind < len(result2) - 1:
-                if result2[ind]['stw'] == result2[ind + 1]['stw']:
+                if result2[ind].stw == result2[ind + 1].stw:
                     continue
             for row in result:
-                if row['calstw'] == row2['stw']:
-                    self.scaninfo.append(row['calstw'])
-                    self.specdata.append(row)
+                if row.calstw == row2.stw:
+                    self.scaninfo.append(row.calstw)
+                    self.specdata.append(row._asdict())
         return 1
 
     def decode_refdata(self):
@@ -289,8 +286,7 @@ class ScandataExporter:
 class CalibrationStep2:
     '''class derived to perform calibration step 2,
        i.e. remove ripple'''
-    def __init__(self, con, freqmode, version):
-        self.con = con
+    def __init__(self, freqmode, version):
         self.spectra = [caldict()]
         self.spec = []
         self.freqmode = freqmode
@@ -385,44 +381,46 @@ class CalibrationStep2:
         [hotload_range1, hotload_range2, hl_1, hl_2] = (
             self.get_hotload_range(hotload)
         )
-        query_string = (
-            "select hotload_range, altitude_range, median_fit, channels "
-            "from ac_cal_level1c where freqmode = $1 and "
-            "version = $2 and intmode = $3 and ssb_fq = $4 "
-            "and altitude_range = $5 and hotload_range = $6 "
-            "order by hotload_range"
+        query_string = dedent("""\
+            select hotload_range, altitude_range, median_fit, channels
+            from ac_cal_level1c where freqmode = :f and
+            version = :v and intmode = :i and ssb_fq = :s
+            and altitude_range = :a and hotload_range = :h
+            order by hotload_range"""
         )
 
-        query = self.con.query(
-            query_string,
-            self.freqmode,
-            int(self.version),
-            intmode,
-            ssb_fq.__repr__().translate(str.maketrans("[]", "{}")),
-            self.altitude_range,
-            hotload_range1
-        )
-        result1 = query.dictresult()
-        query = self.con.query(
-            query_string,
-            self.freqmode,
-            int(self.version),
-            intmode,
-            ssb_fq.__repr__().translate(str.maketrans("[]", "{}")),
-            self.altitude_range,
-            hotload_range2
-        )
-        result2 = query.dictresult()
-        if result1:
+        result1 = db.session.execute(
+            text(query_string),
+            params=dict(
+                f=self.freqmode,
+                v=int(self.version),
+                i=intmode,
+                s=ssb_fq.__repr__().translate(str.maketrans("[]", "{}")),
+                a=self.altitude_range,
+                h=hotload_range1
+            )
+        ).all()
+        result2 = db.session.execute(
+            text(query_string),
+            params=dict(
+                f=self.freqmode,
+                v=int(self.version),
+                i=intmode,
+                s=ssb_fq.__repr__().translate(str.maketrans("[]", "{}")),
+                a=self.altitude_range,
+                h=hotload_range2
+            )
+        ).all()
+        if result1 != []:
             medianfit1 = np.ndarray(
-                shape=(result1[0]['channels'],),
+                shape=(result1[0].channels,),
                 dtype='float64',
-                buffer=result1[0]['median_fit'])
-        if result2:
+                buffer=result1[0].median_fit)
+        if result2 != []:
             medianfit2 = np.ndarray(
-                shape=(result2[0]['channels'],),
+                shape=(result2[0].channels,),
                 dtype='float64',
-                buffer=result2[0]['median_fit']
+                buffer=result2[0].median_fit
             )
         if result1 and result2:
             weight1 = 1 - np.abs(hl_1 - hotload) / np.abs(hl_2 - hl_1)
@@ -923,10 +921,9 @@ def unsplit_normalmode(scangr):
     return scangr
 
 
-def apply_calibration_step2(con, scangr):
+def apply_calibration_step2(scangr):
     '''apply correction'''
-    calgr = CalibrationStep2(con,
-                             scangr.spectra['freqmode'][2],
+    calgr = CalibrationStep2(scangr.spectra['freqmode'][2],
                              scangr.spectra['version'][2])
     for index, speci in enumerate(scangr.specdata):
         if scangr.spectra['type'][index] == 8:
@@ -1041,10 +1038,10 @@ def get_freqinfo(scangr, debug=False):
     return scangr
 
 
-def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
+def get_scan_data_v2(backend, freqmode, scanno, debug=False):
     '''get scan data'''
     calstw = int(scanno)
-    scangr = ScandataExporter(backend, con)
+    scangr = ScandataExporter(backend)
     try:
         isok = scangr.get_db_data(freqmode, calstw)
     except IndexError:
@@ -1055,7 +1052,7 @@ def get_scan_data_v2(con, backend, freqmode, scanno, debug=False):
     scangr.decode_refdata()
     scangr.decode_specdata()
     # perform calibration step2 for target spectrum
-    scangr = apply_calibration_step2(con, scangr)
+    scangr = apply_calibration_step2(scangr)
 
     if scangr.spectra['ac0_frontend'][0] == 'SPL':
         # "unpslit data" to make it symmetric with data from other modes

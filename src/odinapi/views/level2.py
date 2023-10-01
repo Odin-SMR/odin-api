@@ -9,7 +9,7 @@ import urllib.error
 import dateutil.tz
 from flask import request, abort, jsonify, redirect, url_for
 from flask.views import MethodView
-from flask_httpauth import HTTPBasicAuth
+from flask_httpauth import HTTPBasicAuth  # type: ignore
 from pymongo.errors import DuplicateKeyError
 from http import HTTPStatus
 
@@ -24,7 +24,6 @@ from odinapi.database import level2db
 from odinapi.views.views import get_L2_collocations
 from odinapi.views.baseview import BaseView, register_versions, BadRequest
 from odinapi.views.utils import make_rfc5988_pagination_header
-from odinapi.views.database import DatabaseConnector
 from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.utils.swagger import SWAGGER
 import odinapi.utils.get_args as get_args
@@ -259,7 +258,7 @@ class Level2ViewProjects(BaseView):
     @register_versions('fetch')
     def _get_projects(self, version):
         db = level2db.ProjectsDB()
-        projects = db.get_projects(development=is_development_request(version))
+        projects = db.get_projects(development=bool(is_development_request(version)))
         base_url = get_base_url(version)
         return [{
             'Name': p['name'],
@@ -377,8 +376,11 @@ class Level2ProjectAnnotations(BaseView):
 
     @auth.login_required
     def post(self, project):
-        text = request.json.get('Text')
-        freqmode = request.json.get('FreqMode')
+        text = ""
+        freqmode = 0
+        if request.json:
+            text = request.json.get('Text')
+            freqmode = request.json.get('FreqMode')
         if text is None or not isinstance(text, str):
             abort(http.client.BAD_REQUEST)
         if freqmode is not None and not isinstance(freqmode, int):
@@ -682,8 +684,7 @@ class Level2ViewScan(Level2ProjectBaseView):
         if version >= 'v5':
             if not L2:
                 abort(404)
-            info['L2anc'] = get_ancillary_data(
-                DatabaseConnector(), info['L2'])
+            info['L2anc'] = get_ancillary_data(info['L2'])
         return info
 
     @register_versions('return', ['v4'])
@@ -821,7 +822,7 @@ class L2ancView(Level2ProjectBaseView):
         L2 = db.get_L2(freqmode, scanno, product=product)
         if not L2:
             abort(404)
-        L2anc = get_ancillary_data(DatabaseConnector(), L2)
+        L2anc = get_ancillary_data(L2)
         return L2anc
 
     @register_versions('return')
@@ -1094,6 +1095,8 @@ class Level2ViewDay(Level2ProjectBaseView):
         try:
             start_time = get_args.get_datetime(val=date)
         except ValueError:
+            abort(400)
+        if not start_time:
             abort(400)
         end_time = start_time + timedelta(hours=24)
         try:

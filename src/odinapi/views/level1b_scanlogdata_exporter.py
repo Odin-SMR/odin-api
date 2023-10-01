@@ -3,42 +3,44 @@
    from odin scan
 '''
 from datetime import datetime
+from textwrap import dedent
 from dateutil.relativedelta import relativedelta
 import numpy as np
 import matplotlib
+from sqlalchemy import text
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa
 from matplotlib import dates  # noqa
+from ..pg_database import db
 from odinapi.views.level1b_scandata_exporter_v2 import get_scan_data_v2  # noqa
 from odinapi.utils.time_util import mjd2stw, datetime2mjd, mjd2datetime  # noqa
 
 
 class ScanInfoExporter:
     '''A class derived for extracting loginfo from odin scan'''
-    def __init__(self, backend, freqmode, con):
+    def __init__(self, backend, freqmode):
         self.backend = backend
         self.freqmode = freqmode
-        self.con = con
 
     def get_scanids(self, minstw, maxstw):
         '''get scanids within a time span'''
-        query = self.con.query(
-            '''select distinct(stw) from
-               ac_cal_level1b
-               where stw between {0} and {1} and
-               backend = '{2}' and freqmode = {3}
-               order by stw
-            '''.format(*[minstw, maxstw,
-                         self.backend, self.freqmode])
+        result = db.session.execute(
+            text(dedent('''\
+                select distinct(stw) from
+                ac_cal_level1b
+                where stw between :s1 and :s2 and
+                backend = :b and freqmode = :f
+                order by stw'''
+            )),
+            params=dict(s1=minstw, s2=maxstw, b=self.backend, f=self.freqmode)
         )
-        result = query.dictresult()
-        return [row['stw'] for row in result]
+        return [row.stw for row in result]
 
     def extract_scan_log(self, scanid):
         '''extract log info for a given scan '''
         try:
             scan_data = get_scan_data_v2(
-                self.con, self.backend, self.freqmode, scanid
+                self.backend, self.freqmode, scanid
             )
         except(IndexError, TypeError, ValueError):
             return {}
@@ -153,13 +155,13 @@ def plot_loginfo(backend, date1, date2, data):
     return fig
 
 
-def get_scan_logdata(con, backend, datei, freqmode=-1, dmjd=0.25):
+def get_scan_logdata(backend, datei, freqmode=-1, dmjd=0.25):
     '''get loginfo of scans for a given date'''
-    scan_info_exporter = ScanInfoExporter(backend, freqmode, con)
+    scan_info_exporter = ScanInfoExporter(backend, freqmode)
     date_start = datetime.strptime(datei, '%Y-%m-%dT%H:%M:%S')
     mjd_start = datetime2mjd(date_start)
     mjd_end = mjd_start + dmjd
-    date_end = date_start + relativedelta(days=+dmjd)
+    date_end = date_start + relativedelta(days=+int(dmjd))
     # extract scanids within the given time ranges
     # (make sure the stws are outside the true range,
     # since mjd2stw is only an approximate converter)

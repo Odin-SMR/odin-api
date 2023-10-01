@@ -10,6 +10,7 @@ pytest-freezegun
 requests
 selenium
 tox
+types-python-dateutil
 types-mock
 types-PyYAML
 types-requests

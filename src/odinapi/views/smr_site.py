@@ -11,7 +11,6 @@ from odinapi.views.level1b_scandata_exporter_v2 import (
     get_scan_data_v2, plot_scan)
 from odinapi.views.level1b_scanlogdata_exporter import (
     get_scan_logdata, plot_loginfo)
-from odinapi.views.database import DatabaseConnector
 from odinapi.views.level2 import parse_parameters
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 
@@ -111,11 +110,9 @@ class ViewScanSpec(MethodView):
         except KeyError:
             abort(404)
 
-        con = DatabaseConnector()
         calstw = int(scanno)
-        spectra = get_scan_data_v2(con, backend, freqmode, scanno)
+        spectra = get_scan_data_v2(backend, freqmode, scanno)
         fig = plot_scan(backend, calstw, spectra)
-        con.close()
         buf = io.BytesIO()
         fig.savefig(buf, format='png')
         buf.seek(0)
@@ -134,10 +131,8 @@ class ViewFreqmodeInfoPlot(MethodView):
         except KeyError:
             abort(404)
 
-        con = DatabaseConnector()
         loginfo, date1, date2 = get_scan_logdata(
-            con, backend, date+'T00:00:00', int(freqmode), 1)
-        con.close()
+            backend, date+'T00:00:00', int(freqmode), 1)
 
         lista = []
         for ind in range(len(loginfo['ScanID'])):

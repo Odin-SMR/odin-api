@@ -1,9 +1,12 @@
 """ doc
 """
+from textwrap import dedent
 from flask import jsonify, abort, request
 from flask.views import MethodView
-from .database import DatabaseConnector
 from datetime import date, datetime, timedelta
+
+from sqlalchemy import text
+from ..pg_database import db
 
 
 def find_last_day_of_month(year, month):
@@ -16,6 +19,14 @@ def find_last_day_of_month(year, month):
 
 class FreqmodeStatistics(MethodView):
     """Statistics of total number of scans per freqmode"""
+    query = text(dedent("""\
+        select freqmode, sum(nscans)
+        from measurements_cache
+        where date between :d1 and :d2
+        group by freqmode
+        order by freqmode"""
+    ))
+    
     def get(self, version):
         """GET"""
         year = request.args.get('year')
@@ -30,38 +41,32 @@ class FreqmodeStatistics(MethodView):
         """Get freqmode scans summed up for all years"""
         first_date = "2001-01-01"
         last_date = "{0}-12-31".format(datetime.now().year)
-        query_str = self.gen_query(first_date, last_date)
-        info_list = self.gen_data(query_str)
+        info_list = self.gen_data(dict(d1=first_date, d2=last_date))
         return jsonify(Data=info_list)
 
     def get_year(self, year):
         """Get freqmode scans summed up for a single year"""
         first_date = "{0}-01-01".format(year)
         last_date = "{0}-12-31".format(year)
-        query_str = self.gen_query(first_date, last_date)
-        info_list = self.gen_data(query_str)
+        info_list = self.gen_data(dict(d1=first_date, d2=last_date))
         return jsonify(Data=info_list)
 
-    def gen_data(self, query_string):
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
+    def gen_data(self, params):
+        query = db.session.execute(self.query, params=params)
+        result = [row._asdict() for row in query]
         return result
-
-    def gen_query(self, first_date, last_date):
-        query_str = (
-            "select freqmode, sum(nscans) "
-            "from measurements_cache "
-            "where date between '{0}' and '{1}' "
-            "group by freqmode "
-            "order by freqmode ".format(first_date, last_date)
-            )
-        return query_str
 
 
 class TimelineFreqmodeStatistics(MethodView):
     """Statistics of number of scans per freqmode for different years"""
+    query = text("""\
+        select freqmode, sum(nscans)
+        from measurements_cache
+        where date between :d1 and :d2
+        group by freqmode
+        order by freqmode"""     
+    )
+
     def get(self, version):
         """GET"""
         year = request.args.get('year')
@@ -79,13 +84,12 @@ class TimelineFreqmodeStatistics(MethodView):
         for year in years:
             first_date = "{0}-01-01".format(year)
             last_date = "{0}-12-31".format(year)
-            query_str = self.gen_query(first_date, last_date)
-            result = self.gen_data(query_str)
+            result = db.session.execute(self.query, params=dict(d1=first_date, d2=last_date))
             for row in result:
                 try:
-                    info_dict[row["freqmode"]].append([year, row["sum"]])
+                    info_dict[row.freqmode].append([year, row.sum])
                 except KeyError:
-                    info_dict[row["freqmode"]] = [[year, row["sum"]]]
+                    info_dict[row.freqmode] = [[year, row.sum]]
         info_dict = self._fill_blanks(years, info_dict)
         return jsonify(Data=info_dict, Years=years)
 
@@ -96,14 +100,12 @@ class TimelineFreqmodeStatistics(MethodView):
         for month in months:
             first_date = date(year, month, 1)
             last_date = find_last_day_of_month(year, month)
-            query_str = self.gen_query(first_date.isoformat(),
-                                       last_date.isoformat())
-            result = self.gen_data(query_str)
+            result = db.session.execute(self.query, params=dict(d1=first_date, d2=last_date))
             for row in result:
                 try:
-                    info_dict[row["freqmode"]].append([month, row["sum"]])
+                    info_dict[row.freqmode].append([month, row.sum])
                 except KeyError:
-                    info_dict[row["freqmode"]] = [[month, row["sum"]]]
+                    info_dict[row.freqmode] = [[month, row.sum]]
         info_dict = self._fill_blanks(months, info_dict)
         return jsonify(Data=info_dict, Months=months, Year=year)
 
@@ -116,20 +118,3 @@ class TimelineFreqmodeStatistics(MethodView):
                 except IndexError:
                     info_dict[key].append([ind, 0])
         return info_dict
-
-    def gen_data(self, query_string):
-        con = DatabaseConnector()
-        query = con.query(query_string)
-        result = query.dictresult()
-        con.close()
-        return result
-
-    def gen_query(self, first_date, last_date):
-        query_str = (
-            "select freqmode, sum(nscans) "
-            "from measurements_cache "
-            "where date between '{0}' and '{1}' "
-            "group by freqmode "
-            "order by freqmode "
-            ).format(first_date, last_date)
-        return query_str

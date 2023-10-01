@@ -2,11 +2,14 @@
 Provide level1 views that extracts data from cache database.
 """
 from datetime import datetime, date, timedelta
+from textwrap import dedent
+from typing import TypedDict
 
 from flask import abort, request
+from sqlalchemy import TextClause, text
 
+from odinapi.pg_database import db
 from .baseview import BaseView, register_versions
-from .database import DatabaseConnector
 from .level1b_scanlogdata_exporter import ScanInfoExporter
 from .urlgen import get_freqmode_info_url
 from ..utils import get_args
@@ -14,38 +17,39 @@ from ..utils.defs import FREQMODE_TO_BACKEND, SPECIES
 from ..utils.swagger import SWAGGER
 
 
-def get_scan_logdata_cached(con, date, freqmode, scanid=None):
+def get_scan_logdata_cached(date, freqmode, scanid=None):
     # generate query
+    backend = ""
     try:
         backend = FREQMODE_TO_BACKEND[freqmode]
     except KeyError:
         abort(404)
 
     if date is not None:
-        query_string = (
-            "select * "
-            "from scans_cache "
-            "where date = $1 "
-            "and freqmode = $2 "
-            "and backend = $3 "
-            "order by backend, freqmode"
-        )
-        query = con.query(query_string, date, freqmode, backend)
+        query_string = text(dedent("""\
+            select *
+            from scans_cache
+            where date = :d
+            and freqmode = :f
+            and backend = :b
+            order by backend, freqmode"""
+        ))
+        query = db.session.execute(query_string, params=dict(d=date, f=freqmode, b=backend))
     elif scanid is not None:
-        query_string = (
-            "select * "
-            "from scans_cache "
-            "where scanid = $1 "
-            "and freqmode = $2 "
-            "and backend = $3 "
-            "order by backend, freqmode"
-        )
-        query = con.query(query_string, scanid, freqmode, backend)
+        query_string = text(dedent("""\
+            select *
+            from scans_cache
+            where scanid = :s
+                and freqmode = :f
+                and backend = :b
+            order by backend, freqmode"""
+        ))
+        query = db.session.execute(query_string, params=dict(s=scanid, f=freqmode, b=backend))
     else:
         abort(404)
 
     # execute query
-    result = query.dictresult()
+    result = [row._asdict() for row in query]
 
     # translate keys
     key_translation = {
@@ -82,14 +86,14 @@ def get_scan_logdata_cached(con, date, freqmode, scanid=None):
     return translated
 
 
-def get_scan_logdata_uncached(con, freqmode, scanid):
+def get_scan_logdata_uncached(freqmode, scanid):
     """get scan logdata from uncached tables"""
     try:
         backend = FREQMODE_TO_BACKEND[freqmode]
     except KeyError:
         abort(404)
     scan_info_exporter = ScanInfoExporter(
-            backend, freqmode, con)
+            backend, freqmode )
     scan_log_data = scan_info_exporter.extract_scan_log(scanid)
 
     logdata_asdict_withlists = {}
@@ -99,40 +103,56 @@ def get_scan_logdata_uncached(con, freqmode, scanid):
     return logdata_asdict_withlists
 
 
-def get_scan_log_data(dbcon, freqmode, scanid):
+
+def get_scan_log_data(freqmode, scanid):
     logdata = get_scan_logdata_cached(
-        dbcon, date=None, freqmode=int(freqmode),
+        date=None, freqmode=int(freqmode),
         scanid=int(scanid))
     if logdata == {}:
         # if scan logdata is not yet in cache table
         logdata = get_scan_logdata_uncached(
-            dbcon, int(freqmode), int(scanid))
+            int(freqmode), int(scanid))
     return logdata
 
 
-def generate_freq_mode_data(query_string, root_url, version,
-                            include_date=False, date=None):
-    con = DatabaseConnector()
-    query = con.query(query_string)
-    result = query.dictresult()
-    con.close()
+class MeasurementsCacheParams(TypedDict, total=False):
+    date1: date
+    date2: date
+    backend: str
+
+
+def generate_freq_mode_data(
+        query: TextClause,
+        root_url,
+        version,
+        params:MeasurementsCacheParams,
+        include_date=False,
+        date=None
+    ):
+    result = db.session.execute(query, params=params)
     info_list = []
     for row in result:
         info_dict = {}
         if include_date:
-            info_dict['Date'] = row['date']
-        info_dict['Backend'] = row['backend']
-        info_dict['FreqMode'] = row['freqmode']
-        info_dict['NumScan'] = row['nscans']
+            info_dict['Date'] = row.date
+        info_dict['Backend'] = row.backend
+        info_dict['FreqMode'] = row.freqmode
+        info_dict['NumScan'] = row.nscans
         info_dict['URL'] = get_freqmode_info_url(
-            root_url, version, date or row['date'], row['backend'],
-            row['freqmode'])
+            root_url, version, date or row.date, row.backend,
+            row.freqmode)
         info_list.append(info_dict)
     return info_list
 
 
 class DateInfoCached(BaseView):
     """DateInfo using a cached table"""
+    query = text(dedent("""\
+        select freqmode, backend, nscans
+        from measurements_cache
+        where date = :date1
+        order by backend, freqmode"""
+    ))
 
     @register_versions('swagger', ['v5'])
     def _swagger_def(self, version):
@@ -145,14 +165,13 @@ class DateInfoCached(BaseView):
         )
 
     @register_versions('fetch')
-    def _fetch_data(self, version, date):
+    def _fetch_data(self, version:str, date:str):
         try:
-            datetime.strptime(date, '%Y-%m-%d')
+            datetime_obj = datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
             abort(404)
-        query_str = self.gen_query(date)
         return generate_freq_mode_data(
-            query_str, request.url_root, version, date=date)
+            self.query, request.url_root, version, {"date1": datetime_obj.date()}, date=date)
 
     @register_versions('return', ['v4'])
     def _return_data(self, version, data, date):
@@ -163,14 +182,6 @@ class DateInfoCached(BaseView):
         return dict(
             Date=date, Data=data, Type='freqmode_info', Count=len(data))
 
-    def gen_query(self, date):
-        query_str = (
-            "select freqmode, backend, nscans "
-            "from measurements_cache "
-            "where date = '{0}' "
-            "order by backend, freqmode "
-            ).format(date)
-        return query_str
 
 
 SWAGGER.add_parameter('year', 'path', str, description="yyyy")
@@ -186,6 +197,13 @@ class PeriodInfoCached(BaseView):
     is six weeks, just enough to fill a Full Calendar view.
     """
     SUPPORTED_VERSIONS = ['v4', 'v5']
+
+    query = text(dedent("""\
+        select date, freqmode, backend, nscans
+        from measurements_cache
+        where date between :date1 and :date2
+        order by backend, freqmode"""        
+    ))
 
     @register_versions('swagger', ['v5'])
     def _swagger_def(self, version):
@@ -210,18 +228,14 @@ class PeriodInfoCached(BaseView):
             abort(404)
         period_length = request.args.get('length', 42, type=int)
         date_end = date_start + timedelta(days=period_length-1)
-        query_str = self.gen_query(date_start, date_end)
-        data = generate_freq_mode_data(query_str, request.url_root, version,
-                                       include_date=True)
+        data = generate_freq_mode_data(
+            self.query,
+            request.url_root,
+            version,
+            {"date1":date_start, "date2":date_end},
+            include_date=True
+        )
         return (data, date_start, date_end), 200, {}
-
-    def gen_query(self, date_start, date_end):
-        return (
-            "select date, freqmode, backend, nscans "
-            "from measurements_cache "
-            "where date between '{0}' and '{1}' "
-            "order by backend, freqmode "
-            ).format(date_start.isoformat(), date_end.isoformat())
 
     @register_versions('return', ['v4'])
     def _return_data(self, version, data, *args, **kwargs):
@@ -246,31 +260,33 @@ class DateBackendInfoCached(DateInfoCached):
     """DateInfo for a certain backend using a cached table"""
 
     SUPPORTED_VERSIONS = ['v4']
+    query = text(dedent("""\
+        select freqmode, backend, nscans
+        from measurements_cache
+        where date = :date1
+            and backend= :backend
+        group by backend, freqmode, nscans
+        order by backend, freqmode, nscans""")
+    )
 
     @register_versions('fetch')
-    def _fetch_data(self, version, date, backend):
+    def _fetch_data(self, version, date:str, backend):
         try:
-            datetime.strptime(date, '%Y-%m-%d')
+            datetime_obj = datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
             abort(404)
-        query_str = self.gen_query(date, backend)
         return generate_freq_mode_data(
-            query_str, request.url_root, version, date=date)
+            self.query,
+            request.url_root,
+            version,
+            {"date1":datetime_obj.date(), "backend":backend},
+            date=date
+        )
 
     @register_versions('return')
     def _return_data(self, version, data, date, backend):
         return dict(Date=date, Info=data)
 
-    def gen_query(self, date, backend):
-        query_str = (
-            "select freqmode, backend, nscans "
-            "from measurements_cache "
-            "where date = '{0}' "
-            "and backend= '{1}' "
-            "group by backend, freqmode, nscans "
-            "order by backend, freqmode, nscans "
-            ).format(date, backend)
-        return query_str
 
 
 def make_loginfo_v4(loginfo, keylist, ind, version, date, backend):
@@ -384,13 +400,11 @@ class FreqmodeInfoCached(BaseView):
     @register_versions('fetch', ['v4'])
     def _fetch_data_v4(self, version, date, backend, freqmode, scanno=None):
 
-        con = DatabaseConnector()
         loginfo = {}
         keylist = self.KEYS_V4
 
         loginfo = get_scan_logdata_cached(
-            con, date, freqmode=int(freqmode), scanid=scanno)
-        con.close()
+            date, freqmode=int(freqmode), scanid=scanno)
 
         for key in loginfo:
             try:
@@ -442,13 +456,11 @@ class FreqmodeInfoCachedNoBackend(BaseView):
     ):
         if apriori is None:
             apriori = SPECIES
-        con = DatabaseConnector()
         loginfo = {}
         keylist = FreqmodeInfoCached.KEYS_V4
 
         loginfo = get_scan_logdata_cached(
-            con, date, freqmode=int(freqmode), scanid=scanno)
-        con.close()
+            date, freqmode=int(freqmode), scanid=scanno)
 
         for key in loginfo:
             try:
@@ -518,9 +530,7 @@ class L1LogCached(BaseView):
             abort(404)
 
         keylist = FreqmodeInfoCached.KEYS_V4
-        con = DatabaseConnector()
-        loginfo = get_scan_log_data(con, freqmode, scanno)
-        con.close()
+        loginfo = get_scan_log_data(freqmode, scanno)
 
         for key in loginfo:
             try:
@@ -549,9 +559,7 @@ class L1LogCached(BaseView):
     @register_versions('fetch', ['v5'])
     def _fetch_data(self, version, freqmode, scanno):
         keylist = FreqmodeInfoCached.KEYS_V4
-        con = DatabaseConnector()
-        loginfo = get_scan_log_data(con, freqmode, scanno)
-        con.close()
+        loginfo = get_scan_log_data(freqmode, scanno)
         for key in loginfo:
             try:
                 loginfo[key] = loginfo[key].tolist()
@@ -621,7 +629,10 @@ class L1LogCachedList(FreqmodeInfoCachedNoBackend):
     def _fetch_data(self, version, freqmode):
         start_time = get_args.get_datetime('start_time')
         end_time = get_args.get_datetime('end_time')
-        if start_time and end_time and start_time > end_time:
+        if start_time and end_time:
+            if start_time > end_time:
+                abort(400)
+        else:
             abort(400)
 
         apriori = get_args.get_list('apriori')

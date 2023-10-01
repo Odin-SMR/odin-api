@@ -1,14 +1,9 @@
 from http.client import OK
 import unittest
 
-from flask import Flask
-
 from odinapi.run import app
 from mock import patch
 import numpy as np
-import pytest
-
-from odinapi.views import views
 
 
 
@@ -20,38 +15,27 @@ class TestAPR:
         'species': 'CO2',
     }
 
-    @pytest.fixture
-    def apriori_and_get_apriori(self):
-        app = Flask(__name__)
-        app.add_url_rule(
-            '/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/apriori/<species>/',  # noqa
-            view_func=views.ScanAPRNoBackend.as_view('apriorinobackend'),
-        )
-
-        with patch(
-            'odinapi.views.views.get_geoloc_info',
-            return_value=('x', 15, 16, 'y'),
-        ):
-            with patch('odinapi.views.views.DatabaseConnector'):
-                with patch('odinapi.views.views.get_scan_log_data'):
-                    with patch(
-                        'odinapi.views.views.get_apriori',
-                        return_value=self.APRIORI,
-                    ) as get_apriori:
-                        yield app.test_client(), get_apriori
-
+    @patch("odinapi.views.views.get_geoloc_info")
+    @patch("odinapi.views.views.get_apriori")
+    @patch("odinapi.views.views.get_scan_log_data")
     def test_requesting_apriori_defaults_to_none_source(
-        self, apriori_and_get_apriori,
-    ):
-        apriori, get_apriori = apriori_and_get_apriori
+        self, get_scan_log_data, get_apriori, get_geoloc_info, db_app):
+        apriori = db_app.test_client()
+        get_apriori.return_value = self.APRIORI
+        get_geoloc_info.return_value = ('x', 15, 16, 'y')
         resp = apriori.get('/rest_api/v5/level1/11/72/apriori/CO2/')
         assert resp.status_code == OK, resp.json
         get_apriori.assert_called_with('CO2', 15, 16, source=None)
 
+    @patch("odinapi.views.views.get_geoloc_info")
+    @patch("odinapi.views.views.get_apriori")
+    @patch("odinapi.views.views.get_scan_log_data")
     def test_requesting_apriori_source(
-        self, apriori_and_get_apriori,
+        self, get_scan_log_data, get_apriori, get_geoloc_info, db_app
     ):
-        apriori, get_apriori = apriori_and_get_apriori
+        apriori = db_app.test_client()
+        get_apriori.return_value = self.APRIORI
+        get_geoloc_info.return_value = ('x', 15, 16, 'y')
         resp = apriori.get(
             '/rest_api/v5/level1/11/72/apriori/CO2/?aprsource=mipas',
         )
