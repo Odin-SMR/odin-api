@@ -11,15 +11,15 @@ DATEFMT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 COMMON_FILE_HEADER_DATA = {
-    "creator_name": 'Donal Murtagh',
-    "creator_url": 'odin.rss.chalmers.se',
-    "creator_email": 'donal.murtagh@chalmers.se',
-    "address": '412 96 Gothenburg, Sweden',
-    "institution": 'Chalmers University of Technology',
-    "platform": 'Odin',
-    "sensor": 'SMR',
+    "creator_name": "Donal Murtagh",
+    "creator_url": "odin.rss.chalmers.se",
+    "creator_email": "donal.murtagh@chalmers.se",
+    "address": "412 96 Gothenburg, Sweden",
+    "institution": "Chalmers University of Technology",
+    "platform": "Odin",
+    "sensor": "SMR",
     "version_l1b": "8",
-    "version_l2": "3.0.0"
+    "version_l2": "3.0.0",
 }
 
 
@@ -35,11 +35,9 @@ class L2ancDesc(Enum):
     LST = "Mean local solar time for the scan."
     Orbit = "Odin/SMR orbit number."
     SZA1D = (
-        "Mean solar zenith angle of the observations used in the retrieval "
-        "process.")
-    SZA = (
-        "Approximate solar zenith angle corresponding to each retrieval"
-        " value.")
+        "Mean solar zenith angle of the observations used in the retrieval " "process."
+    )
+    SZA = "Approximate solar zenith angle corresponding to each retrieval" " value."
     Theta = "Estimate of the potential temperature profile."
 
     @property
@@ -54,11 +52,13 @@ class L2Desc(Enum):
     AVK = "Averaging kernel matrix."
     ErrorNoise = (
         "Error due to measurement thermal noise (square root of the "
-        "diagonal elements of the corresponding error matrix).")
+        "diagonal elements of the corresponding error matrix)."
+    )
     ErrorTotal = (
         "Total retrieval error, corresponding to the error due to thermal"
         " noise and all interfering smoothing errors (square root of the"
-        " diagonal elements of the corresponding error matrix).")
+        " diagonal elements of the corresponding error matrix)."
+    )
     InvMode = "Inversion mode."
     Lat1D = "A scalar representative latitude of the retrieval."
     Latitude = "Approximate latitude of each retrieval value."
@@ -66,14 +66,15 @@ class L2Desc(Enum):
     Longitude = "Approximate longitude of each retrieval value."
     MeasResponse = (
         "Measurement response, defined as the row sum of the averaging"
-        " kernel matrix.")
+        " kernel matrix."
+    )
     Pressure = "Pressure grid of the retrieved profile."
     Profile = "Retrieved temperature or volume mixing ratio profile."
     Quality = "Quality flag."
     ScanID = "Satellite time word scan identifier."
     Temperature = (
-        "Estimate of the temperature profile (corresponding to the"
-        " ZPT input data).")
+        "Estimate of the temperature profile (corresponding to the" " ZPT input data)."
+    )
     Time = "Mean time of the scan."
     VMR = "Volume mixing ratio or retrieved profile."
 
@@ -160,10 +161,7 @@ class Parameter:
         elif self.unit != Unit.product:
             return self.unit
         else:
-            return (
-                Unit.temperature if istemperature
-                else Unit.unitless
-            )
+            return Unit.temperature if istemperature else Unit.unitless
 
 
 @attr.s
@@ -219,7 +217,7 @@ class L2i:
     def filter(self) -> Filter:
         return Filter(
             residual=1.5,
-            minlmfactor=10. if self.FreqMode in [8., 13., 19.] else 2.
+            minlmfactor=10.0 if self.FreqMode in [8.0, 13.0, 19.0] else 2.0,
         )
 
     def isvalid(self) -> bool:
@@ -259,11 +257,11 @@ class L2Full:
 
 
 def get_file_header_data(
-        freqmode: int,
-        invmode: str,
-        product: str,
-        time_coverage_start: dt.datetime,
-        time_coverage_end: dt.datetime
+    freqmode: int,
+    invmode: str,
+    product: str,
+    time_coverage_start: dt.datetime,
+    time_coverage_end: dt.datetime,
 ) -> Dict[str, str]:
     header_data = {
         "observation_frequency_mode": str(freqmode),
@@ -271,17 +269,14 @@ def get_file_header_data(
         "level2_product_name": product,
         "date_created": dt.datetime.utcnow().strftime(DATEFMT),
         "time_coverage_start": time_coverage_start.strftime(DATEFMT),
-        "time_coverage_end": time_coverage_end.strftime(DATEFMT)
+        "time_coverage_end": time_coverage_end.strftime(DATEFMT),
     }
     header_data.update(COMMON_FILE_HEADER_DATA)
     return header_data
 
 
 def to_l2(l2: Dict[str, Any], product: str) -> L2:
-    profile = (
-        l2["Temperature"] if is_temperature(product)
-        else l2["VMR"]
-    )
+    profile = l2["Temperature"] if is_temperature(product) else l2["VMR"]
     return L2(
         InvMode=l2["InvMode"],
         ScanID=l2["ScanID"],
@@ -323,14 +318,12 @@ def to_l2i(l2: Dict[str, Any]) -> L2i:
     )
 
 
-def generate_filename(
-        project: str, product: str, date_start: dt.datetime) -> str:
+def generate_filename(project: str, product: str, date_start: dt.datetime) -> str:
     return "Odin-SMR_L2_{project}_{product}_{year}-{month:02}.nc".format(
         project=project,
-        product=product.replace(
-            " / ", "-").replace(" - ", "-").replace(" ", "-"),
+        product=product.replace(" / ", "-").replace(" - ", "-").replace(" ", "-"),
         year=date_start.year,
-        month=date_start.month
+        month=date_start.month,
     )
 
 
@@ -338,68 +331,28 @@ def is_temperature(product: str) -> bool:
     return "Temperature" in product
 
 
-L2FILE = L2File([
-    Parameter(
-        L2iDesc.GenerationTime, Unit.time, DType.f4, Dimension.d1
-    ),
-    Parameter(
-        L2Desc.Altitude, Unit.altitude, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.Apriori, Unit.product, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.AVK, Unit.product, DType.f4, Dimension.d3
-    ),
-    Parameter(
-        L2Desc.ErrorNoise, Unit.product, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.ErrorTotal, Unit.product, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.Lat1D, Unit.lat, DType.f4, Dimension.d1
-    ),
-    Parameter(
-        L2Desc.Latitude, Unit.lat, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.Lon1D, Unit.lon, DType.f4, Dimension.d1
-    ),
-    Parameter(
-        L2Desc.Longitude, Unit.lon, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2ancDesc.LST, Unit.hours, DType.f4, Dimension.d1
-    ),
-    Parameter(
-        L2Desc.MeasResponse, Unit.unitless, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2ancDesc.Orbit, Unit.unitless, DType.f4, Dimension.d1
-    ),
-    Parameter(
-        L2Desc.Pressure, Unit.pressure, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.Profile, Unit.product, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.ScanID, Unit.unitless, DType.i8, Dimension.d1
-    ),
-    Parameter(
-        L2ancDesc.SZA1D, Unit.degrees, DType.f4, Dimension.d1
-    ),
-    Parameter(
-        L2ancDesc.SZA, Unit.degrees, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.Temperature, Unit.temperature, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2ancDesc.Theta, Unit.temperature, DType.f4, Dimension.d2
-    ),
-    Parameter(
-        L2Desc.Time, Unit.time, DType.double, Dimension.d1
-    )
-])
+L2FILE = L2File(
+    [
+        Parameter(L2iDesc.GenerationTime, Unit.time, DType.f4, Dimension.d1),
+        Parameter(L2Desc.Altitude, Unit.altitude, DType.f4, Dimension.d2),
+        Parameter(L2Desc.Apriori, Unit.product, DType.f4, Dimension.d2),
+        Parameter(L2Desc.AVK, Unit.product, DType.f4, Dimension.d3),
+        Parameter(L2Desc.ErrorNoise, Unit.product, DType.f4, Dimension.d2),
+        Parameter(L2Desc.ErrorTotal, Unit.product, DType.f4, Dimension.d2),
+        Parameter(L2Desc.Lat1D, Unit.lat, DType.f4, Dimension.d1),
+        Parameter(L2Desc.Latitude, Unit.lat, DType.f4, Dimension.d2),
+        Parameter(L2Desc.Lon1D, Unit.lon, DType.f4, Dimension.d1),
+        Parameter(L2Desc.Longitude, Unit.lon, DType.f4, Dimension.d2),
+        Parameter(L2ancDesc.LST, Unit.hours, DType.f4, Dimension.d1),
+        Parameter(L2Desc.MeasResponse, Unit.unitless, DType.f4, Dimension.d2),
+        Parameter(L2ancDesc.Orbit, Unit.unitless, DType.f4, Dimension.d1),
+        Parameter(L2Desc.Pressure, Unit.pressure, DType.f4, Dimension.d2),
+        Parameter(L2Desc.Profile, Unit.product, DType.f4, Dimension.d2),
+        Parameter(L2Desc.ScanID, Unit.unitless, DType.i8, Dimension.d1),
+        Parameter(L2ancDesc.SZA1D, Unit.degrees, DType.f4, Dimension.d1),
+        Parameter(L2ancDesc.SZA, Unit.degrees, DType.f4, Dimension.d2),
+        Parameter(L2Desc.Temperature, Unit.temperature, DType.f4, Dimension.d2),
+        Parameter(L2ancDesc.Theta, Unit.temperature, DType.f4, Dimension.d2),
+        Parameter(L2Desc.Time, Unit.time, DType.double, Dimension.d1),
+    ]
+)

@@ -53,10 +53,10 @@ SFC = {
 
 def get_dataset_and_settings(levtype, date_start, hour):
     settings = {
-        'year': date_start.strftime("%Y"),
-        'month': date_start.strftime("%m"),
-        'day': date_start.strftime("%d"),
-        'time': f"{hour}:00",
+        "year": date_start.strftime("%Y"),
+        "month": date_start.strftime("%m"),
+        "day": date_start.strftime("%d"),
+        "time": f"{hour}:00",
     }
     if levtype == "pl":
         settings.update(PL)
@@ -70,18 +70,15 @@ def get_dataset_and_settings(levtype, date_start, hour):
 def download_data(date_start, date_end, levtype, hours):
     while date_start <= date_end:
         target_dir = os.path.join(
-            DATA_BASEDIR,
-            f"{date_start.year}",
-            "{0:02}".format(date_start.month)
+            DATA_BASEDIR, f"{date_start.year}", "{0:02}".format(date_start.month)
         )
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         for hour in hours:
-            dataset, settings = get_dataset_and_settings(
-                levtype, date_start, hour)
+            dataset, settings = get_dataset_and_settings(levtype, date_start, hour)
             target_file = "{}_{}_{}-{}.nc".format(
-                settings['class'],
-                settings['levtype'],
+                settings["class"],
+                settings["levtype"],
                 date_start.strftime("%Y-%m-%d"),
                 hour,
             )
@@ -93,16 +90,14 @@ def download_data(date_start, date_end, levtype, hours):
 
 
 def get_default_date_start():
-    return (
-        datetime.utcnow().date() - timedelta(days=365)
-    ).strftime("%Y-%m-%d")
+    return (datetime.utcnow().date() - timedelta(days=365)).strftime("%Y-%m-%d")
 
 
 def get_default_date_end():
     date_end = datetime.utcnow().date() - relativedelta(months=2)
-    return (
-        datetime(date_end.year, date_end.month, 1) - timedelta(days=1)
-    ).strftime("%Y-%m-%d")
+    return (datetime(date_end.year, date_end.month, 1) - timedelta(days=1)).strftime(
+        "%Y-%m-%d"
+    )
 
 
 def cli():
@@ -113,45 +108,42 @@ def cli():
         help="levtype: pl (pressure level) or sfc (surface)",
     )
     parser.add_argument(
-        '-s',
-        '--date-start',
-        dest='date_start',
+        "-s",
+        "--date-start",
+        dest="date_start",
         type=str,
         default=get_default_date_start(),
-        help='''
+        help="""
             start date to download, Format YYYY-MM-DD,
             default is 365 days before today
-        '''
+        """,
     )
     parser.add_argument(
-        '-e',
-        '--date-end',
-        dest='date_end',
+        "-e",
+        "--date-end",
+        dest="date_end",
         type=str,
         default=get_default_date_end(),
-        help='''
+        help="""
             end date to download, Format YYYY-MM-DD,
             default is the last day in three months
             before today
-        '''
+        """,
     )
     parser.add_argument(
-        '-t',
-        '--time',
-        dest='time',
+        "-t",
+        "--time",
+        dest="time",
         type=str,
-        default='00/06/12/18',
-        help='time of day to download',
+        default="00/06/12/18",
+        help="time of day to download",
     )
     args = parser.parse_args()
     assert args.levtype in ["pl", "sfc"]
-    assert set(args.time.split('/')).issubset(
-        set(['00', '06', '12', '18']))
-    hours = args.time.split('/')
-    date_start = datetime.strptime(
-        args.date_start, '%Y-%m-%d')
-    date_end = datetime.strptime(
-        args.date_end, '%Y-%m-%d')
+    assert set(args.time.split("/")).issubset(set(["00", "06", "12", "18"]))
+    hours = args.time.split("/")
+    date_start = datetime.strptime(args.date_start, "%Y-%m-%d")
+    date_end = datetime.strptime(args.date_end, "%Y-%m-%d")
     download_data(date_start, date_end, args.levtype, hours)
 
 

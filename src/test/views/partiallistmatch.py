@@ -10,11 +10,10 @@ class PartialListMatch:
             self.name, len(other), self.length
         )
         assert (
-            other[self.startidx: self.startidx + len(self.part)]
-            == self.part
+            other[self.startidx : self.startidx + len(self.part)] == self.part
         ), "{} partial equality fails {} != {}".format(
             self.name,
-            other[self.startidx: self.startidx + len(self.part)],
+            other[self.startidx : self.startidx + len(self.part)],
             self.part,
         )
         return True

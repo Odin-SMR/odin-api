@@ -9,9 +9,7 @@ import numpy as np  # type: ignore
 from netCDF4 import Dataset, num2date  # type: ignore
 
 from odinapi.utils import smrl2filewriter
-from odinapi.utils.datamodel import (
-    to_l2,  to_l2i, to_l2anc, L2Full, L2FILE, L2i
-)
+from odinapi.utils.datamodel import to_l2, to_l2i, to_l2anc, L2Full, L2FILE, L2i
 from odinapi.database.level2db import Level2DB
 from odinapi.views.database import DatabaseConnector
 from odinapi.utils.time_util import datetime2stw
@@ -20,13 +18,7 @@ from odinapi.utils.time_util import datetime2stw
 FREQMODE = 42
 
 
-FAKE_ANC = {
-    "LST": 0.,
-    "Orbit": 1.,
-    "SZA1D": 2,
-    "SZA": [3, 4],
-    "Theta": [5, 6]
-}
+FAKE_ANC = {"LST": 0.0, "Orbit": 1.0, "SZA1D": 2, "SZA": [3, 4], "Theta": [5, 6]}
 
 
 class FakeDatabaseConnector(DatabaseConnector):
@@ -35,43 +27,47 @@ class FakeDatabaseConnector(DatabaseConnector):
 
 
 def l2anc(x: float):
-    return to_l2anc({
-        "LST": 0. + x,
-        "Orbit": 1 + int(np.ceil(x)),
-        "SZA1D": 2. + x,
-        "SZA": [3. + x, 4. + x],
-        "Theta": [5. + x, 6. + x],
-    })
+    return to_l2anc(
+        {
+            "LST": 0.0 + x,
+            "Orbit": 1 + int(np.ceil(x)),
+            "SZA1D": 2.0 + x,
+            "SZA": [3.0 + x, 4.0 + x],
+            "Theta": [5.0 + x, 6.0 + x],
+        }
+    )
 
 
 def l2i(x: float):
-    return to_l2i({
-        "GenerationTime": "2000-01-02T03:04:05Z",
-        "Residual": 7. + x,
-        "MinLmFactor": 8. + x,
-        "FreqMode": 9 + x,
-    })
+    return to_l2i(
+        {
+            "GenerationTime": "2000-01-02T03:04:05Z",
+            "Residual": 7.0 + x,
+            "MinLmFactor": 8.0 + x,
+            "FreqMode": 9 + x,
+        }
+    )
 
 
 def l2dict(x: float):
     return {
         "InvMode": "10",
         "ScanID": 11 + int(np.ceil(x)),
-        "MJD": 12. + x,
-        "Lat1D": 13. + x,
-        "Lon1D": 14. + x,
+        "MJD": 12.0 + x,
+        "Lat1D": 13.0 + x,
+        "Lon1D": 14.0 + x,
         "Quality": 15 + int(x),
-        "Altitude": [16. + x, 17. + x],
-        "Pressure": [18. + x, 19. + x],
-        "Latitude": [20. + x, 21. + x],
-        "Longitude": [22. + x, 23. + x],
-        "Temperature": [24. + x, 25. + x],
-        "ErrorTotal": [26. + x, 27. + x],
-        "ErrorNoise": [28. + x, 29. + x],
-        "MeasResponse": [30. + x, 31. + x],
-        "Apriori": [32. + x, 33. + x],
-        "VMR": [34. + x, 35. + x],
-        "AVK": [[36. + x, 37. + x], [38. + x, 39. + x]],
+        "Altitude": [16.0 + x, 17.0 + x],
+        "Pressure": [18.0 + x, 19.0 + x],
+        "Latitude": [20.0 + x, 21.0 + x],
+        "Longitude": [22.0 + x, 23.0 + x],
+        "Temperature": [24.0 + x, 25.0 + x],
+        "ErrorTotal": [26.0 + x, 27.0 + x],
+        "ErrorNoise": [28.0 + x, 29.0 + x],
+        "MeasResponse": [30.0 + x, 31.0 + x],
+        "Apriori": [32.0 + x, 33.0 + x],
+        "VMR": [34.0 + x, 35.0 + x],
+        "AVK": [[36.0 + x, 37.0 + x], [38.0 + x, 39.0 + x]],
     }
 
 
@@ -81,7 +77,7 @@ def l2(x: float):
 
 def l2data():
     l2data = []
-    for x in [0., 0.5, 1.0]:
+    for x in [0.0, 0.5, 1.0]:
         l2data.append(L2Full(l2i(x), l2anc(x), l2(x)))
     return l2data
 
@@ -96,7 +92,7 @@ def filewriter():
 @pytest.fixture
 def l2file(tmpdir):
     fc = smrl2filewriter.L2FileCreater(
-            "Proj1", 9, "O3", "O3-FM9", L2FILE.parameters, l2data(), tmpdir
+        "Proj1", 9, "O3", "O3-FM9", L2FILE.parameters, l2data(), tmpdir
     )
     fc.write_to_file()
     return fc
@@ -104,30 +100,33 @@ def l2file(tmpdir):
 
 @pytest.fixture
 def level2db(docker_mongo):
-    level2db = Level2DB('projectfoo', docker_mongo.level2testdb)
-    docker_mongo.level2testdb['L2i_projectfoo'].drop()
-    docker_mongo.level2testdb['L2i_projectfoo'].insert_many([
-        {
-            'ScanID': datetime2stw(
-                dt.datetime(2009, 12, 31, 0, 0, 1) + dt.timedelta(days=day)),
-            'FreqMode': FREQMODE,
-            'ProcessingError': False,
-            'Comments': ["Foo", "Bar"]
-        }
-        for day in [0, 1, 2, 3, 32]
-    ])
+    level2db = Level2DB("projectfoo", docker_mongo.level2testdb)
+    docker_mongo.level2testdb["L2i_projectfoo"].drop()
+    docker_mongo.level2testdb["L2i_projectfoo"].insert_many(
+        [
+            {
+                "ScanID": datetime2stw(
+                    dt.datetime(2009, 12, 31, 0, 0, 1) + dt.timedelta(days=day)
+                ),
+                "FreqMode": FREQMODE,
+                "ProcessingError": False,
+                "Comments": ["Foo", "Bar"],
+            }
+            for day in [0, 1, 2, 3, 32]
+        ]
+    )
     return level2db
 
 
 @pytest.fixture
 def level2db_with_example_data(docker_mongo):
-    level2db = Level2DB('projectfoo', docker_mongo.level2testdb)
-    docker_mongo.level2testdb['L2_projectfoo'].drop()
-    docker_mongo.level2testdb['L2i_projectfoo'].drop()
+    level2db = Level2DB("projectfoo", docker_mongo.level2testdb)
+    docker_mongo.level2testdb["L2_projectfoo"].drop()
+    docker_mongo.level2testdb["L2i_projectfoo"].drop()
     file_example_data = os.path.join(
-        os.path.dirname(__file__), '..', 'systemtest', 'testdata',
-        'odin_result.json')
-    with open(file_example_data, 'r') as the_file:
+        os.path.dirname(__file__), "..", "systemtest", "testdata", "odin_result.json"
+    )
+    with open(file_example_data, "r") as the_file:
         data = json.load(the_file)
     # add data from two scans, make the residual valid for the second
     for i, scanid in enumerate([7014791071, 7014791071 + 1]):
@@ -144,7 +143,6 @@ def level2db_with_example_data(docker_mongo):
 
 
 class TestL2FileCreater:
-
     def test_start_works(self, filewriter):
         assert filewriter.start == dt.datetime(1858, 11, 29, 0, 0)
 
@@ -161,19 +159,18 @@ class TestL2FileCreater:
         assert filewriter.invmode == "10"
 
     def test_get_filename_works(self, filewriter):
-        assert (
-            filewriter.filename()
-            == "/tmp/Odin-SMR_L2_Proj1_O3-FM9_1858-11.nc"
-        )
+        assert filewriter.filename() == "/tmp/Odin-SMR_L2_Proj1_O3-FM9_1858-11.nc"
 
     def test_get_header_works(self, filewriter):
-        assert set({
-            "observation_frequency_mode": "9",
-            "inversion_mode": "10",
-            "level2_product_name": "O3",
-            "time_coverage_start": "1858-11-29T00:00:00Z",
-            "time_coverage_end": "1858-11-30T00:00:00Z",
-        }).issubset(set(filewriter.header))
+        assert set(
+            {
+                "observation_frequency_mode": "9",
+                "inversion_mode": "10",
+                "level2_product_name": "O3",
+                "time_coverage_start": "1858-11-29T00:00:00Z",
+                "time_coverage_end": "1858-11-30T00:00:00Z",
+            }
+        ).issubset(set(filewriter.header))
 
     def test_write_to_file_genereates_a_file(self, l2file):
         outfile = l2file.filename()
@@ -197,23 +194,21 @@ class TestL2FileCreater:
         with Dataset(outfile, "r") as ds:
             # Should give data for Temperature
             assert np.all(
-                ds["Profile"][:]
-                == [[24., 25.], [24.5, 25.5], [25., 26.]]
+                ds["Profile"][:] == [[24.0, 25.0], [24.5, 25.5], [25.0, 26.0]]
             )
-            assert (
-                ds["Profile"].description == "Retrieved volume mixing ratio."
-            )
-            assert (
-                ds["Profile"].units == "-"
-            )
+            assert ds["Profile"].description == "Retrieved volume mixing ratio."
+            assert ds["Profile"].units == "-"
 
-    @pytest.mark.parametrize("para,expect", (
-        ("observation_frequency_mode", "9"),
-        ("inversion_mode", "10"),
-        ("level2_product_name", "O3"),
-        ("time_coverage_start", "1858-11-29T00:00:00Z"),
-        ("time_coverage_end", "1858-11-30T00:00:00Z"),
-    ))
+    @pytest.mark.parametrize(
+        "para,expect",
+        (
+            ("observation_frequency_mode", "9"),
+            ("inversion_mode", "10"),
+            ("level2_product_name", "O3"),
+            ("time_coverage_start", "1858-11-29T00:00:00Z"),
+            ("time_coverage_end", "1858-11-30T00:00:00Z"),
+        ),
+    )
     def test_write_to_file_header_works(self, l2file, para, expect):
         outfile = l2file.filename()
         with Dataset(outfile, "r") as ds:
@@ -221,38 +216,32 @@ class TestL2FileCreater:
 
 
 class TestL2Getter:
-
-    @pytest.mark.parametrize("para,expect", (
-        ("MinLmFactor", 1),
-        ("Residual", 1.662),
-    ))
+    @pytest.mark.parametrize(
+        "para,expect",
+        (
+            ("MinLmFactor", 1),
+            ("Residual", 1.662),
+        ),
+    )
     def test_get_l2i_works(self, level2db_with_example_data, para, expect):
         l2getter = smrl2filewriter.L2Getter(
-            1, "Prod1", DatabaseConnector, level2db_with_example_data)
+            1, "Prod1", DatabaseConnector, level2db_with_example_data
+        )
         l2i = l2getter.get_l2i(7014791071)
         assert isinstance(l2i, L2i)
         assert getattr(l2i, para) == pytest.approx(expect, abs=1e-3)
 
-    @patch(
-        'odinapi.utils.smrl2filewriter.get_ancillary_data',
-        return_value=[FAKE_ANC]
-    )
+    @patch("odinapi.utils.smrl2filewriter.get_ancillary_data", return_value=[FAKE_ANC])
     def test_get_l2anc_get_called_as_expected(
         self, patched_get_ancillary_data, level2db
     ):
-        l2getter = smrl2filewriter.L2Getter(
-            1, "Prod1", FakeDatabaseConnector, level2db)
-        fakel2dict = l2dict(0.)
+        l2getter = smrl2filewriter.L2Getter(1, "Prod1", FakeDatabaseConnector, level2db)
+        fakel2dict = l2dict(0.0)
         l2anc = l2getter.get_l2anc(fakel2dict)
-        patched_get_ancillary_data.assert_has_calls(
-            [call(ANY, [fakel2dict])]
-        )
+        patched_get_ancillary_data.assert_has_calls([call(ANY, [fakel2dict])])
         assert l2anc == to_l2anc(FAKE_ANC)
 
-    @patch(
-        'odinapi.utils.smrl2filewriter.get_ancillary_data',
-        return_value=[FAKE_ANC]
-    )
+    @patch("odinapi.utils.smrl2filewriter.get_ancillary_data", return_value=[FAKE_ANC])
     def test_get_l2full_works(
         self, patched_get_ancillary_data, level2db_with_example_data
     ):
@@ -260,15 +249,12 @@ class TestL2Getter:
             1,
             "ClO / 501 GHz / 20 to 50 km",
             FakeDatabaseConnector,
-            level2db_with_example_data
+            level2db_with_example_data,
         )
         l2full = l2getter.get_l2full(7014791071)
         assert isinstance(l2full, L2Full)
 
-    @patch(
-        'odinapi.utils.smrl2filewriter.get_ancillary_data',
-        return_value=[FAKE_ANC]
-    )
+    @patch("odinapi.utils.smrl2filewriter.get_ancillary_data", return_value=[FAKE_ANC])
     def test_get_l2full_returns_none_if_no_l2data(
         self, patched_get_ancillary_data, level2db_with_example_data
     ):
@@ -276,15 +262,12 @@ class TestL2Getter:
             1,
             "ClO / 501 GHz / 20 to 50 km",
             FakeDatabaseConnector,
-            level2db_with_example_data
+            level2db_with_example_data,
         )
         l2full = l2getter.get_l2full(99999999)
         assert l2full is None
 
-    @patch(
-        'odinapi.utils.smrl2filewriter.get_ancillary_data',
-        return_value=[FAKE_ANC]
-    )
+    @patch("odinapi.utils.smrl2filewriter.get_ancillary_data", return_value=[FAKE_ANC])
     def test_get_data_works(
         self, patched_get_ancillary_data, level2db_with_example_data
     ):
@@ -292,37 +275,41 @@ class TestL2Getter:
             1,
             "ClO / 501 GHz / 20 to 50 km",
             FakeDatabaseConnector,
-            level2db_with_example_data
+            level2db_with_example_data,
         )
         data = l2getter.get_data([7014791071, 7014791072, 9999999999])
         assert len(data) == 1
         assert isinstance(data[0], L2Full)
         assert data[0].l2.ScanID == 7014791072
 
-    @pytest.mark.parametrize("start,end,expect", (
+    @pytest.mark.parametrize(
+        "start,end,expect",
         (
-            dt.datetime(2009, 12, 31),
-            dt.datetime(2010, 2, 2),
-            [4473651439, 4475033983, 4476416527, 4477799071, 4517892843]
+            (
+                dt.datetime(2009, 12, 31),
+                dt.datetime(2010, 2, 2),
+                [4473651439, 4475033983, 4476416527, 4477799071, 4517892843],
+            ),
+            (
+                dt.datetime(2010, 1, 1),
+                dt.datetime(2010, 2, 2),
+                [4475033983, 4476416527, 4477799071, 4517892843],
+            ),
+            (
+                dt.datetime(2010, 1, 1),
+                dt.datetime(2010, 2, 1),
+                [4475033983, 4476416527, 4477799071],
+            ),
         ),
-        (
-            dt.datetime(2010, 1, 1),
-            dt.datetime(2010, 2, 2),
-            [4475033983, 4476416527, 4477799071, 4517892843]
-        ),
-        (
-            dt.datetime(2010, 1, 1),
-            dt.datetime(2010, 2, 1),
-            [4475033983, 4476416527, 4477799071],
-        ),
-    ))
+    )
     def test_get_scanids_works(self, level2db, start, end, expect):
         l2getter = smrl2filewriter.L2Getter(
-            FREQMODE, "Prod1", DatabaseConnector, level2db)
+            FREQMODE, "Prod1", DatabaseConnector, level2db
+        )
         assert l2getter.get_scanids(start, end) == expect
 
 
-@patch('odinapi.utils.smrl2filewriter.get_l2data', return_value=[])
+@patch("odinapi.utils.smrl2filewriter.get_l2data", return_value=[])
 def test_process_period_finishes_without_failure(patched_get_l2data, level2db):
     smrl2filewriter.process_period(
         DatabaseConnector,
@@ -335,7 +322,7 @@ def test_process_period_finishes_without_failure(patched_get_l2data, level2db):
         dt.datetime(2010, 2, 28),
         L2FILE.parameters,
         "/tmp",
-        True
+        True,
     )
     patched_get_l2data.assert_has_calls(
         [
@@ -345,7 +332,7 @@ def test_process_period_finishes_without_failure(patched_get_l2data, level2db):
     )
 
 
-@patch('odinapi.utils.smrl2filewriter.get_l2data', return_value=l2data())
+@patch("odinapi.utils.smrl2filewriter.get_l2data", return_value=l2data())
 def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
     expectfile = os.path.join(tmpdir, "Odin-SMR_L2_projx_prodx_1858-11.nc")
     assert not os.path.isfile(expectfile)
@@ -360,7 +347,7 @@ def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
         dt.datetime(2010, 1, 31),
         L2FILE.parameters,
         tmpdir,
-        True
+        True,
     )
     patched_get_l2data.assert_has_calls(
         [call(ANY, dt.datetime(2010, 1, 1), dt.datetime(2010, 2, 1))]
@@ -368,8 +355,8 @@ def test_process_period_creates_file(patched_get_l2data, level2db, tmpdir):
     assert os.path.isfile(expectfile)
 
 
-@patch('odinapi.utils.smrl2filewriter.os.path.isfile', return_value=True)
-@patch('odinapi.utils.smrl2filewriter.get_l2data', return_value=l2data())
+@patch("odinapi.utils.smrl2filewriter.os.path.isfile", return_value=True)
+@patch("odinapi.utils.smrl2filewriter.get_l2data", return_value=l2data())
 def test_process_period_does_not_overwrite_file(
     patched_get_l2data, patched_isfile, level2db, tmpdir
 ):
@@ -384,38 +371,42 @@ def test_process_period_does_not_overwrite_file(
         dt.datetime(2010, 3, 31),
         L2FILE.parameters,
         tmpdir,
-        False
+        False,
     )
     patched_isfile.assert_called()
     patched_get_l2data.assert_not_called()
 
 
-@patch('odinapi.utils.smrl2filewriter.process_period', return_value=None)
-@patch('odinapi.utils.smrl2filewriter.level2db.Level2DB', return_value=None)
+@patch("odinapi.utils.smrl2filewriter.process_period", return_value=None)
+@patch("odinapi.utils.smrl2filewriter.level2db.Level2DB", return_value=None)
 def test_cli_works(patched_level2db, patched_process_period):
-    smrl2filewriter.cli([
-        "proj",
-        "prod",
-        "1",
-        "2000-01-01",
-        "2000-01-31",
-        "prod-fm1",
-        "-q",
-        "/out",
-        "-f",
-    ])
-    patched_process_period.assert_has_calls([
-        call(
-            ANY,
-            ANY,
+    smrl2filewriter.cli(
+        [
             "proj",
-            1,
             "prod",
+            "1",
+            "2000-01-01",
+            "2000-01-31",
             "prod-fm1",
-            dt.datetime(2000, 1, 1),
-            dt.datetime(2000, 1, 31),
-            L2FILE.parameters,
+            "-q",
             "/out",
-            True
-        )
-    ])
+            "-f",
+        ]
+    )
+    patched_process_period.assert_has_calls(
+        [
+            call(
+                ANY,
+                ANY,
+                "proj",
+                1,
+                "prod",
+                "prod-fm1",
+                dt.datetime(2000, 1, 1),
+                dt.datetime(2000, 1, 31),
+                L2FILE.parameters,
+                "/out",
+                True,
+            )
+        ]
+    )

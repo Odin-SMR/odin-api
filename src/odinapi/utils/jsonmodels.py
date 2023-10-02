@@ -22,25 +22,25 @@ l2i_prototype = {
 }
 
 l2_prototype = {
-    'AVK': [[0.0]],         # (2-D array of doubles)
-    'Altitude': [0.0],      # (array of doubles)
-    'Apriori': [0.0],       # (array of doubles)
-    'ErrorNoise': [0.0],    # (array of doubles)
-    'ErrorTotal': [0.0],    # (array of doubles)
-    'FreqMode': 0,          # (int)
-    'InvMode': '',          # (string)
-    'Lat1D': 0.0,           # (double)
-    'Latitude': [0.0],      # (array of doubles)
-    'Lon1D': 0.0,           # (double)
-    'Longitude': [0.0],     # (array of doubles)
-    'MJD': 0.0,             # (double)
-    'MeasResponse': [0.0],  # (array of doubles)
-    'Pressure': [0.0],      # (array of doubles)
-    'Product': '',          # (string)
-    'Quality': None,        # (?)
-    'ScanID': 0,            # (int)
-    'Temperature': [0.0],   # (array of doubles)
-    'VMR': [0.0]            # (array of doubles)
+    "AVK": [[0.0]],  # (2-D array of doubles)
+    "Altitude": [0.0],  # (array of doubles)
+    "Apriori": [0.0],  # (array of doubles)
+    "ErrorNoise": [0.0],  # (array of doubles)
+    "ErrorTotal": [0.0],  # (array of doubles)
+    "FreqMode": 0,  # (int)
+    "InvMode": "",  # (string)
+    "Lat1D": 0.0,  # (double)
+    "Latitude": [0.0],  # (array of doubles)
+    "Lon1D": 0.0,  # (double)
+    "Longitude": [0.0],  # (array of doubles)
+    "MJD": 0.0,  # (double)
+    "MeasResponse": [0.0],  # (array of doubles)
+    "Pressure": [0.0],  # (array of doubles)
+    "Product": "",  # (string)
+    "Quality": None,  # (?)
+    "ScanID": 0,  # (int)
+    "Temperature": [0.0],  # (array of doubles)
+    "VMR": [0.0],  # (array of doubles)
 }
 
 
@@ -48,8 +48,13 @@ class JsonModelError(Exception):
     pass
 
 
-def check_json(data, prototype={"Data": ""}, allowUnexpected=False,
-               allowMissing=False, fillMissing=False):
+def check_json(
+    data,
+    prototype={"Data": ""},
+    allowUnexpected=False,
+    allowMissing=False,
+    fillMissing=False,
+):
     """
     Go through data, and try to add contents to mimic prototype.
 
@@ -68,8 +73,13 @@ def check_json(data, prototype={"Data": ""}, allowUnexpected=False,
     for k in data:
         try:
             if isinstance(prototype[lowKey[k.lower()]], dict):
-                tmp = check_json(data[k], prototype[lowKey[k.lower()]],
-                                 allowUnexpected, allowMissing, fillMissing)
+                tmp = check_json(
+                    data[k],
+                    prototype[lowKey[k.lower()]],
+                    allowUnexpected,
+                    allowMissing,
+                    fillMissing,
+                )
                 if "JSONError" in tmp:
                     fixedData["JSONError"] = tmp["JSONError"]
                 fixedData[lowKey[k.lower()]] = tmp
@@ -79,15 +89,13 @@ def check_json(data, prototype={"Data": ""}, allowUnexpected=False,
             if allowUnexpected:
                 fixedData[k] = data[k]
             else:
-                raise JsonModelError(
-                    "Data contains unexpected key '{0}'".format(k))
+                raise JsonModelError("Data contains unexpected key '{0}'".format(k))
 
     if not allowMissing:
         for k in prototype:
             try:
                 fixedData[k]
             except KeyError:
-                raise JsonModelError(
-                    "Data is missing expected key '{0}'".format(k))
+                raise JsonModelError("Data is missing expected key '{0}'".format(k))
 
     return fixedData

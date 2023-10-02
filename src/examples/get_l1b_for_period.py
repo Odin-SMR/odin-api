@@ -29,7 +29,8 @@ def get_scans_for_date(freqmode, date, api_root=API_ROOT, retries=0):
         try:
             req = requests.get(
                 "{}/freqmode_info/{}/{}/".format(
-                    api_root, date.isoformat(), int(freqmode)),
+                    api_root, date.isoformat(), int(freqmode)
+                ),
                 timeout=(60, 60),
             )
             break
@@ -42,7 +43,8 @@ def get_scans_for_date(freqmode, date, api_root=API_ROOT, retries=0):
 
 
 def get_scans_for_period(
-        freqmode, first, last, api_root=API_ROOT, retries=0, verbose=False):
+    freqmode, first, last, api_root=API_ROOT, retries=0, verbose=False
+):
     """Get scans from freqmode from first to last date inclusive
 
     Args:
@@ -88,8 +90,7 @@ def get_scans_for_period(
             for datum in req.json()["Data"]:
                 # if fm exists for day lookup fm and add scans to list
                 if datum["FreqMode"] == int(freqmode):
-                    scans.extend(
-                        get_scans_for_date(freqmode, day, api_root, retries))
+                    scans.extend(get_scans_for_date(freqmode, day, api_root, retries))
                     break
         day += delta
 
@@ -126,8 +127,8 @@ def extend_dict(dikt, data):
                     val = interpolate_spectra(
                         val,
                         [
-                            np.array(data["Frequency"]["IFreqGrid"])
-                            + lof for lof in data["Frequency"]["LOFreq"]
+                            np.array(data["Frequency"]["IFreqGrid"]) + lof
+                            for lof in data["Frequency"]["LOFreq"]
                         ],
                         (
                             np.array(dikt["Frequency"]["IFreqGrid"])
@@ -135,9 +136,8 @@ def extend_dict(dikt, data):
                         ),
                     )
                 elif (
-                        (key in ["IFreqGrid", "ChannelsID"]
-                         and "IFreqGrid" in dikt)
-                        or key == "TrecSpectrum"):
+                    key in ["IFreqGrid", "ChannelsID"] and "IFreqGrid" in dikt
+                ) or key == "TrecSpectrum":
                     continue
                 dikt[key].extend(val)
             elif isinstance(val, dict):
@@ -147,8 +147,8 @@ def extend_dict(dikt, data):
 
 
 def get_spectra_for_period(
-        freqmode, first,
-        last=None, api_root=API_ROOT, retries=0, verbose=False):
+    freqmode, first, last=None, api_root=API_ROOT, retries=0, verbose=False
+):
     """Get scans from freqmode from first to last date inclusive
 
     Args:
@@ -164,13 +164,11 @@ def get_spectra_for_period(
 
     # get spectra:
     spectra = {}
-    scans = get_scans_for_period(
-        freqmode, first, last, api_root, retries, verbose)
+    scans = get_scans_for_period(freqmode, first, last, api_root, retries, verbose)
     for n, scan in enumerate(scans):
         for attempt in range(retries + 1):
             try:
-                req = requests.get(
-                    scan["URLS"]["URL-spectra"], timeout=(60, 60))
+                req = requests.get(scan["URLS"]["URL-spectra"], timeout=(60, 60))
                 break
             except requests.exceptions.ReadTimeout:
                 pass
@@ -178,12 +176,20 @@ def get_spectra_for_period(
         if req.status_code == 200:
             data = req.json()["Data"]
             extend_dict(spectra, data)
-            print("Got scan {} of {} ({:.0f}%)".format(
-                n+1, len(scans), (100 * (n + 1)) / len(scans),
-            ))
+            print(
+                "Got scan {} of {} ({:.0f}%)".format(
+                    n + 1,
+                    len(scans),
+                    (100 * (n + 1)) / len(scans),
+                )
+            )
         else:
-            print("Failed to get scan {} of {} ({:.0f}%)".format(
-                n+1, len(scans), (100 * (n + 1)) / len(scans),
-            ))
+            print(
+                "Failed to get scan {} of {} ({:.0f}%)".format(
+                    n + 1,
+                    len(scans),
+                    (100 * (n + 1)) / len(scans),
+                )
+            )
 
     return spectra
