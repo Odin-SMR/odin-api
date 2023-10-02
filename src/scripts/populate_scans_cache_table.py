@@ -15,10 +15,10 @@ from dateutil import parser as date_parser
 def odin_connection():
     """Connects to the database, returns a connection"""
     connection_string = (
-        "host={0} ".format(environ.get("PGHOST")) +
-        "dbname={0} ".format(environ.get("PGDBNAME")) +
-        "user={0} ".format(environ.get("PGUSER")) +
-        "password={0}".format(environ.get("PGPASS"))
+        "host={0} ".format(environ.get("PGHOST"))
+        + "dbname={0} ".format(environ.get("PGDBNAME"))
+        + "user={0} ".format(environ.get("PGUSER"))
+        + "password={0}".format(environ.get("PGPASS"))
     )
     connection = connect(connection_string)
     return connection
@@ -31,42 +31,90 @@ def delete_day_from_database(cursor, day):
         delete from scans_cache
         where date=%s
         """,
-        (day,))
+        (day,),
+    )
 
 
-def add_to_database(cursor, day, freqmode, backend, altend, altstart,
-                    datetime_i, latend, latstart, lonend, lonstart, mjdend,
-                    mjdstart, numspec, scanid, sunzd, quality):
+def add_to_database(
+    cursor,
+    day,
+    freqmode,
+    backend,
+    altend,
+    altstart,
+    datetime_i,
+    latend,
+    latstart,
+    lonend,
+    lonstart,
+    mjdend,
+    mjdstart,
+    numspec,
+    scanid,
+    sunzd,
+    quality,
+):
     """Add an entry to the database.
 
     To avoid conflicts, make sure to delete the old ones first, e.g. by calling
     delete_day_from_database()!"""
     cursor.execute(
-        'insert into scans_cache values(%s,%s,%s,%s,%s,%s,%s,%s,'
-        '%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-        (day, freqmode, backend, scanid, altend, altstart, latend, latstart,
-         lonend, lonstart, mjdend, mjdstart, numspec, sunzd, datetime_i,
-         datetime.now(), quality))
+        "insert into scans_cache values(%s,%s,%s,%s,%s,%s,%s,%s,"
+        "%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        (
+            day,
+            freqmode,
+            backend,
+            scanid,
+            altend,
+            altstart,
+            latend,
+            latstart,
+            lonend,
+            lonstart,
+            mjdend,
+            mjdstart,
+            numspec,
+            sunzd,
+            datetime_i,
+            datetime.now(),
+            quality,
+        ),
+    )
 
 
 def setup_arguments():
     """setup command line arguments"""
     parser = ArgumentParser(description="Repopulate the cached data table")
-    parser.add_argument("-s", "--start", dest="start_date", action="store",
-                        default=(date.today()-timedelta(days=42)).isoformat(),
-                        help="start of period to look for new data "
-                        "(default: one month back)")
-    parser.add_argument("-e", "--end", dest="end_date", action="store",
-                        default=date.today().isoformat(),
-                        help="end of period to look for new data "
-                        "(default: today)")
-    parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
-                        help="use verbose output")
+    parser.add_argument(
+        "-s",
+        "--start",
+        dest="start_date",
+        action="store",
+        default=(date.today() - timedelta(days=42)).isoformat(),
+        help="start of period to look for new data " "(default: one month back)",
+    )
+    parser.add_argument(
+        "-e",
+        "--end",
+        dest="end_date",
+        action="store",
+        default=date.today().isoformat(),
+        help="end of period to look for new data " "(default: today)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="use verbose output",
+    )
     return parser
 
 
-def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
-         verbose=False):
+def main(
+    start_date=date.today() - timedelta(days=42), end_date=date.today(), verbose=False
+):
     """Script to populate database with 'cached' info.
 
     Walks backwards from end_date to start_date."""
@@ -77,18 +125,16 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     earliest_date = start_date
     db_connection = odin_connection()
     db_cursor = db_connection.cursor()
-    if 'ODIN_API_PRODUCTION' not in environ:
-        url_base = 'http://localhost:5000'
+    if "ODIN_API_PRODUCTION" not in environ:
+        url_base = "http://localhost:5000"
     else:
-        url_base = 'https://odin.rss.chalmers.se'
+        url_base = "https://odin.rss.chalmers.se"
     while current_date >= earliest_date:
         if verbose:
             print("Working on {0}".format(current_date))
-        url_day = (
-            '{0}/rest_api/v5/freqmode_info/{1}/'.format(
-                url_base,
-                current_date.isoformat())
-            )
+        url_day = "{0}/rest_api/v5/freqmode_info/{1}/".format(
+            url_base, current_date.isoformat()
+        )
         response = get(url_day, timeout=60)
         retries = max_retries
         while retries > 0:
@@ -107,19 +153,16 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
         delete_day_from_database(db_cursor, current_date.isoformat())
         db_connection.commit()
         json_data_day = response.json()
-        for freqmode in json_data_day['Data']:
-            if freqmode['FreqMode'] == 0:
+        for freqmode in json_data_day["Data"]:
+            if freqmode["FreqMode"] == 0:
                 if verbose:
                     print("Skipping FreqMode 0 on {}".format(current_date))
                 continue
             if verbose:
-                print("Working on {0}".format(freqmode['FreqMode']))
-            url_scan = (
-                '{0}/rest_api/v5/freqmode_raw/{1}/{2}/'.format(
-                    url_base,
-                    current_date.isoformat(),
-                    freqmode['FreqMode'])
-                )
+                print("Working on {0}".format(freqmode["FreqMode"]))
+            url_scan = "{0}/rest_api/v5/freqmode_raw/{1}/{2}/".format(
+                url_base, current_date.isoformat(), freqmode["FreqMode"]
+            )
             retries = max_retries
             while retries > 0:
                 response = get(url_scan, timeout=420)
@@ -136,12 +179,12 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
                 continue
 
             json_data_scan = response.json()
-            for scan in json_data_scan['Data']:
+            for scan in json_data_scan["Data"]:
                 add_to_database(
                     db_cursor,
-                    json_data_day['Date'],
-                    freqmode['FreqMode'],
-                    freqmode['Backend'],
+                    json_data_day["Date"],
+                    freqmode["FreqMode"],
+                    freqmode["Backend"],
                     scan["AltEnd"],
                     scan["AltStart"],
                     scan["DateTime"],
@@ -194,5 +237,5 @@ def cli():
     exit(main(start_date, end_date, args.verbose))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

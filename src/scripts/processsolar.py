@@ -6,16 +6,13 @@ import numpy as np
 
 
 def processsolar():
-
-    solarfile = '/var/lib/odindata/' + 'sw.txt'
-    solar = open(solarfile, 'r')
+    solarfile = "/var/lib/odindata/" + "sw.txt"
+    solar = open(solarfile, "r")
     line = solar.readline(-1)
     while line != "BEGIN OBSERVED\n":
         line = solar.readline(-1)
 
-    res = FortranRecordReader(
-        'I4,I3,I3,I5,I3,8I3,I4,8I4,I4,F4.1,I2,I4,F6.1,I2,5F6.1'
-    )
+    res = FortranRecordReader("I4,I3,I3,I5,I3,8I3,I4,8I4,I4,F4.1,I2,I4,F6.1,I2,5F6.1")
     solardata = []
     line = solar.readline(-1)
     while line != "END OBSERVED\n":
@@ -51,14 +48,16 @@ def processsolar():
 
     datespred = []
     for i in range(solardatapred.shape[0]):
-        datespred.append(DT.date(
-            solardatapred[i, 0].astype(int),
-            solardatapred[i, 1].astype(int),
-            solardatapred[i, 2].astype(int),
-        ))
+        datespred.append(
+            DT.date(
+                solardatapred[i, 0].astype(int),
+                solardatapred[i, 1].astype(int),
+                solardatapred[i, 2].astype(int),
+            )
+        )
 
     solar.close()
-    dbfile = '/var/lib/odindata/' + 'Solardata2.db'
+    dbfile = "/var/lib/odindata/" + "Solardata2.db"
     db = sqlite.connect(dbfile)
     cur = db.cursor()
 
@@ -70,7 +69,7 @@ def processsolar():
     # Ap7 shortint,  Ap8 shortint,  ApAvg shortint,	Cp float, C9 shortint,
     # ISN Integer,  AdjF10_7 float, Q shortint,  AdjCtr81 float,
     # AdjLst81 float, ObsF10_7 float, ObsCtr81 float, ObsLst81 float )')
-    instr = 'insert or replace into solardata values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )'  # noqa
+    instr = "insert or replace into solardata values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"  # noqa
     for i in range(solardata.shape[0]):
         ids = (
             solardata[i, 0].astype(int) * 10000
@@ -87,7 +86,7 @@ def processsolar():
     # Ap7 shortint,  Ap8 shortint,  ApAvg shortint,  Cp float, C9 shortint,
     # ISN Integer,  AdjF10_7 float, Q shortint, AdjCtr81 float,
     # AdjLst81 float, ObsF10_7 float, ObsCtr81 float, ObsLst81 float )')
-    instr = 'insert or replace into solardatapred values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )'  # noqa
+    instr = "insert or replace into solardatapred values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"  # noqa
     idp = ids
     for i in range(solardatapred.shape[0]):
         ids = (

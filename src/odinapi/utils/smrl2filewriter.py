@@ -34,23 +34,20 @@ class L2Getter:
         return datamodel.L2Full(
             l2i=self.get_l2i(scanid),
             l2anc=self.get_l2anc(l2[0]),
-            l2=datamodel.to_l2(l2[0], self.product)
+            l2=datamodel.to_l2(l2[0], self.product),
         )
 
     def get_data(self, scanids: List[int]) -> List[datamodel.L2Full]:
         l2fulls = [self.get_l2full(scanid) for scanid in scanids]
         return [
-            l2full for l2full in l2fulls
-            if l2full is not None and l2full.l2i.isvalid()
+            l2full for l2full in l2fulls if l2full is not None and l2full.l2i.isvalid()
         ]
 
     def get_scanids(self, start: dt.datetime, end: dt.datetime) -> List[int]:
         scans = []
         while start < end:
             currentscans = self.db2.get_scans(
-                self.freqmode,
-                start_time=start,
-                end_time=start + relativedelta(days=1)
+                self.freqmode, start_time=start, end_time=start + relativedelta(days=1)
             )
             for scan in currentscans:
                 scans.append(scan["ScanID"])
@@ -96,7 +93,7 @@ class L2FileCreater:
                 self.project,
                 self.product_label,
                 self.start,
-            )
+            ),
         )
 
     @property
@@ -108,15 +105,12 @@ class L2FileCreater:
     def write_to_file(self) -> None:
         with Dataset(self.filename(), "w", fomat="NETCFD4") as ds:
             ds.createDimension("time", self.ntimes)
-            ds.createDimension('level', self.nlevels)
+            ds.createDimension("level", self.nlevels)
             for para in self.header:
                 setattr(ds, para, self.header[para])
             for para in self.parameters:
                 nc_var = ds.createVariable(
-                    para.name,
-                    para.dtype.value,
-                    para.dimension.value,
-                    zlib=True
+                    para.name, para.dtype.value, para.dimension.value, zlib=True
                 )
                 istemp = datamodel.is_temperature(self.product)
                 nc_var.description = para.get_description(istemp)
@@ -125,7 +119,7 @@ class L2FileCreater:
                     nc_var[:] = date2num(
                         [d.get_data(para) for d in self.data],
                         para.unit.value,
-                        calendar='standard'
+                        calendar="standard",
                     )
                 else:
                     nc_var[:] = [d.get_data(para) for d in self.data]
@@ -140,13 +134,9 @@ def get_l2data(
     # that is the one of interest here, corresponds more to the
     # mean time of the scan, so these times can differ
     minutes = 5
-    scanids = l2getter.get_scanids(
-        start - relativedelta(minutes=minutes), end
-    )
+    scanids = l2getter.get_scanids(start - relativedelta(minutes=minutes), end)
     data = l2getter.get_data(scanids)
-    return [
-        d for d in data if d.l2.Time >= start and d.l2.Time < end
-    ]
+    return [d for d in data if d.l2.Time >= start and d.l2.Time < end]
 
 
 def process_period(
@@ -218,17 +208,17 @@ def cli(argv: List = []) -> None:
         help="end date: format: YYYY-MM-DD",
     )
     parser.add_argument(
-        'product_label',
+        "product_label",
         type=str,
         help="product name (for filename generation)",
     )
     parser.add_argument(
-        '-q',
-        '--outdir',
-        dest='outdir',
+        "-q",
+        "--outdir",
+        dest="outdir",
         type=str,
-        default='/tmp',
-        help='data directory for saving output default is /tmp',
+        default="/tmp",
+        help="data directory for saving output default is /tmp",
     )
     parser.add_argument(
         "-f",
@@ -237,8 +227,8 @@ def cli(argv: List = []) -> None:
         help="flag for overwriting existing files",
     )
     args = parser.parse_args(argv)
-    date_start = dt.datetime.strptime(args.date_start, '%Y-%m-%d')
-    date_end = dt.datetime.strptime(args.date_end, '%Y-%m-%d')
+    date_start = dt.datetime.strptime(args.date_start, "%Y-%m-%d")
+    date_end = dt.datetime.strptime(args.date_end, "%Y-%m-%d")
     db1 = DatabaseConnector
     db2 = level2db.Level2DB(args.project)
     process_period(

@@ -25,7 +25,7 @@ TIME_DATA = [
     {
         "stw": 2970095158,
         "mjd": 54108.47037037,
-        "date": datetime(2007, 1, 8, 11, 17, 20, 63000)
+        "date": datetime(2007, 1, 8, 11, 17, 20, 63000),
     },
     {
         "stw": 4296163273,
@@ -60,54 +60,29 @@ TIME_DATA = [
 ]
 
 
-class TestTimeConversions():
-
-    @pytest.mark.parametrize("stw,mjd", (
-        ((t["stw"], t["mjd"]) for t in TIME_DATA)
-    ))
+class TestTimeConversions:
+    @pytest.mark.parametrize("stw,mjd", (((t["stw"], t["mjd"]) for t in TIME_DATA)))
     def test_stw2mjd(self, stw, mjd):
-        assert (
-            time_util.stw2mjd(stw) == pytest.approx(mjd, abs=1e-3)
-        )
+        assert time_util.stw2mjd(stw) == pytest.approx(mjd, abs=1e-3)
 
-    @pytest.mark.parametrize("mjd,stw", (
-        ((t["mjd"], t["stw"]) for t in TIME_DATA)
-    ))
+    @pytest.mark.parametrize("mjd,stw", (((t["mjd"], t["stw"]) for t in TIME_DATA)))
     def test_mjd2stw(self, mjd, stw):
-        assert (
-            time_util.mjd2stw(mjd) == pytest.approx(stw, abs=1e3)
-        )
+        assert time_util.mjd2stw(mjd) == pytest.approx(stw, abs=1e3)
 
-    @pytest.mark.parametrize("mjd,expect", (
-        ((t["mjd"], t["date"]) for t in TIME_DATA)
-    ))
+    @pytest.mark.parametrize("mjd,expect", (((t["mjd"], t["date"]) for t in TIME_DATA)))
     def test_mjd2datetime(self, mjd, expect):
         date = time_util.mjd2datetime(mjd)
-        assert (
-            (date - expect).total_seconds() == pytest.approx(0, abs=1)
-        )
+        assert (date - expect).total_seconds() == pytest.approx(0, abs=1)
 
-    @pytest.mark.parametrize("date,mjd", (
-        ((t["date"], t["mjd"]) for t in TIME_DATA)
-    ))
+    @pytest.mark.parametrize("date,mjd", (((t["date"], t["mjd"]) for t in TIME_DATA)))
     def test_datetime2mjd(self, date, mjd):
-        assert (
-            time_util.datetime2mjd(date) == pytest.approx(mjd, abs=1e-4)
-        )
+        assert time_util.datetime2mjd(date) == pytest.approx(mjd, abs=1e-4)
 
-    @pytest.mark.parametrize("date,stw", (
-        ((t["date"], t["stw"]) for t in TIME_DATA)
-    ))
+    @pytest.mark.parametrize("date,stw", (((t["date"], t["stw"]) for t in TIME_DATA)))
     def test_datetime2stw(self, date, stw):
-        assert (
-            time_util.datetime2stw(date) == pytest.approx(stw, abs=1e3)
-        )
+        assert time_util.datetime2stw(date) == pytest.approx(stw, abs=1e3)
 
-    @pytest.mark.parametrize("stw,expect", (
-        ((t["stw"], t["date"]) for t in TIME_DATA)
-    ))
+    @pytest.mark.parametrize("stw,expect", (((t["stw"], t["date"]) for t in TIME_DATA)))
     def test_stw2datetime(self, stw, expect):
         date = time_util.stw2datetime(stw)
-        assert (
-            (date - expect).total_seconds() == pytest.approx(0, abs=1e2)
-        )
+        assert (date - expect).total_seconds() == pytest.approx(0, abs=1e2)

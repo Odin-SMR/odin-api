@@ -14,10 +14,10 @@ from dateutil import parser as date_parser
 def odin_connection():
     """Connects to the database, returns a connection"""
     connection_string = (
-        "host={0} ".format(environ.get("PGHOST")) +
-        "dbname={0} ".format(environ.get("PGDBNAME")) +
-        "user={0} ".format(environ.get("PGUSER")) +
-        "password={0}".format(environ.get("PGPASS"))
+        "host={0} ".format(environ.get("PGHOST"))
+        + "dbname={0} ".format(environ.get("PGDBNAME"))
+        + "user={0} ".format(environ.get("PGUSER"))
+        + "password={0}".format(environ.get("PGPASS"))
     )
     connection = connect(connection_string)
     return connection
@@ -30,29 +30,45 @@ def add_to_database(cursor, day, freqmode, numscans, backend):
         delete from measurements_cache
         where date=%s and freqmode=%s and backend=%s
         """,
-        (day, freqmode, backend))
+        (day, freqmode, backend),
+    )
     cursor.execute(
-        'insert into measurements_cache values(%s,%s,%s,%s)',
-        (day, freqmode, numscans, backend))
+        "insert into measurements_cache values(%s,%s,%s,%s)",
+        (day, freqmode, numscans, backend),
+    )
 
 
 def setup_arguments():
     parser = ArgumentParser(description="Repopulate the cached data table")
-    parser.add_argument("-s", "--start", dest="start_date", action="store",
-                        default=(date.today()-timedelta(days=42)).isoformat(),
-                        help="start of period to look for new data "
-                        "(default: one month back)")
-    parser.add_argument("-e", "--end", dest="end_date", action="store",
-                        default=date.today().isoformat(),
-                        help="end of period to look for new data "
-                        "(default: today)")
-    parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
-                        help="use verbose output")
+    parser.add_argument(
+        "-s",
+        "--start",
+        dest="start_date",
+        action="store",
+        default=(date.today() - timedelta(days=42)).isoformat(),
+        help="start of period to look for new data " "(default: one month back)",
+    )
+    parser.add_argument(
+        "-e",
+        "--end",
+        dest="end_date",
+        action="store",
+        default=date.today().isoformat(),
+        help="end of period to look for new data " "(default: today)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="use verbose output",
+    )
     return parser
 
 
-def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
-         verbose=False):
+def main(
+    start_date=date.today() - timedelta(days=42), end_date=date.today(), verbose=False
+):
     """Script to populate database with 'cached'info.
 
     Walks backwards from end_date to start_date."""
@@ -62,10 +78,9 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
     db_connection = odin_connection()
     db_cursor = db_connection.cursor()
     while current_date >= earliest_date:
-        url = (
-            'http://odin.rss.chalmers.se/'
-            'rest_api/v4/freqmode_raw/{}/'.format(current_date.isoformat())
-            )
+        url = "http://odin.rss.chalmers.se/" "rest_api/v4/freqmode_raw/{}/".format(
+            current_date.isoformat()
+        )
         response = get(url)
         try:
             response.raise_for_status()
@@ -73,14 +88,14 @@ def main(start_date=date.today()-timedelta(days=42), end_date=date.today(),
             print("{0} {1}".format(current_date, msg))
             continue
         json_data = response.json()
-        for freqmode in json_data['Info']:
+        for freqmode in json_data["Info"]:
             add_to_database(
                 db_cursor,
-                json_data['Date'],
-                freqmode['FreqMode'],
-                freqmode['NumScan'],
-                freqmode['Backend']
-                )
+                json_data["Date"],
+                freqmode["FreqMode"],
+                freqmode["NumScan"],
+                freqmode["Backend"],
+            )
         db_connection.commit()
         if verbose:
             print("{0} OK".format(current_date))
@@ -115,5 +130,5 @@ def cli():
     exit(main(start_date, end_date, args.verbose))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

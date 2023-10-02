@@ -12,7 +12,7 @@ import numpy as np
 import datetime as dt
 
 NEW_BASEVIEW_LOCK = Lock()
-VERSIONS = ['v4', 'v5']
+VERSIONS = ["v4", "v5"]
 
 
 def register_versions(role, versions=None):
@@ -36,10 +36,12 @@ def register_versions(role, versions=None):
       versions (list): List of versions to register this method for. Default
          is all available versions.
     """
+
     def decorator(method):
         method._role = role
         method._versions = versions
         return method
+
     return decorator
 
 
@@ -89,6 +91,7 @@ class BaseView(MethodView):
             def _return_data_v5(self, version, data, *args):
                 print('In _return_data_v5')
     """
+
     # Versions supported by this view (other versions will result in 404):
     SUPPORTED_VERSIONS = VERSIONS
 
@@ -101,53 +104,73 @@ class BaseView(MethodView):
             for method_name, method in inspect.getmembers(
                 cls, predicate=inspect_predicate
             ):
-                if hasattr(method, '_role'):
-                    if method._role == 'fetch':
+                if hasattr(method, "_role"):
+                    if method._role == "fetch":
                         lookup = cls.VERSION_TO_FETCHDATA
-                    elif method._role == 'return':
+                    elif method._role == "return":
                         lookup = cls.VERSION_TO_RETURNDATA
-                    elif method._role == 'swagger':
+                    elif method._role == "swagger":
                         lookup = cls.VERSION_TO_SWAGGERSPEC
                     else:
-                        raise ValueError(
-                            'Unsupported method role: %r' % method._role)
+                        raise ValueError("Unsupported method role: %r" % method._role)
                     for version in method._versions or cls.SUPPORTED_VERSIONS:
                         if version in lookup:
-                            raise ValueError((
-                                'Could not register version {} to method {} '
-                                'in class {}, it has already been registered '
-                                'for role {} in method {}').format(
-                                    version, method_name, cls.__name__,
-                                    repr(method._role), lookup[version]))
+                            raise ValueError(
+                                (
+                                    "Could not register version {} to method {} "
+                                    "in class {}, it has already been registered "
+                                    "for role {} in method {}"
+                                ).format(
+                                    version,
+                                    method_name,
+                                    cls.__name__,
+                                    repr(method._role),
+                                    lookup[version],
+                                )
+                            )
                         lookup[version] = method_name
             return MethodView.__new__(cls)
 
     def get(self, version, *args, **kwargs):
         if version not in self.SUPPORTED_VERSIONS:
-            return jsonify({
-                'Error': 'Version {} not supported only {}'.format(
-                    version, self.SUPPORTED_VERSIONS,
+            return (
+                jsonify(
+                    {
+                        "Error": "Version {} not supported only {}".format(
+                            version,
+                            self.SUPPORTED_VERSIONS,
+                        ),
+                    }
                 ),
-            }), 404
-        if (version not in self.VERSION_TO_FETCHDATA or
-                version not in self.VERSION_TO_RETURNDATA):
-            return jsonify({
-                'Error':
-                'Version {} not supported only {} (restriction {})'.format(
-                    version,
-                    self.VERSION_TO_FETCHDATA
-                    if version not in self.VERSION_TO_FETCHDATA
-                    else self.VERSION_TO_RETURNDATA,
-                    'fetch data' if version not in self.VERSION_TO_FETCHDATA
-                    else 'return data'
+                404,
+            )
+        if (
+            version not in self.VERSION_TO_FETCHDATA
+            or version not in self.VERSION_TO_RETURNDATA
+        ):
+            return (
+                jsonify(
+                    {
+                        "Error": "Version {} not supported only {} (restriction {})".format(
+                            version,
+                            self.VERSION_TO_FETCHDATA
+                            if version not in self.VERSION_TO_FETCHDATA
+                            else self.VERSION_TO_RETURNDATA,
+                            "fetch data"
+                            if version not in self.VERSION_TO_FETCHDATA
+                            else "return data",
+                        ),
+                    }
                 ),
-            }), 404
+                404,
+            )
         # TODO: Might want to add more method roles?
         try:
             data = getattr(self, self.VERSION_TO_FETCHDATA[version])(
-                version, *args, **kwargs)
+                version, *args, **kwargs
+            )
         except BadRequest as err:
-            return jsonify({'Error': str(err)}), 400
+            return jsonify({"Error": str(err)}), 400
         if isinstance(data, Response):
             return data, 400
         elif isinstance(data, tuple):
@@ -157,14 +180,13 @@ class BaseView(MethodView):
             headers = {}
         # Assume that we always want to return json and 200
         payload = getattr(self, self.VERSION_TO_RETURNDATA[version])(
-            version, data, *args, **kwargs,
+            version,
+            data,
+            *args,
+            **kwargs,
         )
-        payload = simplejson.dumps(
-            payload,
-            default=default,
-            ignore_nan=True
-        )
-        headers['Content-Type'] = 'application/json'
+        payload = simplejson.dumps(payload, default=default, ignore_nan=True)
+        headers["Content-Type"] = "application/json"
         return payload, status, headers
 
     def swagger_spec(self, version):
@@ -191,4 +213,4 @@ def default(obj):
         return float(obj)
     if isinstance(obj, dt.datetime) or isinstance(obj, dt.date):
         return obj.isoformat()
-    raise ValueError(f'Dont know to handle {type(obj)} {obj}')
+    raise ValueError(f"Dont know to handle {type(obj)} {obj}")

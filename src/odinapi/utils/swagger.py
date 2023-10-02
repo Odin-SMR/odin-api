@@ -47,11 +47,11 @@ class Swagger:
     """
 
     TYPE2SWAGGER = {
-        int: 'integer',
-        float: 'number',
-        str: 'string',
-        list: 'array',
-        bool: 'boolean'
+        int: "integer",
+        float: "number",
+        str: "string",
+        list: "array",
+        bool: "boolean",
     }
 
     def __init__(self):
@@ -71,8 +71,9 @@ class Swagger:
     def get_response(self, name):
         return self.responses[name]
 
-    def get_path_definition(self, tags, parameters, responses, summary='',
-                            description=''):
+    def get_path_definition(
+        self, tags, parameters, responses, summary="", description=""
+    ):
         """Return swagger GET definition for a path.
 
         Args:
@@ -85,20 +86,20 @@ class Swagger:
         """
         for param in parameters:
             if param not in self.parameters:
-                raise ValueError('Missing parameter definition for %s' % param)
+                raise ValueError("Missing parameter definition for %s" % param)
         definition = {
-            'description': description,
-            'parameters': [{'$ref': '#/parameters/%s' % param}
-                           for param in parameters],
-            'responses': {str(status_code): response
-                          for status_code, response in responses.items()},
-            'summary': summary,
-            'tags': tags,
+            "description": description,
+            "parameters": [{"$ref": "#/parameters/%s" % param} for param in parameters],
+            "responses": {
+                str(status_code): response
+                for status_code, response in responses.items()
+            },
+            "summary": summary,
+            "tags": tags,
         }
-        return {'get': definition}
+        return {"get": definition}
 
-    def get_type_response(self, type_name, description='', is_list=False,
-                          **kwargs):
+    def get_type_response(self, type_name, description="", is_list=False, **kwargs):
         """Return swagger response definition for a certain type.
 
         Args:
@@ -125,23 +126,25 @@ class Swagger:
               "schema": {...}
             }
         """
-        dataschema = {'$ref': '#/definitions/' + type_name}
+        dataschema = {"$ref": "#/definitions/" + type_name}
         if is_list:
             dataschema = {
-                'type': 'array',
-                'items': dataschema,
+                "type": "array",
+                "items": dataschema,
             }
 
         schema = self.make_properties(kwargs)
-        schema['required'] = ['Data', 'Type', 'Count']
-        schema['properties'].update({
-            'Type': {'type': 'string'},
-            'Count': {'type': 'integer'},
-            'Data': dataschema,
-        })
-        return {'description': description, 'schema': schema}
+        schema["required"] = ["Data", "Type", "Count"]
+        schema["properties"].update(
+            {
+                "Type": {"type": "string"},
+                "Count": {"type": "integer"},
+                "Data": dataschema,
+            }
+        )
+        return {"description": description, "schema": schema}
 
-    def get_mixed_type_response(self, types, description=''):
+    def get_mixed_type_response(self, types, description=""):
         """Return swagger response definition for a mixed type.
 
         Args:
@@ -165,17 +168,20 @@ class Swagger:
               "schema": {...}
             }
         """
-        schema = {'properties': {
-            'Type': {'type': 'string'},  # TODO: Will always be 'mixed'
-            'Count': {'type': 'integer'},  # TODO: Will always be None
-            'Data': {
-                'required': [type_name for type_name, _ in types],
-                'properties': {
-                    typ: self.get_type_response(typ, is_list=is_list)['schema']
-                    for typ, is_list in types}
+        schema = {
+            "properties": {
+                "Type": {"type": "string"},  # TODO: Will always be 'mixed'
+                "Count": {"type": "integer"},  # TODO: Will always be None
+                "Data": {
+                    "required": [type_name for type_name, _ in types],
+                    "properties": {
+                        typ: self.get_type_response(typ, is_list=is_list)["schema"]
+                        for typ, is_list in types
+                    },
+                },
             }
-        }}
-        return {'description': description, 'schema': schema}
+        }
+        return {"description": description, "schema": schema}
 
     def add_type(self, name, properties):
         """Add a type definition.
@@ -186,12 +192,20 @@ class Swagger:
             `make_properties`.
         """
         if name in self.types:
-            raise ValueError('The type %r already exists' % name)
+            raise ValueError("The type %r already exists" % name)
         self.types[name] = self.make_properties(properties)
 
-    def add_parameter(self, name, location, typ, required=False,
-                      string_format=None, default=None, description=None,
-                      collection_format=None):
+    def add_parameter(
+        self,
+        name,
+        location,
+        typ,
+        required=False,
+        string_format=None,
+        default=None,
+        description=None,
+        collection_format=None,
+    ):
         """Add an endpoint parameter.
 
         Args:
@@ -218,24 +232,24 @@ class Swagger:
             }
         """
         if name in self.parameters:
-            raise ValueError('The parameter %r already exists' % name)
+            raise ValueError("The parameter %r already exists" % name)
         self.parameters[name] = {
-            'name': name,
-            'in': location,
-            'type': self.get_swagger_type(typ)
+            "name": name,
+            "in": location,
+            "type": self.get_swagger_type(typ),
         }
         if default is not None:
-            self.parameters[name]['default'] = default
-        if location == 'path' or (required and default is None):
-            self.parameters[name]['required'] = True
+            self.parameters[name]["default"] = default
+        if location == "path" or (required and default is None):
+            self.parameters[name]["required"] = True
         if string_format:
-            self.parameters[name]['format'] = string_format
+            self.parameters[name]["format"] = string_format
         if description:
-            self.parameters[name]['description'] = description
+            self.parameters[name]["description"] = description
         if isinstance(typ, list):
             if collection_format:
-                self.parameters[name]['collectionFormat'] = collection_format
-            self.parameters[name]['items'] = self.make_properties(typ[0])
+                self.parameters[name]["collectionFormat"] = collection_format
+            self.parameters[name]["items"] = self.make_properties(typ[0])
 
     def add_response(self, name, description, properties):
         """Add a swagger response with custom schema.
@@ -257,10 +271,10 @@ class Swagger:
         for a properties example.
         """
         if name in self.responses:
-            raise ValueError('The response %r already exists' % name)
+            raise ValueError("The response %r already exists" % name)
         self.responses[name] = {
-            'description': description,
-            'schema': self.make_properties(properties)
+            "description": description,
+            "schema": self.make_properties(properties),
         }
 
     @staticmethod
@@ -301,13 +315,14 @@ class Swagger:
             }
         """
         if isinstance(properties, dict):
-            return {'type': 'object', 'properties': {
-                key: Swagger.make_properties(val)
-                for key, val in properties.items()}}
-        elif isinstance(properties, list):
             return {
-                "type": "array",
-                "items": Swagger.make_properties(properties[0])}
+                "type": "object",
+                "properties": {
+                    key: Swagger.make_properties(val) for key, val in properties.items()
+                },
+            }
+        elif isinstance(properties, list):
+            return {"type": "array", "items": Swagger.make_properties(properties[0])}
         else:
             return {"type": Swagger.get_swagger_type(properties)}
 
@@ -324,7 +339,7 @@ SWAGGER = Swagger()
 
 def is_base_view(endpoint):
     """Return True if the endpoint handler is a BaseView."""
-    klass = endpoint.__dict__.get('view_class', None)
+    klass = endpoint.__dict__.get("view_class", None)
     try:
         return issubclass(klass, BaseView)
     except TypeError:
@@ -334,7 +349,7 @@ def is_base_view(endpoint):
 class SwaggerSpecView(MethodView):
     """View for generating swagger spec from the BaseView endpoints."""
 
-    def __init__(self, title, description='', terms_of_service=''):
+    def __init__(self, title, description="", terms_of_service=""):
         self.title = title
         self.description = description
         self.terms_of_service = terms_of_service
@@ -343,9 +358,9 @@ class SwaggerSpecView(MethodView):
     @staticmethod
     def rule_to_swagger_path(rule, version):
         rule = str(rule)
-        rule = rule.replace('<version>', version)
-        for arg in re.findall('(<([^<>]*:)?([^<>]*)>)', rule):
-            rule = rule.replace(arg[0], '{%s}' % arg[2])
+        rule = rule.replace("<version>", version)
+        for arg in re.findall("(<([^<>]*:)?([^<>]*)>)", rule):
+            rule = rule.replace(arg[0], "{%s}" % arg[2])
         return rule
 
     def collect_path_specifications(self, version):
@@ -364,17 +379,19 @@ class SwaggerSpecView(MethodView):
     def get(self, version):
         """GET swagger definition for a certain version of the API."""
         param = SWAGGER.get_parameters()
-        return jsonify({
-            "swagger": "2.0",
-            "info": {
-                "version": version,
-                "title": self.title,
-                "description": self.description,
-                "termsOfService": self.terms_of_service,
-            },
-            'basePath': '/',
-            "paths": self.collect_path_specifications(version),
-            "definitions": SWAGGER.get_definitions(),
-            "parameters": param,
-            "responses": SWAGGER.get_responses()
-        })
+        return jsonify(
+            {
+                "swagger": "2.0",
+                "info": {
+                    "version": version,
+                    "title": self.title,
+                    "description": self.description,
+                    "termsOfService": self.terms_of_service,
+                },
+                "basePath": "/",
+                "paths": self.collect_path_specifications(version),
+                "definitions": SWAGGER.get_definitions(),
+                "parameters": param,
+                "responses": SWAGGER.get_responses(),
+            }
+        )

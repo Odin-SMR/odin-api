@@ -165,7 +165,6 @@ class Sage3Data:
             return list(data)
         return []
 
-
     def _getSpaceTimeCoordinates(self):
         """Get measurement times, longitudes and latitudes for the event in
         the file.
@@ -187,7 +186,6 @@ class Sage3Data:
             return list(data1), list(data2)
         return []
 
-
     def _getTempAndPressureProfiles(self):
         key = (
             "Section 5.0 - Altitude-based Data/"
@@ -198,7 +196,6 @@ class Sage3Data:
         if type(data) == h5py.Dataset:
             return list(data)
         return []
-
 
     def _getOzoneProfiles(self):
         key = (
@@ -221,7 +218,6 @@ class Sage3Data:
         if type(data) == h5py.Dataset:
             return list(data)
         return []
-       
 
     def _parse_timestamp(self, timestamp):
         date = str(timestamp.astype(int)[0])
@@ -303,18 +299,12 @@ class Sage3Lunar(Sage3Data):
         )
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
-            return list(data)        
+            return list(data)
         return []
 
     def _getOzoneProfiles(self):
-        key = (
-            "Section 6.2 - Ozone profiles /"
-            "Ozone profiles"
-        )
-        key_opt = (
-            "Section 6.2 - Ozone profiles/"
-            "Ozone profiles"
-        )
+        key = "Section 6.2 - Ozone profiles /" "Ozone profiles"
+        key_opt = "Section 6.2 - Ozone profiles/" "Ozone profiles"
         if key in self._hfile.keys():
             data = self._hfile[key]
         else:
@@ -324,30 +314,21 @@ class Sage3Lunar(Sage3Data):
         return []
 
     def _getNitrogenDioxideProfiles(self):
-        key = (
-            "Section 6.3 - Nitrogen Dioxide profiles/"
-            "Nitrogen Dioxide profiles"
-        )
+        key = "Section 6.3 - Nitrogen Dioxide profiles/" "Nitrogen Dioxide profiles"
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
             return list(data)
         return []
 
     def _getNitrogenTrioxideProfiles(self):
-        key = (
-            "Section 6.4 - Nitrogen Trioxide profiles/"
-            "Nitrogen Dioxide profiles"
-        )
+        key = "Section 6.4 - Nitrogen Trioxide profiles/" "Nitrogen Dioxide profiles"
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
             return list(data)
         return []
 
     def _getChlorineDioxideProfiles(self):
-        key = (
-            "Section 6.5 - OClO profiles/"
-            "OClO profiles"
-        )
+        key = "Section 6.5 - OClO profiles/" "OClO profiles"
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
             return list(data)

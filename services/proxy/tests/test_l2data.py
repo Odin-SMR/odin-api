@@ -3,7 +3,7 @@ import os
 import requests
 
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, MY_PATH + '/../../../src')
+sys.path.insert(0, MY_PATH + "/../../../src")
 
 
 def test_get_l2_data(odinapi_service):

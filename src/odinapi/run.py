@@ -1,6 +1,5 @@
-from .blueprints import register_blueprints
-from .api import app
+from .api import create_app
 
-register_blueprints(app)
+app = create_app()
 if __name__ == "__main__":
     app.run()
