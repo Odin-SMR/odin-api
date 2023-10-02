@@ -24,14 +24,16 @@
 import numpy as np
 from . import nrlmsis
 import sqlite3 as sqlite
-kB = 1.3806488E-23  # m2 kg s-2 K-1
+
+kB = 1.3806488e-23  # m2 kg s-2 K-1
 
 
 class Msis90:
-    '''class for access to MSIS90e model'''
+    """class for access to MSIS90e model"""
 
     def __init__(
-        self, solardatafile='/home/donal/Dropbox/solar/Solardata2.db',
+        self,
+        solardatafile="/home/donal/Dropbox/solar/Solardata2.db",
     ):
         nrlmsis.meters(1)  # turn on SI units
         self.solardatafile = solardatafile
@@ -39,12 +41,11 @@ class Msis90:
     def extractPTZprofilevarsolar(self, datetime, lat, lng, altitudes):
         db = sqlite.connect(self.solardatafile)
         cur = db.cursor()
-        selectstr = (
-            'select APAvg, ObsF10_7, ObsCtr81 from solardata where id ='
-            + str(datetime.year * 10000 + datetime.month * 100 + datetime.day)
+        selectstr = "select APAvg, ObsF10_7, ObsCtr81 from solardata where id =" + str(
+            datetime.year * 10000 + datetime.month * 100 + datetime.day
         )
         apavg, f107, f107a = cur.execute(selectstr).fetchall()[0]
-        ap = apavg * np.ones(7, 'f')
+        ap = apavg * np.ones(7, "f")
         db.close()
         mass = 48
         iydd = datetime.timetuple().tm_yday
@@ -53,14 +54,24 @@ class Msis90:
         T = np.zeros(altitudes.shape)
         Z = altitudes
         for i, alt in enumerate(altitudes):
-            d = np.zeros(9, 'f')
-            t = np.zeros(2, 'f')
+            d = np.zeros(9, "f")
+            t = np.zeros(2, "f")
             nrlmsis.gtd7(
-                iydd, ut, alt, lat, lng, ut / 3600 - lng / 15, f107a, f107, ap,
-                mass, d, t,
+                iydd,
+                ut,
+                alt,
+                lat,
+                lng,
+                ut / 3600 - lng / 15,
+                f107a,
+                f107,
+                ap,
+                mass,
+                d,
+                t,
             )
             T[i] = t[1]
-            P[i] = (d.sum() - d[5]) * kB * t[1] / 100.
+            P[i] = (d.sum() - d[5]) * kB * t[1] / 100.0
 
         return P, T, Z
 
@@ -76,9 +87,17 @@ class Msis90:
         Z = altitudes
         for i, alt in enumerate(altitudes):
             d, t = nrlmsis.gtd7(
-                iydd, ut, alt, lat, lng, ut / 3600 - lng / 15, f107a, f107, ap,
+                iydd,
+                ut,
+                alt,
+                lat,
+                lng,
+                ut / 3600 - lng / 15,
+                f107a,
+                f107,
+                ap,
                 mass,
             )
             T[i] = t[1]
-            P[i] = (d.sum() - d[5]) * kB * t[1] / 100.
+            P[i] = (d.sum() - d[5]) * kB * t[1] / 100.0
         return P, T, Z

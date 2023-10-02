@@ -104,16 +104,16 @@ def filter_by_quality(spectra, reject=0xFFFFFFFF, require=0x0):
 
     # Sanity check:
     if (reject & require) != 0:
-        raise ValueError(
-            "Require and reject masks must be mutually exclusive.")
+        raise ValueError("Require and reject masks must be mutually exclusive.")
 
     if "Data" in spectra and spectra["Type"] == "L1b":
         spectra["Data"] = filter_by_quality(spectra["Data"], reject, require)
     else:
         # Find matching indices:
         data = np.array(spectra["Quality"])
-        inds = np.where(np.logical_and(
-            (data & require) == require, (data & reject) == 0x0))
+        inds = np.where(
+            np.logical_and((data & require) == require, (data & reject) == 0x0)
+        )
 
         # Remove unmatched indices:
         for key, val in spectra.items():

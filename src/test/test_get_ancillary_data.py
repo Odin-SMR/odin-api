@@ -9,7 +9,6 @@ from odinapi.views.get_ancillary_data import (
 
 
 class TestGetAncillaryData:
-
     def test_get_theta(self):
         pressure = np.array([1e5, 1e4])
         temperature = np.array([300.0, 200.0])
@@ -21,15 +20,13 @@ class TestGetAncillaryData:
         mjd = 55000
         longitudes = [-15, 0, 15]
         expected_solar_times = [22.983, 23.983, 0.983]
-        for longitude, expected_solar_time in zip(
-                longitudes, expected_solar_times):
+        for longitude, expected_solar_time in zip(longitudes, expected_solar_times):
             solartime = get_solartime(mjd, longitude)
-            assert_almost_equal(
-                solartime, expected_solar_time, decimal=3)
+            assert_almost_equal(solartime, expected_solar_time, decimal=3)
 
     def test_get_sza_at_retrieval_position(self):
         """test that nearest neighbour interpolation works,
-           along a path across the meridian"""
+        along a path across the meridian"""
         latitude_reference = np.linspace(83, 87, 9)
         longitude_reference = np.linspace(5, -5, 9)
         sza_reference = np.linspace(90, 95, 9)
@@ -41,10 +38,10 @@ class TestGetAncillaryData:
             longiude_retrieval_pos,
             latitude_reference,
             longitude_reference,
-            sza_reference)
+            sza_reference,
+        )
         assert np.all(sza_at_retrieval_pos == sza_reference[indexes])
 
     def test_get_orbit(self):
-        orbit = get_orbit(
-            np.linspace(55000, 55001, 100))
+        orbit = get_orbit(np.linspace(55000, 55001, 100))
         assert orbit == 55000

@@ -16,11 +16,14 @@ class FileInfo(MethodView):
         """GET"""
         result_dict = {}
         for file_ending in ["ac1", "ac2", "shk", "fba", "att"]:
-            query = text(dedent("""\
+            query = text(
+                dedent(
+                    """\
                 select created from level0_files_imported
                 where file ~ :f
                 order by created desc limit 1"""
-            ))
+                )
+            )
             db_result = db.session.execute(query, params=dict(f=".*" + file_ending))
             first_row = db_result.first()
             if first_row is not None:

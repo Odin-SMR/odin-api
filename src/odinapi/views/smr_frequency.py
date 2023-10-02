@@ -1,11 +1,12 @@
-'''functionality to generate frequency per spectrum in scan'''
+"""functionality to generate frequency per spectrum in scan"""
 import numpy as np
 
 
 class Smrl1bFreqspec:
-    '''a class derived to calculate frequency
-       vector from odin-smr L1B data
-    '''
+    """a class derived to calculate frequency
+    vector from odin-smr L1B data
+    """
+
     def __init__(self):
         self.channels = []
         self.intmode = []
@@ -16,15 +17,14 @@ class Smrl1bFreqspec:
         self.restfreq = []
 
     def get_frequency(self, scan_h, ispec, numspec=2):
-        ''' text
-        '''
-        self.channels = scan_h['channels'][numspec]
-        self.intmode = scan_h['mode'][numspec]
-        self.freqcal = scan_h['ssb_fq'][numspec]
-        self.skyfreq = scan_h['skyfreq'][ispec]
-        self.backend = scan_h['backend'][numspec]
-        self.freqres = scan_h['freqres'][numspec]
-        self.restfreq = scan_h['restfreq'][ispec]
+        """text"""
+        self.channels = scan_h["channels"][numspec]
+        self.intmode = scan_h["mode"][numspec]
+        self.freqcal = scan_h["ssb_fq"][numspec]
+        self.skyfreq = scan_h["skyfreq"][ispec]
+        self.backend = scan_h["backend"][numspec]
+        self.freqres = scan_h["freqres"][numspec]
+        self.restfreq = scan_h["restfreq"][ispec]
         # Note:
         # Backend == 1 -> AC1
         # Backend == 2 -> AC2
@@ -34,7 +34,7 @@ class Smrl1bFreqspec:
         else:
             freq = self.ac_freq()
         # correcting Doppler in LO
-        lofreq = scan_h['lofreq'][ispec] - (self.skyfreq - self.restfreq)
+        lofreq = scan_h["lofreq"][ispec] - (self.skyfreq - self.restfreq)
         if (self.skyfreq - lofreq) > 0.0:
             freq = lofreq + freq
         else:
@@ -42,21 +42,19 @@ class Smrl1bFreqspec:
         return np.array(freq)
 
     def aos_freq(self):
-        '''aos frequency'''
+        """aos frequency"""
         nchan = self.channels
         xvec = np.arange(0, nchan) - np.floor(nchan / 2)
         freq0 = self.freqcal[-1:-1:1]
-        freq = (
-            3900.0e6 * np.ones(1, nchan) - (np.polyval(freq0, xvec) - 2100.0e6)
-        )
+        freq = 3900.0e6 * np.ones(1, nchan) - (np.polyval(freq0, xvec) - 2100.0e6)
         return freq
 
     def ac_freq(self):
-        '''ac frequency'''
+        """ac frequency"""
         return self.get_ac_frequency_grid()
 
     def get_seq_pattern(self):
-        '''get the adc pattern'''
+        """get the adc pattern"""
         #
         # The IntMode reported by the correlator is interpreted as
         # a bit pattern. Because this bit pattern only describes ADC
@@ -108,7 +106,7 @@ class Smrl1bFreqspec:
         #
         ssbvec = [1, -1, 1, -1, -1, 1, -1, 1]
         mode = self.intmode << 1 | 1  # bitshift described above
-        seqvec = np.zeros(16, dtype='int')
+        seqvec = np.zeros(16, dtype="int")
         mind = 0
         for bit_i in range(8):
             if (mode & (1 << bit_i)) != 0:
@@ -122,7 +120,7 @@ class Smrl1bFreqspec:
         return seqvec
 
     def get_ac_frequency_grid(self):
-        ''' get ac frequencies'''
+        """get ac frequencies"""
         seqvec = self.get_seq_pattern()
         freq = np.zeros(shape=(8, 112))
         bands = [1, 2, 3, 4, 5, 6, 7, 8]  # default: use all bands
@@ -142,9 +140,11 @@ class Smrl1bFreqspec:
                     # The frequencies are calculated by noting that
                     # two consecutive ADCs share the same internal
                     # SSB-LO:
-                    freq[mind, :] = (self.freqcal[adci // 2] *
-                                     np.ones(112) + np.arange(0, 112, 1) *
-                                     dfreq + (jind - 1) * 112 * dfreq)
+                    freq[mind, :] = (
+                        self.freqcal[adci // 2] * np.ones(112)
+                        + np.arange(0, 112, 1) * dfreq
+                        + (jind - 1) * 112 * dfreq
+                    )
         if self.intmode & 512:
             # for split mode keep used bands only
             freq = freq[bands, :]
@@ -152,8 +152,9 @@ class Smrl1bFreqspec:
 
 
 class Smrl1bFreqsort:
-    '''class derived to sort smr frequency spectra'''
-    def __init__(self, sortmeth='from_middle', rm_edge_chs=True):
+    """class derived to sort smr frequency spectra"""
+
+    def __init__(self, sortmeth="from_middle", rm_edge_chs=True):
         self.freq = []
         self.ydata = []
         self.ssb = []
@@ -163,7 +164,7 @@ class Smrl1bFreqsort:
         self.rm_edge_chs = rm_edge_chs
 
     def get_sorted_ac_spectrum(self, freq, ydata, bad_modules=None):
-        '''get sorted ac specturm'''
+        """get sorted ac specturm"""
         self.freq = np.array(freq)
         self.ydata = np.array(ydata)
         freq0 = np.array(self.freq)
@@ -172,11 +173,11 @@ class Smrl1bFreqsort:
         return self.freq, self.ydata, self.ssb, self.channels_id
 
     def ac_filter(self, bad_modules):
-        '''filter spectrum, remove data from bad modules and edge channels'''
+        """filter spectrum, remove data from bad modules and edge channels"""
         self.ssb_ind = np.ones(896)
         self.channels_id = np.arange(896)
         for band in range(8):
-            self.ssb_ind[band * 112:(band + 1) * 112] = band + 1
+            self.ssb_ind[band * 112 : (band + 1) * 112] = band + 1
         indf = np.ones(896)
         if bad_modules is not None:
             # mark bad modules
@@ -185,14 +186,13 @@ class Smrl1bFreqsort:
             freqs = np.array([np.min(freqs, 1), np.max(freqs, 1)])
             for bad_i, _ in enumerate(bad_modules):
                 band_ind = np.nonzero(
-                    (bad_modules[bad_i] >= freqs[0, :]) &
-                    (bad_modules[bad_i] <= freqs[1, :])
+                    (bad_modules[bad_i] >= freqs[0, :])
+                    & (bad_modules[bad_i] <= freqs[1, :])
                 )[0]
                 indf[(band_ind) * 112 + np.arange(0, 112, 1)] = 0
         if self.rm_edge_chs:
             # mark edge channels
-            indf[np.append(np.arange(0, 896, 112),
-                           np.arange(111, 896, 112))] = 0
+            indf[np.append(np.arange(0, 896, 112), np.arange(111, 896, 112))] = 0
         index = np.nonzero((indf > 0))[0]
         self.freq = self.freq[index]
         self.ydata = self.ydata[index]
@@ -200,13 +200,13 @@ class Smrl1bFreqsort:
         self.channels_id = self.channels_id[index]
 
     def ac_freqsort(self, freq0=None):
-        '''sort frequency vector'''
+        """sort frequency vector"""
         # Sort
-        if self.sortmeth == 'from_middle':
+        if self.sortmeth == "from_middle":
             self.sort_from_middle(freq0)
-        elif self.sortmeth == 'from_start':
+        elif self.sortmeth == "from_start":
             self.sort_from_start()
-        elif self.sortmeth == 'from_end':
+        elif self.sortmeth == "from_end":
             self.sort_from_end()
         index = np.argsort(self.freq)
         self.freq = self.freq[index]
@@ -216,25 +216,22 @@ class Smrl1bFreqsort:
         for band in range(8):
             index = np.nonzero((self.ssb_ind == band + 1))[0]
             if index.shape[0] > 0:
-                self.ssb.extend([band + 1, np.min(index) + 1,
-                                 np.max(index) + 1])
+                self.ssb.extend([band + 1, np.min(index) + 1, np.max(index) + 1])
             else:
                 self.ssb.extend([band + 1, -1, -1])
 
     def sort_from_middle(self, freq0):
-        '''Sort spectra from middle channel
-           remove overlapping channels
-           choose the channel which is closest to its
-           sub-band frequency center
-        '''
+        """Sort spectra from middle channel
+        remove overlapping channels
+        choose the channel which is closest to its
+        sub-band frequency center
+        """
         freqs = np.array(freq0)
         freqs.shape = (8, 112)
         freqs = np.mean(freqs, 1)
         index = []
         for indi in range(self.freq.shape[0]):
-            multi_f = np.nonzero(
-                (np.abs(self.freq[indi] - self.freq) <= 0.51e6)
-            )[0]
+            multi_f = np.nonzero((np.abs(self.freq[indi] - self.freq) <= 0.51e6))[0]
             if multi_f.shape[0] == 1:
                 index.append(indi)
             else:
@@ -250,7 +247,7 @@ class Smrl1bFreqsort:
         self.channels_id = self.channels_id[index]
 
     def sort_from_start(self):
-        '''sort spectra from start channel'''
+        """sort spectra from start channel"""
         nlen = self.freq.shape[0]
         [_, index] = np.unique(
             self.freq[np.arange(nlen - 1, -1, -1)], return_index=True
@@ -262,7 +259,7 @@ class Smrl1bFreqsort:
         self.channels_id = self.channels_id[index]
 
     def sort_from_end(self):
-        '''sort spectra from end channel'''
+        """sort spectra from end channel"""
         [_, index] = np.unique(self.freq, return_index=True)
         self.freq = self.freq[index]
         self.ydata = self.ydata[index]
@@ -271,7 +268,7 @@ class Smrl1bFreqsort:
 
 
 def get_bad_ssb_modules(backend, spectra, freqvec, debug=False):
-    '''get bad ssb modules'''
+    """get bad ssb modules"""
     if debug:
         bad_modules = np.array([], dtype=int)
     else:
@@ -295,21 +292,20 @@ def get_bad_ssb_modules(backend, spectra, freqvec, debug=False):
 
 
 def doppler_corr(skyfreq, restfreq, lofreq, freqvec):
-    '''correcting for Doppler in LO'''
+    """correcting for Doppler in LO"""
     lofreq = lofreq - (skyfreq - restfreq)
     if (skyfreq - lofreq) > 0.0:
-        freqvec = (freqvec - lofreq)
+        freqvec = freqvec - lofreq
     else:
         freqvec = -(lofreq - freqvec)
     return lofreq, freqvec
 
 
 def freqfunc(lofreq, skyfreq, ssb_freq):
-    '''simple freqvec'''
+    """simple freqvec"""
     nlen = 896
     freq = np.zeros(shape=(nlen,))
-    seqvec = [1, 1, 1, -1, 1, 1, 1, -1,
-              1, -1, 1, 1, 1, -1, 1, 1]
+    seqvec = [1, 1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, 1, -1, 1, 1]
     mcount = 0
     for adci in range(8):
         if seqvec[2 * adci]:

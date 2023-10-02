@@ -36,15 +36,15 @@ def get_products(project: str = "ALL-Strat-v3.0.0") -> dict:
 
 
 def get_location(
-            start_date: str,
-            end_date: str,
-            project: str = "ALL-Strat-v3.0.0",
-            product: str = "O3 / 545 GHz / 20 to 85 km",
-            location: Tuple[float, float] = (90, 0),
-            radius: float = 2600,
-            min_altitude: float = 20000,
-            max_altitude: float = 85000,
-        ) -> dict:
+    start_date: str,
+    end_date: str,
+    project: str = "ALL-Strat-v3.0.0",
+    product: str = "O3 / 545 GHz / 20 to 85 km",
+    location: Tuple[float, float] = (90, 0),
+    radius: float = 2600,
+    min_altitude: float = 20000,
+    max_altitude: float = 85000,
+) -> dict:
     """Function for getting data for a location from the Odin REST API"""
 
     # Set up parameters:
@@ -55,7 +55,7 @@ def get_location(
         "min_altitude": min_altitude,
         "max_altitude": max_altitude,
         "start_time": start_date,
-        "end_time": end_date
+        "end_time": end_date,
     }
 
     # Construct request URI:
@@ -75,17 +75,17 @@ def get_location(
 
 
 def get_area(
-            start_date: str,
-            end_date: str,
-            project: str = "ALL-Strat-v3.0.0",
-            product: str = "O3 / 545 GHz / 20 to 85 km",
-            min_lat: float = -5,
-            max_lat: float = 5,
-            min_lon: float = 0,
-            max_lon: float = 360,
-            min_altitude: float = 20000,
-            max_altitude: float = 85000,
-        ) -> dict:
+    start_date: str,
+    end_date: str,
+    project: str = "ALL-Strat-v3.0.0",
+    product: str = "O3 / 545 GHz / 20 to 85 km",
+    min_lat: float = -5,
+    max_lat: float = 5,
+    min_lon: float = 0,
+    max_lon: float = 360,
+    min_altitude: float = 20000,
+    max_altitude: float = 85000,
+) -> dict:
     """Function for getting data for an area from the Odin REST API"""
 
     # Set up parameters:
@@ -98,7 +98,7 @@ def get_area(
         "min_altitude": min_altitude,
         "max_altitude": max_altitude,
         "start_time": start_date,
-        "end_time": end_date
+        "end_time": end_date,
     }
 
     # Construct request URI:
@@ -118,12 +118,12 @@ def get_area(
 
 
 def get_date(
-            date: str,
-            project: str = "ALL-Strat-v3.0.0",
-            product: str = "O3 / 545 GHz / 20 to 85 km",
-            min_altitude: float = 20000,
-            max_altitude: float = 85000,
-        ) -> dict:
+    date: str,
+    project: str = "ALL-Strat-v3.0.0",
+    product: str = "O3 / 545 GHz / 20 to 85 km",
+    min_altitude: float = 20000,
+    max_altitude: float = 85000,
+) -> dict:
     """Function for getting data for a single date from the Odin REST API"""
 
     # Set up parameters:

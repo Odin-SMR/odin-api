@@ -34,7 +34,7 @@ def get_int(arg):
     try:
         return int(val)
     except ValueError:
-        raise ValueError('Could not convert to integer: %r' % val)
+        raise ValueError("Could not convert to integer: %r" % val)
 
 
 def get_bool(arg):
@@ -44,7 +44,7 @@ def get_bool(arg):
     try:
         return str2bool(str(val))
     except ValueError:
-        raise ValueError('Could not convert to boolean: %r' % val)
+        raise ValueError("Could not convert to boolean: %r" % val)
 
 
 def get_float(arg=None, val=None):
@@ -55,7 +55,7 @@ def get_float(arg=None, val=None):
     try:
         return float(val)
     except ValueError:
-        raise ValueError('Could not convert to number: %r' % val)
+        raise ValueError("Could not convert to number: %r" % val)
 
 
 def get_list(arg):
@@ -72,4 +72,4 @@ def get_datetime(arg=None, val=None):
     try:
         return parse_datetime(val)
     except ValueError:
-        raise ValueError('Bad time format: %r' % val)
+        raise ValueError("Bad time format: %r" % val)

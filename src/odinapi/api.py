@@ -27,6 +27,7 @@ class Config:
 
 logger.info("Starting OdinAPI")
 
+
 def create_app(config=Config):
     app = Flask(__name__)
     app.config.from_object(config)

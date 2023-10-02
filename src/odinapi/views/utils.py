@@ -11,22 +11,20 @@ def copyemptydict(a):
 
 
 def make_rfc5988_link(url, **params):
-    link = '<{url}>'.format(url=url)
+    link = "<{url}>".format(url=url)
     if params:
-        params_str = '; '.join('{}="{}"'.format(k, params[k]) for k in params)
+        params_str = "; ".join('{}="{}"'.format(k, params[k]) for k in params)
         link += "; " + params_str
     return link
 
 
-def make_rfc5988_pagination_header(
-        offset, limit, count, url_endpoint, **url_values
-):
+def make_rfc5988_pagination_header(offset, limit, count, url_endpoint, **url_values):
     pagination = OffsetAndLimitPagination(offset, limit, count)
     pages = {
-        'first': pagination.get_first_page(),
-        'prev': pagination.get_prev_page(),
-        'next': pagination.get_next_page(),
-        'last': pagination.get_last_page(),
+        "first": pagination.get_first_page(),
+        "prev": pagination.get_prev_page(),
+        "next": pagination.get_next_page(),
+        "last": pagination.get_last_page(),
     }
     links = []
     for rel in pages:
@@ -36,12 +34,11 @@ def make_rfc5988_pagination_header(
             page_url_values.update(page._asdict())
             url = url_for(url_endpoint, _external=True, **page_url_values)
             links.append(make_rfc5988_link(url, rel=rel))
-    return ', '.join(links)
+    return ", ".join(links)
 
 
 class OffsetAndLimitPagination:
-
-    Page = namedtuple("Page", ['offset', 'limit'])
+    Page = namedtuple("Page", ["offset", "limit"])
 
     def __init__(self, offset, limit, count):
         self.offset = offset

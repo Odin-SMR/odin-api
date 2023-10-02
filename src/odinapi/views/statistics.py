@@ -19,20 +19,24 @@ def find_last_day_of_month(year, month):
 
 class FreqmodeStatistics(MethodView):
     """Statistics of total number of scans per freqmode"""
-    query = text(dedent("""\
+
+    query = text(
+        dedent(
+            """\
         select freqmode, sum(nscans)
         from measurements_cache
         where date between :d1 and :d2
         group by freqmode
         order by freqmode"""
-    ))
-    
+        )
+    )
+
     def get(self, version):
         """GET"""
-        year = request.args.get('year')
-        if version not in ['v4', 'v5']:
+        year = request.args.get("year")
+        if version not in ["v4", "v5"]:
             abort(404)
-        if year is None or year == '':
+        if year is None or year == "":
             return self.get_all()
         else:
             return self.get_year(int(year))
@@ -59,20 +63,22 @@ class FreqmodeStatistics(MethodView):
 
 class TimelineFreqmodeStatistics(MethodView):
     """Statistics of number of scans per freqmode for different years"""
-    query = text("""\
+
+    query = text(
+        """\
         select freqmode, sum(nscans)
         from measurements_cache
         where date between :d1 and :d2
         group by freqmode
-        order by freqmode"""     
+        order by freqmode"""
     )
 
     def get(self, version):
         """GET"""
-        year = request.args.get('year')
-        if version not in ['v4', 'v5']:
+        year = request.args.get("year")
+        if version not in ["v4", "v5"]:
             abort(404)
-        if year is None or year == '':
+        if year is None or year == "":
             return self.get_years()
         else:
             return self.get_months(int(year))
@@ -80,11 +86,13 @@ class TimelineFreqmodeStatistics(MethodView):
     def get_years(self):
         """Get freqmode scans per year for all years"""
         info_dict = {}
-        years = list(range(2001, datetime.now().year+1))
+        years = list(range(2001, datetime.now().year + 1))
         for year in years:
             first_date = "{0}-01-01".format(year)
             last_date = "{0}-12-31".format(year)
-            result = db.session.execute(self.query, params=dict(d1=first_date, d2=last_date))
+            result = db.session.execute(
+                self.query, params=dict(d1=first_date, d2=last_date)
+            )
             for row in result:
                 try:
                     info_dict[row.freqmode].append([year, row.sum])
@@ -100,7 +108,9 @@ class TimelineFreqmodeStatistics(MethodView):
         for month in months:
             first_date = date(year, month, 1)
             last_date = find_last_day_of_month(year, month)
-            result = db.session.execute(self.query, params=dict(d1=first_date, d2=last_date))
+            result = db.session.execute(
+                self.query, params=dict(d1=first_date, d2=last_date)
+            )
             for row in result:
                 try:
                     info_dict[row.freqmode].append([month, row.sum])

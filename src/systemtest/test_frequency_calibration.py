@@ -87,7 +87,7 @@ class TestFreqcorr572:
             ]
         )
 
-    def test_get_tb_profile(self,  freq_corr_572):
+    def test_get_tb_profile(self, freq_corr_572):
         tb_profiles = freq_corr_572.get_tb_profile(576.593, 576.840)
         assert tb_profiles.shape == (45, 2)
         assert np.all(
