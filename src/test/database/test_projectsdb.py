@@ -4,6 +4,7 @@ from mock import patch
 import pytest
 
 from odinapi.database.level2db import ProjectsDB, ProjectError, ProjectAnnotation
+from odinapi.database.mongo import get_collection, get_database
 
 
 def get_empty_collection(col):
@@ -12,10 +13,12 @@ def get_empty_collection(col):
 
 
 @pytest.fixture
-def projectdb(docker_mongo):
+def projectdb(db_context):
     with patch(
         "odinapi.database.level2db.mongo.get_collection",
-        side_effect=lambda db, col: get_empty_collection(docker_mongo[db][col]),
+        side_effect=lambda db, col: get_empty_collection(
+            get_database(db).get_collection(col)
+        ),
     ):
         yield ProjectsDB()
 

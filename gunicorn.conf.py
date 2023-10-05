@@ -12,4 +12,4 @@ timeout = 350
 worker_class = "gevent"
 workers = 4
 preload_app = True
-wsgi_app = "odinapi.run:app"
+wsgi_app = "odinapi.api:create_app()"

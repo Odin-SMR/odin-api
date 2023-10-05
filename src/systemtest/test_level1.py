@@ -5,11 +5,11 @@ import requests
 
 
 class TestLevel1Views:
-    def test_backend_info(self, odinapi_service):
+    def test_backend_info(self, selenium_app):
         """Test raw backend info"""
         # Only V4
         base_url = "/".join(
-            (odinapi_service, "rest_api/{version}/freqmode_raw/{date}/{backend}/")
+            (selenium_app, "rest_api/{version}/freqmode_raw/{date}/{backend}/")
         )
         r = requests.get(
             base_url.format(version="v4", date="2015-01-12", backend="AC2")
@@ -26,17 +26,17 @@ class TestLevel1Views:
             "{}/rest_api/v5/level1/42/7015092840/collocations/",
         ),
     )
-    def test_faulty_freqmode(self, odinapi_service, url):
+    def test_faulty_freqmode(self, selenium_app, url):
         """Test calling API with non-existent freqmode"""
-        r = requests.get(url.format(odinapi_service))
+        r = requests.get(url.format(selenium_app))
         assert r.status_code == http.client.NOT_FOUND
 
     @pytest.mark.slow
-    def test_freqmode_raw_hierarchy(self, odinapi_service):
+    def test_freqmode_raw_hierarchy(self, selenium_app):
         """Test freqmode raw hierarchy flow"""
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "rest_api/{version}/freqmode_raw/{date}/",
             )
         )
@@ -64,12 +64,12 @@ class TestLevel1Views:
         assert nr_freqmodes_v4 == nr_freqmodes_v5
         assert nr_scans_v4 == nr_scans_v5
 
-    def test_get_scan(self, odinapi_service):
+    def test_get_scan(self, selenium_app):
         """Test get scan data"""
         # V4
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "rest_api/{version}/scan/{backend}/{freqmode}/{scanid}",
             )
         )
@@ -82,7 +82,7 @@ class TestLevel1Views:
         # V5
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "rest_api/{version}/level1/{freqmode}/{scanid}/L1b/",
             )
         )
@@ -92,12 +92,12 @@ class TestLevel1Views:
         assert r.json()["Data"]["Tcal"][0] == 287.655
         assert r.json()["Data"]["MJD"][0] == pytest.approx(57034.2339189)
 
-    def test_get_scan_debug(self, odinapi_service):
+    def test_get_scan_debug(self, selenium_app):
         """Test that get scan data debug option works"""
         # Only V5
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "rest_api/{version}/level1/{freqmode}/{scanid}/L1b/{debug}",
             )
         )
@@ -148,6 +148,7 @@ class TestLevel1Views:
                 scanid=7015092840,
             )
         )
+        print(r.request.url)
         assert r.status_code == http.client.OK
         assert "Pressure" in r.json()
 

@@ -7,15 +7,19 @@ from odinapi.database.level2db import (
     get_valid_collapsed_products,
     get_next_min_scanid,
 )
+from odinapi.database.mongo import get_collection, get_database
 
 FREQMODE = 42
 
 
 @pytest.fixture
-def level2db(docker_mongo):
-    level2db = Level2DB("projectfoo", docker_mongo.level2testdb)
-    docker_mongo.level2testdb["L2i_projectfoo"].drop()
-    docker_mongo.level2testdb["L2i_projectfoo"].insert_many(
+def level2db(db_context):
+    database = get_database("level2testdb")
+    level2db = Level2DB("projectfoo", database)
+    for prefix in ["L2", "L2i"]:
+        get_collection("level2testdb", f"{prefix}_projectfoo").drop()
+    collection = get_collection("level2testdb", "L2i_projectfoo")
+    collection.insert_many(
         [
             {
                 "ScanID": 1234,
@@ -65,10 +69,11 @@ def level2db(docker_mongo):
 
 
 @pytest.fixture
-def level2db_with_example_data(docker_mongo):
-    level2db = Level2DB("projectfoo", docker_mongo.level2testdb)
-    docker_mongo.level2testdb["L2_projectfoo"].drop()
-    docker_mongo.level2testdb["L2i_projectfoo"].drop()
+def level2db_with_example_data(db_context):
+    database = get_database("level2testdb")
+    level2db = Level2DB("projectfoo", database)
+    for prefix in ["L2", "L2i"]:
+        get_collection("level2testdb", f"{prefix}_projectfoo").drop()
     file_example_data = os.path.join(
         os.path.dirname(__file__),
         "..",

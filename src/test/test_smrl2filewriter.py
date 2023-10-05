@@ -1,19 +1,18 @@
-import os
 import datetime as dt
 import json
-from unittest.mock import patch, call, ANY
+import os
+from unittest.mock import ANY, call, patch
 
-
-import pytest  # type: ignore
 import numpy as np  # type: ignore
+import pytest  # type: ignore
 from netCDF4 import Dataset, num2date  # type: ignore
 
-from odinapi.utils import smrl2filewriter
-from odinapi.utils.datamodel import to_l2, to_l2i, to_l2anc, L2Full, L2FILE, L2i
 from odinapi.database.level2db import Level2DB
-from odinapi.views.database import DatabaseConnector
+from odinapi.database.mongo import get_collection, get_database  # type: ignore
+from odinapi.utils import smrl2filewriter
+from odinapi.utils.datamodel import L2FILE, L2Full, L2i, to_l2, to_l2anc, to_l2i
 from odinapi.utils.time_util import datetime2stw
-
+from odinapi.views.database import DatabaseConnector
 
 FREQMODE = 42
 
@@ -99,10 +98,12 @@ def l2file(tmpdir):
 
 
 @pytest.fixture
-def level2db(docker_mongo):
-    level2db = Level2DB("projectfoo", docker_mongo.level2testdb)
-    docker_mongo.level2testdb["L2i_projectfoo"].drop()
-    docker_mongo.level2testdb["L2i_projectfoo"].insert_many(
+def level2db(db_context):
+    database = get_database("level2testdb")
+    level2db = Level2DB("projectfoo", database)
+    collection = get_collection("level2testdb", "L2i_projectfoo")
+    collection.drop()
+    collection.insert_many(
         [
             {
                 "ScanID": datetime2stw(
@@ -119,10 +120,13 @@ def level2db(docker_mongo):
 
 
 @pytest.fixture
-def level2db_with_example_data(docker_mongo):
-    level2db = Level2DB("projectfoo", docker_mongo.level2testdb)
-    docker_mongo.level2testdb["L2_projectfoo"].drop()
-    docker_mongo.level2testdb["L2i_projectfoo"].drop()
+def level2db_with_example_data(db_context):
+    database_name = "level2testdb"
+    project_name = "projectfoo"
+    database = get_database(database_name)
+    level2db = Level2DB(project_name, database)
+    for prefix in ["L2", "L2i"]:
+        get_collection(database_name, f"{prefix}_{project_name}").drop()
     file_example_data = os.path.join(
         os.path.dirname(__file__), "..", "systemtest", "testdata", "odin_result.json"
     )

@@ -10,9 +10,10 @@ from selenium.webdriver.support.select import Select
 
 from odinapi.utils import encrypt_util
 
-from .level2_test_data import VERSION, WRITE_URL, get_test_data
+from .level2_test_data import VERSION, get_test_data
 
 PROJECT_NAME = "testproject"
+WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
 
 
 @pytest.fixture(scope="session")
@@ -32,25 +33,25 @@ def chrome():
 
 
 class TestBrowser:
-    def test_main_page_is_up(self, odinapi_service, chrome):
+    def test_main_page_is_up(self, selenium_app, chrome):
         """Test that main page is up"""
         driver = chrome
-        driver.get(odinapi_service)
+        driver.get(selenium_app)
         assert "Odin/SMR" in driver.title
 
 
 @pytest.fixture
-def lvl2data(odinapi_service):
-    import_level2data(odinapi_service)
+def lvl2data(selenium_app):
+    import_level2data(selenium_app)
     yield
-    delete_level2data(odinapi_service)
+    delete_level2data(selenium_app)
 
 
 @pytest.fixture
-def lvl2data_withoffset(odinapi_service):
-    import_level2data(odinapi_service, offset=-1)
+def lvl2data_withoffset(selenium_app):
+    import_level2data(selenium_app, offset=-1)
     yield
-    delete_level2data(odinapi_service, offset=-1)
+    delete_level2data(selenium_app, offset=-1)
 
 
 class TestLevel2Browser:
@@ -60,21 +61,21 @@ class TestLevel2Browser:
         driver.get("{}/level2".format(baseurl))
         return driver
 
-    def test_main_page_is_up(self, odinapi_service, chrome, lvl2data):
+    def test_main_page_is_up(self, selenium_app, chrome, lvl2data):
         """Test that main page is up"""
-        driver = self.get_lvl2page(chrome, odinapi_service)
+        driver = self.get_lvl2page(chrome, selenium_app)
         assert "Odin/SMR" in driver.title
 
-    def test_selectors_displayed(self, odinapi_service, chrome, lvl2data):
+    def test_selectors_displayed(self, selenium_app, chrome, lvl2data):
         """test that project and freqmode selectors
         are displayed"""
-        driver = self.get_lvl2page(chrome, odinapi_service)
+        driver = self.get_lvl2page(chrome, selenium_app)
         assert driver.find_element(By.ID, "select-project").is_displayed()
         assert driver.find_element(By.ID, "select-freqmode").is_displayed()
 
-    def test_project_is_selectable(self, odinapi_service, chrome, lvl2data):
+    def test_project_is_selectable(self, selenium_app, chrome, lvl2data):
         """test that a project can be selected"""
-        driver = self.get_lvl2page(chrome, odinapi_service)
+        driver = self.get_lvl2page(chrome, selenium_app)
         select = Select(driver.find_element(By.ID, "select-project"))
         options = []
         for option in select.options:
@@ -82,10 +83,10 @@ class TestLevel2Browser:
         assert "Choose project" in options
         assert "development/testproject" in options
 
-    def test_freqmode_is_selectable(self, odinapi_service, chrome, lvl2data):
+    def test_freqmode_is_selectable(self, selenium_app, chrome, lvl2data):
         """test that when a project is selected freqmode is displayed
         and can also be selected"""
-        driver = self.get_lvl2page(chrome, odinapi_service)
+        driver = self.get_lvl2page(chrome, selenium_app)
         select = Select(driver.find_element(By.ID, "select-project"))
         select.select_by_visible_text("development/testproject")
         assert driver.find_element(By.ID, "select-freqmode").is_displayed()
@@ -98,7 +99,7 @@ class TestLevel2Browser:
 
     def test_scan_get_selected(
         self,
-        odinapi_service,
+        selenium_app,
         chrome,
         lvl2data,
         lvl2data_withoffset,
@@ -107,7 +108,7 @@ class TestLevel2Browser:
         when doing a selection and that a plot of a level2 scan
         is shown if a link is clicked
         """
-        driver = self.get_lvl2page(chrome, odinapi_service)
+        driver = self.get_lvl2page(chrome, selenium_app)
         select = Select(driver.find_element(By.ID, "select-project"))
         select.select_by_visible_text("development/testproject")
         select = Select(driver.find_element(By.ID, "select-freqmode"))
@@ -123,7 +124,7 @@ class TestLevel2Browser:
             By.XPATH, "//a[@href='{0}']".format(test_ref)
         )[0]
         href.click()
-        driver.get("{}{}".format(odinapi_service, test_ref))
+        driver.get("{}{}".format(selenium_app, test_ref))
         header = driver.find_element(By.CLASS_NAME, "page-header")
         assert (
             header.text
@@ -143,8 +144,8 @@ class TestLevel2Browser:
             "ClO / 501 GHz / 20 to 50 km",
         }
 
-    def test_freqmode_list(self, odinapi_service, chrome):
-        driver = self.get_lvl2page(chrome, odinapi_service)
+    def test_freqmode_list(self, selenium_app, chrome):
+        driver = self.get_lvl2page(chrome, selenium_app)
         freqmode_div = driver.find_element(By.ID, "freqmodeInfoTable")
         assert freqmode_div is not None
         assert freqmode_div.find_elements(By.TAG_NAME, "table")

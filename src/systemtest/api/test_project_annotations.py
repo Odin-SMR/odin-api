@@ -8,8 +8,10 @@ import pytest
 import requests
 import simplejson
 
-from ..level2_test_data import WRITE_URL, VERSION, get_test_data
+from ..level2_test_data import VERSION, get_test_data
 from odinapi.utils import encrypt_util
+
+WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
 
 
 def make_project_url(baseurl, project):
@@ -17,34 +19,34 @@ def make_project_url(baseurl, project):
 
 
 @pytest.fixture
-def project(odinapi_service):
+def project(selenium_app):
     data = get_test_data()
     project = str(uuid.uuid1())
     freq_mode = data["L2I"]["FreqMode"]
     scan_id = data["L2I"]["ScanID"]
     payload = encrypt_util.encode_level2_target_parameter(scan_id, freq_mode, project)
-    wurl = WRITE_URL.format(host=odinapi_service, version=VERSION, d=payload)
+    wurl = WRITE_URL.format(host=selenium_app, version=VERSION, d=payload)
     requests.post(
         wurl,
         data=simplejson.dumps(data, allow_nan=True),
         headers={"Content-Type": "application/json"},
     ).raise_for_status()
-    return make_project_url(odinapi_service, project)
+    return make_project_url(selenium_app, project)
 
 
-def test_get_empty_annotations(project, odinapi_service):
+def test_get_empty_annotations(project, selenium_app):
     response = requests.get(project + "/annotations")
     assert response.status_code == http.client.OK
     assert response.json()["Data"] == []
 
 
-def test_get_annotations_unknown_project(odinapi_service):
-    project = make_project_url(odinapi_service, "unknown")
+def test_get_annotations_unknown_project(selenium_app):
+    project = make_project_url(selenium_app, "unknown")
     response = requests.get(project + "/annotations")
     assert response.status_code == http.client.NOT_FOUND
 
 
-def test_post(odinapi_service, project):
+def test_post(selenium_app, project):
     response = requests.post(
         project + "/annotations",
         json={"Text": "This is a freqmode", "FreqMode": 13},
@@ -63,7 +65,7 @@ def test_post(odinapi_service, project):
     )
 
 
-def test_post_multiple(odinapi_service, project):
+def test_post_multiple(selenium_app, project):
     now = datetime.utcnow().replace(tzinfo=tzutc())
     requests.post(
         project + "/annotations",
@@ -91,8 +93,8 @@ def test_post_multiple(odinapi_service, project):
     )
 
 
-def test_post_unknown_project(odinapi_service):
-    project = make_project_url(odinapi_service, "unknown")
+def test_post_unknown_project(selenium_app):
+    project = make_project_url(selenium_app, "unknown")
     response = requests.post(
         project + "/annotations",
         json={"Text": "This is a project"},
@@ -101,7 +103,7 @@ def test_post_unknown_project(odinapi_service):
     assert response.status_code == http.client.NOT_FOUND
 
 
-def test_post_bad_text(odinapi_service, project):
+def test_post_bad_text(selenium_app, project):
     response = requests.post(
         project + "/annotations",
         json={"Text": 0000},
@@ -110,7 +112,7 @@ def test_post_bad_text(odinapi_service, project):
     assert response.status_code == http.client.BAD_REQUEST
 
 
-def test_post_no_text(odinapi_service, project):
+def test_post_no_text(selenium_app, project):
     response = requests.post(
         project + "/annotations",
         json={},
@@ -119,7 +121,7 @@ def test_post_no_text(odinapi_service, project):
     assert response.status_code == http.client.BAD_REQUEST
 
 
-def test_post_bad_freqmode(odinapi_service, project):
+def test_post_bad_freqmode(selenium_app, project):
     response = requests.post(
         project + "/annotations",
         json={"Text": "xxx", "FreqMode": "abcd"},
@@ -128,7 +130,7 @@ def test_post_bad_freqmode(odinapi_service, project):
     assert response.status_code == http.client.BAD_REQUEST
 
 
-def test_post_no_credentials(odinapi_service, project):
+def test_post_no_credentials(selenium_app, project):
     response = requests.post(
         project + "/annotations",
         json={"Text": "This is a project"},
@@ -136,7 +138,7 @@ def test_post_no_credentials(odinapi_service, project):
     assert response.status_code == http.client.UNAUTHORIZED
 
 
-def test_post_bad_credentials(odinapi_service, project):
+def test_post_bad_credentials(selenium_app, project):
     response = requests.post(
         project + "/annotations",
         json={"Text": "This is a project"},

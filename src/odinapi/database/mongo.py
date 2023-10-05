@@ -1,50 +1,25 @@
-"""
-Module for connecting to mongodb level2 database.
-
-Environment variables:
-
-- ODINAPI_MONGODB_HOST (default=level2db)
-- ODINAPI_MONGODB_PORT (default=27017)
-- ODINAPI_MONGODB_USERNAME (default=<empty>)
-- ODINAPI_MONGODB_PASSWORD (default=<empty>)
-- ODINAPI_MONGODB_SERVER_TIMEOUT (default=180000 ms)
-
-Example:
-
->>> col = get_collection('level2', 'L2')
->>> col.find_one()
-"""
-
-from os import environ
-import logging
-from typing import Optional
-
+from flask import current_app
 from pymongo import MongoClient
+from pymongo.collection import Collection
+from pymongo.database import Database
 
-CLIENT: Optional[MongoClient] = None
-
-logger = logging.getLogger("Mongo")
+CLIENT: MongoClient | None = None
 
 
-def get_connection():
+def get_connection() -> MongoClient:
     """Return MongoClient object"""
+    connection_str = current_app.config["MONGO_DATABASE_URI"]
     global CLIENT
     if not CLIENT:
-        logger.debug("Creating a new Client")
-        host = environ.get("ODINAPI_MONGODB_HOST", "level2db")
-        port = int(environ.get("ODINAPI_MONGODB_PORT", 27017))
-        timeout = int(environ.get("ODINAPI_MONGODB_SERVER_TIMEOUT", 180000))
-        logger.info(f"Connecing to {host}:{port}")
-        CLIENT = MongoClient(host, port, serverSelectionTimeoutMS=timeout)
-    logger.debug(f"Using connection to {CLIENT.server_info}")
+        CLIENT = MongoClient(connection_str)
     return CLIENT
 
 
-def get_database(db_name):
+def get_database(db_name: str) -> Database:
     """Return Database object"""
-    return get_connection()[db_name]
+    return get_connection().get_database(db_name)
 
 
-def get_collection(database, collection):
+def get_collection(db_name: str, collection: str) -> Collection:
     """Return Collection object"""
-    return get_database(database)[collection]
+    return get_database(db_name).get_collection(collection)
