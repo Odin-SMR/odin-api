@@ -14,7 +14,7 @@
   "dependencies": {
     "bootstrap": "^3.4.1",
     "bootstrap-datepicker": "^1.9.0",
-    "css-loader": "^3.6.0",
+    "css-loader": "^6.8.1",
     "datatables": "^1.10.9",
     "elliptic": "^6.5.4",
     "file-loader": "^6.1.0",
