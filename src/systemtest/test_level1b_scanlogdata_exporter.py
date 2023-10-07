@@ -7,6 +7,8 @@ from odinapi.views.level1b_scanlogdata_exporter import (
     scan_data_is_valid,
 )
 
+pytestmark = pytest.mark.system
+
 
 @pytest.fixture
 def scan_info_exporter(db_context):

@@ -11,6 +11,7 @@ import simplejson
 from ..level2_test_data import VERSION, get_test_data
 from odinapi.utils import encrypt_util
 
+pytestmark = pytest.mark.system
 WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
 
 

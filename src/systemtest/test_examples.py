@@ -4,6 +4,8 @@ import requests
 
 from examples import get_l1b_for_period, filter_spectra
 
+pytestmark = pytest.mark.system
+
 
 class TestLevel1Examples:
     """Tests for Level1 API interaction example scripts"""

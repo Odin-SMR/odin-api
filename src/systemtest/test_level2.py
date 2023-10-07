@@ -21,6 +21,7 @@ from .level2_test_data import (
     insert_inf_test_data,
 )
 
+pytestmark = pytest.mark.system
 PROJECT_NAME = "testproject"
 
 

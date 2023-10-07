@@ -33,9 +33,7 @@ class Config:
 
 
 class ProdConfig(Config):
-    SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{pg_user}:{pg_passwd}@{pg_host}/{pg_dbname}?sslmode={pg_sslmode}"
-    )
+    SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg://{pg_user}:{pg_passwd}@{pg_host}/{pg_dbname}?sslmode={pg_sslmode}"
 
     SQLALCHEMY_ENGINE_OPTIONS = dict(pool_size=3, max_overflow=5, pool_recycle=300)
 
@@ -45,7 +43,7 @@ class ProdConfig(Config):
 
 
 class LocalConfig(Config):
-    SQLALCHEMY_DATABASE_URI = "postgresql://odinop@localhost/odin"
+    SQLALCHEMY_DATABASE_URI = "postgresql+psycopg://odinop@localhost/odin"
     MONGO_DATABASE_URI = "mongodb://localhost"
     DEBUG = True
 
@@ -58,7 +56,7 @@ class SeleniumConfig(Config):
 
 class LiveConfig(Config):
     SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://odin:{vulcan_pg_passwd}@localhost/odin?sslmode=verify-ca"
+        f"postgresql+psycopg://odin:{vulcan_pg_passwd}@localhost/odin?sslmode=verify-ca"
     )
     MONGO_DATABASE_URI = "mongodb://localhost"
     DEBUG = True

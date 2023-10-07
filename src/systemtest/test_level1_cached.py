@@ -7,6 +7,8 @@ from odinapi.views.views_cached import (
     get_scan_logdata_uncached,
 )
 
+pytestmark = pytest.mark.system
+
 
 class TestLevel1CachedViews:
     def test_backend_info(self, selenium_app):

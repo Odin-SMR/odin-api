@@ -492,6 +492,8 @@ class ScanPTZ(BaseView):
             abort(404)
         mjd, _, midlat, midlon = get_geoloc_info(loginfo)
         datadict = run_donaletty(mjd, midlat, midlon, scanno)
+        if not datadict:
+            return dict()
         self._convert_items(datadict)
 
         datadictv4 = dict()
@@ -500,7 +502,7 @@ class ScanPTZ(BaseView):
         datadictv4["Altitude"] = datadict["Z"]
         datadictv4["Latitude"] = datadict["latitude"]
         datadictv4["Longitude"] = datadict["longitude"]
-        datadictv4["MJD"] = datadict["datetime"]
+        datadictv4["MJD"] = datadict["mjd"]
         return datadictv4
 
     def _convert_items(self, datadict):

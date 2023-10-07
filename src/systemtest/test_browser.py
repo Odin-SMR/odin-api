@@ -12,6 +12,7 @@ from odinapi.utils import encrypt_util
 
 from .level2_test_data import VERSION, get_test_data
 
+pytestmark = pytest.mark.system
 PROJECT_NAME = "testproject"
 WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
 

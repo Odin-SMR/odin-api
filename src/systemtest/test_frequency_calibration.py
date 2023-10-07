@@ -17,6 +17,8 @@ from odinapi.views.freq_calibration import (
     identify_species_by_lines,
 )
 
+pytestmark = pytest.mark.system
+
 
 @pytest.fixture
 def scan_sample_data(db_context):

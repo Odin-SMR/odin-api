@@ -4,6 +4,8 @@ from flask.testing import FlaskClient
 import pytest
 import requests
 
+pytestmark = pytest.mark.system
+
 
 class TestLevel1Views:
     def test_backend_info(self, selenium_app):

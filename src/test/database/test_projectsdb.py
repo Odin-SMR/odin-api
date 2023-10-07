@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from mock import patch
+from unittest.mock import patch
 import pytest
 
 from odinapi.database.level2db import ProjectsDB, ProjectError, ProjectAnnotation
@@ -23,13 +23,11 @@ def projectdb(db_context):
         yield ProjectsDB()
 
 
-@pytest.mark.slow
 def test_projectdb_empty(projectdb):
     projects = list(projectdb.get_projects())
     assert len(projects) == 0
 
 
-@pytest.mark.slow
 def test_add_project(projectdb):
     projectdb.add_project_if_not_exists("my-project")
     project = projectdb.get_project("my-project")
@@ -38,39 +36,33 @@ def test_add_project(projectdb):
 
 
 class TestPublishProject:
-    @pytest.mark.slow
     def test_publish_project(self, projectdb):
         projectdb.add_project_if_not_exists("my-project")
         projectdb.publish_project("my-project")
         project = projectdb.get_project("my-project")
         assert not project["development"]
 
-    @pytest.mark.slow
     def test_publish_unknown_project(self, projectdb):
         with pytest.raises(ProjectError):
             projectdb.publish_project("my-project")
 
 
 class TestGetProjects:
-    @pytest.mark.slow
     @pytest.fixture(autouse=True)
     def projects(self, projectdb):
         projectdb.add_project_if_not_exists("my-project-dev")
         projectdb.add_project_if_not_exists("my-project-prod")
         projectdb.publish_project("my-project-prod")
 
-    @pytest.mark.slow
     def test_get_all(self, projectdb):
         projects = list(projectdb.get_projects(development=None))
         assert len(projects) == 2
 
-    @pytest.mark.slow
     def test_get_development(self, projectdb):
         projects = list(projectdb.get_projects(development=True))
         assert len(projects) == 1
         assert projects[0]["name"] == "my-project-dev"
 
-    @pytest.mark.slow
     def test_get_production(self, projectdb):
         projects = list(projectdb.get_projects(development=False))
         assert len(projects) == 1
@@ -78,17 +70,14 @@ class TestGetProjects:
 
 
 class TestAnnotations:
-    @pytest.mark.slow
     def test_get_annotations_unknown_project(self, projectdb):
         with pytest.raises(ProjectError):
             list(projectdb.get_annotations("my-project"))
 
-    @pytest.mark.slow
     def test_get_empty_annotations(self, projectdb):
         projectdb.add_project_if_not_exists("my-project")
         assert list(projectdb.get_annotations("my-project")) == []
 
-    @pytest.mark.slow
     def test_add_one_annotation(self, projectdb):
         projectdb.add_project_if_not_exists("my-project")
         annotation = ProjectAnnotation(
@@ -98,7 +87,6 @@ class TestAnnotations:
         projectdb.add_annotation("my-project", annotation)
         assert list(projectdb.get_annotations("my-project")) == [annotation]
 
-    @pytest.mark.slow
     def test_add_multiple_annotation(self, projectdb):
         projectdb.add_project_if_not_exists("my-project")
         annotations = [
@@ -119,7 +107,6 @@ class TestAnnotations:
             projectdb.add_annotation("my-project", annotation)
         assert list(projectdb.get_annotations("my-project")) == annotations
 
-    @pytest.mark.slow
     def test_add_annotation_with_freqmode(self, projectdb):
         projectdb.add_project_if_not_exists("my-project")
         annotation = ProjectAnnotation(
@@ -130,7 +117,6 @@ class TestAnnotations:
         projectdb.add_annotation("my-project", annotation)
         assert list(projectdb.get_annotations("my-project")) == [annotation]
 
-    @pytest.mark.slow
     def test_add_annotation_unknown_project(self, projectdb):
         annotation = ProjectAnnotation(
             text="Not my project",

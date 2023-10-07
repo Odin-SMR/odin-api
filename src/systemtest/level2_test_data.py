@@ -6,10 +6,12 @@ from collections import namedtuple
 from copy import deepcopy
 
 from flask import current_app
+import pytest
 import simplejson
 
 from odinapi.utils import encrypt_util
 
+pytestmark = pytest.mark.system
 UrlInfo = namedtuple("UrlInfo", "url,freq_mode,scan_id,data")
 # Use this version when posting test data:
 VERSION = "v5"
