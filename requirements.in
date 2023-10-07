@@ -5,6 +5,7 @@ coda
 coverage
 cython
 dateutils
+python-dotenv
 flask
 flask-httpauth
 Flask-SQLAlchemy
@@ -12,6 +13,7 @@ fortranformat
 gevent
 gunicorn
 h5py
+LinkHeader
 matplotlib
 mock
 netcdf4

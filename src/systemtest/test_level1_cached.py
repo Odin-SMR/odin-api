@@ -9,13 +9,13 @@ from odinapi.views.views_cached import (
 
 
 class TestLevel1CachedViews:
-    def test_backend_info(self, odinapi_service):
+    def test_backend_info(self, selenium_app):
         """Test cached backend info"""
         # Only V4
         base_url = "{host}/rest_api/{version}/freqmode_info/{date}/" "{backend}/"
         r = requests.get(
             base_url.format(
-                host=odinapi_service,
+                host=selenium_app,
                 version="v4",
                 date="2015-01-15",
                 backend="AC2",
@@ -33,17 +33,17 @@ class TestLevel1CachedViews:
             "{}/rest_api/v5/level1/42/scans/?start_time=2015-01-11&end_time=2015-01-13",  # noqa,
         ),
     )
-    def test_faulty_freqmode(self, odinapi_service, url):
+    def test_faulty_freqmode(self, selenium_app, url):
         """Test calling API with non-existent freqmode"""
         # V4
-        r = requests.get(url.format(odinapi_service))
+        r = requests.get(url.format(selenium_app))
         assert r.status_code == http.client.NOT_FOUND
 
-    def test_freqmode_info_hierarchy(self, odinapi_service):
+    def test_freqmode_info_hierarchy(self, selenium_app):
         """Test cached freqmode info hierarchy flow"""
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "rest_api/{version}/freqmode_info/{date}/",
             )
         )
@@ -70,32 +70,32 @@ class TestLevel1CachedViews:
         assert nr_freqmodes_v4 == nr_freqmodes_v5
         assert nr_scans_v4 == nr_scans_v5
 
-    def test_scan_log(self, odinapi_service):
+    def test_scan_log(self, selenium_app):
         """Test get cached level1 log data for a scan"""
         # V4
         r = requests.get(
-            "{}/rest_api/v4/l1_log/2/7019446353".format(odinapi_service),
+            "{}/rest_api/v4/l1_log/2/7019446353".format(selenium_app),
         )
         assert r.status_code == http.client.OK
         assert r.json()["Info"]["URLS"][
             "URL-ptz"
-        ] == "{}/rest_api/v4/ptz/2015-01-15/AC1/2/7019446353/".format(odinapi_service)
+        ] == "{}/rest_api/v4/ptz/2015-01-15/AC1/2/7019446353/".format(selenium_app)
 
         # V5
         r = requests.get(
-            "{}/rest_api/v5/level1/2/7019446353/Log".format(odinapi_service),
+            "{}/rest_api/v5/level1/2/7019446353/Log".format(selenium_app),
         )
         assert r.status_code == http.client.OK
         assert r.json()["Type"] == "Log"
         assert r.json()["Data"]["URLS"][
             "URL-ptz"
-        ] == "{}/rest_api/v5/level1/2/7019446353/ptz/".format(odinapi_service)
+        ] == "{}/rest_api/v5/level1/2/7019446353/ptz/".format(selenium_app)
 
-    def test_period_info(self, odinapi_service):
+    def test_period_info(self, selenium_app):
         """Test get period info"""
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "/rest_api/{version}/period_info/{year}/{month}/{day}",
             )
         )
@@ -149,7 +149,7 @@ class TestLevel1CachedViews:
     )
     def test_scan_list(
         self,
-        odinapi_service,
+        selenium_app,
         start_time,
         end_time,
         apriori,
@@ -160,7 +160,7 @@ class TestLevel1CachedViews:
         """Test getting list of scans for period"""
         base_url = "/".join(
             (
-                odinapi_service,
+                selenium_app,
                 "/rest_api/v5/level1/1/scans/?start_time={start_time}&end_time={end_time}{apriori}",  # noqa
             )
         )

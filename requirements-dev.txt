@@ -1,4 +1,4 @@
-astroid==2.15.8
+astroid==3.0.0
     # via pylint
 attrs==23.1.0
     # via
@@ -10,16 +10,16 @@ black==23.9.1
     # via -r requirements-dev.in
 blinker==1.6.2
     # via flask
-boto3==1.28.57
+boto3==1.28.60
     # via -r requirements.in
-boto3-stubs==1.28.57
+boto3-stubs==1.28.60
     # via -r requirements-dev.in
-botocore==1.31.57
+botocore==1.31.60
     # via
     #   boto3
     #   s3fs
     #   s3transfer
-botocore-stubs==1.31.57
+botocore-stubs==1.31.60
     # via boto3-stubs
 build==1.0.3
     # via pip-tools
@@ -52,7 +52,7 @@ colorama==0.4.6
     # via tox
 contourpy==1.1.1
     # via matplotlib
-coverage==7.3.1
+coverage==7.3.2
     # via -r requirements.in
 cycler==0.12.0
     # via matplotlib
@@ -95,7 +95,7 @@ gems==0.4.0
     # via coda
 gevent==23.9.1
     # via -r requirements.in
-greenlet==3.0.0rc3
+greenlet==3.0.0
     # via
     #   gevent
     #   sqlalchemy
@@ -123,8 +123,8 @@ jmespath==1.0.1
     #   botocore
 kiwisolver==1.4.5
     # via matplotlib
-lazy-object-proxy==1.9.0
-    # via astroid
+linkheader==0.4.3
+    # via -r requirements.in
 markupsafe==2.1.3
     # via
     #   jinja2
@@ -145,11 +145,11 @@ mypy-boto3-cloudformation==1.28.48
     # via boto3-stubs
 mypy-boto3-dynamodb==1.28.55
     # via boto3-stubs
-mypy-boto3-ec2==1.28.57
+mypy-boto3-ec2==1.28.58
     # via boto3-stubs
 mypy-boto3-lambda==1.28.36
     # via boto3-stubs
-mypy-boto3-rds==1.28.41
+mypy-boto3-rds==1.28.58
     # via boto3-stubs
 mypy-boto3-s3==1.28.55
     # via boto3-stubs
@@ -193,7 +193,7 @@ pillow==10.0.1
     # via matplotlib
 pip-tools==7.3.0
     # via -r requirements-dev.in
-platformdirs==3.10.0
+platformdirs==3.11.0
     # via
     #   black
     #   pylint
@@ -203,11 +203,13 @@ pluggy==1.3.0
     # via
     #   pytest
     #   tox
+psutil==5.9.5
+    # via pytest-xprocess
 psycopg==3.1.12
     # via -r requirements.in
 psycopg-binary==3.1.12
     # via psycopg
-psycopg2-binary==2.9.8
+psycopg2-binary==2.9.9
     # via -r requirements.in
 pycodestyle==2.11.0
     # via -r requirements.in
@@ -217,11 +219,11 @@ pyephem==9.99
     # via -r requirements.in
 pyflakes==3.1.0
     # via -r requirements.in
-pygresql==5.2.5
+pygresql==6.0
     # via -r requirements.in
 pyhdf==0.11.3
     # via -r requirements.in
-pylint==2.17.7
+pylint==3.0.0
     # via -r requirements.in
 pymongo==4.5.0
     # via
@@ -243,11 +245,14 @@ pytest==7.4.2
     #   pytest-docker
     #   pytest-docker-tools
     #   pytest-freezegun
+    #   pytest-xprocess
 pytest-docker==2.0.1
     # via -r requirements-dev.in
 pytest-docker-tools==3.1.3
     # via -r requirements-dev.in
 pytest-freezegun==0.4.2
+    # via -r requirements-dev.in
+pytest-xprocess==0.23.0
     # via -r requirements-dev.in
 python-dateutil==2.8.2
     # via
@@ -258,7 +263,9 @@ python-dateutil==2.8.2
     #   matplotlib
     #   pandas
 python-dotenv==1.0.0
-    # via webdriver-manager
+    # via
+    #   -r requirements.in
+    #   webdriver-manager
 pytz==2023.3.post1
     # via
     #   dateutils
@@ -306,7 +313,7 @@ trio==0.22.2
     #   trio-websocket
 trio-websocket==0.11.1
     # via selenium
-types-awscrt==0.19.1
+types-awscrt==0.19.2
     # via botocore-stubs
 types-mock==5.1.0.2
     # via -r requirements-dev.in
@@ -337,7 +344,7 @@ typing-extensions==4.8.0
     #   sqlalchemy
 tzdata==2023.3
     # via pandas
-urllib3==1.26.16
+urllib3==1.26.17
     # via
     #   botocore
     #   docker
@@ -353,8 +360,6 @@ werkzeug==3.0.0
     # via flask
 wheel==0.41.2
     # via pip-tools
-wrapt==1.15.0
-    # via astroid
 wsproto==1.2.0
     # via trio-websocket
 zope-event==5.0

@@ -11,10 +11,10 @@ class TestLevel1Examples:
     def get_apiroot(self, baseurl):
         return "{}/rest_api/v5".format(baseurl)
 
-    def test_get_scans_for_period(self, odinapi_service):
+    def test_get_scans_for_period(self, selenium_app):
         """Test getting scans for a frequency mode and period"""
         # V5
-        apiurl = self.get_apiroot(odinapi_service)
+        apiurl = self.get_apiroot(selenium_app)
         scans = get_l1b_for_period.get_scans_for_period(1, "2015-12-30", None, apiurl)
         assert len(scans) == 322
         scans = get_l1b_for_period.get_scans_for_period(1, "2015-12-31", None, apiurl)
@@ -33,10 +33,10 @@ class TestLevel1Examples:
             )
 
     @pytest.mark.slow
-    def test_get_spectra_for_period(self, odinapi_service):
+    def test_get_spectra_for_period(self, selenium_app):
         """Test getting spectra for a frequency mode and period"""
         # V5
-        apiurl = self.get_apiroot(odinapi_service)
+        apiurl = self.get_apiroot(selenium_app)
         spectra = get_l1b_for_period.get_spectra_for_period(
             1, "2015-01-12", None, apiurl
         )
@@ -48,20 +48,20 @@ class TestLevel1Examples:
             )
 
     @pytest.mark.slow
-    def test_break_postgresql(self, odinapi_service):
+    def test_break_postgresql(self, selenium_app):
         """This test used to break psql because 2015-01-13 has no spectra"""
         # V5
-        apiurl = self.get_apiroot(odinapi_service)
+        apiurl = self.get_apiroot(selenium_app)
         spectra = get_l1b_for_period.get_spectra_for_period(
             1, "2015-01-12", "2015-01-13", apiurl
         )
         assert len(spectra) == 34
         assert len(spectra["Spectrum"]) == 8935
 
-    def test_filter_by_param(self, odinapi_service):
+    def test_filter_by_param(self, selenium_app):
         """Test filtering by parameter range"""
         # V5
-        apiurl = self.get_apiroot(odinapi_service)
+        apiurl = self.get_apiroot(selenium_app)
         request = requests.get("{}/level1/1/7015305914/L1b/".format(apiurl))
         request.raise_for_status(), request.text
         spectra = request.json()
@@ -73,10 +73,10 @@ class TestLevel1Examples:
         with pytest.raises(ValueError):
             filter_spectra.filter_by_param(spectra, 70000, 50000, "Altitude")
 
-    def test_filter_by_quality(self, odinapi_service):
+    def test_filter_by_quality(self, selenium_app):
         """Test filtering by parameter quality flags"""
         # V5
-        apiurl = self.get_apiroot(odinapi_service)
+        apiurl = self.get_apiroot(selenium_app)
         request = requests.get("{}/level1/1/7015305914/L1b/".format(apiurl))
         spectra = request.json()
         assert len(spectra) == 3

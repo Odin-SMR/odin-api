@@ -9,7 +9,7 @@ import urllib.error
 import dateutil.tz
 from flask import request, abort, jsonify, redirect, url_for
 from flask.views import MethodView
-from flask_httpauth import HTTPBasicAuth
+from flask_httpauth import HTTPBasicAuth  # type: ignore
 from pymongo.errors import DuplicateKeyError
 from http import HTTPStatus
 
@@ -163,35 +163,37 @@ def get_base_url(version):
 
 
 class Level2Write(MethodView):
+    logger = logging.getLogger(__name__)
+
     def post(self, version):
         """Insert level2 data for a scan id and freq mode"""
         msg = request.args.get("d")
         if not msg:
-            logging.warning("Level2Write.post: request message is empty")
+            self.logger.warning("Level2Write.post: request message is empty")
             abort(400)
         try:
             scanid, freqmode, project = decode_level2_target_parameter(msg)
         except:  # noqa
-            logging.warning("Level2Write.post: data can not be decoded")
+            self.logger.warning("Level2Write.post: data can not be decoded")
             abort(400)
         data = request.json
         if not data:
-            logging.warning("Level2Write.post: no json data")
+            self.logger.warning("Level2Write.post: no json data")
             abort(400)
         if any(k not in data for k in ("L2", "L2I", "L2C")):
-            logging.warning(
+            self.logger.warning(
                 "Level2Write.post: at least one of L2, L2I, " "or, L2C is missing"
             )
             abort(400)
         L2c = data.pop("L2C") or ""
         if not isinstance(L2c, str):
-            logging.warning("Level2Write.post: L2c is not a string")
+            self.logger.warning("Level2Write.post: L2c is not a string")
             abort(400)
         L2 = data.pop("L2") or []
         if isinstance(L2, dict):
             L2 = [L2]
         if not isinstance(L2, list):
-            logging.warning("Level2Write.post: L2 is not a list")
+            self.logger.warning("Level2Write.post: L2 is not a list")
             abort(400)
         for nr, species in enumerate(L2):
             try:
@@ -203,7 +205,7 @@ class Level2Write(MethodView):
                 )
         L2i = data.pop("L2I") or {}
         if not isinstance(L2i, dict):
-            logging.warning("Level2Write.post: L2I is not a dict")
+            self.logger.warning("Level2Write.post: L2I is not a dict")
             abort(400)
         if L2i:
             try:
@@ -218,7 +220,7 @@ class Level2Write(MethodView):
             L2i["FreqMode"] = freqmode
             L2i["ProcessingError"] = True
         if scanid != L2i["ScanID"]:
-            logging.warning("Level2Write.post: scanid mismatch")
+            self.logger.warning("Level2Write.post: scanid mismatch")
             return (
                 jsonify(
                     {"error": "ScanID missmatch (%r != %r)" % (scanid, L2i["ScanID"])}
@@ -226,7 +228,7 @@ class Level2Write(MethodView):
                 HTTPStatus.BAD_REQUEST,
             )
         if freqmode != L2i["FreqMode"]:
-            logging.warning("Level2Write.post: freqmode mismatch")
+            self.logger.warning("Level2Write.post: freqmode mismatch")
             return (
                 jsonify(
                     {
@@ -248,7 +250,7 @@ class Level2Write(MethodView):
             # that there is a good reason for that
             db.delete(L2i["ScanID"], L2i["FreqMode"])
             db.store(L2, L2i, L2c)
-            logging.warning(
+            self.logger.warning(
                 "Level2Write.post: DuplicateKeyError "
                 "scan data already existed in database "
                 "for project={0}, FreqMode={1}, and ScanID={2} "
@@ -1208,6 +1210,8 @@ class Level2ViewDay(Level2ProjectBaseView):
         try:
             start_time = get_args.get_datetime(val=date)
         except ValueError:
+            abort(400)
+        if start_time is None:
             abort(400)
         end_time = start_time + timedelta(hours=24)
         try:

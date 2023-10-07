@@ -14,6 +14,8 @@ root:
     - default
   level: DEBUG
 loggers:
+  odinapi:
+    level: DEBUG
   flask:
     level: INFO
   flask.app:
