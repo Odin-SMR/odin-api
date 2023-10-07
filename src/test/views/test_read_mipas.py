@@ -16,13 +16,12 @@ def mipas_basepath_pattern():
     return p / "data" / "vds-data" / "Envisat_MIPAS_Level2" / "{0}" / "V5"
 
 
-def test_read_mipas_file(mipas_basepath_pattern):
+def test_read_mipas_file(mipas_basepath_pattern, app_context):
     data = read_mipas_file(
         "MIPAS-E_IMK.200702.V5R_O3_224.nc",
         "2007-02-01",
         "O3",
         2,
-        basepath_pattern=str(mipas_basepath_pattern),
     )
     expect = {
         "MJD": 54132.00168981497,

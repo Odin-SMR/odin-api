@@ -1,28 +1,32 @@
 """read  mls level2 file"""
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from h5py import File
+
 import numpy as np
+import s3fs  # type: ignore
+from dateutil.relativedelta import relativedelta
+from h5py import File  # type: ignore
 
 
 def read_mls_file(mlsfile, date, species, file_index):
     """read mls level2 file"""
     file_index = int(file_index)
-    mls_datapath = "/vds-data/Aura_MLS_Level2/{0}/v04".format(*[species])
+    mls_datapath = "s3://odin-vds-data/Aura_MLS_Level2/{0}/v04".format(*[species])
     mls_datapath = "{0}/{1}/{2}/".format(*[mls_datapath, date[0:4], date[5:7]])
     data = dict()
     data_fields = dict()
     geolocation_fields = dict()
-    with File(mls_datapath + mlsfile, "r") as fgr:
-        if species == "T":
-            fdata = fgr["HDFEOS"]["SWATHS"]["Temperature"]
-        else:
-            fdata = fgr["HDFEOS"]["SWATHS"][species]
-        for item in fdata["Data Fields"]:
-            data_fields[item] = np.array(fdata["Data Fields"][item])
+    s3 = s3fs.S3FileSystem()
+    with s3.open(mls_datapath + mlsfile) as f:
+        with File(f) as fgr:
+            if species == "T":
+                fdata = fgr["HDFEOS"]["SWATHS"]["Temperature"]  # type: ignore
+            else:
+                fdata = fgr["HDFEOS"]["SWATHS"][species]  # type: ignore
+            for item in fdata["Data Fields"]:  # type: ignore
+                data_fields[item] = np.array(fdata["Data Fields"][item])  # type: ignore
 
-        for item in fdata["Geolocation Fields"]:
-            geolocation_fields[item] = np.array(fdata["Geolocation Fields"][item])
+            for item in fdata["Geolocation Fields"]:  # type: ignore
+                geolocation_fields[item] = np.array(fdata["Geolocation Fields"][item])  # type: ignore
 
     # transform the mls date to MJD and add to dict
     mjd = []

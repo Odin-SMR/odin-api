@@ -1,4 +1,5 @@
 import http.client
+from flask.testing import FlaskClient
 
 import pytest
 import requests
@@ -130,16 +131,13 @@ class TestLevel1Views:
         )
         assert r.status_code == http.client.BAD_REQUEST
 
-    def test_get_apriori(self, odinapi_service):
+    def test_get_apriori(self, test_client: FlaskClient):
         """Test get apriori data"""
         # V4
-        base_url = "/".join(
-            (
-                odinapi_service,
-                "rest_api/{version}/apriori/O3/{date}/{backend}/{freqmode}/{scanid}/",  # noqa
-            )
+        base_url = (
+            "/rest_api/{version}/apriori/O3/{date}/{backend}/{freqmode}/{scanid}/"
         )
-        r = requests.get(
+        r = test_client.get(
             base_url.format(
                 version="v4",
                 date="2015-01-12",
@@ -148,31 +146,29 @@ class TestLevel1Views:
                 scanid=7015092840,
             )
         )
-        print(r.request.url)
         assert r.status_code == http.client.OK
-        assert "Pressure" in r.json()
+        assert r.json
+        assert "Pressure" in r.json
 
         # V5
-        base_url = "/".join(
-            (
-                odinapi_service,
-                "rest_api/{version}/level1/{freqmode}/{scanid}/apriori/O3/",
-            )
+        base_url = "/rest_api/{version}/level1/{freqmode}/{scanid}/apriori/O3/"
+        r = test_client.get(
+            base_url.format(version="v5", freqmode=1, scanid=7015092840)
         )
-        r = requests.get(base_url.format(version="v5", freqmode=1, scanid=7015092840))
         assert r.status_code == http.client.OK
-        assert r.json()["Type"] == "apriori"
+        assert r.json
+        assert r.json["Type"] == "apriori"
 
-    def test_get_collocations(self, odinapi_service):
+    def test_get_collocations(self, test_client):
         """Test get collocations for a scan"""
         # V5
         base_url = "/".join(
-            (
-                odinapi_service,
-                "rest_api/{version}/level1/{freqmode}/{scanid}/collocations/",
-            )
+            ("/rest_api/{version}/level1/{freqmode}/{scanid}/collocations/",)
         )
-        r = requests.get(base_url.format(version="v5", freqmode=1, scanid=1930998606))
+        r = test_client.get(
+            base_url.format(version="v5", freqmode=1, scanid=1930998606)
+        )
         assert r.status_code == http.client.OK
-        assert r.json()["Type"] == "collocation"
-        assert r.json()["Count"] == 7
+        assert r.json
+        assert r.json["Type"] == "collocation"
+        assert r.json["Count"] == 7

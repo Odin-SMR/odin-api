@@ -1,3 +1,4 @@
+from multiprocessing import cpu_count
 from yaml import safe_load
 
 with open("/app/logconf.yaml") as f:
@@ -10,6 +11,6 @@ logconfig_dict = logconf
 secure_scheme_headers = {"X-FORWARDED-PROTO": "https"}
 timeout = 350
 worker_class = "gevent"
-workers = 4
-preload_app = True
+workers = cpu_count() + 1
+# preload_app = True
 wsgi_app = "odinapi.api:create_app()"

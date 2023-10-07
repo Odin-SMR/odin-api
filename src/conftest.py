@@ -10,7 +10,7 @@ from docker.models.containers import Container  # type: ignore
 from xprocess import ProcessStarter  # type: ignore
 
 from odinapi.api import create_app
-from odinapi.odin_config import TestConfig
+from odinapi.odin_config import LocalConfig, TestConfig
 
 WAIT_FOR_SERVICE_TIME = 60 * 5
 PAUSE_TIME = 5
@@ -60,7 +60,7 @@ def odin_postgresql(docker_ip, docker_services):
 
 @pytest.fixture(scope="session")
 def odinapi_service(docker_ip, docker_services):
-    port = docker_services.port_for("odin", 80)
+    port = docker_services.port_for("webapi", 8000)
     url = "http://{}:{}".format(docker_ip, port)
     yield url
 
@@ -150,3 +150,11 @@ def db_context(db_app):
 def test_client(db_app: Flask):
     with db_app.app_context():
         yield db_app.test_client()
+
+
+@pytest.fixture
+def app_context():
+    config = LocalConfig()
+    app = create_app(config)
+    with app.app_context():
+        yield

@@ -22,8 +22,12 @@ def parse_arguments():
                 eval $(ssh-agent)
                 ssh-add /path/to/correct_key.pem
 
-                a .env file containing:
-                    VULCAN_PG_PASSWD=correct_password
+                a .env file containing PGPASSWORD and (AWS_PROFILE OR
+                AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID)
+                example:
+                    PGPASSWD=<correct_password>
+                    AWS_SECRET_ACCESS_KEY=<your-key>
+                    AWS_ACCESS_KEY_ID=<your-key-id>
 
                 ssh -L 5432:vulcan.rss.chalmers.se:5432 \\
                     -L 27017:localhost:27017 \\
@@ -36,6 +40,15 @@ def parse_arguments():
             Prerequisite:
                 $ docker run -d -p 127.0.0.1:27017:27017 mongo
                 $ docker run -d -p 127.0.0.1:5432:5432 odinsmr/odin_db
+
+                a .env file containing AWS_PROFILE OR
+                (AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID)
+                example:
+                    AWS_PROFILE=<your-profile>
+
+        Selenium setup:
+            This is used for testing with pytest. Pytest also need
+            AWS credentials in the .env file.
         """
     )
     parser = argparse.ArgumentParser(

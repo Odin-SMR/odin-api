@@ -16,12 +16,11 @@ def mipas_basepath():
 
 
 @pytest.fixture
-def get_mipas_data_o3(mipas_basepath):
+def get_mipas_data_o3(mipas_basepath, app_context):
     return read_esa_mipas_file(
         "MIP_NL__2PWDSI20020731_121351_000060462008_00124_02182_1000_11.nc",
         "2002-07-31",
         "O3",
-        basepath=str(mipas_basepath),
     )
 
 
@@ -30,7 +29,6 @@ def get_mipas_data(mipas_basepath, species):
         "MIP_NL__2PWDSI20020731_121351_000060462008_00124_02182_1000_11.nc",
         "2002-07-31",
         species,
-        basepath=str(mipas_basepath),
     )
 
 
@@ -43,8 +41,8 @@ def get_mipas_data(mipas_basepath, species):
         ("N2O", ("n2o_retrieval_mds", "scan_geolocation_ads")),
     ),
 )
-def test_read_esa_mipas_get_correct_group(mipas_basepath, species, expect):
-    data = get_mipas_data(mipas_basepath, species)
+def test_read_esa_mipas_get_correct_group(species, expect, app_context):
+    data = get_mipas_data("", species)
     assert set(data.keys()) == set(expect)
 
 
@@ -95,7 +93,9 @@ def test_read_esa_mipas_get_correct_group(mipas_basepath, species, expect):
         ),
     ),
 )
-def test_read_esa_mipas_get_correct_variables(get_mipas_data_o3, group, expect):
+def test_read_esa_mipas_get_correct_variables(
+    get_mipas_data_o3, group, expect, app_context
+):
     assert set(get_mipas_data_o3[group].keys()) == set(expect)
 
 
@@ -126,7 +126,9 @@ def test_read_esa_mipas_get_correct_variables(get_mipas_data_o3, group, expect):
         ("scan_geolocation_ads", "target_sun_elev", -31.460635),
     ),
 )
-def test_read_esa_mipas_scalars(get_mipas_data_o3, group, variable, expect):
+def test_read_esa_mipas_scalars(
+    get_mipas_data_o3, group, variable, expect, app_context
+):
     assert get_mipas_data_o3[group][variable] == expect
 
 
@@ -145,5 +147,5 @@ def test_read_esa_mipas_scalars(get_mipas_data_o3, group, variable, expect):
         ("o3_retrieval_mds", "avg_kernel", (16, 16)),
     ),
 )
-def test_read_esa_mipas_arrays(get_mipas_data_o3, group, variable, expect):
+def test_read_esa_mipas_arrays(get_mipas_data_o3, group, variable, expect, app_context):
     assert np.array(get_mipas_data_o3[group][variable]).shape == expect

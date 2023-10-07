@@ -1120,7 +1120,6 @@ class TestReadLevel2:
         assert len(products) == 0
 
     def validate_v4_results(self, url, nr_expected, expected_l2):
-        print(url)
         r = current_app.test_client().get(url)
         assert r.status_code == http.client.OK
         assert r.json
@@ -1132,7 +1131,6 @@ class TestReadLevel2:
         )
 
     def validate_v5_results(self, url, nr_expected, expected_l2):
-        print(url)
         r = current_app.test_client().get(url)
         assert r.status_code == http.client.OK
         assert r.json
@@ -1716,7 +1714,6 @@ class TestReadLevel2:
         expect_url,
     ):
         date = "2015-04-01"
-        print([i.scan_id for i in lot_of_fake_data])
         url = make_dev_url(
             "{host}/rest_api/v5/level2/{project}/{date}".format(
                 host="http://localhost",

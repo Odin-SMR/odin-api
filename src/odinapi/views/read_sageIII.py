@@ -1,7 +1,9 @@
 import os
+from datetime import datetime
+
 import h5py  # type: ignore
 import numpy as np
-from datetime import datetime
+import s3fs  # type: ignore
 
 
 def read_sageIII_file(filename, date, species, event_type):
@@ -14,7 +16,7 @@ def read_sageIII_file(filename, date, species, event_type):
     # Construct filename:
     versions = {"lunar": "v03", "solar": "v04"}
 
-    sageIII_datapath = "/vds-data/Meteor3M_SAGEIII_Level2/"
+    sageIII_datapath = "s3://odin-vds-data/Meteor3M_SAGEIII_Level2/"
 
     year = date[0:4]
     month = date[5:7]
@@ -63,7 +65,9 @@ def nanitize(f):
 
 class Sage3Data:
     def __init__(self, filename):
-        self._hfile = h5py.File(filename, "r")
+        self.s3 = s3fs.S3FileSystem()
+        self.f = self.s3.open(filename)
+        self._hfile = h5py.File(self.f)
         self.speciesData = {"O3": self.ozone, "NO2": self.nitrogen_dioxide}
 
     def __enter__(self):
@@ -71,6 +75,7 @@ class Sage3Data:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._hfile.close()
+        self.f.close()
 
     @property
     def datetimes_iso(self):

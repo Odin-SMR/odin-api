@@ -13,7 +13,19 @@ mongo_port = int(environ.get("ODINAPI_MONGODB_PORT", 27017))
 mongo_timeout = int(environ.get("ODINAPI_MONGODB_SERVER_TIMEOUT", 180000))
 
 local_dotenv = dotenv_values(find_dotenv())
-vulcan_pg_passwd = local_dotenv.get("VULCAN_PG_PASSWD", "")
+vulcan_pg_passwd = local_dotenv.get("PGPASSWD", "")
+
+aws_profile = local_dotenv.get("AWS_PROFILE")
+if aws_profile:
+    environ.setdefault("AWS_PROFILE", aws_profile)
+
+aws_secret = local_dotenv.get("AWS_SECRET_ACCESS_KEY")
+if aws_secret:
+    environ.setdefault("AWS_SECRET_ACCESS_KEY", aws_secret)
+
+aws_access = local_dotenv.get("AWS_ACCESS_KEY_ID")
+if aws_access:
+    environ.setdefault("AWS_ACCESS_KEY_ID", aws_access)
 
 
 class Config:
@@ -54,3 +66,4 @@ class LiveConfig(Config):
 
 class TestConfig(LocalConfig):
     TESTING = True
+    DEBUG = True

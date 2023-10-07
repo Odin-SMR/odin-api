@@ -4,7 +4,7 @@ from textwrap import dedent
 from typing import TypedDict
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-from flask import request, jsonify, abort
+from flask import current_app, request, jsonify, abort
 from flask.views import MethodView
 from numpy import around
 from threading import Lock
@@ -18,7 +18,7 @@ from odinapi.utils.time_util import datetime2mjd, mjd2stw
 from .geoloc_tools import get_geoloc_info
 from .level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
 from .level1b_scanlogdata_exporter import get_scan_logdata
-from .read_apriori import get_apriori
+from .read_apriori import AprioriException, get_apriori
 from .read_mls import read_mls_file
 from .read_mipas import read_mipas_file, read_esa_mipas_file
 from .read_smiles import read_smiles_file
@@ -570,19 +570,25 @@ class ScanAPR(BaseView):
     """Get apriori data for a certain species"""
 
     SUPPORTED_VERSIONS = ["v4"]
+    logger = logging.getLogger("odinapi").getChild(__name__)
 
     @register_versions("fetch", ["v4"])
     def _get_v4(self, version, species, date, backend, freqmode, scanno):
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
+            self.logger.warning("could not get scandata")
             abort(404)
         _, day_of_year, midlat, _ = get_geoloc_info(loginfo)
-        datadict = get_apriori(
-            species,
-            day_of_year,
-            midlat,
-            source=get_args.get_string("aprsource"),
-        )
+        try:
+            datadict = get_apriori(
+                species,
+                day_of_year,
+                midlat,
+                source=get_args.get_string("aprsource"),
+            )
+        except AprioriException as err:
+            self.logger.warning("could not find apriori data")
+            abort(404)
         # vmr can be very small, problematic to decreaese number of digits
         return {
             "Pressure": around(datadict["pressure"], decimals=8).tolist(),
