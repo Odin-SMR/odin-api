@@ -47,7 +47,6 @@ def insert_test_data(project_name, file_name="odin_result.json"):
         urlinfo.url,
         data=simplejson.dumps(data, allow_nan=True),
         headers={"Content-Type": "application/json"},
-        follow_redirects=True,
     )
     assert r.status_code == http.client.CREATED, f"insert test-data failed: {__name__}"
     return r, urlinfo
@@ -69,7 +68,6 @@ def insert_inf_test_data(
         urlinfo.url,
         data=simplejson.dumps(data, allow_nan=True),
         headers={"Content-Type": "application/json"},
-        follow_redirects=True,
     )
     assert (
         r.status_code == http.client.CREATED
@@ -93,7 +91,6 @@ def insert_lot_of_test_data(project_name, file_name="odin_result.json"):
             urlinfo.url,
             data=simplejson.dumps(data, allow_nan=True),
             headers={"Content-Type": "application/json"},
-            follow_redirects=True,
         )
         assert (
             r.status_code == http.client.CREATED
@@ -117,7 +114,6 @@ def insert_failed_scan(
         wurl_failed,
         data=simplejson.dumps(data_failed, allow_nan=True),
         headers={"Content-Type": "application/json"},
-        follow_redirects=True,
     )
     assert (
         r.status_code == http.client.CREATED

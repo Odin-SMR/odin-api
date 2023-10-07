@@ -67,7 +67,7 @@ class TestProjects:
         """Test get list of projects"""
         url = "/rest_api/v4/level2/projects/"
         projecturl = f"http://localhost/rest_api/v4/level2/{PROJECT_NAME}/"
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         if r.json is not None:
             info = r.json["Info"]
@@ -78,7 +78,7 @@ class TestProjects:
 
     def test_get_v5_projects(self, fake_data, test_client):
         url = "/rest_api/v5/level2/projects/"
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         if r.json is not None:
             assert len(r.json["Data"]) == 0
@@ -90,7 +90,6 @@ class TestProjects:
         projecturl = f"http://localhost/rest_api/v5/level2/{PROJECT_NAME}/"
         r = test_client.get(
             make_dev_url(url),
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         data = r.json["Data"]
@@ -113,7 +112,7 @@ class TestProjects:
         if version == "v5":
             url = make_dev_url(url)
 
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         if version == "v4":
             assert r.json["Info"] == {
@@ -157,7 +156,7 @@ class TestWriteLevel2:
         """Test post and delete of level2 data"""
         r, urlinfo = insert_test_data(PROJECT_NAME)
         assert r.status_code == http.client.CREATED
-        r = test_client.delete(urlinfo.url, follow_redirects=True)
+        r = test_client.delete(urlinfo.url)
         assert r.status_code == http.client.NO_CONTENT
 
     def test_update_data(self, test_client: FlaskClient, cleanup):
@@ -188,7 +187,6 @@ class TestWriteLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         assert r.json
@@ -198,7 +196,6 @@ class TestWriteLevel2:
         r, urlinfo = insert_test_data(PROJECT_NAME)
         r = test_client.delete(
             urlinfo.url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.NO_CONTENT
 
@@ -208,7 +205,6 @@ class TestWriteLevel2:
         r = test_client.post(
             urlinfo.url,
             json=data_failed,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.CREATED
 
@@ -235,7 +231,6 @@ class TestWriteLevel2:
         )
         r = test_client.post(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.BAD_REQUEST
 
@@ -244,7 +239,6 @@ class TestWriteLevel2:
         urlinfo = get_write_url(data, PROJECT_NAME)
         r = test_client.post(
             urlinfo.url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.UNSUPPORTED_MEDIA_TYPE
 
@@ -316,7 +310,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         comments = r.json["Info"]["Comments"]
@@ -332,7 +325,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             make_dev_url(url),
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         assert r.json["Type"] == "level2_scan_comment"
@@ -349,7 +341,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             make_dev_url(url),
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         comments = r.json["Data"]
@@ -366,7 +357,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             make_dev_url(url),
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         comments = r.json["Data"]
@@ -384,7 +374,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             make_dev_url(url),
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         comments = r.json["Data"]
@@ -402,7 +391,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url + "?offset=2&limit=2",
-            follow_redirects=True,
         )
         links = link_header.parse(r.headers.get("link", ""))
 
@@ -455,7 +443,6 @@ class TestReadLevel2:
             url += params
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
 
         assert r.status_code == http.client.OK
@@ -601,7 +588,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         assert r.json
@@ -625,7 +611,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         scans = r.json["Data"]
@@ -648,7 +633,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         scans = r.json["Data"]
@@ -670,7 +654,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url + "?offset=1&limit=1",
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         links = link_header.parse(r.headers.get("link", ""))
@@ -698,7 +681,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         scans = r.json["Info"]["Scans"]
@@ -726,7 +708,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         assert r.json["Type"] == "level2_failed_scan_info"
@@ -764,7 +745,6 @@ class TestReadLevel2:
             r = test_client.delete(
                 urlinfo.url,
                 json=urlinfo.data(),
-                follow_redirects=True,
             )
             assert r.status_code == http.client.NO_CONTENT
 
@@ -788,7 +768,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url + "?limit=1",
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         scans = r.json["Data"]
@@ -812,7 +791,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url + "?offset=1",
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         scans = r.json["Data"]
@@ -836,7 +814,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url + "?offset=10",
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         scans = r.json["Data"]
@@ -859,7 +836,6 @@ class TestReadLevel2:
         )
         r = test_client.get(
             url + "?offset=1&limit=1",
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK
         links = link_header.parse(r.headers.get("link", ""))
@@ -927,7 +903,7 @@ class TestReadLevel2:
             freqmode=urlinfo.freq_mode,
             scanid=urlinfo.scan_id,
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         info = r.json["Info"]
         assert set(["L2i", "L2", "L2c", "URLS"]).issubset(list(info.keys()))
@@ -963,7 +939,7 @@ class TestReadLevel2:
             freqmode=freq_mode,
             scanid=scan_id,
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.NOT_FOUND
 
     def test_get_scan_v5(self, test_client, fake_data):
@@ -977,7 +953,7 @@ class TestReadLevel2:
                 scanid=urlinfo.scan_id,
             )
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         mixed = r.json
         assert mixed["Type"] == "mixed"
@@ -996,7 +972,7 @@ class TestReadLevel2:
         urlinfo = get_write_url(data, PROJECT_NAME)
         data["L2"] = []
         data["L2C"] = "processing failed."
-        r = test_client.post(urlinfo.url, json=data, follow_redirects=True)
+        r = test_client.post(urlinfo.url, json=data)
         assert r.status_code == http.client.CREATED
 
         url = make_dev_url(
@@ -1008,8 +984,8 @@ class TestReadLevel2:
                 scanid=urlinfo.scan_id,
             )
         )
-        r1 = test_client.get("{}L2c/".format(url), follow_redirects=True)
-        r2 = test_client.get(url, follow_redirects=True)
+        r1 = test_client.get("{}L2c/".format(url))
+        r2 = test_client.get(url)
         delete_test_data(PROJECT_NAME)
         assert (
             r1.json["Data"][0] == "processing failed."
@@ -1028,10 +1004,10 @@ class TestReadLevel2:
                 scanid=urlinfo.scan_id,
             )
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         info = r.json["Data"]
-        r = test_client.get(url + "{}/".format(part), follow_redirects=True)
+        r = test_client.get(url + "{}/".format(part))
         assert r.status_code == http.client.OK
         assert r.json["Data"] == info[part]["Data"]
 
@@ -1046,12 +1022,12 @@ class TestReadLevel2:
                 scanid=urlinfo.scan_id,
             )
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         info = r.json["Data"]
 
         product = "O3 / 501 GHz / 20 to 50 km"
-        r = test_client.get(url + "?product={}".format(product), follow_redirects=True)
+        r = test_client.get(url + "?product={}".format(product))
         assert r.status_code == http.client.OK
         data = r.json["Data"]
         assert data == [p for p in info if p["Product"] == product]
@@ -1067,7 +1043,7 @@ class TestReadLevel2:
         if version == "v5":
             url = make_dev_url(url)
 
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
 
         if version == "v4":
@@ -1089,7 +1065,7 @@ class TestReadLevel2:
                 project=PROJECT_NAME,
             )
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         if version == "v4":
             products = r.json["Info"]["Products"]
@@ -1109,7 +1085,7 @@ class TestReadLevel2:
                 project=PROJECT_NAME,
             )
         )
-        r = test_client.get(url, follow_redirects=True)
+        r = test_client.get(url)
         assert r.status_code == http.client.OK
         if version == "v4":
             products = r.json["Info"]["Products"]
@@ -1120,7 +1096,6 @@ class TestReadLevel2:
         assert len(products) == 0
 
     def validate_v4_results(self, url, nr_expected, expected_l2):
-        print(url)
         r = current_app.test_client().get(url)
         assert r.status_code == http.client.OK
         assert r.json
@@ -1132,7 +1107,6 @@ class TestReadLevel2:
         )
 
     def validate_v5_results(self, url, nr_expected, expected_l2):
-        print(url)
         r = current_app.test_client().get(url)
         assert r.status_code == http.client.OK
         assert r.json
@@ -1605,7 +1579,6 @@ class TestReadLevel2:
         url += "?%s" % urllib.parse.urlencode(param)
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         products = r.json["Data"]
         assert set([product["ScanID"] for product in products]) == set(expect_scanids)
@@ -1641,7 +1614,6 @@ class TestReadLevel2:
         url += "?%s" % urllib.parse.urlencode(param)
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         links = link_header.parse(r.headers.get("link", ""))
         match = links.links_by_attr_pairs([("rel", "next")])
@@ -1649,7 +1621,7 @@ class TestReadLevel2:
         if expect_link:
             assert href
             assert expect_url in href
-            r = test_client.get(href, follow_redirects=True)
+            r = test_client.get(href)
             assert r.status_code == http.client.OK
             assert "link" not in r.headers
         else:
@@ -1686,7 +1658,6 @@ class TestReadLevel2:
         r = test_client.get(
             url,
             query_string=param,
-            follow_redirects=True,
         )
         links = link_header.parse(r.headers.get("link", ""))
         match = links.links_by_attr_pairs([("rel", "next")])
@@ -1694,7 +1665,7 @@ class TestReadLevel2:
         if expect_link:
             assert href
             assert expect_url in href
-            r = test_client.get(href, follow_redirects=True)
+            r = test_client.get(href)
             assert r.status_code == http.client.OK
             assert "link" not in r.headers
         else:
@@ -1716,9 +1687,8 @@ class TestReadLevel2:
         expect_url,
     ):
         date = "2015-04-01"
-        print([i.scan_id for i in lot_of_fake_data])
         url = make_dev_url(
-            "{host}/rest_api/v5/level2/{project}/{date}".format(
+            "{host}/rest_api/v5/level2/{project}/{date}/".format(
                 host="http://localhost",
                 project=PROJECT_NAME,
                 date=date,
@@ -1729,7 +1699,6 @@ class TestReadLevel2:
         r = test_client.get(
             url,
             query_string=param,
-            follow_redirects=True,
         )
         links = link_header.parse(r.headers.get("link", ""))
         match = links.links_by_attr_pairs([("rel", "next")])
@@ -1737,7 +1706,7 @@ class TestReadLevel2:
         if expect_link:
             assert href
             assert expect_url in href
-            r = test_client.get(href, follow_redirects=True)
+            r = test_client.get(href)
             assert r.status_code == http.client.OK
             assert "link" not in r.headers
         else:
@@ -1843,7 +1812,6 @@ class TestReadLevel2:
             url += "?%s" % urllib.parse.urlencode(param)
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == status
 
@@ -1857,7 +1825,6 @@ class TestReadLevel2:
         url = f"/rest_api/v5/level2/development/{PROJECT_NAME}/{freqmode}/{scanid}/"  # noqa
         r = test_client.get(
             url,
-            follow_redirects=True,
         )
         assert r.status_code == http.client.OK, r.text
         assert "NaN" not in r.text

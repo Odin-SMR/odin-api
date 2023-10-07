@@ -148,7 +148,6 @@ class TestLevel1Views:
                 scanid=7015092840,
             )
         )
-        print(r.request.url)
         assert r.status_code == http.client.OK
         assert "Pressure" in r.json()
 
