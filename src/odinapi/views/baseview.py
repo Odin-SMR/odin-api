@@ -3,13 +3,11 @@ handling of different api versions.
 """
 
 import inspect
+import logging
 from threading import Lock
 
-from flask import jsonify, Response
+from flask import jsonify, Response, json
 from flask.views import MethodView
-import simplejson
-import numpy as np
-import datetime as dt
 
 NEW_BASEVIEW_LOCK = Lock()
 VERSIONS = ["v4", "v5"]
@@ -94,6 +92,10 @@ class BaseView(MethodView):
 
     # Versions supported by this view (other versions will result in 404):
     SUPPORTED_VERSIONS = VERSIONS
+
+    def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
+        super().__init__()
 
     def __new__(cls, *args, **kwargs):
         """Class constructor, map api versions to view methods."""
@@ -185,7 +187,7 @@ class BaseView(MethodView):
             *args,
             **kwargs,
         )
-        payload = simplejson.dumps(payload, default=default, ignore_nan=True)
+        payload = json.dumps(payload)
         headers["Content-Type"] = "application/json"
         return payload, status, headers
 
@@ -202,15 +204,3 @@ class BaseView(MethodView):
             return
         if version in self.VERSION_TO_SWAGGERSPEC:
             return getattr(self, self.VERSION_TO_SWAGGERSPEC[version])(version)
-
-
-def default(obj):
-    if isinstance(obj, np.int_):
-        return int(obj)
-    if isinstance(obj, np.float_):
-        if not np.isfinite(obj):
-            return None
-        return float(obj)
-    if isinstance(obj, dt.datetime) or isinstance(obj, dt.date):
-        return obj.isoformat()
-    raise ValueError(f"Dont know to handle {type(obj)} {obj}")

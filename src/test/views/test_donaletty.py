@@ -45,9 +45,7 @@ def test_donaletty_returns_expected_scalars(ptz_data, parameter, expect):
         ("T", (151,)),
     ),
 )
-def test_donaletty_returns_expected_array_shapes(
-    ptz_data, parameter, expect
-):
+def test_donaletty_returns_expected_array_shapes(ptz_data, parameter, expect):
     assert ptz_data[parameter].shape == expect
 
 

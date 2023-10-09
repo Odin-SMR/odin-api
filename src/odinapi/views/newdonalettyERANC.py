@@ -5,7 +5,7 @@ from datetime import datetime
 import tempfile
 from typing import TypedDict
 
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # type: ignore
 
 from odinapi.odin_aws.s3 import s3_fileobject, s3_stat
 

@@ -319,7 +319,7 @@ def make_loginfo_v4(loginfo, keylist, ind, version, date, backend):
         datadict[key] = loginfo[key][ind]
     datadict["URLS"] = dict()
     datadict["URLS"]["URL-log"] = (
-        "{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}" ""
+        "{0}rest_api/{1}/freqmode_info/{2}/{3}/{4}/{5}"
     ).format(request.url_root, version, date, backend, freq_mode, scanid)
     datadict["URLS"]["URL-spectra"] = ("{0}rest_api/{1}/scan/{2}/{3}/{4}/").format(
         request.url_root, version, backend, freq_mode, scanid
@@ -345,7 +345,7 @@ def make_loginfo_v5(loginfo, keylist, ind, version, apriori=None):
     for key in keylist:
         datadict[key] = loginfo[key][ind]
     datadict["URLS"] = dict()
-    datadict["URLS"]["URL-log"] = ("{0}rest_api/{1}/level1/{2}/{3}/Log/" "").format(
+    datadict["URLS"]["URL-log"] = ("{0}rest_api/{1}/level1/{2}/{3}/Log/").format(
         request.url_root, version, freq_mode, scanid
     )
     datadict["URLS"]["URL-spectra"] = ("{0}rest_api/{1}/level1/{2}/{3}/L1b/").format(
@@ -434,9 +434,7 @@ class FreqmodeInfoCachedNoBackend(BaseView):
             ["level1"],
             ["date", "freqmode"],
             {"200": SWAGGER.get_type_response("Log", is_list=True)},
-            summary=(
-                "Get log info for scans in a day and freqmode from " "cached table"
-            ),
+            summary=("Get log info for scans in a day and freqmode from cached table"),
         )
 
     @register_versions("fetch")
@@ -620,9 +618,7 @@ class L1LogCachedList(FreqmodeInfoCachedNoBackend):
             ["level1"],
             ["freqmode", "start_time", "end_time", "apriori"],
             {"200": SWAGGER.get_type_response("Log", is_list=True)},
-            summary=(
-                "Get log info for scans in period and freqmode from " "cached table"
-            ),
+            summary=("Get log info for scans in period and freqmode from cached table"),
             description=(
                 "Get log info for scans in period and freqmode from "
                 "cached table. Apriori URLs are by default only "

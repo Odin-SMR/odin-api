@@ -21,11 +21,11 @@ vds_views.add_url_rule(
     view_func=VdsScanInfo.as_view("vdsScaninfo"),
 )
 vds_views.add_url_rule(
-    "/rest_api/<version>/vds/<backend>/<freqmode>/<species>" "/<instrument>/",
+    "/rest_api/<version>/vds/<backend>/<freqmode>/<species>/<instrument>/",
     view_func=VdsInstrumentInfo.as_view("vdsinstrumentinfo"),
 )
 vds_views.add_url_rule(
-    "/rest_api/<version>/vds/<backend>/<freqmode>/<species>" "/<instrument>/<date>/",
+    "/rest_api/<version>/vds/<backend>/<freqmode>/<species>/<instrument>/<date>/",
     view_func=VdsDateInfo.as_view("vdsdateinfo"),
 )
 vds_views.add_url_rule(

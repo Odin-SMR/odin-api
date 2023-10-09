@@ -49,23 +49,23 @@ production.add_url_rule(
     view_func=Level2ViewFailedScans.as_view("level2viewfailed"),
 )
 production.add_url_rule(
-    ("/rest_api/<version>/level2/<project>" "/<int:freqmode>/<int:scanno>/"),
+    ("/rest_api/<version>/level2/<project>/<int:freqmode>/<int:scanno>/"),
     view_func=Level2ViewScan.as_view("level2viewscan"),
 )
 production.add_url_rule(
-    ("/rest_api/<version>/level2/<project>" "/<int:freqmode>/<int:scanno>/L2i/"),
+    ("/rest_api/<version>/level2/<project>/<int:freqmode>/<int:scanno>/L2i/"),
     view_func=L2iView.as_view("level2L2i"),
 )
 production.add_url_rule(
-    ("/rest_api/<version>/level2/<project>" "/<int:freqmode>/<int:scanno>/L2c/"),
+    ("/rest_api/<version>/level2/<project>/<int:freqmode>/<int:scanno>/L2c/"),
     view_func=L2cView.as_view("level2L2c"),
 )
 production.add_url_rule(
-    ("/rest_api/<version>/level2/<project>" "/<int:freqmode>/<int:scanno>/L2anc/"),
+    ("/rest_api/<version>/level2/<project>/<int:freqmode>/<int:scanno>/L2anc/"),
     view_func=L2ancView.as_view("level2L2anc"),
 )
 production.add_url_rule(
-    ("/rest_api/<version>/level2/<project>" "/<int:freqmode>/<int:scanno>/L2/"),
+    ("/rest_api/<version>/level2/<project>/<int:freqmode>/<int:scanno>/L2/"),
     view_func=L2View.as_view("level2L2"),
 )
 production.add_url_rule(
@@ -73,7 +73,7 @@ production.add_url_rule(
     view_func=Level2ViewProducts.as_view("level2viewproducts"),
 )
 production.add_url_rule(
-    ("/rest_api/<version>/level2/<project>" "/<int:freqmode>/products/"),
+    ("/rest_api/<version>/level2/<project>/<int:freqmode>/products/"),
     view_func=Level2ViewProductsFreqmode.as_view("level2viewfmproducts"),
 )
 production.add_url_rule(

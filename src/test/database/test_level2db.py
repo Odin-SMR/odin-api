@@ -92,7 +92,6 @@ def level2db_with_example_data(db_context):
 
 
 class TestGetComments:
-
     def test_get_all_comments(self, level2db):
         expected = ["Bar", "Baz", "Error", "Fi", "Foo"]
         assert list(level2db.get_comments(FREQMODE)) == expected

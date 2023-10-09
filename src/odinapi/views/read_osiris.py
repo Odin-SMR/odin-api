@@ -5,7 +5,7 @@ from os.path import join
 import numpy as np
 import s3fs  # type: ignore
 from dateutil.relativedelta import relativedelta
-from h5py import File
+from h5py import File  # type: ignore
 
 from odinapi.odin_aws.s3 import s3_stat  # type:ignore
 

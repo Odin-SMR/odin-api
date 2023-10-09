@@ -1,8 +1,6 @@
-import os
-
 import pytest
 import requests
-import simplejson
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -163,7 +161,7 @@ def import_level2data(host, offset=0):
     requests.delete(url)
     requests.post(
         url,
-        data=simplejson.dumps(data, allow_nan=True),
+        data=json.dumps(data, allow_nan=True),
         headers={"Content-Type": "application/json"},
     )
 

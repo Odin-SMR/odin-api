@@ -31,7 +31,7 @@ def docker_mongo():
     container.stop()
     container.remove()
 
-@pytest.mark.slow
+
 @pytest.fixture(scope="session")
 def docker_postgresql():
     client = from_env()
@@ -105,7 +105,7 @@ def test_client(db_app: Flask):
 
 @pytest.fixture
 def app_context():
-    config = LocalConfig()
+    config = TestConfig()
     app = create_app(config)
     with app.app_context():
         yield

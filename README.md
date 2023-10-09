@@ -21,3 +21,17 @@ There are some markers defined in the test suite, to run test not marked as
 slow or marked as system test
 
     pytest -m "not slow and not system"
+
+## Tests in github actions
+
+Github runs all test on a commit with tox.
+
+    tox
+
+## Running the webapi on your local system
+
+Bring up a the system browse the Odin/SMR site and try out the api. This test system 
+includes some level1 data (no level2 data).
+
+    docker compose up -d
+    ./start --local

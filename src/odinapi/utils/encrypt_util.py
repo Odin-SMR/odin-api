@@ -1,5 +1,5 @@
 import os
-import json
+from flask import json
 import base64
 from Crypto.Cipher import AES
 from io import BytesIO

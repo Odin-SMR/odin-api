@@ -2,12 +2,13 @@
 from datetime import datetime, timedelta
 import http.client
 import logging
+import typing as t
 import urllib.request
 import urllib.parse
 import urllib.error
 
 import dateutil.tz
-from flask import request, abort, jsonify, redirect, url_for
+from flask import request, abort, jsonify, redirect, url_for, json
 from flask.views import MethodView
 from flask_httpauth import HTTPBasicAuth  # type: ignore
 from pymongo.errors import DuplicateKeyError
@@ -30,12 +31,6 @@ from odinapi.views.utils import make_rfc5988_pagination_header
 from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.utils.swagger import SWAGGER
 import odinapi.utils.get_args as get_args
-
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-)
 
 
 DEFAULT_LIMIT = 1000
@@ -140,8 +135,9 @@ class Level2ProjectBaseView(BaseView):
     accessible from endpoints that have '/development/' in the path.
     """
 
-    def __init__(self, development=False):
+    def __init__(self, development=False, **kwargs):
         self.development = development
+        super().__init__(**kwargs)
 
     def get(self, version, project, *args, **kwargs):
         is_dev = is_development_request(version)
@@ -152,7 +148,7 @@ class Level2ProjectBaseView(BaseView):
                 abort(404)
             if project_obj["development"] != is_dev:
                 abort(404)
-        return super(Level2ProjectBaseView, self).get(version, project, *args, **kwargs)
+        return super().get(version, project, *args, **kwargs)
 
 
 def get_base_url(version):
@@ -182,7 +178,7 @@ class Level2Write(MethodView):
             abort(400)
         if any(k not in data for k in ("L2", "L2I", "L2C")):
             self.logger.warning(
-                "Level2Write.post: at least one of L2, L2I, " "or, L2C is missing"
+                "Level2Write.post: at least one of L2, L2I, or, L2C is missing"
             )
             abort(400)
         L2c = data.pop("L2C") or ""
@@ -427,9 +423,12 @@ class Level2ProjectAnnotations(BaseView):
         return obj
 
     @auth.login_required
-    def post(self, project):
-        text = request.json.get("Text")
-        freqmode = request.json.get("FreqMode")
+    def post(self, project: str):
+        text: str | None = None
+        freqmode: str | None = None
+        if request.json:
+            text = request.json.get("Text", None)
+            freqmode = request.json.get("FreqMode", None)
         if text is None or not isinstance(text, str):
             abort(http.client.BAD_REQUEST)
         if freqmode is not None and not isinstance(freqmode, int):
@@ -1056,7 +1055,7 @@ class Level2ViewProductsFreqmode(Level2ProjectBaseView):
             ["level2"],
             ["project", "freqmode"],
             {"200": SWAGGER.get_type_response("level2_product_name", is_list=True)},
-            summary=("Get available products" " for a given project and freqmode"),
+            summary=("Get available products for a given project and freqmode"),
         )
 
     @register_versions("fetch", ["v4"])
@@ -1389,7 +1388,7 @@ def parse_parameters(**kwargs):
 
     if circles and any(area):
         raise ValueError(
-            ("Not supported to filter both by locations and area at the " "same time")
+            ("Not supported to filter both by locations and area at the same time")
         )
     if any(area):
         area = level2db.GeographicArea(*area)

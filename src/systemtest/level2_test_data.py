@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from flask import current_app
 import pytest
-import simplejson
+import json
 
 from odinapi.utils import encrypt_util
 
@@ -21,7 +21,7 @@ WRITE_URL = "http://localhost/rest_api/{version}/level2?d={d}"
 
 def get_test_data(file_name="odin_result.json"):
     with open(os.path.join(TEST_DATA_DIR, file_name)) as inp:
-        return simplejson.load(inp, allow_nan=True)
+        return json.load(inp)
 
 
 def get_write_url(data, project_name):
@@ -47,8 +47,7 @@ def insert_test_data(project_name, file_name="odin_result.json"):
     )
     r = client.post(
         urlinfo.url,
-        data=simplejson.dumps(data, allow_nan=True),
-        headers={"Content-Type": "application/json"},
+        json=data,
     )
     assert r.status_code == http.client.CREATED, f"insert test-data failed: {__name__}"
     return r, urlinfo
@@ -60,7 +59,7 @@ def insert_inf_test_data(
 ):
     with open(os.path.join(TEST_DATA_DIR, file_name)) as inp:
         text = re.sub(r'"MinLmFactor": 1,', '"MinLmFactor": NaN,', inp.read())
-    data = simplejson.loads(text, allow_nan=True)
+    data = json.loads(text)
     urlinfo = get_write_url(
         data,
         project_name,
@@ -68,8 +67,7 @@ def insert_inf_test_data(
     requests = current_app.test_client()
     r = requests.post(
         urlinfo.url,
-        data=simplejson.dumps(data, allow_nan=True),
-        headers={"Content-Type": "application/json"},
+        json=data,
     )
     assert (
         r.status_code == http.client.CREATED
@@ -91,8 +89,7 @@ def insert_lot_of_test_data(project_name, file_name="odin_result.json"):
         )
         r = requests.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert (
             r.status_code == http.client.CREATED
@@ -114,8 +111,7 @@ def insert_failed_scan(
     requests = current_app.test_client()
     r = requests.post(
         wurl_failed,
-        data=simplejson.dumps(data_failed, allow_nan=True),
-        headers={"Content-Type": "application/json"},
+        json=data_failed,
     )
     assert (
         r.status_code == http.client.CREATED
@@ -137,8 +133,7 @@ def delete_test_data(project_name, file_name="odin_result.json"):
     )
     r = requests.delete(
         urlinfo.url,
-        data=simplejson.dumps(data, allow_nan=True),
-        headers={"Content-Type": "application/json"},
+        json=data,
     )
     assert (
         r.status_code == http.client.NO_CONTENT

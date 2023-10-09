@@ -4,4 +4,3 @@ pytest_docker_tools
 pytest-freezegun
 pytest-xprocess
 selenium
-tox

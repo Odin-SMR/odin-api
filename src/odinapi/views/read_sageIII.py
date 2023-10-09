@@ -308,8 +308,8 @@ class Sage3Lunar(Sage3Data):
         return []
 
     def _getOzoneProfiles(self):
-        key = "Section 6.2 - Ozone profiles /" "Ozone profiles"
-        key_opt = "Section 6.2 - Ozone profiles/" "Ozone profiles"
+        key = "Section 6.2 - Ozone profiles /Ozone profiles"
+        key_opt = "Section 6.2 - Ozone profiles/Ozone profiles"
         if key in self._hfile.keys():
             data = self._hfile[key]
         else:
@@ -319,21 +319,21 @@ class Sage3Lunar(Sage3Data):
         return []
 
     def _getNitrogenDioxideProfiles(self):
-        key = "Section 6.3 - Nitrogen Dioxide profiles/" "Nitrogen Dioxide profiles"
+        key = "Section 6.3 - Nitrogen Dioxide profiles/Nitrogen Dioxide profiles"
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
             return list(data)
         return []
 
     def _getNitrogenTrioxideProfiles(self):
-        key = "Section 6.4 - Nitrogen Trioxide profiles/" "Nitrogen Dioxide profiles"
+        key = "Section 6.4 - Nitrogen Trioxide profiles/Nitrogen Dioxide profiles"
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
             return list(data)
         return []
 
     def _getChlorineDioxideProfiles(self):
-        key = "Section 6.5 - OClO profiles/" "OClO profiles"
+        key = "Section 6.5 - OClO profiles/OClO profiles"
         data = self._hfile[key]
         if type(data) == h5py.Dataset:
             return list(data)
