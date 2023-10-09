@@ -98,7 +98,6 @@ class TestLevel1Views:
         assert r.json
         assert r.json["Type"] == "L1b"
         # First two subbands should be discarded in production mode:
-        print(r.json["Data"]["Frequency"]["SubBandIndex"][0])
         assert r.json["Data"]["Frequency"]["SubBandIndex"][0][0] == -1
         assert r.json["Data"]["Frequency"]["SubBandIndex"][0][1] == -1
 
@@ -113,7 +112,6 @@ class TestLevel1Views:
         assert r.json
         assert r.json["Type"] == "L1b"
         # Only the first suband should be discarded in debug mode:
-        print(r.json["Data"]["Frequency"]["SubBandIndex"])
         assert r.json["Data"]["Frequency"]["SubBandIndex"][0][0] == -1
         assert r.json["Data"]["Frequency"]["SubBandIndex"][0][1] == 1
 
