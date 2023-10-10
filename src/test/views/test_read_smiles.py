@@ -16,13 +16,12 @@ def smiles_basepath_pattern():
     return p / "data" / "vds-data" / "ISS_SMILES_Level2" / "{0}" / "v2.4"
 
 
-def test_read_smiles_file_geolocation_fields(smiles_basepath_pattern):
+def test_read_smiles_file_geolocation_fields(smiles_basepath_pattern, app_context):
     data = read_smiles_file(
         "SMILES_L2_O3_B_008-11-0502_20091112.he5",
         "2009-11-13",
         "O3",
         3,
-        smiles_basepath_pattern=str(smiles_basepath_pattern),
     )
     geoloc = data["geolocation_fields"]
     assert geoloc == {

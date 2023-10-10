@@ -1,11 +1,18 @@
-import os
-
-import numpy as np
-import scipy.io as sio
+import tempfile
 from typing import Tuple
 
+import numpy as np
+import numpy.typing as npt
+from scipy.io import loadmat  # type: ignore
+
+from ..odin_aws.s3 import s3_fileobject
 
 DAYS_PER_YEAR = 365  # neglect leap year
+BUCKET = "odin-apriori"
+
+
+class AprioriException(RuntimeError):
+    pass
 
 
 def get_datadict(data, source):
@@ -31,17 +38,19 @@ def get_datadict(data, source):
     }
 
 
-def get_interpolation_weights(xs: np.array, x: float) -> Tuple[int, int, float, float]:
+def get_interpolation_weights(
+    xs: npt.NDArray, x: float
+) -> Tuple[int, int, float, float]:
     assert x > xs[0] and x <= xs[-1]
     ind2 = np.argmax(x <= xs)
     ind1 = ind2 - 1
     dx = xs[ind2] - xs[ind1]
     w1 = (xs[ind2] - x) / dx
-    return ind1, ind2, w1, 1.0 - w1
+    return int(ind1), int(ind2), w1, 1.0 - w1
 
 
 def get_interpolation_weights_for_lat(
-    lats: np.array, lat: float
+    lats: npt.NDArray, lat: float
 ) -> Tuple[int, int, float, float]:
     if lat <= lats[0]:
         return 0, lats.size - 1, 1.0, 0.0
@@ -51,7 +60,7 @@ def get_interpolation_weights_for_lat(
 
 
 def get_interpolation_weights_for_doy(
-    xs: np.array, x: float
+    xs: npt.NDArray, x: float
 ) -> Tuple[int, int, float, float]:
     if x <= xs[0] or x >= xs[-1]:
         dx = DAYS_PER_YEAR + xs[0] - xs[-1]
@@ -79,29 +88,36 @@ def get_apriori(
     day_of_year,
     latitude,
     source=None,
-    datadir="/var/lib/odindata/apriori/",
+    datadir="",
 ):
     filename = (
         "apriori_{}_{}.mat".format(species, source)
         if source
         else "apriori_{}.mat".format(species)
     )
-    path = os.path.join(datadir, filename)
-    data = sio.loadmat(path)
+    uri = f"s3://{BUCKET}/{filename}"
 
-    datadict = get_datadict(data, "Bdx" if source is None else source.upper())
+    with tempfile.NamedTemporaryFile(suffix=".mat") as tmp:
+        buffer = s3_fileobject(uri)
+        if buffer:
+            tmp.write(buffer.read())
+        else:
+            raise AprioriException(f"No such file: {uri}")
+        data = loadmat(tmp.name)
 
-    doy = float(day_of_year)
-    vmr = get_vmr_interpolated_for_doy(datadict["vmr"], datadict["doy"], doy)
+        datadict = get_datadict(data, "Bdx" if source is None else source.upper())
 
-    vmr = get_vmr_interpolated_for_lat(vmr, datadict["latitude"], latitude)
+        doy = float(day_of_year)
+        vmr = get_vmr_interpolated_for_doy(datadict["vmr"], datadict["doy"], doy)
 
-    return {
-        "altitude": datadict["altitude"].ravel(),
-        "pressure": datadict["pressure"].ravel(),
-        "species": species,
-        "vmr": vmr,
-        # Below only used in testing
-        "latitude": latitude,
-        "path": path,
-    }
+        vmr = get_vmr_interpolated_for_lat(vmr, datadict["latitude"], latitude)
+
+        return {
+            "altitude": datadict["altitude"].ravel(),
+            "pressure": datadict["pressure"].ravel(),
+            "species": species,
+            "vmr": vmr,
+            # Below only used in testing
+            "latitude": latitude,
+            "path": f"s3://{BUCKET}/{filename}",
+        }

@@ -10,17 +10,8 @@ FROM python:3.11-buster
 COPY requirements_python.apt /app/
 WORKDIR /app
 RUN set -x && \
-    apt-get update && xargs apt-get install -y < requirements_python.apt
-
-COPY dependencies/ /dependencies/
-
-# swagger
-RUN cd /dependencies && tar -xzf swagger-ui-2.2.8.tar.gz && \
-    mkdir -p /swagger-ui && \
-    cp -r swagger-ui-2.2.8/dist/* /swagger-ui/ && \
-    sed -i 's#<title>Swagger UI</title>#<title>Odin rest API</title>#g' /swagger-ui/index.html && \
-    sed -i 's#http://petstore.swagger.io/v2/swagger.json#/rest_api/v5/spec#g' /swagger-ui/index.html && \
-    rm -rf swagger-ui*
+    apt-get update && xargs apt-get install -y < requirements_python.apt && \
+    apt-get -y upgrade
 
 COPY requirements.txt /app/
 RUN pip install -r requirements.txt

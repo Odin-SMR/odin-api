@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import pytest
-import scipy.io as sio
+import scipy.io as sio  # type: ignore
 
 from odinapi.views import read_apriori
 
@@ -47,7 +47,7 @@ def test_returns_altitude_for_mipas(co_mipas):
         (79, (4, 5, 0.05, 0.95)),
     ),
 )
-def test_get_interpolation_weights(x, expect):
+def test_get_interpolation_weights(x, expect, app_context):
     xs = np.array([-80, -60, -40, 40, 60, 80])
     id1, id2, w1, w2 = read_apriori.get_interpolation_weights(xs, x)
     np.testing.assert_allclose((id1, id2, w1, w2), expect, atol=1e-6)
@@ -65,7 +65,7 @@ def test_get_interpolation_weights(x, expect):
         (366, (0, 5, 0.5, 0.5)),  # doy 366 gives same result as doy 365
     ),
 )
-def test_get_interpolation_weights_for_doy(doy, expect):
+def test_get_interpolation_weights_for_doy(doy, expect, app_context):
     doys = np.array([5, 10, 15, 350, 355, 360])
     id1, id2, w1, w2 = read_apriori.get_interpolation_weights_for_doy(doys, doy)
     np.testing.assert_allclose((id1, id2, w1, w2), expect, atol=1e-6)
@@ -85,7 +85,7 @@ def test_get_interpolation_weights_for_doy(doy, expect):
         (90, (0, 5, 0.0, 1.0)),  # all weight to id
     ),
 )
-def test_get_interpolation_weights_for_lat(lat, expect):
+def test_get_interpolation_weights_for_lat(lat, expect, app_context):
     lats = np.array([-80, -60, -40, 40, 60, 80])
     id1, id2, w1, w2 = read_apriori.get_interpolation_weights_for_lat(lats, lat)
     np.testing.assert_allclose((id1, id2, w1, w2), expect, atol=1e-6)
@@ -100,7 +100,7 @@ def test_get_interpolation_weights_for_lat(lat, expect):
         (80, 3),
     ),
 )
-def test_get_vmr_interpolated_for_lat(lat, expect):
+def test_get_vmr_interpolated_for_lat(lat, expect, app_context):
     vmrs = np.zeros((1, 3))
     vmrs[0, 0] = 1.0
     vmrs[0, 1] = 2.0
@@ -118,7 +118,7 @@ def test_get_vmr_interpolated_for_lat(lat, expect):
         (30, 1.5),
     ),
 )
-def test_get_vmr_interpolated_for_doy(doy, expect):
+def test_get_vmr_interpolated_for_doy(doy, expect, app_context):
     vmrs = np.zeros((1, 1, 1, 3))
     vmrs[0, 0, 0, 0] = 1.0
     vmrs[0, 0, 0, 1] = 2.0
@@ -128,7 +128,7 @@ def test_get_vmr_interpolated_for_doy(doy, expect):
     assert vmr.item() == expect
 
 
-def test_returns_expected_data_keys():
+def test_returns_expected_data_keys(app_context):
     species = "CO2"
     day_of_year = 14
     latitude = 35
@@ -153,10 +153,10 @@ def test_returns_expected_data_keys():
     (
         ("species", "CO2"),
         ("latitude", 35),
-        ("path", os.path.join(DATADIR, "apriori_CO2.mat")),
+        ("path", "s3://odin-apriori/apriori_CO2.mat"),
     ),
 )
-def test_returns_expected_data(key, expect):
+def test_returns_expected_data(key, expect, app_context):
     species = "CO2"
     day_of_year = 14
     latitude = 35
@@ -164,12 +164,11 @@ def test_returns_expected_data(key, expect):
         species,
         day_of_year,
         latitude,
-        datadir=DATADIR,
     )
     assert data[key] == expect
 
 
-def test_returns_expected_pressure():
+def test_returns_expected_pressure(app_context):
     species = "CO2"
     day_of_year = 14
     latitude = 35
@@ -177,21 +176,20 @@ def test_returns_expected_pressure():
         species,
         day_of_year,
         latitude,
-        datadir=DATADIR,
     )
     np.testing.assert_allclose(
         data["pressure"][:10].tolist(),
         [
             100000.0,
-            93057.204093,
+            97162.795158,
+            94406.087629,
+            91727.593539,
+            89125.093813,
             86596.432336,
-            80584.218776,
-            74989.420933,
-            69783.058486,
-            64938.163158,
-            60429.639024,
-            56234.132519,
-            52329.911468,
+            84139.514165,
+            81752.303794,
+            79432.823472,
+            77179.151559,
         ],
     )
 
@@ -199,23 +197,25 @@ def test_returns_expected_pressure():
 @pytest.mark.parametrize(
     "species,doy,latitude,source,expect",
     (
-        ("CO2", 1.0, -90.0, None, 0.0003626),
-        ("CO2", 1.0, 35.0, None, 0.0003626),
-        ("CO2", 15.0, 35.0, None, 0.0003626),
-        ("CO2", 180.0, 35.0, None, 0.0003626),
-        ("CO2", 350.0, 35.0, None, 0.0003626),
-        ("CO2", 365.0, 35.0, None, 0.0003626),
-        ("CO2", 365.0, 80.0, None, 0.0003626),
-        ("CO2", 365.0, 90.0, None, 0.0003626),
-        ("CO", 1.0, 80.0, "mipas", 0.34654013),
-        ("CO", 10.0, 80.0, "mipas", 0.3749516),
-        ("CO", 30.0, 80.0, "mipas", 0.2280777),
-        ("CO", 335.0, 80.0, "mipas", 0.1782076),
-        ("CO", 355.0, 80.0, "mipas", 0.3118149),
-        ("CO", 365.0, 80.0, "mipas", 0.3433833),
+        ("CO2", 1.0, -90.0, None, 0.000365),
+        ("CO2", 1.0, 35.0, None, 0.000365),
+        ("CO2", 15.0, 35.0, None, 0.000365),
+        ("CO2", 180.0, 35.0, None, 0.000365),
+        ("CO2", 350.0, 35.0, None, 0.000365),
+        ("CO2", 365.0, 35.0, None, 0.000365),
+        ("CO2", 365.0, 80.0, None, 0.000365),
+        ("CO2", 365.0, 90.0, None, 0.000365),
+        ("CO", 1.0, 80.0, "MIPAS", 0.34654013),
+        ("CO", 10.0, 80.0, "MIPAS", 0.3749516),
+        ("CO", 30.0, 80.0, "MIPAS", 0.2280777),
+        ("CO", 335.0, 80.0, "MIPAS", 0.1782076),
+        ("CO", 355.0, 80.0, "MIPAS", 0.3118149),
+        ("CO", 365.0, 80.0, "MIPAS", 0.3433833),
     ),
 )
-def test_get_apriori_co2_vmr_does_not_vary(species, doy, latitude, source, expect):
+def test_get_apriori_co2_vmr_does_not_vary(
+    species, doy, latitude, source, expect, app_context
+):
     # CO2 is constant for a given altitude in the used apriori data.
     # Check that returned data is constant for CO2, but not constant
     # for all species.
@@ -224,12 +224,11 @@ def test_get_apriori_co2_vmr_does_not_vary(species, doy, latitude, source, expec
         doy,
         latitude,
         source=source,
-        datadir=DATADIR,
     )
     assert data["vmr"][20] == pytest.approx(expect, abs=1e-7)
 
 
-def test_returns_expected_vmr():
+def test_returns_expected_vmr(app_context):
     species = "CO2"
     day_of_year = 14
     latitude = 35
@@ -237,16 +236,15 @@ def test_returns_expected_vmr():
         species,
         day_of_year,
         latitude,
-        datadir=DATADIR,
     )
     np.testing.assert_allclose(
         data["vmr"][:20].tolist(),
         [0.000365] * 16 + [0.000364, 0.000364, 0.000363, 0.000363],
-        atol=0.0000005,
+        atol=0.000005,
     )
 
 
-def test_using_alternative_source():
+def test_using_alternative_source(app_context):
     species = "CO"
     day_of_year = 14
     latitude = 35
@@ -254,7 +252,6 @@ def test_using_alternative_source():
         species,
         day_of_year,
         latitude,
-        source="mipas",
-        datadir=DATADIR,
+        source="MIPAS",
     )
-    assert data["path"] == os.path.join(os.path.join(DATADIR, "apriori_CO_mipas.mat"))
+    assert data["path"] == "s3://odin-apriori/apriori_CO_MIPAS.mat"

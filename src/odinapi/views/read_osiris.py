@@ -2,26 +2,34 @@
 from datetime import datetime
 from os.path import join
 
+import numpy as np
+import s3fs  # type: ignore
 from dateutil.relativedelta import relativedelta
 from h5py import File
-import numpy as np
+
+from odinapi.odin_aws.s3 import s3_stat  # type:ignore
 
 
 def read_osiris_file(osiris_file, date, species, file_index):
     """read osiris level2 file"""
     file_index = int(file_index)
-    osiris_file = join(
-        "/osiris-data", "{0}{1}".format(*[date[0:4], date[5:7]]), osiris_file
-    )
+    osiris_file = f"s3://odin-osiris/Level2/Daily/{date[0:4]}{date[5:7]}/{osiris_file}"
     data = dict()
     data_fields = dict()
     geolocation_fields = dict()
-    with File(osiris_file, "r") as fgr:
-        fdata = fgr["HDFEOS"]["SWATHS"][r"OSIRIS\Odin {0}MART".format(species)]
-        for key in fdata["Data Fields"]:
-            data_fields[key] = np.array(fdata["Data Fields"][key])
-        for key in fdata["Geolocation Fields"]:
-            geolocation_fields[key] = np.array(fdata["Geolocation Fields"][key])
+    s3 = s3fs.S3FileSystem()
+    if s3_stat(osiris_file):
+        with s3.open(osiris_file) as f:
+            with File(f) as fgr:
+                fdata = fgr["HDFEOS"]["SWATHS"][  # type: ignore
+                    r"OSIRIS\Odin {0}MART".format(species)
+                ]
+                for key in fdata["Data Fields"]:  # type: ignore
+                    data_fields[key] = np.array(fdata["Data Fields"][key])  # type: ignore
+                for key in fdata["Geolocation Fields"]:  # type: ignore
+                    geolocation_fields[key] = np.array(
+                        fdata["Geolocation Fields"][key]  # type: ignore
+                    )  # type: ignore
     # transform the mls date to MJD and add to dict
     mjd = []
     for time_i in geolocation_fields["Time"]:

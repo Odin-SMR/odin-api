@@ -11,6 +11,6 @@ class TestSwaggerViews:
         assert "paths" in spec
         assert len(spec["paths"]) > 0
 
-    def test_gui(self, odinapi_service):
-        r = requests.get("{}/apidocs/index.html".format(odinapi_service))
+    def test_gui(self, selenium_app):
+        r = requests.get("{}/apidocs/index.html".format(selenium_app))
         r.raise_for_status()
