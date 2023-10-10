@@ -2,7 +2,7 @@
 import pytest
 import requests
 
-from examples import get_l1b_for_period, filter_spectra
+from odinapi.static.examples import get_l1b_for_period, filter_spectra
 
 pytestmark = pytest.mark.system
 
