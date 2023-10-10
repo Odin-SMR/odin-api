@@ -1,10 +1,2 @@
-boto3-stubs[essential]
-matplotlib-stubs
-mypy
 pip-tools
 tox
-types-python-dateutil
-types-PyYAML
-types-requests
-types-selenium
-types-simplejson
