@@ -17,9 +17,6 @@ COPY requirements.txt /app/
 RUN pip install -r requirements.txt
 
 COPY src/odinapi /app/odinapi/
-COPY scripts/compile_nrlmsis.sh .
-RUN ./compile_nrlmsis.sh
-COPY src/examples /app/odinapi/static/examples/
 COPY --from=0 /odin/src/odinapi/static /app/odinapi/static
 
 COPY entrypoint.sh /
