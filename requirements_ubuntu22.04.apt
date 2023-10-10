@@ -3,8 +3,6 @@ python3.11
 python3.11-dev
 libhdf4-dev
 libhdf5-dev
-gfortran
-libpq-dev
 
 #chromedriver and chromium-browser (from npm)
 libgtk-3-bin
