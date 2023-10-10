@@ -3,61 +3,64 @@ import http.client
 import uuid
 
 import dateutil.parser
-from dateutil.tz import tzutc
+from flask.testing import FlaskClient
 import pytest
-import requests
-import simplejson
+import json
 
 from ..level2_test_data import VERSION, get_test_data
 from odinapi.utils import encrypt_util
 
-WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
+pytestmark = pytest.mark.system
+WRITE_URL = "/rest_api/{version}/level2?d={d}"
 
 
-def make_project_url(baseurl, project):
-    return "{}/rest_api/v5/level2/{}".format(baseurl, project)
+def make_project_url(project):
+    return "/rest_api/v5/level2/{}".format(project)
 
 
 @pytest.fixture
-def project(selenium_app):
+def project(test_client: FlaskClient):
     data = get_test_data()
     project = str(uuid.uuid1())
     freq_mode = data["L2I"]["FreqMode"]
     scan_id = data["L2I"]["ScanID"]
     payload = encrypt_util.encode_level2_target_parameter(scan_id, freq_mode, project)
-    wurl = WRITE_URL.format(host=selenium_app, version=VERSION, d=payload)
-    requests.post(
+    wurl = WRITE_URL.format(version=VERSION, d=payload)
+    r = test_client.post(
         wurl,
-        data=simplejson.dumps(data, allow_nan=True),
+        data=json.dumps(data, allow_nan=True),
         headers={"Content-Type": "application/json"},
-    ).raise_for_status()
-    return make_project_url(selenium_app, project)
+    )
+    assert r.status_code == http.client.CREATED
+    return make_project_url(project)
 
 
-def test_get_empty_annotations(project, selenium_app):
-    response = requests.get(project + "/annotations")
+def test_get_empty_annotations(project, test_client: FlaskClient):
+    response = test_client.get(project + "/annotations")
+    assert response.json
     assert response.status_code == http.client.OK
-    assert response.json()["Data"] == []
+    assert response.json["Data"] == []
 
 
-def test_get_annotations_unknown_project(selenium_app):
-    project = make_project_url(selenium_app, "unknown")
-    response = requests.get(project + "/annotations")
+def test_get_annotations_unknown_project(test_client: FlaskClient):
+    project = make_project_url("unknown")
+    response = test_client.get(project + "/annotations")
     assert response.status_code == http.client.NOT_FOUND
 
 
-def test_post(selenium_app, project):
-    response = requests.post(
+def test_post(test_client: FlaskClient, project):
+    response = test_client.post(
         project + "/annotations",
         json={"Text": "This is a freqmode", "FreqMode": 13},
         auth=("bob", encrypt_util.SECRET_KEY),
     )
-    now = datetime.utcnow().replace(tzinfo=tzutc())
+    now = datetime.utcnow()
     assert response.status_code == http.client.CREATED
-    response = requests.get(project + "/annotations")
+    response = test_client.get(project + "/annotations")
     assert response.status_code == http.client.OK
-    assert len(response.json()["Data"]) == 1
-    annotation = response.json()["Data"][0]
+    assert response.json
+    assert len(response.json["Data"]) == 1
+    annotation = response.json["Data"][0]
     assert annotation["Text"] == "This is a freqmode"
     assert annotation["FreqMode"] == 13
     assert dateutil.parser.parse(annotation["CreatedAt"]) - now < abs(
@@ -65,21 +68,24 @@ def test_post(selenium_app, project):
     )
 
 
-def test_post_multiple(selenium_app, project):
-    now = datetime.utcnow().replace(tzinfo=tzutc())
-    requests.post(
+def test_post_multiple(test_client: FlaskClient, project):
+    now = datetime.utcnow()
+    r = test_client.post(
         project + "/annotations",
         json={"Text": "This is a project"},
         auth=("bob", encrypt_util.SECRET_KEY),
-    ).raise_for_status()
-    response = requests.post(
+    )
+    assert r.status_code == http.client.CREATED
+    r = response = test_client.post(
         project + "/annotations",
         json={"Text": "This is a freqmode", "FreqMode": 13},
         auth=("bob", encrypt_util.SECRET_KEY),
-    ).raise_for_status()
-    response = requests.get(project + "/annotations")
+    )
+    assert r.status_code == http.client.CREATED
+    response = test_client.get(project + "/annotations")
     assert response.status_code == http.client.OK
-    annotations = response.json()["Data"]
+    assert response.json
+    annotations = response.json["Data"]
     assert len(annotations) == 2
     assert annotations[0]["Text"] == "This is a project"
     assert annotations[0].get("FreqMode") is None
@@ -93,9 +99,9 @@ def test_post_multiple(selenium_app, project):
     )
 
 
-def test_post_unknown_project(selenium_app):
-    project = make_project_url(selenium_app, "unknown")
-    response = requests.post(
+def test_post_unknown_project(test_client: FlaskClient):
+    project = make_project_url("unknown")
+    response = test_client.post(
         project + "/annotations",
         json={"Text": "This is a project"},
         auth=("bob", encrypt_util.SECRET_KEY),
@@ -103,8 +109,8 @@ def test_post_unknown_project(selenium_app):
     assert response.status_code == http.client.NOT_FOUND
 
 
-def test_post_bad_text(selenium_app, project):
-    response = requests.post(
+def test_post_bad_text(test_client: FlaskClient, project):
+    response = test_client.post(
         project + "/annotations",
         json={"Text": 0000},
         auth=("bob", encrypt_util.SECRET_KEY),
@@ -112,8 +118,8 @@ def test_post_bad_text(selenium_app, project):
     assert response.status_code == http.client.BAD_REQUEST
 
 
-def test_post_no_text(selenium_app, project):
-    response = requests.post(
+def test_post_no_text(test_client: FlaskClient, project):
+    response = test_client.post(
         project + "/annotations",
         json={},
         auth=("bob", encrypt_util.SECRET_KEY),
@@ -121,8 +127,8 @@ def test_post_no_text(selenium_app, project):
     assert response.status_code == http.client.BAD_REQUEST
 
 
-def test_post_bad_freqmode(selenium_app, project):
-    response = requests.post(
+def test_post_bad_freqmode(test_client: FlaskClient, project):
+    response = test_client.post(
         project + "/annotations",
         json={"Text": "xxx", "FreqMode": "abcd"},
         auth=("bob", encrypt_util.SECRET_KEY),
@@ -130,16 +136,16 @@ def test_post_bad_freqmode(selenium_app, project):
     assert response.status_code == http.client.BAD_REQUEST
 
 
-def test_post_no_credentials(selenium_app, project):
-    response = requests.post(
+def test_post_no_credentials(test_client: FlaskClient, project):
+    response = test_client.post(
         project + "/annotations",
         json={"Text": "This is a project"},
     )
     assert response.status_code == http.client.UNAUTHORIZED
 
 
-def test_post_bad_credentials(selenium_app, project):
-    response = requests.post(
+def test_post_bad_credentials(test_client: FlaskClient, project):
+    response = test_client.post(
         project + "/annotations",
         json={"Text": "This is a project"},
         auth=("bob", "password"),

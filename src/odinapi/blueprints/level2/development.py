@@ -38,22 +38,19 @@ development.add_url_rule(
     view_func=Level2ProjectAnnotations.as_view("level2devannotations"),
 )
 development.add_url_rule(
-    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/" "comments/",
+    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/comments/",
     view_func=Level2ViewComments.as_view("level2devviewcomments", development=True),
 )
 development.add_url_rule(
-    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/" "scans/",
+    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/scans/",
     view_func=Level2ViewScans.as_view("level2devviewscans", development=True),
 )
 development.add_url_rule(
-    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/" "failed/",
+    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/failed/",
     view_func=Level2ViewFailedScans.as_view("level2devviewfailed", development=True),
 )
 development.add_url_rule(
-    (
-        "/rest_api/<version>/level2/development/<project>"
-        "/<int:freqmode>/<int:scanno>/"
-    ),
+    ("/rest_api/<version>/level2/development/<project>/<int:freqmode>/<int:scanno>/"),
     view_func=Level2ViewScan.as_view("level2devviewscan", development=True),
 )
 development.add_url_rule(
@@ -61,7 +58,7 @@ development.add_url_rule(
     view_func=Level2ViewProducts.as_view("level2devviewproducts", development=True),
 )
 development.add_url_rule(
-    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/" "products/",
+    "/rest_api/<version>/level2/development/<project>/<int:freqmode>/products/",
     view_func=Level2ViewProductsFreqmode.as_view(
         "level2devviewfmproducts", development=True
     ),

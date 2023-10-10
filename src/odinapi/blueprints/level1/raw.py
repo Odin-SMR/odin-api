@@ -13,10 +13,10 @@ raw.add_url_rule(
     view_func=DateBackendInfo.as_view("backendraw"),
 )
 raw.add_url_rule(
-    "/rest_api/<version>/freqmode_raw/<date>/<backend>/" "<int:freqmode>/",
+    "/rest_api/<version>/freqmode_raw/<date>/<backend>/<int:freqmode>/",
     view_func=FreqmodeInfo.as_view("scansraw"),
 )
 raw.add_url_rule(
-    "/rest_api/<version>/freqmode_raw/<date>/<backend>/" "<int:freqmode>/<int:scanno>/",
+    "/rest_api/<version>/freqmode_raw/<date>/<backend>/<int:freqmode>/<int:scanno>/",
     view_func=FreqmodeInfo.as_view("scanraw"),
 )

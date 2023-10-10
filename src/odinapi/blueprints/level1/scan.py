@@ -13,7 +13,7 @@ scan.add_url_rule(
     view_func=ScanSpec.as_view("scan"),
 )
 scan.add_url_rule(
-    "/rest_api/<version>/ptz/<date>/<backend>/<int:freqmode>/" "<int:scanno>/",
+    "/rest_api/<version>/ptz/<date>/<backend>/<int:freqmode>/<int:scanno>/",
     view_func=ScanPTZ.as_view("ptz"),
 )
 scan.add_url_rule(

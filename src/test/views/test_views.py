@@ -1,7 +1,7 @@
 from http.client import OK
 
 import numpy as np
-from mock import patch
+from unittest.mock import patch
 
 
 class TestAPR:

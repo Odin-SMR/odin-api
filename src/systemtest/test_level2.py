@@ -7,7 +7,6 @@ from flask import current_app
 from flask.testing import FlaskClient
 import numpy as np
 import pytest
-import simplejson
 import link_header  # type: ignore
 from odinapi.utils import encrypt_util
 from .level2_test_data import (
@@ -21,6 +20,7 @@ from .level2_test_data import (
     insert_inf_test_data,
 )
 
+pytestmark = pytest.mark.system
 PROJECT_NAME = "testproject"
 
 
@@ -171,8 +171,7 @@ class TestWriteLevel2:
         data["L2"][2]["MJD"] = mjd
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.CREATED
 
@@ -215,8 +214,7 @@ class TestWriteLevel2:
         data["L2"] = data["L2"][0]
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.CREATED
 
@@ -248,8 +246,7 @@ class TestWriteLevel2:
         data.pop("L2")
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.BAD_REQUEST
 
@@ -259,8 +256,7 @@ class TestWriteLevel2:
         data["L2I"].pop("ScanID")
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.BAD_REQUEST
 
@@ -270,8 +266,7 @@ class TestWriteLevel2:
         data["L2"][0].pop("ScanID")
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.BAD_REQUEST
 
@@ -281,8 +276,7 @@ class TestWriteLevel2:
         data["L2I"]["FreqMode"] = 2
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.BAD_REQUEST
 
@@ -292,8 +286,7 @@ class TestWriteLevel2:
         data["L2I"]["ScanID"] = 2
         r = test_client.post(
             urlinfo.url,
-            data=simplejson.dumps(data, allow_nan=True),
-            headers={"Content-Type": "application/json"},
+            json=data,
         )
         assert r.status_code == http.client.BAD_REQUEST
 
@@ -549,8 +542,7 @@ class TestReadLevel2:
             info = get_write_url(data, PROJECT_NAME)
             r = test_client.post(
                 info.url,
-                data=simplejson.dumps(data, allow_nan=True),
-                headers={"Content-Type": "application/json"},
+                json=data,
             )
             assert r.status_code == http.client.CREATED, f"inserting failed: {__name__}"
             return info
@@ -562,8 +554,7 @@ class TestReadLevel2:
         def delete_extra(info):
             r = test_client.delete(
                 info.url,
-                data=simplejson.dumps(info.data(), allow_nan=True),
-                headers={"Content-Type": "application/json"},
+                json=info.data(),
             )
             assert (
                 r.status_code == http.client.NO_CONTENT
@@ -1820,9 +1811,9 @@ class TestReadLevel2:
         test_client,
         fake_data_with_inf,
     ):
-        (scanid,) = (fake_data_with_inf.scan_id,)
+        scanid = fake_data_with_inf.scan_id
         freqmode = fake_data_with_inf.freq_mode
-        url = f"/rest_api/v5/level2/development/{PROJECT_NAME}/{freqmode}/{scanid}/"  # noqa
+        url = f"/rest_api/v5/level2/development/{PROJECT_NAME}/{freqmode}/{scanid}/"
         r = test_client.get(
             url,
         )

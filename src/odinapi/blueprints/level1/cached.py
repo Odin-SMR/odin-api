@@ -10,7 +10,7 @@ from odinapi.views.views_cached import (
 
 cached = Blueprint("level1_cached", __name__)
 cached.add_url_rule(
-    "/rest_api/<version>/period_info/<int:year>/<int:month>/" "<int:day>/",
+    "/rest_api/<version>/period_info/<int:year>/<int:month>/<int:day>/",
     view_func=PeriodInfoCached.as_view("periodinfo"),
 )
 cached.add_url_rule(
@@ -22,7 +22,7 @@ cached.add_url_rule(
     view_func=DateBackendInfoCached.as_view("backendinfo"),
 )
 cached.add_url_rule(
-    "/rest_api/<version>/freqmode_info/<date>/<backend>/" "<int:freqmode>/",
+    "/rest_api/<version>/freqmode_info/<date>/<backend>/<int:freqmode>/",
     view_func=FreqmodeInfoCached.as_view("scansinfo"),
 )
 cached.add_url_rule(

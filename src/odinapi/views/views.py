@@ -1,5 +1,4 @@
 from datetime import datetime
-import logging
 from textwrap import dedent
 from typing import TypedDict
 
@@ -39,16 +38,13 @@ from odinapi.utils.swagger import SWAGGER
 from odinapi.views.views_cached import get_scan_log_data
 import odinapi.utils.get_args as get_args
 
-# Make linter happy
-use_agg
+
 SWAGGER.add_parameter("freqmode", "path", int)
 SWAGGER.add_parameter("scanno", "path", int)
 SWAGGER.add_parameter("date", "path", str, string_format="date")
 SWAGGER.add_type(
     "freqmode_info", {"Backend": str, "FreqMode": int, "NumScan": int, "URL": str}
 )
-
-logger = logging.getLogger(__name__)
 
 
 class QueryParams(TypedDict, total=False):
@@ -292,9 +288,9 @@ class FreqmodeInfoNoBackend(BaseView):
             abort(404)
 
         if not self._acquire_lock():
-            logging.debug("could not acquire raw lock")
+            self.logger.debug("could not acquire raw lock")
             abort(429)
-        logging.debug("raw lock acquired")
+        self.logger.debug("raw lock acquired")
 
         try:
             loginfo = {}
@@ -310,7 +306,7 @@ class FreqmodeInfoNoBackend(BaseView):
             raise (err)
         finally:
             self._release_lock()
-            logging.debug("raw lock released")
+            self.logger.debug("raw lock released")
 
         try:
             for index in range(len(loginfo["ScanID"])):
@@ -463,17 +459,16 @@ class ScanSpecNoBackend(ScanSpec):
 
     @register_versions("fetch")
     def _get_v5(self, version, freqmode, scanno):
+        debug = None
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
             abort(404)
-
         try:
             debug = get_args.get_bool("debug")
         except ValueError:
             abort(400)
-
-        return self._get_v4(version, backend, freqmode, scanno, debug)
+        return self._get_v4(version, backend, freqmode, scanno, bool(debug))
 
     @register_versions("return")
     def _to_return_format(self, version, data, *args, **kwargs):
@@ -492,6 +487,8 @@ class ScanPTZ(BaseView):
             abort(404)
         mjd, _, midlat, midlon = get_geoloc_info(loginfo)
         datadict = run_donaletty(mjd, midlat, midlon, scanno)
+        if not datadict:
+            return dict()
         self._convert_items(datadict)
 
         datadictv4 = dict()
@@ -500,7 +497,7 @@ class ScanPTZ(BaseView):
         datadictv4["Altitude"] = datadict["Z"]
         datadictv4["Latitude"] = datadict["latitude"]
         datadictv4["Longitude"] = datadict["longitude"]
-        datadictv4["MJD"] = datadict["datetime"]
+        datadictv4["MJD"] = datadict["mjd"]
         return datadictv4
 
     def _convert_items(self, datadict):
@@ -570,7 +567,6 @@ class ScanAPR(BaseView):
     """Get apriori data for a certain species"""
 
     SUPPORTED_VERSIONS = ["v4"]
-    logger = logging.getLogger("odinapi").getChild(__name__)
 
     @register_versions("fetch", ["v4"])
     def _get_v4(self, version, species, date, backend, freqmode, scanno):

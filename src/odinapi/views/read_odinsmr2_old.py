@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from pyhdf import HDF, VS
+from pyhdf import HDF, VS  # type: ignore
 
 from odinapi.odin_aws.s3 import s3_fileobject
 

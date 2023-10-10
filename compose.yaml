@@ -2,54 +2,19 @@ services:
   postgresql:
     image: odinsmr/odin_db:latest
     ports:
-      - 5432
+      - 127.0.0.1:5432:5432
     healthcheck:
       test: pg_isready -h localhost -U odinop -d odin || exit 1
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 5m
-      start_interval: 10s
-
-  webapi:
-    ports:
-      - 8000
-    environment:
-      - PGHOST=postgresql
-      - PGDBNAME=odin
-      - PGUSER=odinop
-      - PGPASS=odinop
-      - PGSSLMODE=disable
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - ./data/vds-data:/vds-data:ro
-      - ./data/vds-data/SMRhdf/Qsmr-2-1/:/odin-smr-2-1-data:ro
-      - ./data/vds-data/OSIRIS_Level2/:/osiris-data:ro
-      - ./data/apriori:/var/lib/odindata/apriori:ro
-      - ./data/ptz-data/Solardata2.db:/var/lib/odindata/Solardata2.db:ro
-      - ./data/ptz-data/ERA-Interim:/var/lib/odindata/ECMWF:ro
-    entrypoint: []
-    healthcheck:
-      test: curl --fail http://localhost:8000 || exit 1
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 2m
-      start_interval: 10s
-    depends_on:
-      level2db:
-          condition: service_healthy
-      postgresql:
-          condition: service_healthy
+      start_interval: 20s
 
   level2db:
     image: mongo
     ports: 
-      - 27017
+      - 127.0.0.1:27017:27017
     healthcheck:
       test: mongosh --quiet mongodb://localhost --eval "db.stats()"
       interval: 15s
@@ -57,4 +22,4 @@ services:
       retries: 3
       start_period: 5m
       start_interval: 10s
-    command: mongod --quiet --logpath /dev/null
+    command: mongod --quiet

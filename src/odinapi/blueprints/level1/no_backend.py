@@ -29,11 +29,11 @@ no_backend.add_url_rule(
     view_func=ScanPTZNoBackend.as_view("ptznobackend"),
 )
 no_backend.add_url_rule(
-    "/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/" "apriori/<species>/",
+    "/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/apriori/<species>/",
     view_func=ScanAPRNoBackend.as_view("apriorinobackend"),
 )
 no_backend.add_url_rule(
-    ("/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/" "collocations/"),
+    ("/rest_api/<version>/level1/<int:freqmode>/<int:scanno>/collocations/"),
     view_func=CollocationsView.as_view("collocations"),
 )
 no_backend.add_url_rule(
@@ -55,6 +55,6 @@ no_backend.add_url_rule(
     view_func=FreqmodeInfoNoBackend.as_view("scansinforawnobackend"),
 )
 no_backend.add_url_rule(
-    "/rest_api/<version>/freqmode_raw/<date>/" "<int:freqmode>/<int:scanno>/",
+    "/rest_api/<version>/freqmode_raw/<date>/<int:freqmode>/<int:scanno>/",
     view_func=ScanInfoNoBackend.as_view("scaninforawnobackend"),
 )

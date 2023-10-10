@@ -1,6 +1,6 @@
 from textwrap import dedent
 import numpy as np
-import ephem
+import ephem  # type: ignore
 from sqlalchemy import text  # type: ignore
 from odinapi.views.geoloc_tools import sph2cart
 from odinapi.utils.time_util import mjd2datetime

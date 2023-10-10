@@ -1,8 +1,6 @@
-import os
-
 import pytest
 import requests
-import simplejson
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -12,6 +10,7 @@ from odinapi.utils import encrypt_util
 
 from .level2_test_data import VERSION, get_test_data
 
+pytestmark = pytest.mark.system
 PROJECT_NAME = "testproject"
 WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
 
@@ -162,7 +161,7 @@ def import_level2data(host, offset=0):
     requests.delete(url)
     requests.post(
         url,
-        data=simplejson.dumps(data, allow_nan=True),
+        data=json.dumps(data, allow_nan=True),
         headers={"Content-Type": "application/json"},
     )
 

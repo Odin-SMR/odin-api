@@ -1,38 +1,37 @@
 # ODIN API
 
-## Installation
+OdinAPI was rewritten 2023 to run in AWS
+## Cloning the repo
 
-**It is critical that this is done first thing after cloning the repository**
+    git clone git@github.com:Odin-SMR/odin-api.git
 
-The `data/` directory comes from a different repository added as a submodule.
+## Preparing the development environment
 
-To clone the odin-api repository with the submodule, you can use:
-
-    git clone --recursive git@github.com:Odin-SMR/odin-api.git
-
-If you already cloned the odin repository without the submodule, or if you
-want to update the submodule:
-
-    git submodule update --init --recursive
+Install the system requirements in the `./requirement_ubuntu20.04.apt` file.
+Create a virtual enviroment and install the python requirements in the file
+ `./requirements-dev.txt`.
 
 ## Running tests locally
 
-The file `requirements_ubuntu18.04.apt` includes the minimum set of libraries
-you need to run the unittests locally. (docker and docker-compose is also
-needed).
+Run all tests:
 
-To run the unittest only:
+    pytest
 
-    tox -e py38
+There are some markers defined in the test suite, to run test not marked as
+slow or marked as system test
 
-To run lint only
+    pytest -m "not slow and not system"
 
-    tox -e lint
+## Tests in github actions
 
-To just run systemtests
+Github runs all test on a commit with tox.
 
-    tox -e system
+    tox
 
-Or just proxy tests
+## Running the webapi on your local system
 
-    tox -e proxy
+Bring up a the system browse the Odin/SMR site and try out the api. This test system 
+includes some level1 data (no level2 data).
+
+    docker compose up -d
+    ./start --local

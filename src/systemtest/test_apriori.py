@@ -3,6 +3,8 @@ from http.client import OK
 import pytest
 from flask.testing import FlaskClient
 
+pytestmark = pytest.mark.system
+
 
 class TestApriori:
     def test_ozone_apriori_file_exists(self, test_client: FlaskClient):

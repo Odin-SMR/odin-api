@@ -1,16 +1,20 @@
+from http.client import OK
+from flask.testing import FlaskClient
 import pytest
 import requests
 
+pytestmark = pytest.mark.system
+
 
 class TestSwaggerViews:
-    @pytest.mark.slow
-    def test_spec_v5(self, selenium_app):
-        r = requests.get("{}/rest_api/v5/spec".format(selenium_app))
-        r.raise_for_status()
-        spec = r.json()
+    def test_spec_v5(self, test_client: FlaskClient):
+        r = test_client.get("/rest_api/v5/spec")
+        r.status_code = OK
+        assert r.json
+        spec = r.json
         assert "paths" in spec
         assert len(spec["paths"]) > 0
 
-    def test_gui(self, selenium_app):
-        r = requests.get("{}/apidocs/index.html".format(selenium_app))
-        r.raise_for_status()
+    def test_gui(self, test_client: FlaskClient):
+        r = test_client.get("/apidocs/index.html")
+        assert r.status_code == OK

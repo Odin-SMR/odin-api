@@ -81,7 +81,7 @@ class ProjectsDB:
             {"_id": False, "name": True, "development": True},
         )
 
-    def get_projects(self, development=True):
+    def get_projects(self, development: bool | None = True):
         if development is None:
             # Return both development and production projects
             return self.projects_collection.find({}, {"_id": 0})

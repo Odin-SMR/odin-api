@@ -1,6 +1,8 @@
 from http.client import OK
 import pytest
 
+pytestmark = pytest.mark.system
+
 
 def test_vds_file4ace_exists(test_client):
     url = "/rest_api/v4/config_data/data_files/"
