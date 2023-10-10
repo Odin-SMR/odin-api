@@ -11,6 +11,7 @@ from xprocess import ProcessStarter  # type: ignore
 
 from odinapi.api import create_app
 from odinapi.odin_config import LocalConfig, TestConfig
+from odinapi.odin_config import LocalConfig, TestConfig
 
 WAIT_FOR_SERVICE_TIME = 60 * 5
 PAUSE_TIME = 5

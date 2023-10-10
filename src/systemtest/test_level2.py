@@ -1818,7 +1818,7 @@ class TestReadLevel2:
             url,
         )
         assert r.status_code == http.client.OK, r.text
-        assert "NaN" not in r.text  ## TODO: nan is in text
+        assert "NaN" not in r.text
         assert '"MinLmFactor": null' in r.text
 
 

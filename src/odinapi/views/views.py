@@ -3,7 +3,7 @@ from textwrap import dedent
 from typing import TypedDict
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-from flask import request, jsonify, abort
+from flask import current_app, request, jsonify, abort
 from flask.views import MethodView
 from numpy import around
 from threading import Lock
@@ -567,6 +567,7 @@ class ScanAPR(BaseView):
     """Get apriori data for a certain species"""
 
     SUPPORTED_VERSIONS = ["v4"]
+    logger = logging.getLogger("odinapi").getChild(__name__)
 
     @register_versions("fetch", ["v4"])
     def _get_v4(self, version, species, date, backend, freqmode, scanno):
