@@ -567,7 +567,6 @@ class ScanAPR(BaseView):
     """Get apriori data for a certain species"""
 
     SUPPORTED_VERSIONS = ["v4"]
-    logger = logging.getLogger("odinapi").getChild(__name__)
 
     @register_versions("fetch", ["v4"])
     def _get_v4(self, version, species, date, backend, freqmode, scanno):
