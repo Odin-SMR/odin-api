@@ -7,5 +7,5 @@ def test_squeeze_query():
             as sample query;
     """
     log_friendly_query = squeeze_query(query)
-    assert len(log_friendly_query.splitlines()) == 1
-    assert len(log_friendly_query.split(" ")) == 5
+    assert len(log_friendly_query.splitlines()) == 1, "Query should be one line"
+    assert len(log_friendly_query.split(" ")) == 5, "Query is not 5 words long"
