@@ -1,7 +1,7 @@
 # pylint: disable=E0401,C0413,C0302,R0912,R0914
 """extract scan data from odin database and display on webapi"""
 from datetime import datetime
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 from flask import abort
 import numpy as np
 from dateutil.relativedelta import relativedelta
@@ -45,7 +45,7 @@ class ScandataExporter:
         temp = dict(b=self.backend, c=calstw, f=freqmode)
         result = db.session.execute(
             text(
-                dedent(
+                squeeze_query(
                     """\
               select ac_level1b.stw, calstw, ac_level1b.backend, orbit,
               mjd, lst, intmode, mode, spectra, alevel, version, channels,
@@ -72,7 +72,7 @@ class ScandataExporter:
         # extract all calibration spectrum data for the scan
         result2 = db.session.execute(
             text(
-                dedent(
+                squeeze_query(
                     """\
                select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
                mjd, lst, intmode, mode, spectra, alevel, version, channels,
@@ -100,7 +100,7 @@ class ScandataExporter:
         if result2 == []:
             result2 = db.session.execute(
                 text(
-                    dedent(
+                    squeeze_query(
                         """\
                select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
                mjd, lst, intmode, mode, spectra, alevel, version, channels,
@@ -127,7 +127,7 @@ class ScandataExporter:
             if result2 == []:
                 result2 = db.session.execute(
                     text(
-                        dedent(
+                        squeeze_query(
                             """\
                    select ac_cal_level1b.stw, ac_cal_level1b.backend, orbit,
                    mjd, lst, intmode, mode, spectra, alevel, version, channels,
@@ -164,7 +164,7 @@ class ScandataExporter:
         stw2 = result[-1].stw + 256
         refdata = db.session.execute(
             text(
-                dedent(
+                squeeze_query(
                     """
                   select backend, frontend, ac_level0.stw, inttime, cc,
                   sig_type, mech_type, skybeamhit
@@ -448,7 +448,7 @@ class CalibrationStep2:
     def get_medianfit(self, intmode, ssb_fq, hotload):
         """get median fit spectrum"""
         [hotload_range1, hotload_range2, hl_1, hl_2] = self.get_hotload_range(hotload)
-        query_string = dedent(
+        query_string = squeeze_query(
             """\
             select hotload_range, altitude_range, median_fit, channels
             from ac_cal_level1c where freqmode = :f and

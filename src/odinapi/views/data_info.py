@@ -1,5 +1,5 @@
 import os.path
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 
 from flask import abort, jsonify
 from flask.views import MethodView
@@ -17,7 +17,7 @@ class FileInfo(MethodView):
         result_dict = {}
         for file_ending in ["ac1", "ac2", "shk", "fba", "att"]:
             query = text(
-                dedent(
+                squeeze_query(
                     """\
                 select created from level0_files_imported
                 where file ~ :f

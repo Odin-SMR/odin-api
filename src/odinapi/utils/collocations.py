@@ -1,5 +1,5 @@
 """Module for handling collocation data"""
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 from sqlalchemy import text
 from odinapi.utils.defs import FREQMODE_TO_BACKEND
 from odinapi.pg_database import db
@@ -13,7 +13,7 @@ def get_collocations(freqmode, scanid, fields=None):
     backend = FREQMODE_TO_BACKEND[freqmode]
 
     query_string = text(
-        dedent(
+        squeeze_query(
             f"""\
         select {columns}
         from collocations
@@ -31,7 +31,7 @@ def collocations_table_exist():
     """Return True if the collocations table exist"""
     query = db.session.execute.query(
         text(
-            dedent(
+            squeeze_query(
                 """\
         select 1 from information_schema.tables
         where table_name='collocations'"""

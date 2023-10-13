@@ -3,7 +3,7 @@
    from odin scan
 """
 from datetime import datetime
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 from dateutil.relativedelta import relativedelta
 import numpy as np
 import matplotlib
@@ -28,7 +28,7 @@ class ScanInfoExporter:
         """get scanids within a time span"""
         result = db.session.execute(
             text(
-                dedent(
+                squeeze_query(
                     """\
                 select distinct(stw) from
                 ac_cal_level1b

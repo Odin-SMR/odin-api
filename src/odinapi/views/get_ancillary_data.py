@@ -1,4 +1,4 @@
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 import numpy as np
 import ephem  # type: ignore
 from sqlalchemy import text  # type: ignore
@@ -70,7 +70,7 @@ def get_attitude_data(scanno):
     """get attitude data from level1 database"""
     result = db.session.execute(
         text(
-            dedent(
+            squeeze_query(
                 """\
         select stw, latitude, longitude,
         sunzd, orbit

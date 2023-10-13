@@ -1,5 +1,5 @@
 from datetime import datetime
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 from typing import TypedDict
 
 from dateutil.relativedelta import relativedelta  # type: ignore
@@ -114,7 +114,7 @@ class DateBackendInfo(DateInfo):
 
     SUPPORTED_VERSIONS = ["v4"]
     query_str = text(
-        dedent(
+        squeeze_query(
             """\
         select freqmode, backend, count(distinct(stw))
         from ac_cal_level1b
@@ -693,7 +693,7 @@ class VdsInfo(MethodView):
     """verification data set scan info"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """select backend, freqmode, count(distinct(scanid))
         from collocations group by backend,freqmode"""
         )
@@ -729,7 +729,7 @@ class VdsFreqmodeInfo(MethodView):
     """verification data set scan info"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select backend,freqmode,species,instrument,count(*)
         from collocations
@@ -772,7 +772,7 @@ class VdsInstrumentInfo(MethodView):
     """verification data set scan info"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select date, backend, freqmode,species, instrument, count(*)
         from collocations
@@ -829,7 +829,7 @@ class VdsDateInfo(MethodView):
     """verification data set scan info"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """select * from collocations
         where backend=:backend and
         freqmode=:freqmode and
@@ -936,7 +936,7 @@ class VdsScanInfo(MethodView):
     """verification data set scan info"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select distinct(scanid), date, freqmode, backend,
         altend, altstart, latend, latstart, lonend, lonstart,
