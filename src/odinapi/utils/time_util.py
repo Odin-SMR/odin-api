@@ -3,13 +3,11 @@ from datetime import datetime, timedelta
 
 MJD_ODIN_REBOOT = 59247
 MJD_START_DATE = datetime(1858, 11, 17)
+DAYS_PER_SECOND = 1.0 / 60 / 60 / 24
 
 
 def datetime2mjd(dt: datetime) -> float:
-    return (dt - MJD_START_DATE).total_seconds() * datetime2mjd.days_per_second
-
-
-datetime2mjd.days_per_second = 1.0 / 60 / 60 / 24
+    return (dt - MJD_START_DATE).total_seconds() * DAYS_PER_SECOND
 
 
 def datetime2stw(dt: datetime) -> int:
