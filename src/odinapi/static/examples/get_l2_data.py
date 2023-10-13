@@ -44,11 +44,11 @@ def get_location(
     radius: float = 2600,
     min_altitude: float = 20000,
     max_altitude: float = 85000,
-) -> dict:
+) -> list:
     """Function for getting data for a location from the Odin REST API"""
 
     # Set up parameters:
-    parameters = {
+    parameters: dict[str, str | float] = {
         "product": product,
         "location": "{}, {}".format(*location),
         "radius": radius,
@@ -85,11 +85,11 @@ def get_area(
     max_lon: float = 360,
     min_altitude: float = 20000,
     max_altitude: float = 85000,
-) -> dict:
+) -> list:
     """Function for getting data for an area from the Odin REST API"""
 
     # Set up parameters:
-    parameters = {
+    parameters: dict[str, float | str] = {
         "product": product,
         "min_lat": min_lat,
         "max_lat": max_lat,
@@ -127,7 +127,7 @@ def get_date(
     """Function for getting data for a single date from the Odin REST API"""
 
     # Set up parameters:
-    parameters = {
+    parameters: dict[str, str | float] = {
         "product": product,
         "min_altitude": min_altitude,
         "max_altitude": max_altitude,

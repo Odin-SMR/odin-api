@@ -1,6 +1,15 @@
 black
+boto3-stubs[essential]
+matplotlib-stubs
+mypy
 pytest
 pytest_docker_tools
 pytest-freezegun
 pytest-xprocess
 selenium
+types-mock
+types-python-dateutil
+types-PyYAML
+types-requests
+types-selenium
+types-simplejson
