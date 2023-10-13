@@ -1,6 +1,6 @@
 """ doc
 """
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 from flask import jsonify, abort, request
 from flask.views import MethodView
 from datetime import date, datetime, timedelta
@@ -21,7 +21,7 @@ class FreqmodeStatistics(MethodView):
     """Statistics of total number of scans per freqmode"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select freqmode, sum(nscans)
         from measurements_cache

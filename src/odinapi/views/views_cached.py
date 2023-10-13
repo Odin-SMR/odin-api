@@ -2,7 +2,7 @@
 Provide level1 views that extracts data from cache database.
 """
 from datetime import datetime, date, timedelta
-from textwrap import dedent
+from odinapi.pg_database import squeeze_query
 from typing import TypedDict
 
 from flask import abort, request
@@ -27,7 +27,7 @@ def get_scan_logdata_cached(date, freqmode, scanid=None):
 
     if date is not None:
         query_string = text(
-            dedent(
+            squeeze_query(
                 """\
             select *
             from scans_cache
@@ -42,7 +42,7 @@ def get_scan_logdata_cached(date, freqmode, scanid=None):
         )
     elif scanid is not None:
         query_string = text(
-            dedent(
+            squeeze_query(
                 """\
             select *
             from scans_cache
@@ -156,7 +156,7 @@ class DateInfoCached(BaseView):
     """DateInfo using a cached table"""
 
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select freqmode, backend, nscans
         from measurements_cache
@@ -214,7 +214,7 @@ class PeriodInfoCached(BaseView):
     SUPPORTED_VERSIONS = ["v4", "v5"]
 
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select date, freqmode, backend, nscans
         from measurements_cache
@@ -280,7 +280,7 @@ class DateBackendInfoCached(DateInfoCached):
 
     SUPPORTED_VERSIONS = ["v4"]
     query = text(
-        dedent(
+        squeeze_query(
             """\
         select freqmode, backend, nscans
         from measurements_cache
