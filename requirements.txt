@@ -52,7 +52,7 @@ sqlalchemy==2.0.21
 tqdm==4.66.1
 typing-extensions==4.8.0
 urllib3==2.0.6
-werkzeug==3.0.0
+werkzeug==3.0.1
 zope-event==5.0
 zope-interface==6.1
 
