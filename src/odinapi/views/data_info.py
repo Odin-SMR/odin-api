@@ -6,7 +6,6 @@ from flask.views import MethodView
 from sqlalchemy import text
 
 from ..pg_database import db
-from . import newdonalettyERANC
 
 
 class FileInfo(MethodView):
@@ -31,12 +30,3 @@ class FileInfo(MethodView):
             else:
                 result_dict[file_ending] = None
         return jsonify(**result_dict)
-
-
-class LatestECMF(MethodView):
-    """GET the date of the latest available ecmf file"""
-
-    def get(self, version):
-        file_name = newdonalettyERANC.get_latest_ecmf_file()
-        date = newdonalettyERANC.get_ecmf_file_date(file_name)
-        return jsonify(dict(File=os.path.basename(file_name), Date=date))

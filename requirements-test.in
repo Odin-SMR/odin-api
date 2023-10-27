@@ -5,6 +5,7 @@ mypy
 pytest
 pytest_docker_tools
 pytest-freezegun
+pytest-mock
 pytest-xprocess
 selenium
 types-mock

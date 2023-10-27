@@ -24,8 +24,8 @@ from .read_smiles import read_smiles_file
 from .read_sageIII import read_sageIII_file
 from .read_osiris import read_osiris_file
 from .read_odinsmr2_old import read_qsmr_file
+from .read_ptz import get_ptz
 from .read_ace import read_ace_file
-from .newdonalettyERANC import run_donaletty
 from odinapi.utils.defs import SPECIES
 from .get_odinapi_info import get_config_data_files
 
@@ -486,29 +486,10 @@ class ScanPTZ(BaseView):
         if loginfo == {}:
             abort(404)
         mjd, _, midlat, midlon = get_geoloc_info(loginfo)
-        datadict = run_donaletty(mjd, midlat, midlon, scanno)
-        if not datadict:
+        ptz = get_ptz(backend, scanno, mjd, midlat, midlon)
+        if not ptz:
             return dict()
-        self._convert_items(datadict)
-
-        datadictv4 = dict()
-        datadictv4["Pressure"] = around(datadict["P"], decimals=8).tolist()
-        datadictv4["Temperature"] = around(datadict["T"], decimals=3).tolist()
-        datadictv4["Altitude"] = datadict["Z"]
-        datadictv4["Latitude"] = datadict["latitude"]
-        datadictv4["Longitude"] = datadict["longitude"]
-        datadictv4["MJD"] = datadict["mjd"]
-        return datadictv4
-
-    def _convert_items(self, datadict):
-        for key in ["P", "T", "Z"]:
-            if key == "P":
-                # convert from hPa to Pa
-                datadict[key] *= 100
-            if key == "Z":
-                # convert from km to m
-                datadict[key] *= 1000
-            datadict[key] = datadict[key].tolist()
+        return ptz
 
     @register_versions("return")
     def _to_return_format(self, version, datadict, *args, **kwargs):
