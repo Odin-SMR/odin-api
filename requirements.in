@@ -13,6 +13,7 @@ matplotlib
 netcdf4
 numpy
 psycopg[binary]
+pyarrow
 pycryptodome
 pyhdf
 pymongo
