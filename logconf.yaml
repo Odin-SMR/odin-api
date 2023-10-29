@@ -16,6 +16,8 @@ root:
 loggers:
   odinapi:
     level: DEBUG
+  botocore:
+    level: INFO
   flask:
     level: INFO
   flask.app:
@@ -24,15 +26,24 @@ loggers:
     level: INFO
   flask.response:
     level: INFO
+  fsspec:
+    level: INFO
   gunicorn:
     level: INFO
   gunicorn.error:
     level: INFO
   gunicorn.access:
     level: INFO
-  sqlalchemy.engine:
+  s3transfer:
     level: INFO
+  s3fs:
+    level: INFO
+  sqlalchemy.engine:
+    level: WARNING
   sqlalchemy.pool:
-    level: DEBUG
+    level: INFO
   matplotlib:
     level: INFO
+  urllib3:
+    level: INFO
+    

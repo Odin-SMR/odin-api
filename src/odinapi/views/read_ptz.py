@@ -41,7 +41,19 @@ def get_ptz(
                 scanid,
             )
             continue
-        table = dataset.to_table(filter=ds.field("ScanID") == scanid)
+        except Exception as e:
+            logger.error("Error reading dataset in %s: %s", s3_path, e)
+            continue
+        try:
+            table = dataset.to_table(filter=ds.field("ScanID") == scanid)
+        except Exception as e:
+            logger.error(
+                "Error exporting dataset to table with ScanID filter (%i) from %s: %s",
+                scanid,
+                s3_path,
+                e,
+            )
+            continue
         if table.num_rows == 0:
             logger.debug(
                 "No ptz data found for scanid %x(%i) in path %s",
