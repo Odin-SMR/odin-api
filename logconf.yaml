@@ -26,11 +26,17 @@ loggers:
     level: INFO
   flask.response:
     level: INFO
+  fsspec:
+    level: INFO
   gunicorn:
     level: INFO
   gunicorn.error:
     level: INFO
   gunicorn.access:
+    level: INFO
+  s3transfer:
+    level: INFO
+  s3fs:
     level: INFO
   sqlalchemy.engine:
     level: WARNING
