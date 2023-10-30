@@ -11,3 +11,6 @@ stats.add_url_rule(
     "/rest_api/<version>/statistics/freqmode/timeline/",
     view_func=TimelineFreqmodeStatistics.as_view("timefmstatistics"),
 )
+@stats.route("/rest_api/health_check")
+def health_check():
+    return "Odin API OK!"
