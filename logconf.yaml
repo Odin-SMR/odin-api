@@ -46,4 +46,3 @@ loggers:
     level: INFO
   urllib3:
     level: INFO
-    
