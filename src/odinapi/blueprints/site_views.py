@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, redirect
 
 from ..views.smr_site import (
     ViewDataAccess,
@@ -39,3 +39,7 @@ site_views.add_url_rule(
     "/plot/<date>/<int:freqmode>", view_func=ViewFreqmodeInfoPlot.as_view("plotscans")
 )
 site_views.add_url_rule("/dataaccess", view_func=ViewDataAccess.as_view("dataaccess"))
+
+@site_views.route("/level2_download")
+def level2_download():
+    return redirect("http://odin-l2netcdf.s3-website.eu-north-1.amazonaws.com/")
