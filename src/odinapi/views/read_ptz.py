@@ -27,10 +27,11 @@ def prefix_names(stw: int) -> List[str]:
 def get_ptz(
     backend: Backend, scanid: int, mjd: int, lat: float, lon: float
 ) -> PTZ | None:
-    s3 = s3fs.S3FileSystem()
+    s3 = s3fs.S3FileSystem({"metadata_cache_expiry": 0})
     result: PTZ | None = None
     for prefix in prefix_names(scanid):
         s3_path = f"odin-zpt/{backend.lower()}/{prefix}"
+        s3.invalidate_cache(s3_path)
         try:
             dataset = ds.dataset(s3_path, format="parquet", filesystem=s3)
         except FileNotFoundError:
