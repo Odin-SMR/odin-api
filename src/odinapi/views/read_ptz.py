@@ -27,7 +27,7 @@ def prefix_names(stw: int) -> List[str]:
 def get_ptz(
     backend: Backend, scanid: int, mjd: int, lat: float, lon: float
 ) -> PTZ | None:
-    s3 = s3fs.S3FileSystem({"metadata_cache_expiry": 0})
+    s3 = s3fs.S3FileSystem()
     result: PTZ | None = None
     for prefix in prefix_names(scanid):
         s3_path = f"odin-zpt/{backend.lower()}/{prefix}"
