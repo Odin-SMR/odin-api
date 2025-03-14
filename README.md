@@ -28,10 +28,15 @@ Github runs all test on a commit with tox.
 
     tox
 
+Note: to run test locally, docker needs to be started, and AWS-credentials
+needs to be in place as environmental variables.
+
+  eval "$(aws configure export-credentials --profile odin-cdk --format env)"
+
 ## Running the webapi on your local system
 
-Bring up a the system browse the Odin/SMR site and try out the api. This test system 
-includes some level1 data (no level2 data).
+Bring up a the system browse the Odin/SMR site and try out the api. This test
+system includes some level1 data (no level2 data).
 
     docker compose up -d
     ./start --local
