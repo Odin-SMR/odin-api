@@ -12,7 +12,7 @@ h5py
 LinkHeader
 matplotlib
 netcdf4
-numpy
+numpy==1.26.4
 psycopg[binary]
 pyarrow
 pycryptodome
