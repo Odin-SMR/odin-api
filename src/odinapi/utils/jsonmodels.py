@@ -4,6 +4,7 @@ TODO:
     implemented as a JSON schema, see e.g.:
         http://json-schema.org/examples.html
 """
+
 l2i_prototype = {
     "BLineOffset": [list(range(12)) for _ in range(4)],
     "ChannelsID": [list(range(639))],

@@ -1,6 +1,6 @@
 # pylint: disable=E0401,C0413
 """module for extracting scan log data
-   from odin scan
+from odin scan
 """
 from datetime import datetime
 from odinapi.pg_database import squeeze_query

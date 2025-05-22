@@ -1,4 +1,5 @@
 """Tests for example scripts for API interaction"""
+
 import pytest
 import requests
 

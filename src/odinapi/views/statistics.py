@@ -1,5 +1,5 @@
-""" doc
-"""
+"""doc"""
+
 from odinapi.pg_database import squeeze_query
 from flask import jsonify, abort, request
 from flask.views import MethodView

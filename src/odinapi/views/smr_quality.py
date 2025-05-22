@@ -1,4 +1,5 @@
 """quality check of a scan"""
+
 import numpy as np
 
 
