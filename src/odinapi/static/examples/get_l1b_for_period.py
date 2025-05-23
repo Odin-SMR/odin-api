@@ -1,4 +1,5 @@
 """Functions for getting L1b scans and spectra from Odin API v5"""
+
 from datetime import timedelta
 
 from dateutil import parser as dateparser

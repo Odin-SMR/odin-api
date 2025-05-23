@@ -1,5 +1,5 @@
-"""frequency correction tools for odin-api
-"""
+"""frequency correction tools for odin-api"""
+
 import numpy as np
 from scipy.optimize import curve_fit  # type: ignore
 

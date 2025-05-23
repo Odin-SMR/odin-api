@@ -1,5 +1,5 @@
-""" Human readable views for the SMR site
-"""
+"""Human readable views for the SMR site"""
+
 import io
 from os import environ
 from datetime import datetime, timedelta

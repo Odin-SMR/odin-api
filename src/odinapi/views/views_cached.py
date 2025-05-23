@@ -1,6 +1,7 @@
 """
 Provide level1 views that extracts data from cache database.
 """
+
 from datetime import datetime, date, timedelta
 from odinapi.pg_database import squeeze_query
 from typing import TypedDict

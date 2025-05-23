@@ -2,6 +2,7 @@ boto3
 cdsapi
 dateutils
 flask
+flask-cors
 flask-httpauth
 Flask-SQLAlchemy
 ephem

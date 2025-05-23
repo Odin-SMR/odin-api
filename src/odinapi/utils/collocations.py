@@ -1,4 +1,5 @@
 """Module for handling collocation data"""
+
 from odinapi.pg_database import squeeze_query
 from sqlalchemy import text
 from odinapi.utils.defs import FREQMODE_TO_BACKEND

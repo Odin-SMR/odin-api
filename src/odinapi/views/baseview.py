@@ -155,12 +155,16 @@ class BaseView(MethodView):
                     {
                         "Error": "Version {} not supported only {} (restriction {})".format(
                             version,
-                            self.VERSION_TO_FETCHDATA
-                            if version not in self.VERSION_TO_FETCHDATA
-                            else self.VERSION_TO_RETURNDATA,
-                            "fetch data"
-                            if version not in self.VERSION_TO_FETCHDATA
-                            else "return data",
+                            (
+                                self.VERSION_TO_FETCHDATA
+                                if version not in self.VERSION_TO_FETCHDATA
+                                else self.VERSION_TO_RETURNDATA
+                            ),
+                            (
+                                "fetch data"
+                                if version not in self.VERSION_TO_FETCHDATA
+                                else "return data"
+                            ),
                         ),
                     }
                 ),

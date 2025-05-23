@@ -1,4 +1,5 @@
 """functionality to generate frequency per spectrum in scan"""
+
 import numpy as np
 
 

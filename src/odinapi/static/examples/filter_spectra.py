@@ -1,4 +1,5 @@
 """Functions for filtering lists of L1b spectra from Odin API v5"""
+
 import numpy as np
 
 

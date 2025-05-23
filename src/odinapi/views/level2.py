@@ -1,4 +1,5 @@
 """Views for getting Level 2 data"""
+
 from datetime import datetime, timedelta
 import http.client
 import logging
