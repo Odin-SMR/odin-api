@@ -1,3 +1,4 @@
+# type: ignore
 import os
 import numpy as N
 import h5py
