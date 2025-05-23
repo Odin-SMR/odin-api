@@ -1,10 +1,12 @@
+import json
+
 import pytest
 import requests
-import json
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.ui import WebDriverWait
 
 from odinapi.utils import encrypt_util
 
@@ -115,9 +117,15 @@ class TestLevel2Browser:
         driver.find_element(By.NAME, "start_date").send_keys("2015-01-12")
         driver.find_element(By.NAME, "end_date").send_keys("2015-01-13")
         driver.find_element(By.NAME, "offset").send_keys("1")
+
         driver.find_element(By.CLASS_NAME, "search-form-table").submit()
+        WebDriverWait(driver, 10).until(
+            lambda d: len(d.find_elements(By.CSS_SELECTOR, "#search-results td")) > 0
+        )
         search_results = driver.find_element(By.ID, "search-results")
-        assert search_results.find_elements(By.TAG_NAME, "td")[0].text == "7014791071"
+        first_td = search_results.find_elements(By.TAG_NAME, "td")[0]
+        assert first_td.text == "7014791071"
+
         test_ref = "/level2/development/testproject/1/7014791071"
         href = driver.find_element(By.ID, "search-results").find_elements(
             By.XPATH, "//a[@href='{0}']".format(test_ref)
