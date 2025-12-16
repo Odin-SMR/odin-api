@@ -39,9 +39,9 @@ COPY logconf.yaml /app/
 RUN mkdir -p /root/.postgresql
 
 # Add health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/rest_api/health_check', timeout=2)" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/rest_api/health_check', timeout=3)" || exit 1
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8000
-CMD ["gunicorn"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py"]
