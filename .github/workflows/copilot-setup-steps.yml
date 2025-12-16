@@ -30,29 +30,38 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22.x"
-          cache: "npm"
 
       - name: "Set up Python"
         uses: actions/setup-python@v6
         with:
           python-version-file: ".python-version"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: aws credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          role-to-assume: arn:aws:iam::991049544436:role/OdinGithubRole
+          aws-region: eu-north-1
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libnss3 libasound2t64
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - name: install uv dependencies
+        run: uv sync
 
-      - name: aws credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::991049544436:role/OdinGithubRole
-          aws-region: eu-north-1
+      - name: install javscript dependencies
+        run: npm install
+
+      - name: build javscript code
+        run: npm run build
+

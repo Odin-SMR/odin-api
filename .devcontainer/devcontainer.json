@@ -1,5 +1,5 @@
 {
-  "name": "odinapi dev (py3.11 + node16 + uv)",
+  "name": "odinapi dev",
   "dockerComposeFile": "compose.yaml",
   "service": "dev",
   "workspaceFolder": "/workspaces/odin-api",
@@ -22,8 +22,7 @@
         "ms-python.debugpy",
         "redhat.vscode-yaml",
         "ms-python.black-formatter",
-        "ms-python.mypy-type-checker",
-        "charliermarsh.ruff"
+        "ms-python.mypy-type-checker"
       ]
     }
   },
