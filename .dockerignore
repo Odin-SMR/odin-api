@@ -1,7 +1,75 @@
+# Python
 **/*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Logs
 *.log
+
+# Git
 .git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# Testing
 .tox/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Development
+/env/
+/venv/
+/.venv/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data and temporary files
 /data/
-/env
-/node_modules
+/tmp/
+
+# Node modules
+/node_modules/
+
+# Documentation
+*.md
+docs/
+README*
+LICENSE
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Development dependencies
+requirements-dev.txt
+requirements-dev.in
+pyproject.toml
+uv.lock
+tox.ini
+
+# Test files
+tests/
+test_*.py
+*_test.py
+spec/
+
+# Compose and dev configs
+compose.yaml
+docker-compose*.yml
+.devcontainer/
+Makefile
