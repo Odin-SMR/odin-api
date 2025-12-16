@@ -5,6 +5,9 @@ import numpy as np
 from odinapi.views.read_mipas import read_esa_mipas_file
 
 
+pytestmark = pytest.mark.aws
+
+
 @pytest.fixture
 def mipas_basepath():
     p = Path(__file__)

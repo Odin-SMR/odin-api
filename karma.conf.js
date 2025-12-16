@@ -48,7 +48,7 @@ module.exports = (config) => {
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['ChromeHeadless'],
+        browsers: ['ChromeHeadlessNoSandbox'],
 
         browserNoActivityTimeout: 30000,
 
@@ -64,6 +64,19 @@ module.exports = (config) => {
             type: 'cobertura',
             dir: '.',
             file: 'coverage.xml',
+        },
+
+        // Custom launcher for running ChromeHeadless in container without sandbox
+        customLaunchers: {
+            ChromeHeadlessNoSandbox: {
+                base: 'ChromeHeadless',
+                flags: [
+                    '--no-sandbox',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage',
+                    '--headless=new',
+                ],
+            },
         },
     });
 };

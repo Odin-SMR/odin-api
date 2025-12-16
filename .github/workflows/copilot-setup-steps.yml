@@ -1,15 +1,12 @@
-name: Python CI
-
-on:
-  - push
-
+on: workflow_dispatch
 jobs:
-  build:
+  copilot-setup-steps:
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       id-token: write
+
     services:
       postgresql:
         image: odinsmr/odin_db:latest
@@ -30,17 +27,10 @@ jobs:
           --health-interval=15s
           --health-timeout=5s
           --health-retries=3
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-
-      - name: "Set up Python"
-        uses: actions/setup-python@v6
-        with:
-          python-version-file: ".python-version"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
 
       - name: Set up node
         uses: actions/setup-node@v4
@@ -48,19 +38,22 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libasound2
 
-      - name: Javascript tests
-        run: |
-          npm install
-          npm run build
-          npm test
-
-      - name: Run linting
-        run: uv run black --check .
-
-      - name: Run tests
-        run: uv run pytest
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      
+      - name: aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::049185525373:role/Github_access_to_Slipstream 
+          aws-region: eu-north-1
+      

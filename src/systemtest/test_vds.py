@@ -1,7 +1,7 @@
 from http.client import OK
 import pytest
 
-pytestmark = pytest.mark.system
+pytestmark = [pytest.mark.system, pytest.mark.aws]
 
 
 def test_vds_file4ace_exists(test_client):

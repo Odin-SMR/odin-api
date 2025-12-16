@@ -6,6 +6,9 @@ from odinapi.views.read_smiles import read_smiles_file
 from .partiallistmatch import PartialListMatch
 
 
+pytestmark = pytest.mark.aws
+
+
 @pytest.fixture
 def smiles_basepath_pattern():
     p = Path(__file__)

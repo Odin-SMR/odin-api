@@ -10,7 +10,7 @@ class CustomJSONProvider(DefaultJSONProvider):
     def default(self, obj: Any) -> Any:
         if type(obj) == np.int_:
             return int(obj)
-        if type(obj) == np.float_:
+        if type(obj) == np.float32:
             return float(obj)
         if isinstance(obj, dt.datetime) or isinstance(obj, dt.date):
             return obj.isoformat()

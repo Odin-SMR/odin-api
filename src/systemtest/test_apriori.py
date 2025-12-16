@@ -3,7 +3,7 @@ from http.client import OK
 import pytest
 from flask.testing import FlaskClient
 
-pytestmark = pytest.mark.system
+pytestmark = [pytest.mark.system, pytest.mark.aws]
 
 
 class TestApriori:

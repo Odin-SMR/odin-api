@@ -63,5 +63,7 @@ class LiveConfig(Config):
 
 
 class TestConfig(LocalConfig):
+    SQLALCHEMY_DATABASE_URI = "postgresql+psycopg://odinop@postgresql/odin"
+    MONGO_DATABASE_URI = "mongodb://level2db"
     TESTING = True
     DEBUG = True

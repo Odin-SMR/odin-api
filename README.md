@@ -7,36 +7,57 @@ OdinAPI was rewritten 2023 to run in AWS
 
 ## Preparing the development environment
 
-Install the system requirements in the `./requirement_ubuntu20.04.apt` file.
-Create a virtual enviroment and install the python requirements in the file
- `./requirements-dev.txt`.
+### Python environment
+
+Python dependencies are managed with **uv** and declared in `pyproject.toml`.
+
+Create and populate a virtual environment with development dependencies:
+
+```bash
+uv sync
+```
+
+### Node.js environment
+
+```bash
+npm install
+```
+
+```bash
+npm run build
+```
+
+```bash
+npm test
+```
+
 
 ## Running tests locally
 
-Run all tests:
+To run all tests, this requires correct AWS credentials, and running mongodb and postgresql docker containers.
 
-    pytest
+```bash
+uv run pytest
+```
 
-There are some markers defined in the test suite, to run test not marked as
-slow or marked as system test
+There are some markers defined for tests:
+- `aws`: tests that require access to AWS S3
+- `slow`: tests that are slow to run (e.g., integration tests)
+- `system`: tests that require the full system to be running.
 
-    pytest -m "not slow and not system"
+to run only unittests:
 
-## Tests in github actions
+```bash
+uv run pytest -m "not (slow or system or aws)"
+```
 
-Github runs all test on a commit with tox.
+## Linting
 
-    tox
+```bash
+uv run black --check .
+```
 
-Note: to run test locally, docker needs to be started, and AWS-credentials
-needs to be in place as environmental variables.
+## Running the API
 
-  eval "$(aws configure export-credentials --profile odin-cdk --format env)"
+```bash
 
-## Running the webapi on your local system
-
-Bring up a the system browse the Odin/SMR site and try out the api. This test
-system includes some level1 data (no level2 data).
-
-    docker compose up -d
-    ./start --local
