@@ -77,5 +77,9 @@ jobs:
       - name: Run python type checking
         run: uv run mypy .
 
-      - name: Run tests
-        run: uv run pytest
+      - name: Run unit tests
+        run: uv run pytest -m "not system"
+
+      - name: Run system tests
+        run: uv run pytest -m "system"
+        timeout-minutes: 30
