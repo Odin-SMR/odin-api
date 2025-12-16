@@ -46,14 +46,13 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libnss3
+          sudo apt-get install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libnss3 libasound2t64
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-      
+
       - name: aws credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::049185525373:role/Github_access_to_Slipstream 
+          role-to-assume: arn:aws:iam::991049544436:role/OdinGithubRole
           aws-region: eu-north-1
-      

@@ -48,6 +48,13 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
+
+      - name: aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::991049544436:role/OdinGithubRole
+          aws-region: eu-north-1
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
