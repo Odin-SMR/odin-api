@@ -10,8 +10,8 @@ RUN npm run build
 # Main application stage
 FROM python:3.13-slim-bookworm
 
-# Install uv for fast, reliable dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Install uv for fast, reliable dependency management (pinned version for reproducibility)
+COPY --from=ghcr.io/astral-sh/uv:0.5 /uv /uvx /bin/
 
 COPY requirements_python.apt /app/
 WORKDIR /app
@@ -26,7 +26,9 @@ RUN set -x && \
 
 # Install Python dependencies using uv (syncs from pyproject.toml)
 COPY pyproject.toml uv.lock /app/
-RUN uv sync --frozen --no-dev --no-install-project
+RUN set -e && \
+    uv sync --frozen --no-dev --no-install-project && \
+    echo "Dependencies installed successfully"
 
 # Copy application code
 COPY src/odinapi /app/odinapi/
