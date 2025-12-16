@@ -8,7 +8,8 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
     },
-    "ghcr.io/devcontainers/features/aws-cli:1": {}
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "customizations": {
     "vscode": {
@@ -26,7 +27,7 @@
       ]
     }
   },
-  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && sudo apt update && sudo apt install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libasound2",
+  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && sudo apt update && sudo apt install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libnss3 libasound2t64",
   "remoteEnv": {
     "FLASK_DEBUG": "1",
     "FLASK_RUN_HOST": "0.0.0.0",

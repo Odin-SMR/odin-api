@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -51,7 +51,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libasound2
+          sudo apt-get install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libnss3 libasound2t64
 
       - name: Javascript tests
         run: |
