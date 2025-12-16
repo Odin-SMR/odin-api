@@ -77,6 +77,7 @@ jobs:
       - name: Run python type checking
         run: uv run mypy .
 
+      # Split tests into unit and system for faster feedback and better timeout control
       - name: Run unit tests
         run: uv run pytest -m "not system"
 
