@@ -58,8 +58,8 @@ LICENSE
 # Development dependencies
 requirements-dev.txt
 requirements-dev.in
-pyproject.toml
-uv.lock
+requirements.txt
+requirements.in
 tox.ini
 
 # Test files

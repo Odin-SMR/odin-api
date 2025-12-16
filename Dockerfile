@@ -9,6 +9,10 @@ RUN npm run build
 
 # Main application stage
 FROM python:3.13-slim-bookworm
+
+# Install uv for fast, reliable dependency management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 COPY requirements_python.apt /app/
 WORKDIR /app
 
@@ -20,10 +24,9 @@ RUN set -x && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install Python dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies using uv (syncs from pyproject.toml)
+COPY pyproject.toml uv.lock /app/
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application code
 COPY src/odinapi /app/odinapi/
@@ -40,8 +43,8 @@ RUN mkdir -p /root/.postgresql
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/rest_api/health_check', timeout=3)" || exit 1
+    CMD uv run --no-dev python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/rest_api/health_check', timeout=3)" || exit 1
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8000
-CMD ["gunicorn", "--config", "gunicorn.conf.py"]
+CMD ["uv", "run", "--no-dev", "gunicorn", "--config", "gunicorn.conf.py"]
