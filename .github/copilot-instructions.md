@@ -15,3 +15,10 @@ For detailed setup and development instructions, please refer to our [README](..
 - Level1 data is stored in a postgresql database
 - Level2 data is stored in a mongodb database.
 - Apriori data is stored in S3.
+
+## Style Guidelines
+- Run black and mypy on all code before committing.
+- Prefer simple and clear code over clever or complex solutions.
+- Use already exisiting third-party libraries when possible instead of writing custom code.
+- Write unit tests for all new features and bug fixes.
+- Run tests before committing code.
