@@ -17,7 +17,7 @@ RUN set -x && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies using uv (syncs from pyproject.toml)
-COPY pyproject.toml uv.lock /app/
+COPY pyproject.toml uv.lock README.md /app/
 RUN set -e && \
     uv sync --frozen --no-dev --no-install-project && \
     echo "Dependencies installed successfully"
