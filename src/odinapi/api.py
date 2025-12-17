@@ -16,7 +16,7 @@ def create_app(config: Config = ProdConfig()):
     app.config.from_object(config)
     app.json = CustomJSONProvider(app)
     CORS(app)
-    
+
     # Initialize Swagger/OpenAPI documentation
     swagger_config = {
         "headers": [],
@@ -42,7 +42,7 @@ def create_app(config: Config = ProdConfig()):
         "basePath": "/",
     }
     Swagger(app, config=swagger_config, template=swagger_template)
-    
+
     db.init_app(app)
     register_blueprints(app)
     return app
