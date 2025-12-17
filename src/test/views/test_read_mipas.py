@@ -6,6 +6,9 @@ from odinapi.views.read_mipas import read_mipas_file
 from .partiallistmatch import PartialListMatch
 
 
+pytestmark = pytest.mark.aws
+
+
 @pytest.fixture
 def mipas_basepath_pattern():
     p = Path(__file__)

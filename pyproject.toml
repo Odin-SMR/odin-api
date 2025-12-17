@@ -1,0 +1,75 @@
+[project]
+name = "odinapi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "boto3>=1.40.18",
+    "cdsapi>=0.7.6",
+    "dateutils>=0.6.12",
+    "ephem>=4.2",
+    "flask>=3.1.2",
+    "flask-cors>=6.0.1",
+    "flask-httpauth>=4.8.0",
+    "flask-sqlalchemy>=3.1.1",
+    "gevent>=25.9.1",
+    "gunicorn>=23.0.0",
+    "h5py>=3.14.0",
+    "linkheader>=0.4.3",
+    "matplotlib>=3.10.6",
+    "netcdf4>=1.7.2",
+    "numpy>=2.3.3",
+    "psycopg[binary]>=3.2.10",
+    "pyarrow>=21.0.0",
+    "pycryptodome>=3.23.0",
+    "pyhdf>=0.11.6",
+    "pymongo>=4.15.1",
+    "python-dateutil>=2.9.0.post0",
+    "python-dotenv>=1.1.1",
+    "pyyaml>=6.0.2",
+    "requests>=2.32.5",
+    "s3fs>=2025.3.2",
+    "scipy>=1.16.2",
+    "simplejson>=3.20.1",
+    "sqlalchemy>=2.0.43",
+]
+
+[build-system]
+requires = ["uv-build>=0.1.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+markers = [
+  "aws: tests that require AWS resources",
+  "slow: slow tests",
+  "system: system/integration tests",
+]
+
+[tool.mypy]
+strict = false
+warn_unused_ignores = false
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "boto3-stubs[essential]>=1.40.34",
+    "duckdb>=1.4.0",
+    "ipykernel>=6.30.1",
+    "matplotlib-stubs>=0.3.4",
+    "mypy>=1.18.2",
+    "pip-tools>=7.5.0",
+    "pytest>=8.4.2",
+    "pytest-freezegun>=0.4.2",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.14.9",
+    "selenium>=4.35.0",
+    "tox>=4.30.2",
+    "types-flask-cors>=6.0.0.20250809",
+    "types-mock>=5.2.0.20250809",
+    "types-python-dateutil>=2.9.0.20250822",
+    "types-pyyaml>=6.0.12.20250915",
+    "types-requests>=2.32.4.20250913",
+    "types-selenium>=3.141.9",
+    "types-simplejson>=3.20.0.20250822",
+]

@@ -1,8 +1,9 @@
 # type: ignore
 import os
-import numpy as N
-import h5py
 from datetime import datetime
+
+import h5py
+import numpy as N
 from dateutil.relativedelta import relativedelta
 
 
@@ -13,7 +14,7 @@ def read_osiris_file(file, species):
     geolocation_fields = dict()
 
     f = h5py.File(ifile, "r")
-    fdata = f["HDFEOS"]["SWATHS"]["OSIRIS\Odin O3MART"]
+    fdata = f["HDFEOS"]["SWATHS"][r"OSIRIS\Odin O3MART"]
 
     for item in fdata["Data Fields"].keys():
         data_fields[item] = N.array(fdata["Data Fields"][item])
@@ -25,7 +26,7 @@ def read_osiris_file(file, species):
     # transform the mls date to MJD and add to dict
     mjd = []
     mls_date0 = datetime(1993, 1, 1)
-    mjd0 = datetime(1858, 11, 17)
+    # mjd0 = datetime(1858, 11, 17)
     for time_i in geolocation_fields["Time"]:
         date_i = mls_date0 + relativedelta(seconds=time_i)
         mjd_i = date_i - datetime(1858, 11, 17)
@@ -52,7 +53,7 @@ if __name__ == "__main__":
                 datapath = f"{osiris_datapath}/{year}{month:02d}/"
                 try:
                     files = os.listdir(datapath)
-                except:
+                except Exception:
                     continue
                 if len(files) == 0:
                     continue
@@ -64,7 +65,7 @@ if __name__ == "__main__":
                     ifile = datapath + file
                     try:
                         data = read_osiris_file(ifile, species)
-                    except:
+                    except Exception:
                         pass
 
                     for ind, mjd in enumerate(data["geolocation_fields"]["MJD"]):

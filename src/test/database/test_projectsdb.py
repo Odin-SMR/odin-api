@@ -1,10 +1,10 @@
 from datetime import datetime
-
 from unittest.mock import patch
+
 import pytest
 
-from odinapi.database.level2db import ProjectsDB, ProjectError, ProjectAnnotation
-from odinapi.database.mongo import get_collection, get_database
+from odinapi.database.level2db import ProjectAnnotation, ProjectError, ProjectsDB
+from odinapi.database.mongo import get_database
 
 
 def get_empty_collection(col):

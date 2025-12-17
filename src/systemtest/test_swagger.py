@@ -1,7 +1,7 @@
 from http.client import OK
-from flask.testing import FlaskClient
+
 import pytest
-import requests
+from flask.testing import FlaskClient
 
 pytestmark = pytest.mark.system
 

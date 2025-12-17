@@ -1,7 +1,6 @@
-import os.path
 from odinapi.pg_database import squeeze_query
 
-from flask import abort, jsonify
+from flask import jsonify
 from flask.views import MethodView
 from sqlalchemy import text
 

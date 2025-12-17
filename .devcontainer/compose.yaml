@@ -1,0 +1,33 @@
+services:
+  dev:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/odin-api:cached
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      level2db:
+        condition: service_healthy
+  postgresql:
+    image: odinsmr/odin_db:latest
+    ports:
+      - 127.0.0.1:5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h localhost -U odinop -d odin || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5m
+
+  level2db:
+    image: mongo
+    ports:
+      - 127.0.0.1:27017:27017
+    healthcheck:
+      test: [ "CMD-SHELL", "mongosh --quiet mongodb://localhost --eval \"db.stats()\"" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5m
+    command: [ "mongod", "--quiet" ]

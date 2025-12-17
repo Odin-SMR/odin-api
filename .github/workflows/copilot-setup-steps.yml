@@ -1,10 +1,6 @@
-name: Python CI
-
-on:
-  - push
-
+on: workflow_dispatch
 jobs:
-  build:
+  copilot-setup-steps:
     runs-on: ubuntu-24.04
 
     permissions:
@@ -31,6 +27,7 @@ jobs:
           --health-interval=15s
           --health-timeout=5s
           --health-retries=3
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -62,31 +59,9 @@ jobs:
       - name: install uv dependencies
         run: uv sync
 
-      - name: install javscript dependencies
+      - name: install javascript dependencies
         run: npm install
 
-      - name: build javscript code
+      - name: build javascript code
         run: npm run build
 
-      - name: Javascript tests
-        run: npm test
-
-      - name: Run python linting
-        run: uv run black --check .
-
-      - name: Run python type checking
-        run: uv run mypy .
-
-      # Split tests into unit and system for faster feedback and better timeout control
-      - name: Run unit tests
-        env:
-          ODINAPI_TEST_PGHOST: localhost
-          ODINAPI_TEST_MONGO_HOST: localhost
-        run: uv run pytest -m "not system"
-
-      - name: Run system tests
-        env:
-          ODINAPI_TEST_PGHOST: localhost
-          ODINAPI_TEST_MONGO_HOST: localhost
-        run: uv run pytest -m "system"
-        timeout-minutes: 30

@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 import requests
@@ -20,12 +21,19 @@ WRITE_URL = "{host}/rest_api/{version}/level2?d={d}"
 @pytest.fixture(scope="session")
 def chrome():
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.binary_location = (
+    chrome_options.binary_location = os.path.abspath(
         "./node_modules/chromium/lib/chromium/chrome-linux/chrome"
     )
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920,1080")
+    service = ChromeService(
+        os.path.abspath("./node_modules/chromedriver/bin/chromedriver")
+    )
     driver = webdriver.Chrome(
-        service=ChromeService("./node_modules/chromedriver/bin/chromedriver"),
+        service=service,
         options=chrome_options,
     )
     driver.implicitly_wait(4)

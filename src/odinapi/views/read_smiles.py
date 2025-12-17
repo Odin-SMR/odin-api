@@ -2,12 +2,10 @@ from datetime import datetime
 
 import numpy as np
 import s3fs  # type: ignore
-import numpy as np
-import s3fs  # type: ignore
 from dateutil.relativedelta import relativedelta
 from h5py import File  # type: ignore
 
-from odinapi.odin_aws.s3 import s3_stat  # type: ignore
+from odinapi.odin_aws.s3 import s3_stat
 
 
 def read_smiles_file(

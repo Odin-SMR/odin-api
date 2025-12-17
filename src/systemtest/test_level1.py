@@ -124,6 +124,7 @@ class TestLevel1Views:
         )
         assert r.status_code == http.client.BAD_REQUEST
 
+    @pytest.mark.aws
     def test_get_apriori(self, test_client: FlaskClient):
         """Test get apriori data"""
         # V4

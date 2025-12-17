@@ -63,5 +63,12 @@ class LiveConfig(Config):
 
 
 class TestConfig(LocalConfig):
+    # Use environment variables for test database hosts to support both
+    # devcontainer (service names) and CI (localhost) environments
+    pg_test_host = environ.get("ODINAPI_TEST_PGHOST", "postgresql")
+    mongo_test_host = environ.get("ODINAPI_TEST_MONGO_HOST", "level2db")
+
+    SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg://odinop@{pg_test_host}/odin"
+    MONGO_DATABASE_URI = f"mongodb://{mongo_test_host}"
     TESTING = True
     DEBUG = True

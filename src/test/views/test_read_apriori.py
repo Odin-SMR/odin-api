@@ -128,6 +128,7 @@ def test_get_vmr_interpolated_for_doy(doy, expect, app_context):
     assert vmr.item() == expect
 
 
+@pytest.mark.aws
 def test_returns_expected_data_keys(app_context):
     species = "CO2"
     day_of_year = 14
@@ -148,15 +149,8 @@ def test_returns_expected_data_keys(app_context):
     }
 
 
-@pytest.mark.parametrize(
-    "key,expect",
-    (
-        ("species", "CO2"),
-        ("latitude", 35),
-        ("path", "s3://odin-apriori/apriori_CO2.mat"),
-    ),
-)
-def test_returns_expected_data(key, expect, app_context):
+@pytest.mark.aws
+def test_returns_expected_data(app_context):
     species = "CO2"
     day_of_year = 14
     latitude = 35
@@ -165,9 +159,12 @@ def test_returns_expected_data(key, expect, app_context):
         day_of_year,
         latitude,
     )
-    assert data[key] == expect
+    assert data["species"] == "CO2"
+    assert data["latitude"] == 35
+    assert data["path"] == "s3://odin-apriori/apriori_CO2.mat"
 
 
+@pytest.mark.aws
 def test_returns_expected_pressure(app_context):
     species = "CO2"
     day_of_year = 14
@@ -194,6 +191,7 @@ def test_returns_expected_pressure(app_context):
     )
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize(
     "species,doy,latitude,source,expect",
     (
@@ -228,6 +226,7 @@ def test_get_apriori_co2_vmr_does_not_vary(
     assert data["vmr"][20] == pytest.approx(expect, abs=1e-7)
 
 
+@pytest.mark.aws
 def test_returns_expected_vmr(app_context):
     species = "CO2"
     day_of_year = 14
@@ -244,6 +243,7 @@ def test_returns_expected_vmr(app_context):
     )
 
 
+@pytest.mark.aws
 def test_using_alternative_source(app_context):
     species = "CO"
     day_of_year = 14
