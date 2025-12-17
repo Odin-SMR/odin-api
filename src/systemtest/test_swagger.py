@@ -8,12 +8,14 @@ pytestmark = pytest.mark.system
 
 class TestSwaggerViews:
     def test_spec_v5(self, test_client: FlaskClient):
-        """Test that the Swagger spec endpoint returns valid JSON"""
+        """Test that the Swagger spec endpoint returns valid OpenAPI 2.0 JSON"""
         r = test_client.get("/rest_api/v5/spec")
         assert r.status_code == OK
         assert r.json
         spec = r.json
-        assert "swagger" in spec or "openapi" in spec
+        # Flasgger uses OpenAPI 2.0 (Swagger 2.0)
+        assert "swagger" in spec
+        assert spec["swagger"] == "2.0"
         assert "info" in spec
         assert "paths" in spec
 
