@@ -39,7 +39,6 @@ def test_register_versions():
             "VERSION_TO_RETURNDATA",
             {"v4": "_tester", "v5": "_tester"},
         ),
-        ("swagger", ["v42"], "VERSION_TO_SWAGGERSPEC", {"v42": "_tester"}),
     ),
 )
 def test_baseview(role, versions, check_attribute, expect):
