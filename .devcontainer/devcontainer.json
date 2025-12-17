@@ -6,10 +6,14 @@
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {},
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
+      "version": "22"
     },
     "ghcr.io/devcontainers/features/aws-cli:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {},
+    "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
+      "packages": "libgtk-3-bin,libatk-bridge2.0-0,libgbm1,libxss1,libnss3,libasound2t64"
+    }
   },
   "customizations": {
     "vscode": {
@@ -22,11 +26,13 @@
         "ms-python.debugpy",
         "redhat.vscode-yaml",
         "ms-python.black-formatter",
-        "ms-python.mypy-type-checker"
+        "ms-python.mypy-type-checker",
+        "github.vscode-pull-request-github",
+        "charliermarsh.ruff"
       ]
     }
   },
-  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && sudo apt update && sudo apt install -y libgtk-3-bin libatk-bridge2.0-0 libgbm1 libxss1 libnss3 libasound2t64",
+  "postCreateCommand": "uv sync && npm install && npm run build",
   "remoteEnv": {
     "FLASK_DEBUG": "1",
     "FLASK_RUN_HOST": "0.0.0.0",

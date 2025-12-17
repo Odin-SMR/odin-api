@@ -59,9 +59,9 @@ jobs:
       - name: install uv dependencies
         run: uv sync
 
-      - name: install javscript dependencies
+      - name: install javascript dependencies
         run: npm install
 
-      - name: build javscript code
+      - name: build javascript code
         run: npm run build
 

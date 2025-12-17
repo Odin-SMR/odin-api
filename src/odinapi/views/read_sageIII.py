@@ -166,7 +166,7 @@ class Sage3Data:
             "Section 4.3 - Ground Track Data Over This Event"
         )
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
@@ -187,7 +187,7 @@ class Sage3Data:
         data1 = self._hfile[key1]
         data2 = self._hfile[key2]
 
-        if (type(data1) == h5py.Dataset) and (type(data2) == h5py.Dataset):
+        if (isinstance(data1, h5py.Dataset)) and (isinstance(data2, h5py.Dataset)):
             return list(data1), list(data2)
         return []
 
@@ -198,7 +198,7 @@ class Sage3Data:
             "Temperature_pressure profiles"
         )
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
@@ -209,7 +209,7 @@ class Sage3Data:
             "Mesospheric Ozone profiles"
         )
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
@@ -220,7 +220,7 @@ class Sage3Data:
             "Nitrogen Dioxide profiles"
         )
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
@@ -260,7 +260,7 @@ class Sage3Solar(Sage3Data):
             "Water Vapor profiles"
         )
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
@@ -303,7 +303,7 @@ class Sage3Lunar(Sage3Data):
             "Temperature_pressure profiles"
         )
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
@@ -314,27 +314,27 @@ class Sage3Lunar(Sage3Data):
             data = self._hfile[key]
         else:
             data = self._hfile[key_opt]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
     def _getNitrogenDioxideProfiles(self):
         key = "Section 6.3 - Nitrogen Dioxide profiles/Nitrogen Dioxide profiles"
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
     def _getNitrogenTrioxideProfiles(self):
         key = "Section 6.4 - Nitrogen Trioxide profiles/Nitrogen Dioxide profiles"
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []
 
     def _getChlorineDioxideProfiles(self):
         key = "Section 6.5 - OClO profiles/OClO profiles"
         data = self._hfile[key]
-        if type(data) == h5py.Dataset:
+        if isinstance(data, h5py.Dataset):
             return list(data)
         return []

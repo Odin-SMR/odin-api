@@ -1,43 +1,43 @@
 from datetime import datetime
-from odinapi.pg_database import squeeze_query
+from threading import Lock
 from typing import TypedDict
 
 from dateutil.relativedelta import relativedelta  # type: ignore
-from flask import current_app, request, jsonify, abort
+from flask import abort, jsonify, request
 from flask.views import MethodView
 from numpy import around
-from threading import Lock
 from sqlalchemy import text
 
+import odinapi.utils.get_args as get_args
+from odinapi.pg_database import squeeze_query
+
 # Activate Agg, must be done before imports below
-from odinapi.utils import use_agg
+from odinapi.utils import (
+    time_util,
+    use_agg,  # noqa: F401
+)
+from odinapi.utils.collocations import get_collocations
+from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
+from odinapi.utils.swagger import SWAGGER
+from odinapi.utils.time_util import datetime2mjd, mjd2stw
+from odinapi.views.baseview import BaseView, register_versions
+from odinapi.views.urlgen import get_freqmode_raw_url
+from odinapi.views.views_cached import get_scan_log_data
 
 from ..pg_database import db
-from odinapi.utils.time_util import datetime2mjd, mjd2stw
 from .geoloc_tools import get_geoloc_info
+from .get_odinapi_info import get_config_data_files
 from .level1b_scandata_exporter_v2 import get_scan_data_v2, scan2dictlist_v4
 from .level1b_scanlogdata_exporter import get_scan_logdata
-from .read_apriori import AprioriException, get_apriori
-from .read_mls import read_mls_file
-from .read_mipas import read_mipas_file, read_esa_mipas_file
-from .read_smiles import read_smiles_file
-from .read_sageIII import read_sageIII_file
-from .read_osiris import read_osiris_file
-from .read_odinsmr2_old import read_qsmr_file
-from .read_ptz import get_ptz
 from .read_ace import read_ace_file
-from odinapi.utils.defs import SPECIES
-from .get_odinapi_info import get_config_data_files
-
-from odinapi.views.baseview import register_versions, BaseView
-from odinapi.views.urlgen import get_freqmode_raw_url
-from odinapi.utils.defs import FREQMODE_TO_BACKEND
-from odinapi.utils import time_util
-from odinapi.utils.collocations import get_collocations
-from odinapi.utils.swagger import SWAGGER
-from odinapi.views.views_cached import get_scan_log_data
-import odinapi.utils.get_args as get_args
-
+from .read_apriori import AprioriException, get_apriori
+from .read_mipas import read_esa_mipas_file, read_mipas_file
+from .read_mls import read_mls_file
+from .read_odinsmr2_old import read_qsmr_file
+from .read_osiris import read_osiris_file
+from .read_ptz import get_ptz
+from .read_sageIII import read_sageIII_file
+from .read_smiles import read_smiles_file
 
 SWAGGER.add_parameter("freqmode", "path", int)
 SWAGGER.add_parameter("scanno", "path", int)
@@ -126,7 +126,7 @@ class DateBackendInfo(DateInfo):
     )
 
     @register_versions("fetch")
-    def _get(self, version, date, backend):
+    def _get(self, version, date, backend):  # type: ignore
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
@@ -141,7 +141,7 @@ class DateBackendInfo(DateInfo):
         )
 
     @register_versions("return")
-    def _return(self, version, data, date, backend):
+    def _return(self, version, data, date, backend):  # type: ignore
         return dict(Date=date, Info=data)
 
 
@@ -365,11 +365,11 @@ class ScanInfoNoBackend(FreqmodeInfoNoBackend):
         )
 
     @register_versions("fetch")
-    def _fetch_data(self, version, date, freqmode, scanno):
+    def _fetch_data(self, version, date, freqmode, scanno):  # type: ignore
         return super(ScanInfoNoBackend, self)._fetch_data(version, date, freqmode)
 
     @register_versions("return")
-    def _return_data_v5(self, version, data, date, freqmode, scanno):
+    def _return_data_v5(self, version, data, date, freqmode, scanno):  # type: ignore
         for s in data:
             if s["ScanID"] == scanno:
                 return {"Data": s, "Type": "Log", "Count": None}
@@ -563,7 +563,7 @@ class ScanAPR(BaseView):
                 midlat,
                 source=get_args.get_string("aprsource"),
             )
-        except AprioriException as err:
+        except AprioriException:
             self.logger.warning("could not find apriori data")
             abort(404)
         # vmr can be very small, problematic to decreaese number of digits

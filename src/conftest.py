@@ -1,19 +1,12 @@
-import os
-from pathlib import Path
-import socket
 import subprocess
 from time import sleep
-from flask import Flask
 
 import pytest
-from docker import from_env  # type: ignore
-from docker.models.containers import Container  # type: ignore
 import requests
-from xprocess import ProcessStarter  # type: ignore
+from flask import Flask
 
 from odinapi.api import create_app
-from odinapi.odin_config import LocalConfig, SeleniumConfig, TestConfig
-from odinapi.odin_config import LocalConfig, TestConfig
+from odinapi.odin_config import TestConfig
 
 WAIT_FOR_SERVICE_TIME = 60 * 5
 PAUSE_TIME = 5
@@ -27,7 +20,7 @@ def db_app():
 
 
 @pytest.fixture(scope="session")
-def selenium_app(xprocess):
+def selenium_app():
     p = subprocess.Popen(["flask", "--app", "odinapi.api:run", "run"])
     for _ in range(20):
         try:

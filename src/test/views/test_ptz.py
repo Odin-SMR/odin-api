@@ -1,6 +1,7 @@
-import pytest
 import pyarrow as pa  # type: ignore
-from odinapi.views.read_ptz import prefix_names, get_ptz
+import pytest
+
+from odinapi.views.read_ptz import get_ptz, prefix_names
 
 
 class TestPTZ:
@@ -12,7 +13,7 @@ class TestPTZ:
         # next_file_in_bucket = "s3://odin-zpt/ac1/342/34206025.ac1.parquet"
         first_scanid_in_file = 13992239357
         last_scanid_in_file = 13992591241
-        prev_stw_accordin_to_prev_file_name = 0x341FCD5C << 4
+        # prev_stw_accordin_to_prev_file_name = 0x341FCD5C << 4
         first_stw_according_to_file_name = 0x342009EC << 4
         last_stw_according_to_next_file_name = 0x34206025 << 4
         assert first_scanid_in_file > first_stw_according_to_file_name

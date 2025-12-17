@@ -1,11 +1,20 @@
 # ODIN API
 
-OdinAPI was rewritten 2023 to run in AWS
+OdinAPI was rewritten 2023 to run in AWS, using ECS Fargate, S3, and posgresql hosted on Chalmers.
 ## Cloning the repo
 
     git clone git@github.com:Odin-SMR/odin-api.git
 
 ## Preparing the development environment
+
+### AWS Credentials
+
+The devcontainer comes with the AWS CLI installed. The API uses the default AWS credential provider chain to find credentials.
+
+example in the devcontainer, using the `odin` profile:
+```bash
+eval "$(aws configure export-credentials --profile odin --format env)"
+```
 
 ### Python environment
 
@@ -56,8 +65,18 @@ uv run pytest -m "not (slow or system or aws)"
 ```bash
 uv run black --check .
 ```
+```bash
+uv run ruff check .
+```
+
+## Type checking
+```bash
+uv run mypy .
+```
 
 ## Running the API
 
 ```bash
+uv run flask --app odinapi.api:run run
+```
 

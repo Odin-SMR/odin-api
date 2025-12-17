@@ -4,7 +4,7 @@ For detailed setup and development instructions, please refer to our [README](..
 
 ### User Interaction
 
-- Users are studens and reearchers who want to access and analyze atmospheric data.
+- Users are students and researchers who want to access and analyze atmospheric data.
 - The application is a RESTful API that serves atmospheric data to clients.
 - Ensure the API endpoints are well-documented and easy to use.
 
@@ -19,7 +19,7 @@ For detailed setup and development instructions, please refer to our [README](..
 ## Style Guidelines
 - Run black and mypy on all code before committing.
 - Prefer simple and clear code over clever or complex solutions.
-- Use already exisiting third-party libraries when possible instead of writing custom code.
+- Use already existing third-party libraries when possible instead of writing custom code.
 - Write unit tests for all new features and bug fixes.
 - Run tests before committing code.
 

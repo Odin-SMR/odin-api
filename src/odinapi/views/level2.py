@@ -1,38 +1,33 @@
 """Views for getting Level 2 data"""
 
-from datetime import datetime, timedelta
 import http.client
 import logging
-import typing as t
-import urllib.request
 import urllib.parse
-import urllib.error
+from datetime import datetime, timedelta
+from http import HTTPStatus
 
 import dateutil.tz
-from flask import request, abort, jsonify, redirect, url_for, json
+from flask import abort, jsonify, redirect, request, url_for
 from flask.views import MethodView
 from flask_httpauth import HTTPBasicAuth  # type: ignore
 from pymongo.errors import DuplicateKeyError
-from http import HTTPStatus
 
-from odinapi.utils.encrypt_util import decode_level2_target_parameter, SECRET_KEY
+import odinapi.utils.get_args as get_args
+from odinapi.database import level2db
+from odinapi.utils import time_util
+from odinapi.utils.defs import FREQMODE_TO_BACKEND
+from odinapi.utils.encrypt_util import SECRET_KEY, decode_level2_target_parameter
 from odinapi.utils.jsonmodels import (
+    JsonModelError,
+    check_json,
     l2_prototype,
     l2i_prototype,
-    check_json,
-    JsonModelError,
 )
-from odinapi.utils.defs import FREQMODE_TO_BACKEND
-from odinapi.utils import time_util
-
-from odinapi.database import level2db
-from odinapi.views.views import get_L2_collocations
-from odinapi.views.baseview import BaseView, register_versions, BadRequest
-from odinapi.views.utils import make_rfc5988_pagination_header
-from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.utils.swagger import SWAGGER
-import odinapi.utils.get_args as get_args
-
+from odinapi.views.baseview import BadRequest, BaseView, register_versions
+from odinapi.views.get_ancillary_data import get_ancillary_data
+from odinapi.views.utils import make_rfc5988_pagination_header
+from odinapi.views.views import get_L2_collocations
 
 DEFAULT_LIMIT = 1000
 DOCUMENT_LIMIT = level2db.DOCUMENT_LIMIT
@@ -403,7 +398,7 @@ class Level2ProjectPublish(MethodView):
 
 
 class Level2ProjectAnnotations(BaseView):
-    def get(self, project):
+    def get(self, project):  # type: ignore
         projectsdb = level2db.ProjectsDB()
         try:
             annotations = list(projectsdb.get_annotations(project))
