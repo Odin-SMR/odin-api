@@ -20,6 +20,7 @@ WORKDIR /app
 RUN set -x && \
     apt-get update && \
     xargs apt-get install -y --no-install-recommends < requirements_python.apt && \
+    apt-get install -y --no-install-recommends curl && \
     apt-get -y upgrade && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -43,9 +44,9 @@ COPY logconf.yaml /app/
 # Pre-create certificate directory (will be populated by entrypoint)
 RUN mkdir -p /root/.postgresql
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD uv run --no-dev python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/rest_api/health_check', timeout=3)" || exit 1
+# Add health check (matches ECS task definition)
+HEALTHCHECK --interval=120s --timeout=20s --start-period=40s --retries=5 \
+    CMD curl -f http://localhost:8000/rest_api/health_check || exit 1
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8000
