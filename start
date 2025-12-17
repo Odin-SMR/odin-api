@@ -1,2 +1,0 @@
-#!/bin/bash
-PYTHONPATH=./src python -m odinapi.run "${@}"

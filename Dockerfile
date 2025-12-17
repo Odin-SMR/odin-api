@@ -1,12 +1,3 @@
-# Build stage for Node.js frontend
-FROM node:22-bookworm-slim AS frontend-builder
-COPY ./src/odinapi/static /odin/src/odinapi/static
-COPY ./package*.json /odin/
-COPY webpack.config.js /odin/
-WORKDIR /odin
-RUN npm ci --production=false
-RUN npm run build
-
 # Main application stage
 FROM python:3.13-slim-bookworm
 
@@ -19,7 +10,6 @@ WORKDIR /app
 # Install system dependencies and clean up in a single layer
 RUN set -x && \
     apt-get update && \
-    xargs apt-get install -y --no-install-recommends < requirements_python.apt && \
     apt-get install -y --no-install-recommends curl && \
     apt-get -y upgrade && \
     apt-get clean && \
@@ -33,7 +23,6 @@ RUN set -e && \
 
 # Copy application code (maintain src directory structure for uv_build)
 COPY src/odinapi /app/src/odinapi/
-COPY --from=frontend-builder /odin/src/odinapi/static /app/src/odinapi/static
 
 # Copy configuration files
 COPY entrypoint.sh /
