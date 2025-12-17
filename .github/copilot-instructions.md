@@ -23,9 +23,16 @@ For detailed setup and development instructions, please refer to our [README](..
 - Write unit tests for all new features and bug fixes.
 - Run tests before committing code.
 
+## Running tests
+
+set environment variables to run tests with pytest
+    ODINAPI_TEST_PGHOST=localhost
+    ODINAPI_TEST_MONGO_HOST=localhost
+
 ## Runtime Environment
 - The Docker image runs on AWS ECS Fargate.
 - Ensure image is compliant with the task definition below.
+
 
 ### ECS Fargate Task Definition
 ```json
