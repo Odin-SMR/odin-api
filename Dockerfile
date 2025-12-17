@@ -10,7 +10,7 @@ WORKDIR /app
 # Install system dependencies and clean up in a single layer
 RUN set -x && \
     apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl awscli && \
     apt-get -y upgrade && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
