@@ -46,8 +46,8 @@ htmlcov/
 
 # Documentation
 *.md
+!README.md
 docs/
-README*
 LICENSE
 
 # CI/CD
