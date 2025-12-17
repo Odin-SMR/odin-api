@@ -1,42 +1,64 @@
 name: Continuous deployment
 
 on:
-  push:
-    branches: 
+  workflow_run:
+    workflows: ["Python CI"]
+    types:
+      - completed
+    branches:
       - master
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    # Only run if CI workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.1
+      with:
+        role-to-assume: arn:aws:iam::991049544436:role/OdinGithubRole
+        aws-region: eu-north-1
 
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-      env:
-        AWS_REGION: eu-north-1
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Extract version from commit SHA
+      id: version
+      run: echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
     - name: Build and push
       id: build-push
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: true
-        tags: ${{ steps.login-ecr.outputs.registry }}/odin-api:latest
+        tags: |
+          ${{ steps.login-ecr.outputs.registry }}/odin-api:latest
+          ${{ steps.login-ecr.outputs.registry }}/odin-api:${{ steps.version.outputs.VERSION }}
 
   deploy:
     needs: build-and-push
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v5.1.1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::991049544436:role/OdinGithubRole
         aws-region: eu-north-1
 
     - name: Force new deployment
