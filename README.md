@@ -26,21 +26,6 @@ Create and populate a virtual environment with development dependencies:
 uv sync
 ```
 
-### Node.js environment
-
-```bash
-npm install
-```
-
-```bash
-npm run build
-```
-
-```bash
-npm test
-```
-
-
 ## Running tests locally
 
 To run all tests, this requires correct AWS credentials, and running mongodb and postgresql docker containers.

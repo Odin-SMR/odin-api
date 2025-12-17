@@ -1,12 +1,3 @@
-# Build stage for Node.js frontend
-FROM node:22-bookworm-slim AS frontend-builder
-COPY ./src/odinapi/static /odin/src/odinapi/static
-COPY ./package*.json /odin/
-COPY webpack.config.js /odin/
-WORKDIR /odin
-RUN npm ci --production=false
-RUN npm run build
-
 # Main application stage
 FROM python:3.13-slim-bookworm
 
@@ -33,7 +24,6 @@ RUN set -e && \
 
 # Copy application code
 COPY src/odinapi /app/odinapi/
-COPY --from=frontend-builder /odin/src/odinapi/static /app/odinapi/static
 
 # Copy configuration files
 COPY entrypoint.sh /
