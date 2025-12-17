@@ -21,8 +21,8 @@ RUN set -e && \
     uv sync --frozen --no-dev --no-install-project && \
     echo "Dependencies installed successfully"
 
-# Copy application code
-COPY src/odinapi /app/odinapi/
+# Copy application code (maintain src directory structure for uv_build)
+COPY src/odinapi /app/src/odinapi/
 
 # Copy configuration files
 COPY entrypoint.sh /
