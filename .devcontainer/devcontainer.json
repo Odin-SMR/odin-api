@@ -23,6 +23,7 @@
         "ms-ossdata.vscode-postgresql",
         "mongodb.mongodb-vscode",
         "GitHub.copilot",
+        "github.copilot-chat",
         "ms-python.debugpy",
         "redhat.vscode-yaml",
         "ms-python.black-formatter",
@@ -32,7 +33,7 @@
       ]
     }
   },
-  "postCreateCommand": "uv sync && npm install && npm run build",
+  "postCreateCommand": "uv sync",
   "remoteEnv": {
     "FLASK_DEBUG": "1",
     "FLASK_RUN_HOST": "0.0.0.0",
