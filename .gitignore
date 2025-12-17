@@ -20,5 +20,4 @@ result.xml
 geckodriver.log
 __pycache__
 .pytest_cache
-src/odinapi/static/assets
 .env
