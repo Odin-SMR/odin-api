@@ -2,7 +2,7 @@
 
 from flask import Flask
 from flask_cors import CORS
-from flasgger import Swagger
+from flasgger import Swagger  # type: ignore
 
 from odinapi.custom_json import CustomJSONProvider
 

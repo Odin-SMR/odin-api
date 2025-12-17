@@ -6,7 +6,7 @@ import unittest
 class TestSwagger(unittest.TestCase):
     def test_flasgger_installed(self):
         """Test that flasgger is installed and can be imported"""
-        import flasgger
+        import flasgger  # type: ignore
 
         # Check that flasgger has the expected Swagger class
         self.assertTrue(hasattr(flasgger, "Swagger"))
