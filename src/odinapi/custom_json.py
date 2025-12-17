@@ -7,7 +7,7 @@ import simplejson
 
 
 class CustomJSONProvider(DefaultJSONProvider):
-    def default(self, obj: Any) -> Any: # type: ignore
+    def default(self, obj: Any) -> Any:  # type: ignore
         if isinstance(obj, np.integer):
             return int(obj)
         if isinstance(obj, np.floating):
