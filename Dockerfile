@@ -10,7 +10,6 @@ WORKDIR /app
 # Install system dependencies and clean up in a single layer
 RUN set -x && \
     apt-get update && \
-    xargs apt-get install -y --no-install-recommends < requirements_python.apt && \
     apt-get install -y --no-install-recommends curl && \
     apt-get -y upgrade && \
     apt-get clean && \
