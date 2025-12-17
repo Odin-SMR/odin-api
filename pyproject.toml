@@ -35,10 +35,6 @@ dependencies = [
     "sqlalchemy>=2.0.43",
 ]
 
-[build-system]
-requires = ["uv-build>=0.1.0"]
-build-backend = "uv_build"
-
 [tool.pytest.ini_options]
 markers = [
   "aws: tests that require AWS resources",

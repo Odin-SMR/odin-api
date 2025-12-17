@@ -26,14 +26,17 @@ RUN set -x && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies using uv (syncs from pyproject.toml)
-COPY pyproject.toml uv.lock README.md /app/
+COPY pyproject.toml uv.lock /app/
 RUN set -e && \
     uv sync --frozen --no-dev --no-install-project && \
     echo "Dependencies installed successfully"
 
-# Copy application code (maintain src directory structure for uv_build)
-COPY src/odinapi /app/src/odinapi/
-COPY --from=frontend-builder /odin/src/odinapi/static /app/src/odinapi/static
+# Copy application code
+COPY src/odinapi /app/odinapi/
+COPY --from=frontend-builder /odin/src/odinapi/static /app/odinapi/static
+
+# Set PYTHONPATH so odinapi module can be found without installation
+ENV PYTHONPATH=/app
 
 # Copy configuration files
 COPY entrypoint.sh /
