@@ -102,7 +102,6 @@ class BaseView(MethodView):
         with NEW_BASEVIEW_LOCK:
             cls.VERSION_TO_FETCHDATA = {}
             cls.VERSION_TO_RETURNDATA = {}
-            cls.VERSION_TO_SWAGGERSPEC = {}
             for method_name, method in inspect.getmembers(
                 cls, predicate=inspect_predicate
             ):
@@ -111,8 +110,6 @@ class BaseView(MethodView):
                         lookup = cls.VERSION_TO_FETCHDATA
                     elif method._role == "return":
                         lookup = cls.VERSION_TO_RETURNDATA
-                    elif method._role == "swagger":
-                        lookup = cls.VERSION_TO_SWAGGERSPEC
                     else:
                         raise ValueError("Unsupported method role: %r" % method._role)
                     for version in method._versions or cls.SUPPORTED_VERSIONS:
@@ -194,17 +191,3 @@ class BaseView(MethodView):
         payload = json.dumps(payload)
         headers["Content-Type"] = "application/json"
         return payload, status, headers
-
-    def swagger_spec(self, version):
-        """Return GET swagger spec for this view.
-
-        Register the method to use like this:
-
-            @register_versions('swagger', ['v5'])
-            def _swagger_spec(self, version):
-               ...
-        """
-        if version not in self.SUPPORTED_VERSIONS:
-            return
-        if version in self.VERSION_TO_SWAGGERSPEC:
-            return getattr(self, self.VERSION_TO_SWAGGERSPEC[version])(version)

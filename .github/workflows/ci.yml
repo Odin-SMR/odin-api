@@ -7,6 +7,10 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
+    env:
+      ODINAPI_TEST_PGHOST: localhost
+      ODINAPI_TEST_MONGO_HOST: localhost
+
     permissions:
       contents: read
       id-token: write
@@ -60,14 +64,8 @@ jobs:
 
       # Split tests into unit and system for faster feedback and better timeout control
       - name: Run unit tests
-        env:
-          ODINAPI_TEST_PGHOST: localhost
-          ODINAPI_TEST_MONGO_HOST: localhost
         run: uv run pytest -m "not system"
 
       - name: Run system tests
-        env:
-          ODINAPI_TEST_PGHOST: localhost
-          ODINAPI_TEST_MONGO_HOST: localhost
         run: uv run pytest -m "system"
-        timeout-minutes: 30
+        timeout-minutes: 10

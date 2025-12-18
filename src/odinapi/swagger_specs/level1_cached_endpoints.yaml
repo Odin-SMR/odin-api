@@ -1,0 +1,225 @@
+---
+# OpenAPI 3.0 documentation for Level 1 cached/freqmode_info endpoints
+
+paths:
+  /rest_api/{version}/freqmode_info/{date}/:
+    get:
+      tags:
+        - level1-cached
+      summary: Get scan counts for a day
+      description: Returns frequency mode information for all scans on a given date from cached table
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date in YYYY-MM-DD format
+      responses:
+        '200':
+          description: Successful response with scan counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Date:
+                    type: string
+                    format: date
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Backend:
+                          type: string
+                        FreqMode:
+                          type: integer
+                        NumScan:
+                          type: integer
+                        URL:
+                          type: string
+                  Type:
+                    type: string
+                    example: "freqmode_info"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/freqmode_info/{date}/{freqmode}/:
+    get:
+      tags:
+        - level1-cached
+      summary: Get log info for scans in a day and freqmode
+      description: Returns scan log information for a specific date and frequency mode from cached table
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date in YYYY-MM-DD format
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+      responses:
+        '200':
+          description: Successful response with log data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "Log"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/freqmode_info/{date}/{freqmode}/{scanno}/:
+    get:
+      tags:
+        - level1-cached
+      summary: Get log info for a scan
+      description: Returns log information for a specific scan from cached table
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date in YYYY-MM-DD format
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with scan log data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "Log"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/period_info/{year}/{month}/{day}/:
+    get:
+      tags:
+        - level1-cached
+      summary: Get scan counts per day for a period
+      description: |
+        Returns scan counts for multiple days in a period. This is used to populate the calendar. 
+        The default length of the period is six weeks, just enough to fill a full calendar view.
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Year
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Month (1-12)
+        - name: day
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 31
+          description: Day of month
+        - name: length
+          in: query
+          schema:
+            type: integer
+            default: 42
+          description: Number of days to retrieve (default 42 for calendar)
+      responses:
+        '200':
+          description: Successful response with period data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  PeriodStart:
+                    type: string
+                    format: date
+                  PeriodEnd:
+                    type: string
+                    format: date
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Backend:
+                          type: string
+                        FreqMode:
+                          type: integer
+                        NumScan:
+                          type: integer
+                        URL:
+                          type: string
+                  Type:
+                    type: string
+                    example: "freqmode_info"
+                  Count:
+                    type: integer

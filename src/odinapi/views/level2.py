@@ -23,7 +23,6 @@ from odinapi.utils.jsonmodels import (
     l2_prototype,
     l2i_prototype,
 )
-from odinapi.utils.swagger import SWAGGER
 from odinapi.views.baseview import BadRequest, BaseView, register_versions
 from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.views.utils import make_rfc5988_pagination_header
@@ -34,89 +33,6 @@ DOCUMENT_LIMIT = level2db.DOCUMENT_LIMIT
 DOCUMENT_LIMIT_MIN = 1000
 DEFAULT_OFFSET = 0
 DEFAULT_MINSCANID = 0
-
-SWAGGER.add_response("Level2BadQuery", "Unsupported query", {"Error": str})
-
-SWAGGER.add_parameter("project", "path", str)
-SWAGGER.add_parameter(
-    "radius",
-    "query",
-    float,
-    required=True,
-    description=("Return data within this radius from the provided locations (km)."),
-)
-SWAGGER.add_parameter(
-    "location",
-    "query",
-    [str],
-    required=True,
-    collection_format="multi",
-    description=(
-        "Return data close to these locations (lat,lon). "
-        "Example location: '-10.1,300.3'."
-    ),
-)
-SWAGGER.add_parameter(
-    "min_lat", "query", float, description="Min latitude (-90 to 90)."
-)
-SWAGGER.add_parameter(
-    "max_lat", "query", float, description="Max latitude (-90 to 90)."
-)
-SWAGGER.add_parameter(
-    "min_lon", "query", float, description="Min longitude (0 to 360)."
-)
-SWAGGER.add_parameter(
-    "max_lon", "query", float, description="Max longitude (0 to 360)."
-)
-SWAGGER.add_parameter(
-    "product",
-    "query",
-    [str],
-    collection_format="multi",
-    description="Return data only for these products.",
-)
-SWAGGER.add_parameter("min_pressure", "query", float, description="Min pressure (Pa).")
-SWAGGER.add_parameter("max_pressure", "query", float, description="Max pressure (Pa).")
-SWAGGER.add_parameter("min_altitude", "query", float, description="Min altitude (m).")
-SWAGGER.add_parameter("max_altitude", "query", float, description="Max altitude (m).")
-SWAGGER.add_parameter(
-    "comment", "query", str, description="Return scans with this comment."
-)
-SWAGGER.add_parameter(
-    "limit",
-    "query",
-    int,
-    default=DEFAULT_LIMIT,
-    description="Number of scans to return.",
-)
-SWAGGER.add_parameter(
-    "document_limit",
-    "query",
-    int,
-    default=DOCUMENT_LIMIT,
-    description="""
-        Maximum number of database documents to return.
-        One document corresponds to data from one pressure
-        level of one product from one scan. Lowest allowed value
-        of this parameter is 1000. No uncomplete
-        products are returned. Link to next piece of data is given
-        in the response headers, if the limit is hit.
-    """,
-)
-SWAGGER.add_parameter(
-    "offset",
-    "query",
-    int,
-    default=DEFAULT_OFFSET,
-    description="Skip scans before returning.",
-)
-SWAGGER.add_parameter(
-    "min_scanid",
-    "query",
-    int,
-    default=DEFAULT_MINSCANID,
-    description="Skip scans having a lower scanid than this.",
-)
 
 
 def is_development_request(version):
@@ -266,28 +182,8 @@ class Level2Write(MethodView):
         return "", HTTPStatus.NO_CONTENT
 
 
-SWAGGER.add_type(
-    "level2_project",
-    {
-        "Name": str,
-        "URLS": {
-            "URL-project": str,
-        },
-    },
-)
-
-
 class Level2ViewProjects(BaseView):
     """Get list of existing projects"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            [],
-            {"200": SWAGGER.get_type_response("level2_project", is_list=True)},
-            summary="Get list of existing projects",
-        )
 
     @register_versions("fetch")
     def _get_projects(self, version):
@@ -311,31 +207,8 @@ class Level2ViewProjects(BaseView):
         return {"Data": projects, "Type": "level2_project", "Count": len(projects)}
 
 
-SWAGGER.add_type(
-    "level2_project_freqmode",
-    {
-        "FreqMode": int,
-        "URLS": {"URL-scans": str, "URL-failed": str, "URL-comment": str},
-    },
-)
-
-
 class Level2ViewProject(Level2ProjectBaseView):
     """Get project information"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project"],
-            {
-                "200": SWAGGER.get_type_response(
-                    "level2_project_freqmode",
-                    is_list=True,
-                )
-            },
-            summary="Get project information",
-        )
 
     @register_versions("fetch")
     def _get_freqmodes(self, version, project):
@@ -441,43 +314,9 @@ class Level2ProjectAnnotations(BaseView):
             abort(http.client.NOT_FOUND)
         return "", http.client.CREATED
 
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project"],
-            {"200": SWAGGER.get_type_response("L2ProjectAnnotation", is_list=True)},
-            summary="Get annotations for a project",
-        )
-
-
-SWAGGER.add_type(
-    "L2ProjectAnnotation",
-    {
-        "Text": str,
-        "FreqMode": int,
-        "CreatedAt": str,
-    },
-)
-
-
-SWAGGER.add_type(
-    "level2_scan_comment",
-    {"Comment": str, "URLS": {"URL-scans": str, "URL-failed": str}},
-)
-
 
 class Level2ViewComments(Level2ProjectBaseView):
     """GET list of comments for a freqmode"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode", "offset", "limit"],
-            {"200": SWAGGER.get_type_response("level2_scan_comment", is_list=True)},
-            summary="Get list of comments for a freqmode",
-        )
 
     @register_versions("fetch")
     def _fetch(self, version, project, freqmode):
@@ -546,40 +385,8 @@ class Level2ViewComments(Level2ProjectBaseView):
         }
 
 
-SWAGGER.add_type(
-    "level2_scan_info",
-    {
-        "ScanID": int,
-        "Date": str,
-        "URLS": {
-            "URL-level2": str,
-            "URL-spectra": str,
-            "URL-log": str,
-            "URL-ancillary": str,
-        },
-    },
-)
-
-
 class Level2ViewScans(Level2ProjectBaseView):
     """GET list of matching scans"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            [
-                "project",
-                "freqmode",
-                "start_time",
-                "end_time",
-                "comment",
-                "limit",
-                "offset",
-            ],
-            {"200": SWAGGER.get_type_response("level2_scan_info", is_list=True)},
-            summary="Get list of matching scans",
-        )
 
     @register_versions("fetch")
     def _fetch(self, version, project, freqmode):
@@ -638,40 +445,8 @@ class Level2ViewScans(Level2ProjectBaseView):
         }
 
 
-SWAGGER.add_type(
-    "level2_failed_scan_info",
-    {
-        "ScanID": int,
-        "Date": str,
-        "Error": str,
-        "URLS": {
-            "URL-level2": str,
-            "URL-spectra": str,
-            "URL-log": str,
-        },
-    },
-)
-
-
 class Level2ViewFailedScans(Level2ProjectBaseView):
     """GET list of matching scans that failed the level2 processing"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            [
-                "project",
-                "freqmode",
-                "start_time",
-                "end_time",
-                "comment",
-                "offset",
-                "limit",
-            ],
-            {"200": SWAGGER.get_type_response("level2_failed_scan_info", is_list=True)},
-            summary=("Get list of matching scans that failed the level2 processing"),
-        )
 
     @register_versions("fetch")
     def _fetch(self, version, project, freqmode):
@@ -734,22 +509,6 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
 class Level2ViewScan(Level2ProjectBaseView):
     """GET level2 data, info and comments for one scan and freqmode"""
 
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode", "scanno"],
-            {
-                "200": SWAGGER.get_mixed_type_response(
-                    [("L2", True), ("L2i", False), ("L2c", True), ("L2anc", True)]
-                )
-            },
-            summary=(
-                "Get level2 data, info, comments, and ancillary data"
-                + " for one scan and freqmode"
-            ),
-        )
-
     @register_versions("fetch")
     def _fetch(self, version, project, freqmode, scanno):
         db = level2db.Level2DB(project)
@@ -791,39 +550,10 @@ class Level2ViewScan(Level2ProjectBaseView):
         return mixed
 
 
-SWAGGER.add_type(
-    "L2i",
-    {
-        "InvMode": str,
-        "FreqMode": int,
-        "ScanID": int,
-        "ChannelsID": [int],
-        "STW": [int],
-        "FreqOffset": float,
-        "MinLmFactor": float,
-        "PointOffset": float,
-        "Residual": float,
-        "LOFreq": [float],
-        "BlineOffset": [[float]],
-        "FitSpectrum": [[float]],
-        "GenerationTime": str,
-    },
-)
-
-
 class L2iView(Level2ProjectBaseView):
     """Get level2 info for one scan and freqmode"""
 
     SUPPORTED_VERSIONS = ["v5"]
-
-    @register_versions("swagger")
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode", "scanno"],
-            {"200": SWAGGER.get_type_response("L2i")},
-            summary=("Get level2 info for one scan and freqmode"),
-        )
 
     @register_versions("fetch")
     def _get(self, version, project, freqmode, scanno):
@@ -839,22 +569,10 @@ class L2iView(Level2ProjectBaseView):
         return {"Data": L2i, "Type": "L2i", "Count": None}
 
 
-SWAGGER.add_type("L2c", str)
-
-
 class L2cView(Level2ProjectBaseView):
     """Get level2 comments for one scan and freqmode"""
 
     SUPPORTED_VERSIONS = ["v5"]
-
-    @register_versions("swagger")
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode", "scanno"],
-            {"200": SWAGGER.get_type_response("L2c", is_list=True)},
-            summary=("Get level2 comments for one scan and freqmode"),
-        )
 
     @register_versions("fetch")
     def _get(self, version, project, freqmode, scanno):
@@ -869,40 +587,10 @@ class L2cView(Level2ProjectBaseView):
         return {"Data": L2c, "Type": "L2c", "Count": len(L2c)}
 
 
-SWAGGER.add_type(
-    "L2anc",
-    {
-        "InvMode": str,
-        "FreqMode": int,
-        "ScanID": int,
-        "MJD": float,
-        "Orbit": int,
-        "Lat1D": float,
-        "Lon1D": float,
-        "Latitude": [float],
-        "Longitude": [float],
-        "Pressure": [float],
-        "SZA1D": float,
-        "SZA": [float],
-        "LST": float,
-        "Theta": [float],
-    },
-)
-
-
 class L2ancView(Level2ProjectBaseView):
     """Get ancillary data for one scan and freqmode"""
 
     SUPPORTED_VERSIONS = ["v5"]
-
-    @register_versions("swagger")
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode", "scanno"],
-            {"200": SWAGGER.get_type_response("L2anc", is_list=True)},
-            summary=("Get ancillary data for one scan and freqmode"),
-        )
 
     @register_versions("fetch")
     def _get(self, version, project, freqmode, scanno):
@@ -919,46 +607,11 @@ class L2ancView(Level2ProjectBaseView):
         return {"Data": L2anc, "Type": "L2anc", "Count": len(L2anc)}
 
 
-SWAGGER.add_type(
-    "L2",
-    {
-        "Product": str,
-        "InvMode": str,
-        "FreqMode": int,
-        "ScanID": int,
-        "MJD": float,
-        "Lat1D": float,
-        "Lon1D": float,
-        "Quality": float,
-        "Altitude": [float],
-        "Pressure": [float],
-        "Latitude": [float],
-        "Longitude": [float],
-        "Temperature": [float],
-        "ErrorTotal": [float],
-        "ErrorNoise": [float],
-        "MeasResponse": [float],
-        "Apriori": [float],
-        "VMR": [float],
-        "AVK": [[float]],
-    },
-)
-
-
 class L2View(Level2ProjectBaseView):
     """Get level2 data for one scan and freqmode"""
 
     # TODO: Choose if AVK should be included
     SUPPORTED_VERSIONS = ["v5"]
-
-    @register_versions("swagger")
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode", "scanno", "product"],
-            {"200": SWAGGER.get_type_response("L2", is_list=True)},
-            summary=("Get level2 data for one scan and freqmode"),
-        )
 
     @register_versions("fetch")
     def _get(self, version, project, freqmode, scanno):
@@ -1008,20 +661,8 @@ def get_scan_urls(version, project, freqmode, scanno):
         }
 
 
-SWAGGER.add_type("level2_product_name", str)
-
-
 class Level2ViewProducts(Level2ProjectBaseView):
     """GET available products"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project"],
-            {"200": SWAGGER.get_type_response("level2_product_name", is_list=True)},
-            summary=("Get available products"),
-        )
 
     @register_versions("fetch", ["v4"])
     def _get(self, version, project):
@@ -1044,15 +685,6 @@ class Level2ViewProducts(Level2ProjectBaseView):
 
 class Level2ViewProductsFreqmode(Level2ProjectBaseView):
     """GET available products"""
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            ["project", "freqmode"],
-            {"200": SWAGGER.get_type_response("level2_product_name", is_list=True)},
-            summary=("Get available products for a given project and freqmode"),
-        )
 
     @register_versions("fetch", ["v4"])
     def _get(self, version, project, freqmode):
@@ -1087,43 +719,6 @@ class Level2ViewLocations(Level2ProjectBaseView):
         start_time=2015-10-11&end_time=2016-02-20&radius=100&
         location=-24.0,200.0&location=-30.0,210.0
     """
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            [
-                "project",
-                "product",
-                "location",
-                "radius",
-                "min_pressure",
-                "max_pressure",
-                "min_altitude",
-                "max_altitude",
-                "start_time",
-                "end_time",
-                "min_scanid",
-                "document_limit",
-            ],
-            {
-                "200": SWAGGER.get_type_response("L2", is_list=True),
-                "400": SWAGGER.get_response("Level2BadQuery"),
-            },
-            summary=("Get data close to provided location"),
-            description=(
-                "Provide one or more locations and a radius to get "
-                "data within the resulting circles on the earth surface.\n"
-                "\n"
-                "Choose between min/max altitude and min/max pressure.\n"
-                "\n"
-                "Example query:\n"
-                "\n"
-                "   product=p1&product=p2&min_pressure=100&max_pressure=1000&"
-                "start_time=2015-10-11&end_time=2016-02-20&radius=100&"
-                "location=-24.0,200.0&location=-30.0,210.0"
-            ),
-        )
 
     @register_versions("fetch")
     def _fetch(self, version, project):
@@ -1168,37 +763,6 @@ class Level2ViewDay(Level2ProjectBaseView):
 
         product=p1&product=p2&min_pressure=1000&max_pressure=1000
     """
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            [
-                "project",
-                "date",
-                "product",
-                "min_pressure",
-                "max_pressure",
-                "min_altitude",
-                "max_altitude",
-                "min_scanid",
-                "document_limit",
-            ],
-            {
-                "200": SWAGGER.get_type_response("L2", is_list=True),
-                "400": SWAGGER.get_response("Level2BadQuery"),
-            },
-            summary=("Get data for provided day"),
-            description=(
-                "Get data for a certain day\n"
-                "\n"
-                "Choose between min/max altitude and min/max pressure.\n"
-                "\n"
-                "Example query:\n"
-                "\n"
-                "    product=p1&product=p2&min_pressure=1000&max_pressure=1000"
-            ),
-        )
 
     @register_versions("fetch")
     def _fetch(self, version, project, date):
@@ -1256,50 +820,6 @@ class Level2ViewArea(Level2ProjectBaseView):
         start_time=2015-10-11&end_time=2016-02-20&min_lat=-80&
         max_lat=-70&min_lon=150&max_lon=200
     """
-
-    @register_versions("swagger", ["v5"])
-    def _swagger_def(self, version):
-        return SWAGGER.get_path_definition(
-            ["level2"],
-            [
-                "project",
-                "product",
-                "min_lat",
-                "max_lat",
-                "min_lon",
-                "max_lon",
-                "min_pressure",
-                "max_pressure",
-                "min_altitude",
-                "max_altitude",
-                "start_time",
-                "end_time",
-                "min_scanid",
-                "document_limit",
-            ],
-            {
-                "200": SWAGGER.get_type_response("L2", is_list=True),
-                "400": SWAGGER.get_response("Level2BadQuery"),
-            },
-            summary=("Get data in provided area"),
-            description=(
-                "Get data for a certain area\n"
-                "\n"
-                "Provide latitude and/or longitude limits to get data for a "
-                "certain area of the earth.\n"
-                "\n"
-                "If no latitude or longitude limits are provided, data for "
-                "the whole earth is returned.\n"
-                "\n"
-                "Choose between min/max altitude and min/max pressure."
-                "\n"
-                "Example url parameters:\n"
-                "\n"
-                "    product=p1&product=p2&min_pressure=100&max_pressure=100&"
-                "start_time=2015-10-11&end_time=2016-02-20&min_lat=-80&"
-                "max_lat=-70&min_lon=150&max_lon=200"
-            ),
-        )
 
     @register_versions("fetch")
     def _fetch(self, version, project):
