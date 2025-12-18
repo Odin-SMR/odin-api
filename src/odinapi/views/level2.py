@@ -30,7 +30,9 @@ from odinapi.views.views import get_L2_collocations
 
 class BadRequest(Exception):
     """Exception for bad requests"""
+
     pass
+
 
 DEFAULT_LIMIT = 1000
 DOCUMENT_LIMIT = level2db.DOCUMENT_LIMIT
@@ -54,6 +56,7 @@ class Level2ProjectBaseView(MethodView):
 
     def __init__(self, development=False, **kwargs):
         import logging
+
         self.development = development
         self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
         super().__init__(**kwargs)
@@ -206,7 +209,7 @@ class Level2ViewProjects(MethodView):
             }
             for p in projects_list
         ]
-        
+
         if version == "v4":
             return jsonify(Info={"Projects": projects})
         else:  # v5
@@ -227,7 +230,7 @@ class Level2ViewProject(Level2ProjectBaseView):
                 abort(404)
             if project_obj["development"] != is_dev:
                 abort(404)
-        
+
         db = level2db.Level2DB(project)
         freqmodes = db.get_freqmodes()
         base_url = get_base_url(version)
@@ -251,7 +254,7 @@ class Level2ViewProject(Level2ProjectBaseView):
                 for freqmode in freqmodes
             ],
         }
-        
+
         if version == "v4":
             return jsonify(Info=info)
         else:  # v5
@@ -284,7 +287,7 @@ class Level2ProjectPublish(MethodView):
 
 class Level2ProjectAnnotations(MethodView):
     """Get and create project annotations"""
-    
+
     def get(self, project):
         """Get project annotations"""
         projectsdb = level2db.ProjectsDB()
@@ -345,7 +348,7 @@ class Level2ViewComments(Level2ProjectBaseView):
                 abort(404)
             if project_obj["development"] != is_dev:
                 abort(404)
-        
+
         limit = get_args.get_int("limit") or DEFAULT_LIMIT
         offset = get_args.get_int("offset") or DEFAULT_OFFSET
         db = level2db.Level2DB(project)
@@ -374,7 +377,7 @@ class Level2ViewComments(Level2ProjectBaseView):
             ]
         }
         count = db.count_comments(freqmode)
-        
+
         headers = {
             "Link": make_rfc5988_pagination_header(
                 offset,
@@ -386,15 +389,19 @@ class Level2ViewComments(Level2ProjectBaseView):
                 freqmode=freqmode,
             ),
         }
-        
+
         if version == "v4":
             return jsonify(Info=info), HTTPStatus.OK, headers
         else:  # v5
-            return jsonify(
-                Data=info["Comments"],
-                Type="level2_scan_comment",
-                Count=count,
-            ), HTTPStatus.OK, headers
+            return (
+                jsonify(
+                    Data=info["Comments"],
+                    Type="level2_scan_comment",
+                    Count=count,
+                ),
+                HTTPStatus.OK,
+                headers,
+            )
 
     def _get_endpoint(self):
         return (
@@ -407,8 +414,18 @@ class Level2ViewComments(Level2ProjectBaseView):
 class Level2ViewScans(Level2ProjectBaseView):
     """GET list of matching scans"""
 
-    @register_versions("fetch")
-    def _fetch(self, version, project, freqmode):
+    def get(self, version, project, freqmode):
+        """Get scans for a project and freqmode"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         start_time = get_args.get_datetime("start_time")
         end_time = get_args.get_datetime("end_time")
         limit = get_args.get_int("limit") or DEFAULT_LIMIT
@@ -426,10 +443,7 @@ class Level2ViewScans(Level2ProjectBaseView):
             scan["Date"] = time_util.stw2datetime(scan["ScanID"]).isoformat()
             scan["URLS"] = get_scan_urls(version, project, freqmode, scan["ScanID"])
         count = db.count_scans(freqmode, **param)
-        data = {
-            "scans": scans,
-            "count": count,
-        }
+
         headers = {
             "Link": make_rfc5988_pagination_header(
                 offset,
@@ -442,7 +456,19 @@ class Level2ViewScans(Level2ProjectBaseView):
                 **param,
             )
         }
-        return data, HTTPStatus.OK, headers
+
+        if version == "v4":
+            return (
+                jsonify(Info={"Count": count, "Scans": scans}),
+                HTTPStatus.OK,
+                headers,
+            )
+        else:  # v5
+            return (
+                jsonify(Data=scans, Type="level2_scan_info", Count=count),
+                HTTPStatus.OK,
+                headers,
+            )
 
     def _get_endpoint(self):
         return (
@@ -451,24 +477,22 @@ class Level2ViewScans(Level2ProjectBaseView):
             else "level2_production.level2viewscans"
         )
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, data, project, freqmode):
-        return {"Info": {"Count": data["count"], "Scans": data["scans"]}}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, data, project, freqmode):
-        return {
-            "Data": data["scans"],
-            "Type": "level2_scan_info",
-            "Count": data["count"],
-        }
-
 
 class Level2ViewFailedScans(Level2ProjectBaseView):
     """GET list of matching scans that failed the level2 processing"""
 
-    @register_versions("fetch")
-    def _fetch(self, version, project, freqmode):
+    def get(self, version, project, freqmode):
+        """Get failed scans for a project and freqmode"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         start_time = get_args.get_datetime("start_time")
         end_time = get_args.get_datetime("end_time")
         limit = get_args.get_int("limit") or DEFAULT_LIMIT
@@ -487,10 +511,7 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
             scan["Error"] = scan.pop("Comments")[0]
             scan["Date"] = time_util.stw2datetime(scan["ScanID"]).date().isoformat()
         count = db.count_failed_scans(freqmode, **param)
-        data = {
-            "scans": scans,
-            "count": count,
-        }
+
         headers = {
             "Link": make_rfc5988_pagination_header(
                 offset,
@@ -503,7 +524,19 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
                 **param,
             ),
         }
-        return data, HTTPStatus.OK, headers
+
+        if version == "v4":
+            return (
+                jsonify(Info={"Count": count, "Scans": scans}),
+                HTTPStatus.OK,
+                headers,
+            )
+        else:  # v5
+            return (
+                jsonify(Data=scans, Type="level2_failed_scan_info", Count=count),
+                HTTPStatus.OK,
+                headers,
+            )
 
     def _get_endpoint(self):
         return (
@@ -512,24 +545,22 @@ class Level2ViewFailedScans(Level2ProjectBaseView):
             else "level2_production.level2viewfailed"
         )
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, data, project, freqmode):
-        return {"Info": {"Count": data["count"], "Scans": data["scans"]}}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, data, project, freqmode):
-        return {
-            "Data": data["scans"],
-            "Type": "level2_failed_scan_info",
-            "Count": data["count"],
-        }
-
 
 class Level2ViewScan(Level2ProjectBaseView):
     """GET level2 data, info and comments for one scan and freqmode"""
 
-    @register_versions("fetch")
-    def _fetch(self, version, project, freqmode, scanno):
+    def get(self, version, project, freqmode, scanno):
+        """Get level2 scan data"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         db = level2db.Level2DB(project)
         L2i, L2, L2c = db.get_scan(freqmode, scanno)
         if not L2i:
@@ -545,105 +576,130 @@ class Level2ViewScan(Level2ProjectBaseView):
             if not L2:
                 abort(404)
             info["L2anc"] = get_ancillary_data(info["L2"])
-        return info
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, info, project, freqmode, scanno):
-        return {"Info": info}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, info, project, freqmode, scanno):
-        L2i = info["L2i"]
-        L2i["URLS"] = info["URLS"]
-        data = {
-            "L2i": {"Data": L2i, "Type": "L2i", "Count": None},
-            "L2": {"Data": info["L2"], "Type": "L2", "Count": len(info["L2"])},
-            "L2c": {"Data": info["L2c"], "Type": "L2c", "Count": len(info["L2c"])},
-            "L2anc": {
-                "Data": info["L2anc"],
-                "Type": "L2anc",
-                "Count": len(info["L2anc"]),
-            },
-        }
-        mixed = {"Data": data, "Type": "mixed", "Count": None}
-        return mixed
+        if version == "v4":
+            return jsonify(Info=info)
+        else:  # v5
+            L2i = info["L2i"]
+            L2i["URLS"] = info["URLS"]
+            data = {
+                "L2i": {"Data": L2i, "Type": "L2i", "Count": None},
+                "L2": {"Data": info["L2"], "Type": "L2", "Count": len(info["L2"])},
+                "L2c": {"Data": info["L2c"], "Type": "L2c", "Count": len(info["L2c"])},
+                "L2anc": {
+                    "Data": info["L2anc"],
+                    "Type": "L2anc",
+                    "Count": len(info["L2anc"]),
+                },
+            }
+            mixed = {"Data": data, "Type": "mixed", "Count": None}
+            return jsonify(mixed)
 
 
 class L2iView(Level2ProjectBaseView):
     """Get level2 info for one scan and freqmode"""
 
-    SUPPORTED_VERSIONS = ["v5"]
+    def get(self, version, project, freqmode, scanno):
+        """Get L2i data"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
 
-    @register_versions("fetch")
-    def _get(self, version, project, freqmode, scanno):
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         db = level2db.Level2DB(project)
         L2i = db.get_L2i(freqmode, scanno)
         if not L2i:
             abort(404)
         L2i["URLS"] = get_scan_urls(version, project, freqmode, scanno)
-        return L2i
-
-    @register_versions("return")
-    def _return(self, version, L2i, project, freqmode, scanno):
-        return {"Data": L2i, "Type": "L2i", "Count": None}
+        return jsonify(Data=L2i, Type="L2i", Count=None)
 
 
 class L2cView(Level2ProjectBaseView):
     """Get level2 comments for one scan and freqmode"""
 
-    SUPPORTED_VERSIONS = ["v5"]
+    def get(self, version, project, freqmode, scanno):
+        """Get L2c data"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
 
-    @register_versions("fetch")
-    def _get(self, version, project, freqmode, scanno):
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         db = level2db.Level2DB(project)
         L2c = db.get_L2c(freqmode, scanno)
         if not L2c:
             abort(404)
-        return L2c
-
-    @register_versions("return")
-    def _return(self, version, L2c, project, freqmode, scanno):
-        return {"Data": L2c, "Type": "L2c", "Count": len(L2c)}
+        return jsonify(Data=L2c, Type="L2c", Count=len(L2c))
 
 
 class L2ancView(Level2ProjectBaseView):
     """Get ancillary data for one scan and freqmode"""
 
-    SUPPORTED_VERSIONS = ["v5"]
+    def get(self, version, project, freqmode, scanno):
+        """Get L2anc data"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
 
-    @register_versions("fetch")
-    def _get(self, version, project, freqmode, scanno):
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         product = get_args.get_string("product")
         db = level2db.Level2DB(project)
         L2 = db.get_L2(freqmode, scanno, product=product)
         if not L2:
             abort(404)
         L2anc = get_ancillary_data(L2)
-        return L2anc
-
-    @register_versions("return")
-    def _return(self, version, L2anc, project, freqmode, scanno):
-        return {"Data": L2anc, "Type": "L2anc", "Count": len(L2anc)}
+        return jsonify(Data=L2anc, Type="L2anc", Count=len(L2anc))
 
 
 class L2View(Level2ProjectBaseView):
     """Get level2 data for one scan and freqmode"""
 
     # TODO: Choose if AVK should be included
-    SUPPORTED_VERSIONS = ["v5"]
 
-    @register_versions("fetch")
-    def _get(self, version, project, freqmode, scanno):
+    def get(self, version, project, freqmode, scanno):
+        """Get L2 data"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         product = get_args.get_string("product")
         db = level2db.Level2DB(project)
         L2 = db.get_L2(freqmode, scanno, product=product)
         if not L2:
             abort(404)
-        return L2
-
-    @register_versions("return")
-    def _return(self, version, L2, project, freqmode, scanno):
-        return {"Data": L2, "Type": "L2", "Count": len(L2)}
+        return jsonify(Data=L2, Type="L2", Count=len(L2))
 
 
 def get_scan_urls(version, project, freqmode, scanno):
@@ -683,45 +739,54 @@ def get_scan_urls(version, project, freqmode, scanno):
 class Level2ViewProducts(Level2ProjectBaseView):
     """GET available products"""
 
-    @register_versions("fetch", ["v4"])
-    def _get(self, version, project):
+    def get(self, version, project):
+        """Get products for a project"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         db = level2db.Level2DB(project)
-        return db.get_product_count()
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, products, project):
-        return {"Info": {"Products": products}}
-
-    @register_versions("fetch", ["v5"])
-    def _get_v5(self, version, project):
-        db = level2db.Level2DB(project)
-        return db.get_products(freqmode=None)
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, products, project):
-        return {"Data": products, "Type": "level2_product_name", "Count": len(products)}
+        if version == "v4":
+            products = db.get_product_count()
+            return jsonify(Info={"Products": products})
+        else:  # v5
+            products = db.get_products(freqmode=None)
+            return jsonify(
+                Data=products, Type="level2_product_name", Count=len(products)
+            )
 
 
 class Level2ViewProductsFreqmode(Level2ProjectBaseView):
-    """GET available products"""
+    """GET available products for a freqmode"""
 
-    @register_versions("fetch", ["v4"])
-    def _get(self, version, project, freqmode):
+    def get(self, version, project, freqmode):
+        """Get products for a project and freqmode"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         db = level2db.Level2DB(project)
-        return db.get_products(freqmode=int(freqmode))
+        products = db.get_products(freqmode=int(freqmode))
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, products, project, freqmode):
-        return {"Info": {"Products": products}}
-
-    @register_versions("fetch", ["v5"])
-    def _get_v5(self, version, project, freqmode):
-        db = level2db.Level2DB(project)
-        return db.get_products(freqmode=int(freqmode))
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, products, project, freqmode):
-        return {"Data": products, "Type": "level2_product_name", "Count": len(products)}
+        if version == "v4":
+            return jsonify(Info={"Products": products})
+        else:  # v5
+            return jsonify(
+                Data=products, Type="level2_product_name", Count=len(products)
+            )
 
 
 class Level2ViewLocations(Level2ProjectBaseView):
@@ -739,8 +804,18 @@ class Level2ViewLocations(Level2ProjectBaseView):
         location=-24.0,200.0&location=-30.0,210.0
     """
 
-    @register_versions("fetch")
-    def _fetch(self, version, project):
+    def get(self, version, project):
+        """Get Level2 data for specified locations"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         if not get_args.get_list("location"):
             raise BadRequest("No locations specified")
         try:
@@ -750,8 +825,11 @@ class Level2ViewLocations(Level2ProjectBaseView):
         db = level2db.Level2DB(project)
         limit = param.pop("document_limit")
         meas_iter = db.get_measurements(param.pop("products"), limit, **param)
+
         if version == "v4":
-            return meas_iter
+            results = list(meas_iter)
+            return jsonify(Info={"Nr": len(results), "Results": results})
+
         scans, next_min_scanid = level2db.get_valid_collapsed_products(
             list(meas_iter), limit
         )
@@ -761,16 +839,7 @@ class Level2ViewLocations(Level2ProjectBaseView):
                 request.url, param["min_scanid"], next_min_scanid
             )
             headers = {"link": link}
-        return scans, HTTPStatus.OK, headers
-
-    @register_versions("return", ["v4"])
-    def _return(self, version, results, _):
-        results = list(results)
-        return {"Info": {"Nr": len(results), "Results": results}}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, results, _):
-        return {"Data": results, "Type": "L2", "Count": len(results)}
+        return jsonify(Data=scans, Type="L2", Count=len(scans)), HTTPStatus.OK, headers
 
 
 class Level2ViewDay(Level2ProjectBaseView):
@@ -783,8 +852,18 @@ class Level2ViewDay(Level2ProjectBaseView):
         product=p1&product=p2&min_pressure=1000&max_pressure=1000
     """
 
-    @register_versions("fetch")
-    def _fetch(self, version, project, date):
+    def get(self, version, project, date):
+        """Get Level2 data for a specific day"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         try:
             start_time = get_args.get_datetime(val=date)
         except ValueError:
@@ -799,8 +878,11 @@ class Level2ViewDay(Level2ProjectBaseView):
         db = level2db.Level2DB(project)
         limit = param.pop("document_limit")
         meas_iter = db.get_measurements(param.pop("products"), limit, **param)
+
         if version == "v4":
-            return meas_iter
+            results = list(meas_iter)
+            return jsonify(Info={"Nr": len(results), "Results": results})
+
         scans, next_min_scanid = level2db.get_valid_collapsed_products(
             list(meas_iter), limit
         )
@@ -810,16 +892,7 @@ class Level2ViewDay(Level2ProjectBaseView):
                 request.url, param["min_scanid"], next_min_scanid
             )
             headers = {"link": link}
-        return scans, HTTPStatus.OK, headers
-
-    @register_versions("return", ["v4"])
-    def _return(self, version, results, *args, **kwargs):
-        results = list(results)
-        return {"Info": {"Nr": len(results), "Results": results}}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, results, *args, **kwargs):
-        return {"Data": results, "Type": "L2", "Count": len(results)}
+        return jsonify(Data=scans, Type="L2", Count=len(scans)), HTTPStatus.OK, headers
 
 
 class Level2ViewArea(Level2ProjectBaseView):
@@ -840,8 +913,18 @@ class Level2ViewArea(Level2ProjectBaseView):
         max_lat=-70&min_lon=150&max_lon=200
     """
 
-    @register_versions("fetch")
-    def _fetch(self, version, project):
+    def get(self, version, project):
+        """Get Level2 data for a specific area"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+
         try:
             param = parse_parameters()
         except ValueError as e:
@@ -850,8 +933,11 @@ class Level2ViewArea(Level2ProjectBaseView):
         db = level2db.Level2DB(project)
         limit = param.pop("document_limit")
         meas_iter = db.get_measurements(param.pop("products"), limit, **param)
+
         if version == "v4":
-            return meas_iter
+            results = list(meas_iter)
+            return jsonify(Info={"Nr": len(results), "Results": results})
+
         scans, next_min_scanid = level2db.get_valid_collapsed_products(
             list(meas_iter), limit
         )
@@ -861,16 +947,7 @@ class Level2ViewArea(Level2ProjectBaseView):
                 request.url, param["min_scanid"], next_min_scanid
             )
             headers = {"link": link}
-        return scans, HTTPStatus.OK, headers
-
-    @register_versions("return", ["v4"])
-    def _return(self, version, results, _):
-        results = list(results)
-        return {"Info": {"Nr": len(results), "Results": results}}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, results, _):
-        return {"Data": results, "Type": "L2", "Count": len(results)}
+        return jsonify(Data=scans, Type="L2", Count=len(scans)), HTTPStatus.OK, headers
 
 
 def parse_parameters(**kwargs):
