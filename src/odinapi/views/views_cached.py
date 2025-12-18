@@ -237,7 +237,7 @@ class PeriodInfoCached(MethodView):
             )
 
 
-class DateBackendInfoCached(DateInfoCached):
+class DateBackendInfoCached(MethodView):
     """DateInfo for a certain backend using a cached table"""
 
     query = text(
@@ -252,7 +252,7 @@ class DateBackendInfoCached(DateInfoCached):
         )
     )
 
-    def get(self, version, date: str, backend):
+    def get(self, version: str, date: str, backend: str):
         """Get date backend info from cache"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
