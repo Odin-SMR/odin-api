@@ -13,7 +13,6 @@ from odinapi.pg_database import squeeze_query
 
 # Activate Agg, must be done before imports below
 from odinapi.utils import (
-    time_util,
     use_agg,  # noqa: F401
 )
 from odinapi.utils.collocations import get_collocations
@@ -60,20 +59,20 @@ class DateInfo(MethodView):
         """Get scan counts for a specific date"""
         if version not in ["v4", "v5"]:
             return jsonify({"Error": f"Version {version} not supported"}), 404
-        
+
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
-        
+
         date2 = date1 + relativedelta(days=+1)
         mjd1 = int(datetime2mjd(date1))
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        
+
         data = self._gen_data(date, version, QueryParams(stw1=stw1, stw2=stw2))
-        
+
         if version == "v4":
             return jsonify(Date=date, Info=data)
         else:  # v5
@@ -113,22 +112,22 @@ class DateBackendInfo(DateInfo):
         """Get scan counts for a specific date and backend"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
-        
+
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
-        
+
         date2 = date1 + relativedelta(days=+1)
         mjd1 = int(datetime2mjd(date1))
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        
+
         data = self._gen_data(
             date, version, QueryParams(stw1=stw1, stw2=stw2, backend=backend)
         )
-        
+
         return jsonify(Date=date, Info=data)
 
 
@@ -156,7 +155,7 @@ class FreqmodeInfo(MethodView):
         """Get frequency mode info"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
-        
+
         loginfo = {}
         keylist = self.KEYS_V4
 
@@ -220,11 +219,12 @@ class FreqmodeInfo(MethodView):
 
 class FreqmodeInfoNoBackend(MethodView):
     """loginfo for all scans from a given date and freqmode without backend"""
-    
+
     LOCK = Lock()
 
     def __init__(self):
         import logging
+
         self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
 
     @classmethod
@@ -239,7 +239,7 @@ class FreqmodeInfoNoBackend(MethodView):
         """Get frequency mode info without backend"""
         if version != "v5":
             return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
-        
+
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
@@ -311,11 +311,12 @@ class FreqmodeInfoNoBackend(MethodView):
 
 class ScanInfoNoBackend(MethodView):
     """Get scan info without backend"""
-    
+
     LOCK = Lock()
 
     def __init__(self):
         import logging
+
         self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
 
     @classmethod
@@ -330,7 +331,7 @@ class ScanInfoNoBackend(MethodView):
         """Get scan info without backend"""
         if version != "v5":
             return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
-        
+
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
@@ -407,7 +408,7 @@ class ScanSpec(MethodView):
         """Get L1b data for a scan"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
-        
+
         spectra = get_scan_data_v2(backend, freqmode, scanno, debug)
         if spectra == {}:
             abort(404)
@@ -422,7 +423,7 @@ class ScanSpecNoBackend(MethodView):
         """Get L1b data for a scan without specifying backend"""
         if version != "v5":
             return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
-        
+
         debug = None
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
@@ -432,11 +433,11 @@ class ScanSpecNoBackend(MethodView):
             debug = get_args.get_bool("debug")
         except ValueError:
             abort(400)
-        
+
         spectra = get_scan_data_v2(backend, freqmode, scanno, bool(debug))
         if spectra == {}:
             abort(404)
-        
+
         data = scan2dictlist_v4(spectra)
         return jsonify(Data=data, Type="L1b", Count=None)
 
@@ -448,7 +449,7 @@ class ScanPTZ(MethodView):
         """Get PTZ data for a scan"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
-        
+
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             abort(404)
@@ -466,15 +467,12 @@ class ScanPTZNoBackend(MethodView):
         """Get PTZ data for a scan without specifying backend"""
         if version != "v5":
             return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
-        
+
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
             abort(404)
 
-        # TODO: Not always correct date?
-        date = time_util.stw2datetime(scanno).strftime("%Y-%m-%d")
-        
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             abort(404)
@@ -490,13 +488,14 @@ class ScanAPR(MethodView):
 
     def __init__(self):
         import logging
+
         self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
 
     def get(self, version, species, date, backend, freqmode, scanno):
         """Get apriori data for a scan"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
-        
+
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             self.logger.warning("could not get scandata")
@@ -526,21 +525,20 @@ class ScanAPRNoBackend(MethodView):
 
     def __init__(self):
         import logging
+
         self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
 
     def get(self, version, freqmode, scanno, species):
         """Get apriori data for a scan without specifying backend"""
         if version != "v5":
             return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
-        
+
         try:
-            backend = FREQMODE_TO_BACKEND[freqmode]
+            # Validate freqmode by checking if it maps to a backend
+            _ = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
             abort(404)
 
-        # TODO: Not always correct date?
-        date = time_util.stw2datetime(scanno).strftime("%Y-%m-%d")
-        
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             self.logger.warning("could not get scandata")
@@ -556,7 +554,7 @@ class ScanAPRNoBackend(MethodView):
         except AprioriException:
             self.logger.warning("could not find apriori data")
             abort(404)
-        
+
         return jsonify(
             Data={
                 "Pressure": around(datadict["pressure"], decimals=8).tolist(),
@@ -576,12 +574,14 @@ class CollocationsView(MethodView):
         """Get L2 collocations"""
         if version != "v5":
             return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
-        
+
         try:
-            collocations = get_L2_collocations(request.url_root, version, freqmode, scanno)
+            collocations = get_L2_collocations(
+                request.url_root, version, freqmode, scanno
+            )
         except KeyError:
             abort(404)
-        
+
         return jsonify(Data=collocations, Type="collocation", Count=len(collocations))
 
 
