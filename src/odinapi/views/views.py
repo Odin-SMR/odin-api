@@ -46,7 +46,7 @@ class QueryParams(TypedDict, total=False):
     backend: str | None
 
 
-class DateInfo(BaseView):
+class DateInfo(MethodView):
     """Get scan counts for a day"""
 
     query_str = text(
@@ -57,28 +57,30 @@ class DateInfo(BaseView):
         "order by backend,freqmode "
     )
 
-    @register_versions("fetch")
-    def _get(self, version, date):
+    def get(self, version, date):
+        """Get scan counts for a specific date"""
+        if version not in ["v4", "v5"]:
+            return jsonify({"Error": f"Version {version} not supported"}), 404
+        
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
+        
         date2 = date1 + relativedelta(days=+1)
         mjd1 = int(datetime2mjd(date1))
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        return self.gen_data(date, version, QueryParams(stw1=stw1, stw2=stw2))
+        
+        data = self._gen_data(date, version, QueryParams(stw1=stw1, stw2=stw2))
+        
+        if version == "v4":
+            return jsonify(Date=date, Info=data)
+        else:  # v5
+            return jsonify(Date=date, Data=data, Type="freqmode_info", Count=len(data))
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, data, date):
-        return dict(Date=date, Info=data)
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, data, date):
-        return dict(Date=date, Data=data, Type="freqmode_info", Count=len(data))
-
-    def gen_data(self, date, version, params: QueryParams):
+    def _gen_data(self, date, version, params: QueryParams):
         result = db.session.execute(self.query_str, params=params)
         info_list = []
         for row in result:
@@ -96,7 +98,6 @@ class DateInfo(BaseView):
 class DateBackendInfo(DateInfo):
     """Get scan counts for a day and backend"""
 
-    SUPPORTED_VERSIONS = ["v4"]
     query_str = text(
         squeeze_query(
             """\
@@ -109,24 +110,27 @@ class DateBackendInfo(DateInfo):
         )
     )
 
-    @register_versions("fetch")
-    def _get(self, version, date, backend):  # type: ignore
+    def get(self, version, date, backend):
+        """Get scan counts for a specific date and backend"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+        
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
+        
         date2 = date1 + relativedelta(days=+1)
         mjd1 = int(datetime2mjd(date1))
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        return self.gen_data(
+        
+        data = self._gen_data(
             date, version, QueryParams(stw1=stw1, stw2=stw2, backend=backend)
         )
-
-    @register_versions("return")
-    def _return(self, version, data, date, backend):  # type: ignore
-        return dict(Date=date, Info=data)
+        
+        return jsonify(Date=date, Info=data)
 
 
 class FreqmodeInfo(BaseView):
