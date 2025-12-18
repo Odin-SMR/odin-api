@@ -1,13 +1,13 @@
 ---
-# OpenAPI 3.0 documentation for Level 1 endpoints
+# OpenAPI 3.0 documentation for Level 1 core endpoints (no backend parameter)
 
 paths:
-  /rest_api/{version}/level1/{date}/:
+  /rest_api/{version}/level1/{freqmode}/scans/:
     get:
       tags:
         - level1
-      summary: Get scan counts for a day
-      description: Returns frequency mode information for all scans on a given date
+      summary: Get list of scans for a freqmode
+      description: Returns log information for all scans in a specific frequency mode
       parameters:
         - name: version
           in: path
@@ -16,75 +16,27 @@ paths:
             type: string
             enum: [v4, v5]
           description: API version
-        - name: date
-          in: path
-          required: true
-          schema:
-            type: string
-            format: date
-          description: Date in YYYY-MM-DD format
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  Date:
-                    type: string
-                    format: date
-                  Data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        Backend:
-                          type: string
-                        FreqMode:
-                          type: integer
-                        NumScan:
-                          type: integer
-                        URL:
-                          type: string
-                  Type:
-                    type: string
-                    example: "freqmode_info"
-                  Count:
-                    type: integer
-        '404':
-          description: Invalid date format
-
-  /rest_api/{version}/level1/{date}/{freqmode}/:
-    get:
-      tags:
-        - level1
-      summary: Get log info for scans in a day and freqmode
-      description: Returns scan log information for a specific date and frequency mode
-      parameters:
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [v4, v5]
-          description: API version
-        - name: date
-          in: path
-          required: true
-          schema:
-            type: string
-            format: date
-          description: Date in YYYY-MM-DD format
         - name: freqmode
           in: path
           required: true
           schema:
             type: integer
           description: Frequency mode number
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start time filter
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End time filter
       responses:
         '200':
-          description: Successful response with log data
+          description: Successful response with scan list
           content:
             application/json:
               schema:
@@ -99,10 +51,8 @@ paths:
                     example: "Log"
                   Count:
                     type: integer
-        '404':
-          description: Invalid date format or freqmode not found
 
-  /rest_api/{version}/level1/{date}/{freqmode}/{scanno}/:
+  /rest_api/{version}/level1/{freqmode}/{scanno}/Log/:
     get:
       tags:
         - level1
@@ -116,13 +66,6 @@ paths:
             type: string
             enum: [v4, v5]
           description: API version
-        - name: date
-          in: path
-          required: true
-          schema:
-            type: string
-            format: date
-          description: Date in YYYY-MM-DD format
         - name: freqmode
           in: path
           required: true
@@ -137,7 +80,7 @@ paths:
           description: Scan number
       responses:
         '200':
-          description: Successful response with log data for specific scan
+          description: Successful response with log data
           content:
             application/json:
               schema:
@@ -150,15 +93,231 @@ paths:
                     example: "Log"
                   Count:
                     type: integer
-        '404':
-          description: Scan not found
+
+  /rest_api/{version}/level1/{freqmode}/{scanno}/L1b/:
+    get:
+      tags:
+        - level1
+      summary: Get scan spectrum data
+      description: Returns Level 1b spectrum data for a specific scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with L1b spectrum data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "L1b"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level1/{freqmode}/{scanno}/ptz/:
+    get:
+      tags:
+        - level1
+      summary: Get pressure-temperature-altitude profile
+      description: Returns PTZ profile data for a specific scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with PTZ profile data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "ptz"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level1/{freqmode}/{scanno}/apriori/{species}/:
+    get:
+      tags:
+        - level1
+      summary: Get a priori data
+      description: Returns a priori data for a specific species and scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+        - name: species
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Species name (e.g., O3, H2O, NO2)
+      responses:
+        '200':
+          description: Successful response with a priori data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "apriori"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level1/{freqmode}/{scanno}/collocations/:
+    get:
+      tags:
+        - level1
+      summary: Get collocations for a scan
+      description: Returns collocations (coincident measurements) for a specific scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with collocation data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "collocation"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/l1_log/{freqmode}/{scanno}/:
+    get:
+      tags:
+        - level1
+      summary: Get log info for a scan (alternative endpoint)
+      description: Returns log information for a specific scan identified by freqmode and scanno
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with log data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "Log"
+                  Count:
+                    type: integer
 
   /rest_api/{version}/scan/{backend}/{freqmode}/{scanno}/:
     get:
       tags:
         - level1
-      summary: Get scan spectrum data
-      description: Returns spectrum data for a specific scan
+      summary: Get scan spectrum data with backend
+      description: Returns spectrum data for a specific scan with backend specification
       parameters:
         - name: version
           in: path
@@ -201,15 +360,13 @@ paths:
                     example: "L1b"
                   Count:
                     type: integer
-        '404':
-          description: Scan not found
 
   /rest_api/{version}/ptz/{date}/{backend}/{freqmode}/{scanno}/:
     get:
       tags:
         - level1
-      summary: Get pressure-temperature-altitude profile
-      description: Returns PTZ profile data for a specific scan
+      summary: Get PTZ profile with date and backend
+      description: Returns PTZ profile data for a specific scan with date and backend
       parameters:
         - name: version
           in: path
@@ -246,7 +403,7 @@ paths:
           description: Scan number
       responses:
         '200':
-          description: Successful response with PTZ profile data
+          description: Successful response with PTZ data
           content:
             application/json:
               schema:
@@ -259,15 +416,13 @@ paths:
                     example: "ptz"
                   Count:
                     type: integer
-        '404':
-          description: PTZ data not found
 
   /rest_api/{version}/apriori/{species}/{date}/{backend}/{freqmode}/{scanno}/:
     get:
       tags:
         - level1
-      summary: Get a priori data
-      description: Returns a priori data for a specific species and scan
+      summary: Get a priori data with full parameters
+      description: Returns a priori data for a specific species, date, backend, and scan
       parameters:
         - name: version
           in: path
@@ -323,5 +478,3 @@ paths:
                     example: "apriori"
                   Count:
                     type: integer
-        '404':
-          description: A priori data not found

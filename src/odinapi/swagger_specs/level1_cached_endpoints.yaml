@@ -1,13 +1,13 @@
 ---
-# OpenAPI 3.0 documentation for Level 1 cached/optimized endpoints
+# OpenAPI 3.0 documentation for Level 1 cached/freqmode_info endpoints
 
 paths:
-  /rest_api/{version}/level1c/{date}/:
+  /rest_api/{version}/freqmode_info/{date}/:
     get:
       tags:
         - level1-cached
-      summary: Get scan counts for a day from cached table
-      description: Returns frequency mode information for all scans on a given date from the cached table (optimized for performance)
+      summary: Get scan counts for a day
+      description: Returns frequency mode information for all scans on a given date from cached table
       parameters:
         - name: version
           in: path
@@ -25,7 +25,7 @@ paths:
           description: Date in YYYY-MM-DD format
       responses:
         '200':
-          description: Successful response with cached scan counts
+          description: Successful response with scan counts
           content:
             application/json:
               schema:
@@ -53,89 +53,12 @@ paths:
                   Count:
                     type: integer
 
-  /rest_api/{version}/level1c/{year}/{month}/{day}/{length}/:
+  /rest_api/{version}/freqmode_info/{date}/{freqmode}/:
     get:
       tags:
         - level1-cached
-      summary: Get scan counts per day for a period
-      description: |
-        Returns scan counts for multiple days in a period. This is used to populate the calendar. 
-        The default length of the period is six weeks, just enough to fill a full calendar view.
-      parameters:
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [v4, v5]
-          description: API version
-        - name: year
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: Year
-        - name: month
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 12
-          description: Month (1-12)
-        - name: day
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 31
-          description: Day of month
-        - name: length
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: Number of days to retrieve
-      responses:
-        '200':
-          description: Successful response with period data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  PeriodStart:
-                    type: string
-                    format: date
-                  PeriodEnd:
-                    type: string
-                    format: date
-                  Data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        Backend:
-                          type: string
-                        FreqMode:
-                          type: integer
-                        NumScan:
-                          type: integer
-                        URL:
-                          type: string
-                  Type:
-                    type: string
-                    example: "freqmode_info"
-                  Count:
-                    type: integer
-
-  /rest_api/{version}/level1c/{date}/{freqmode}/:
-    get:
-      tags:
-        - level1-cached
-      summary: Get log info for scans in a day and freqmode from cached table
-      description: Returns scan log information for a specific date and frequency mode from cached table (optimized)
+      summary: Get log info for scans in a day and freqmode
+      description: Returns scan log information for a specific date and frequency mode from cached table
       parameters:
         - name: version
           in: path
@@ -159,7 +82,7 @@ paths:
           description: Frequency mode number
       responses:
         '200':
-          description: Successful response with cached log data
+          description: Successful response with log data
           content:
             application/json:
               schema:
@@ -175,11 +98,11 @@ paths:
                   Count:
                     type: integer
 
-  /rest_api/{version}/level1c/{date}/{freqmode}/{scanno}/:
+  /rest_api/{version}/freqmode_info/{date}/{freqmode}/{scanno}/:
     get:
       tags:
         - level1-cached
-      summary: Get log info for a scan from cached table
+      summary: Get log info for a scan
       description: Returns log information for a specific scan from cached table
       parameters:
         - name: version
@@ -224,58 +147,14 @@ paths:
                   Count:
                     type: integer
 
-  /rest_api/{version}/l1_log/{freqmode}/{scanno}/:
+  /rest_api/{version}/period_info/{year}/{month}/{day}/:
     get:
       tags:
         - level1-cached
-      summary: Get log info for a scan from cached table
-      description: Returns log information for a specific scan identified by freqmode and scanno
-      parameters:
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [v4, v5]
-          description: API version
-        - name: freqmode
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: Frequency mode number
-        - name: scanno
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: Scan number
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  Data:
-                    type: object
-                  Type:
-                    type: string
-                    example: "Log"
-                  Count:
-                    type: integer
-
-  /rest_api/{version}/level1c/{freqmode}/:
-    get:
-      tags:
-        - level1-cached
-      summary: Get log info for scans in period and freqmode from cached table
+      summary: Get scan counts per day for a period
       description: |
-        Returns log information for scans in a time period for a specific frequency mode from cached table. 
-        Apriori URLs are by default only returned for requested species, use 'apriori=all' to override this. 
-        Species names are case sensitive, invalid species names will be ignored - see data documentation for 
-        information on available apriori data.
+        Returns scan counts for multiple days in a period. This is used to populate the calendar. 
+        The default length of the period is six weeks, just enough to fill a full calendar view.
       parameters:
         - name: version
           in: path
@@ -284,93 +163,63 @@ paths:
             type: string
             enum: [v4, v5]
           description: API version
-        - name: freqmode
+        - name: year
           in: path
           required: true
           schema:
             type: integer
-          description: Frequency mode number
-        - name: start_time
-          in: query
+          description: Year
+        - name: month
+          in: path
           required: true
           schema:
-            type: string
-            format: date-time
-          description: Start time for the period
-        - name: end_time
-          in: query
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Month (1-12)
+        - name: day
+          in: path
           required: true
           schema:
-            type: string
-            format: date-time
-          description: End time for the period
-        - name: apriori
+            type: integer
+            minimum: 1
+            maximum: 31
+          description: Day of month
+        - name: length
           in: query
           schema:
-            type: array
-            items:
-              type: string
-          description: Species names for apriori data (use 'all' for all species)
-          style: form
-          explode: true
+            type: integer
+            default: 42
+          description: Number of days to retrieve (default 42 for calendar)
       responses:
         '200':
-          description: Successful response with log data for period
+          description: Successful response with period data
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  PeriodStart:
+                    type: string
+                    format: date
+                  PeriodEnd:
+                    type: string
+                    format: date
                   Data:
                     type: array
                     items:
                       type: object
+                      properties:
+                        Backend:
+                          type: string
+                        FreqMode:
+                          type: integer
+                        NumScan:
+                          type: integer
+                        URL:
+                          type: string
                   Type:
                     type: string
-                    example: "Log"
-                  Count:
-                    type: integer
-
-  /rest_api/{version}/collocations/{freqmode}/{scanno}/:
-    get:
-      tags:
-        - level1
-      summary: Get collocations for a scan
-      description: Returns collocations (coincident measurements) for a specific scan
-      parameters:
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [v4, v5]
-          description: API version
-        - name: freqmode
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: Frequency mode number
-        - name: scanno
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: Scan number
-      responses:
-        '200':
-          description: Successful response with collocation data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  Data:
-                    type: array
-                    items:
-                      type: object
-                  Type:
-                    type: string
-                    example: "collocation"
+                    example: "freqmode_info"
                   Count:
                     type: integer
