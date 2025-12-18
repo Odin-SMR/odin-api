@@ -17,22 +17,15 @@ For detailed setup and development instructions, please refer to our [README](..
 - Apriori data is stored in S3.
 
 ## Style Guidelines
-- Run black and mypy on all code before committing.
+- Run black, ruff and mypy on all code before committing.
 - Prefer simple and clear code over clever or complex solutions.
 - Use already existing third-party libraries when possible instead of writing custom code.
 - Write unit tests for all new features and bug fixes.
-- Run tests before committing code.
-
-## Running tests
-
-set environment variables to run tests with pytest
-    ODINAPI_TEST_PGHOST=localhost
-    ODINAPI_TEST_MONGO_HOST=localhost
+- Run pytests before committing code.
 
 ## Runtime Environment
 - The Docker image runs on AWS ECS Fargate.
 - Ensure image is compliant with the task definition below.
-
 
 ### ECS Fargate Task Definition
 ```json
