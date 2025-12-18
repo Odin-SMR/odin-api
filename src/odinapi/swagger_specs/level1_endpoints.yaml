@@ -7,7 +7,10 @@ paths:
       tags:
         - level1
       summary: Get list of scans for a freqmode
-      description: Returns log information for all scans in a specific frequency mode
+      description: |
+        Get log info for scans in period and freqmode from cached table. 
+        Apriori URLs are by default only returned for requested species, use 'apriori=all' to override this. 
+        Species names are case sensitive, invalid species names will be ignored - see data documentation for information on available apriori data.
       parameters:
         - name: version
           in: path
@@ -34,6 +37,15 @@ paths:
             type: string
             format: date-time
           description: End time filter
+        - name: apriori
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Return apriori data only for these species, or use 'all' for all apriori data
       responses:
         '200':
           description: Successful response with scan list
