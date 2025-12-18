@@ -20,7 +20,6 @@ from odinapi.utils.collocations import get_collocations
 from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 
 from odinapi.utils.time_util import datetime2mjd, mjd2stw
-from odinapi.views.baseview import BaseView, register_versions
 from odinapi.views.urlgen import get_freqmode_raw_url
 from odinapi.views.views_cached import get_scan_log_data
 

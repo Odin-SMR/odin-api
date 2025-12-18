@@ -23,10 +23,14 @@ from odinapi.utils.jsonmodels import (
     l2_prototype,
     l2i_prototype,
 )
-from odinapi.views.baseview import BadRequest, BaseView, register_versions
 from odinapi.views.get_ancillary_data import get_ancillary_data
 from odinapi.views.utils import make_rfc5988_pagination_header
 from odinapi.views.views import get_L2_collocations
+
+
+class BadRequest(Exception):
+    """Exception for bad requests"""
+    pass
 
 DEFAULT_LIMIT = 1000
 DOCUMENT_LIMIT = level2db.DOCUMENT_LIMIT
@@ -42,16 +46,20 @@ def is_development_request(version):
     return "/development/" in request.path
 
 
-class Level2ProjectBaseView(BaseView):
-    """With version v5 and above development projects should only be
+class Level2ProjectBaseView(MethodView):
+    """Base view for Level2 project endpoints.
+    With version v5 and above development projects should only be
     accessible from endpoints that have '/development/' in the path.
     """
 
     def __init__(self, development=False, **kwargs):
+        import logging
         self.development = development
+        self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
         super().__init__(**kwargs)
 
     def get(self, version, project, *args, **kwargs):
+        """Override in subclasses to implement specific GET logic"""
         is_dev = is_development_request(version)
         if is_dev is not None:
             projects = level2db.ProjectsDB()
@@ -60,7 +68,8 @@ class Level2ProjectBaseView(BaseView):
                 abort(404)
             if project_obj["development"] != is_dev:
                 abort(404)
-        return super().get(version, project, *args, **kwargs)
+        # Subclasses should override to implement their logic
+        return jsonify({"Error": "Not implemented"}), 501
 
 
 def get_base_url(version):
@@ -182,36 +191,43 @@ class Level2Write(MethodView):
         return "", HTTPStatus.NO_CONTENT
 
 
-class Level2ViewProjects(BaseView):
+class Level2ViewProjects(MethodView):
     """Get list of existing projects"""
 
-    @register_versions("fetch")
-    def _get_projects(self, version):
+    def get(self, version):
+        """Get list of Level2 projects"""
         db = level2db.ProjectsDB()
-        projects = db.get_projects(development=is_development_request(version))
+        projects_list = db.get_projects(development=is_development_request(version))
         base_url = get_base_url(version)
-        return [
+        projects = [
             {
                 "Name": p["name"],
                 "URLS": {"URL-project": "{}/{}/".format(base_url, p["name"])},
             }
-            for p in projects
+            for p in projects_list
         ]
-
-    @register_versions("return", ["v4"])
-    def _return_data(self, version, projects):
-        return {"Info": {"Projects": projects}}
-
-    @register_versions("return", ["v5"])
-    def _return_data_v5(self, version, projects):
-        return {"Data": projects, "Type": "level2_project", "Count": len(projects)}
+        
+        if version == "v4":
+            return jsonify(Info={"Projects": projects})
+        else:  # v5
+            return jsonify(Data=projects, Type="level2_project", Count=len(projects))
 
 
 class Level2ViewProject(Level2ProjectBaseView):
     """Get project information"""
 
-    @register_versions("fetch")
-    def _get_freqmodes(self, version, project):
+    def get(self, version, project):
+        """Get project freqmodes"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+        
         db = level2db.Level2DB(project)
         freqmodes = db.get_freqmodes()
         base_url = get_base_url(version)
@@ -235,19 +251,15 @@ class Level2ViewProject(Level2ProjectBaseView):
                 for freqmode in freqmodes
             ],
         }
-        return info
-
-    @register_versions("return", ["v4"])
-    def _return(self, version, info, project):
-        return {"Info": info}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, info, project):
-        return {
-            "Data": info["FreqModes"],
-            "Type": "level2_project_freqmode",
-            "Count": len(info["FreqModes"]),
-        }
+        
+        if version == "v4":
+            return jsonify(Info=info)
+        else:  # v5
+            return jsonify(
+                Data=info["FreqModes"],
+                Type="level2_project_freqmode",
+                Count=len(info["FreqModes"]),
+            )
 
 
 auth = HTTPBasicAuth()
@@ -270,8 +282,11 @@ class Level2ProjectPublish(MethodView):
         )
 
 
-class Level2ProjectAnnotations(BaseView):
-    def get(self, project):  # type: ignore
+class Level2ProjectAnnotations(MethodView):
+    """Get and create project annotations"""
+    
+    def get(self, project):
+        """Get project annotations"""
         projectsdb = level2db.ProjectsDB()
         try:
             annotations = list(projectsdb.get_annotations(project))
@@ -293,6 +308,7 @@ class Level2ProjectAnnotations(BaseView):
 
     @auth.login_required
     def post(self, project: str):
+        """Create new project annotation"""
         text: str | None = None
         freqmode: str | None = None
         if request.json:
@@ -318,8 +334,18 @@ class Level2ProjectAnnotations(BaseView):
 class Level2ViewComments(Level2ProjectBaseView):
     """GET list of comments for a freqmode"""
 
-    @register_versions("fetch")
-    def _fetch(self, version, project, freqmode):
+    def get(self, version, project, freqmode):
+        """Get comments for a project and freqmode"""
+        # Check development project access
+        is_dev = is_development_request(version)
+        if is_dev is not None:
+            projects = level2db.ProjectsDB()
+            project_obj = projects.get_project(project)
+            if not project_obj:
+                abort(404)
+            if project_obj["development"] != is_dev:
+                abort(404)
+        
         limit = get_args.get_int("limit") or DEFAULT_LIMIT
         offset = get_args.get_int("offset") or DEFAULT_OFFSET
         db = level2db.Level2DB(project)
@@ -348,10 +374,7 @@ class Level2ViewComments(Level2ProjectBaseView):
             ]
         }
         count = db.count_comments(freqmode)
-        data = {
-            "info": info,
-            "count": count,
-        }
+        
         headers = {
             "Link": make_rfc5988_pagination_header(
                 offset,
@@ -363,7 +386,15 @@ class Level2ViewComments(Level2ProjectBaseView):
                 freqmode=freqmode,
             ),
         }
-        return data, HTTPStatus.OK, headers
+        
+        if version == "v4":
+            return jsonify(Info=info), HTTPStatus.OK, headers
+        else:  # v5
+            return jsonify(
+                Data=info["Comments"],
+                Type="level2_scan_comment",
+                Count=count,
+            ), HTTPStatus.OK, headers
 
     def _get_endpoint(self):
         return (
@@ -371,18 +402,6 @@ class Level2ViewComments(Level2ProjectBaseView):
             if self.development
             else "level2_production.level2viewcomments"
         )
-
-    @register_versions("return", ["v4"])
-    def _return(self, version, data, project, freqmode):
-        return {"Info": data["info"]}
-
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, data, project, freqmode):
-        return {
-            "Data": data["info"]["Comments"],
-            "Type": "level2_scan_comment",
-            "Count": data["count"],
-        }
 
 
 class Level2ViewScans(Level2ProjectBaseView):
