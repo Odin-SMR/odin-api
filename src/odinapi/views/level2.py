@@ -197,6 +197,11 @@ class Level2Write(MethodView):
 class Level2ViewProjects(MethodView):
     """Get list of existing projects"""
 
+    def __init__(self, development=False, **kwargs):
+        """Initialize view - development parameter kept for compatibility"""
+        super().__init__(**kwargs)
+        # Note: development status is determined from URL path via is_development_request()
+
     def get(self, version):
         """Get list of Level2 projects"""
         db = level2db.ProjectsDB()
@@ -806,40 +811,47 @@ class Level2ViewLocations(Level2ProjectBaseView):
 
     def get(self, version, project):
         """Get Level2 data for specified locations"""
-        # Check development project access
-        is_dev = is_development_request(version)
-        if is_dev is not None:
-            projects = level2db.ProjectsDB()
-            project_obj = projects.get_project(project)
-            if not project_obj:
-                abort(404)
-            if project_obj["development"] != is_dev:
-                abort(404)
-
-        if not get_args.get_list("location"):
-            raise BadRequest("No locations specified")
         try:
-            param = parse_parameters()
-        except ValueError as err:
-            raise BadRequest(str(err))
-        db = level2db.Level2DB(project)
-        limit = param.pop("document_limit")
-        meas_iter = db.get_measurements(param.pop("products"), limit, **param)
+            # Check development project access
+            is_dev = is_development_request(version)
+            if is_dev is not None:
+                projects = level2db.ProjectsDB()
+                project_obj = projects.get_project(project)
+                if not project_obj:
+                    abort(404)
+                if project_obj["development"] != is_dev:
+                    abort(404)
 
-        if version == "v4":
-            results = list(meas_iter)
-            return jsonify(Info={"Nr": len(results), "Results": results})
+            if not get_args.get_list("location"):
+                raise BadRequest("No locations specified")
+            try:
+                param = parse_parameters()
+            except ValueError as err:
+                raise BadRequest(str(err))
+            db = level2db.Level2DB(project)
+            limit = param.pop("document_limit")
+            meas_iter = db.get_measurements(param.pop("products"), limit, **param)
 
-        scans, next_min_scanid = level2db.get_valid_collapsed_products(
-            list(meas_iter), limit
-        )
-        headers = {}
-        if next_min_scanid is not None:
-            link = get_level2view_paging_links(
-                request.url, param["min_scanid"], next_min_scanid
+            if version == "v4":
+                results = list(meas_iter)
+                return jsonify(Info={"Nr": len(results), "Results": results})
+
+            scans, next_min_scanid = level2db.get_valid_collapsed_products(
+                list(meas_iter), limit
             )
-            headers = {"link": link}
-        return jsonify(Data=scans, Type="L2", Count=len(scans)), HTTPStatus.OK, headers
+            headers = {}
+            if next_min_scanid is not None:
+                link = get_level2view_paging_links(
+                    request.url, param["min_scanid"], next_min_scanid
+                )
+                headers = {"link": link}
+            return (
+                jsonify(Data=scans, Type="L2", Count=len(scans)),
+                HTTPStatus.OK,
+                headers,
+            )
+        except BadRequest as err:
+            return jsonify({"Error": str(err)}), 400
 
 
 class Level2ViewDay(Level2ProjectBaseView):
@@ -854,45 +866,52 @@ class Level2ViewDay(Level2ProjectBaseView):
 
     def get(self, version, project, date):
         """Get Level2 data for a specific day"""
-        # Check development project access
-        is_dev = is_development_request(version)
-        if is_dev is not None:
-            projects = level2db.ProjectsDB()
-            project_obj = projects.get_project(project)
-            if not project_obj:
-                abort(404)
-            if project_obj["development"] != is_dev:
-                abort(404)
-
         try:
-            start_time = get_args.get_datetime(val=date)
-        except ValueError:
-            abort(400)
-        if start_time is None:
-            abort(400)
-        end_time = start_time + timedelta(hours=24)
-        try:
-            param = parse_parameters(start_time=start_time, end_time=end_time)
-        except ValueError as e:
-            return jsonify({"Error": str(e)})
-        db = level2db.Level2DB(project)
-        limit = param.pop("document_limit")
-        meas_iter = db.get_measurements(param.pop("products"), limit, **param)
+            # Check development project access
+            is_dev = is_development_request(version)
+            if is_dev is not None:
+                projects = level2db.ProjectsDB()
+                project_obj = projects.get_project(project)
+                if not project_obj:
+                    abort(404)
+                if project_obj["development"] != is_dev:
+                    abort(404)
 
-        if version == "v4":
-            results = list(meas_iter)
-            return jsonify(Info={"Nr": len(results), "Results": results})
+            try:
+                start_time = get_args.get_datetime(val=date)
+            except ValueError:
+                abort(400)
+            if start_time is None:
+                abort(400)
+            end_time = start_time + timedelta(hours=24)
+            try:
+                param = parse_parameters(start_time=start_time, end_time=end_time)
+            except ValueError as e:
+                raise BadRequest(str(e))
+            db = level2db.Level2DB(project)
+            limit = param.pop("document_limit")
+            meas_iter = db.get_measurements(param.pop("products"), limit, **param)
 
-        scans, next_min_scanid = level2db.get_valid_collapsed_products(
-            list(meas_iter), limit
-        )
-        headers = {}
-        if next_min_scanid is not None:
-            link = get_level2view_paging_links(
-                request.url, param["min_scanid"], next_min_scanid
+            if version == "v4":
+                results = list(meas_iter)
+                return jsonify(Info={"Nr": len(results), "Results": results})
+
+            scans, next_min_scanid = level2db.get_valid_collapsed_products(
+                list(meas_iter), limit
             )
-            headers = {"link": link}
-        return jsonify(Data=scans, Type="L2", Count=len(scans)), HTTPStatus.OK, headers
+            headers = {}
+            if next_min_scanid is not None:
+                link = get_level2view_paging_links(
+                    request.url, param["min_scanid"], next_min_scanid
+                )
+                headers = {"link": link}
+            return (
+                jsonify(Data=scans, Type="L2", Count=len(scans)),
+                HTTPStatus.OK,
+                headers,
+            )
+        except BadRequest as err:
+            return jsonify({"Error": str(err)}), 400
 
 
 class Level2ViewArea(Level2ProjectBaseView):
@@ -915,39 +934,46 @@ class Level2ViewArea(Level2ProjectBaseView):
 
     def get(self, version, project):
         """Get Level2 data for a specific area"""
-        # Check development project access
-        is_dev = is_development_request(version)
-        if is_dev is not None:
-            projects = level2db.ProjectsDB()
-            project_obj = projects.get_project(project)
-            if not project_obj:
-                abort(404)
-            if project_obj["development"] != is_dev:
-                abort(404)
-
         try:
-            param = parse_parameters()
-        except ValueError as e:
-            raise BadRequest(str(e))
+            # Check development project access
+            is_dev = is_development_request(version)
+            if is_dev is not None:
+                projects = level2db.ProjectsDB()
+                project_obj = projects.get_project(project)
+                if not project_obj:
+                    abort(404)
+                if project_obj["development"] != is_dev:
+                    abort(404)
 
-        db = level2db.Level2DB(project)
-        limit = param.pop("document_limit")
-        meas_iter = db.get_measurements(param.pop("products"), limit, **param)
+            try:
+                param = parse_parameters()
+            except ValueError as e:
+                raise BadRequest(str(e))
 
-        if version == "v4":
-            results = list(meas_iter)
-            return jsonify(Info={"Nr": len(results), "Results": results})
+            db = level2db.Level2DB(project)
+            limit = param.pop("document_limit")
+            meas_iter = db.get_measurements(param.pop("products"), limit, **param)
 
-        scans, next_min_scanid = level2db.get_valid_collapsed_products(
-            list(meas_iter), limit
-        )
-        headers = {}
-        if next_min_scanid is not None:
-            link = get_level2view_paging_links(
-                request.url, param["min_scanid"], next_min_scanid
+            if version == "v4":
+                results = list(meas_iter)
+                return jsonify(Info={"Nr": len(results), "Results": results})
+
+            scans, next_min_scanid = level2db.get_valid_collapsed_products(
+                list(meas_iter), limit
             )
-            headers = {"link": link}
-        return jsonify(Data=scans, Type="L2", Count=len(scans)), HTTPStatus.OK, headers
+            headers = {}
+            if next_min_scanid is not None:
+                link = get_level2view_paging_links(
+                    request.url, param["min_scanid"], next_min_scanid
+                )
+                headers = {"link": link}
+            return (
+                jsonify(Data=scans, Type="L2", Count=len(scans)),
+                HTTPStatus.OK,
+                headers,
+            )
+        except BadRequest as err:
+            return jsonify({"Error": str(err)}), 400
 
 
 def parse_parameters(**kwargs):
