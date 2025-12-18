@@ -6,11 +6,11 @@ from datetime import datetime, date, timedelta
 from odinapi.pg_database import squeeze_query
 from typing import TypedDict
 
-from flask import abort, request
+from flask import abort, jsonify, request
+from flask.views import MethodView
 from sqlalchemy import TextClause, text
 
 from odinapi.pg_database import db
-from .baseview import BaseView, register_versions
 from .level1b_scanlogdata_exporter import ScanInfoExporter
 from .urlgen import get_freqmode_info_url
 from ..utils import get_args
@@ -152,7 +152,7 @@ def generate_freq_mode_data(
     return info_list
 
 
-class DateInfoCached(BaseView):
+class DateInfoCached(MethodView):
     """DateInfo using a cached table"""
 
     query = text(
@@ -165,36 +165,35 @@ class DateInfoCached(BaseView):
         )
     )
 
-    @register_versions("fetch")
-    def _fetch_data(self, version: str, date: str):
+    def get(self, version: str, date: str):
+        """Get date info from cache"""
+        if version not in ["v4", "v5"]:
+            return jsonify({"Error": f"Version {version} not supported"}), 404
+        
         try:
             datetime_obj = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
-        return generate_freq_mode_data(
+        
+        data = generate_freq_mode_data(
             self.query,
             request.url_root,
             version,
             {"date1": datetime_obj.date()},
             date=date,
         )
-
-    @register_versions("return", ["v4"])
-    def _return_data(self, version, data, date):
-        return dict(Date=date, Info=data)
-
-    @register_versions("return", ["v5"])
-    def _return_data_v5(self, version, data, date):
-        return dict(Date=date, Data=data, Type="freqmode_info", Count=len(data))
+        
+        if version == "v4":
+            return jsonify(Date=date, Info=data)
+        else:  # v5
+            return jsonify(Date=date, Data=data, Type="freqmode_info", Count=len(data))
 
 
-class PeriodInfoCached(BaseView):
+class PeriodInfoCached(MethodView):
     """Period using a cached table
     This is used to populate the calendar. The standard length of the period
     is six weeks, just enough to fill a Full Calendar view.
     """
-
-    SUPPORTED_VERSIONS = ["v4", "v5"]
 
     query = text(
         squeeze_query(
@@ -206,12 +205,16 @@ class PeriodInfoCached(BaseView):
         )
     )
 
-    @register_versions("fetch")
-    def _fetch_data(self, version, year, month, day):
+    def get(self, version, year, month, day):
+        """Get period info from cache"""
+        if version not in ["v4", "v5"]:
+            return jsonify({"Error": f"Version {version} not supported"}), 404
+        
         try:
             date_start = date(year, month, day)
         except ValueError:
             abort(404)
+        
         period_length = request.args.get("length", 42, type=int)
         date_end = date_start + timedelta(days=period_length - 1)
         data = generate_freq_mode_data(
@@ -221,29 +224,22 @@ class PeriodInfoCached(BaseView):
             {"date1": date_start, "date2": date_end},
             include_date=True,
         )
-        return (data, date_start, date_end), 200, {}
-
-    @register_versions("return", ["v4"])
-    def _return_data(self, version, data, *args, **kwargs):
-        data, start, end = data
-        return dict(period_start=start, period_end=end, Info=data)
-
-    @register_versions("return", ["v5"])
-    def _return_data_v5(self, version, data, *args, **kwargs):
-        data, start, end = data
-        return dict(
-            PeriodStart=start.isoformat(),
-            PeriodEnd=end.isoformat(),
-            Data=data,
-            Type="freqmode_info",
-            Count=len(data),
-        )
+        
+        if version == "v4":
+            return jsonify(period_start=date_start, period_end=date_end, Info=data)
+        else:  # v5
+            return jsonify(
+                PeriodStart=date_start.isoformat(),
+                PeriodEnd=date_end.isoformat(),
+                Data=data,
+                Type="freqmode_info",
+                Count=len(data),
+            )
 
 
 class DateBackendInfoCached(DateInfoCached):
     """DateInfo for a certain backend using a cached table"""
 
-    SUPPORTED_VERSIONS = ["v4"]
     query = text(
         squeeze_query(
             """\
@@ -256,23 +252,25 @@ class DateBackendInfoCached(DateInfoCached):
         )
     )
 
-    @register_versions("fetch")
-    def _fetch_data(self, version, date: str, backend):
+    def get(self, version, date: str, backend):
+        """Get date backend info from cache"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+        
         try:
             datetime_obj = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
-        return generate_freq_mode_data(
+        
+        data = generate_freq_mode_data(
             self.query,
             request.url_root,
             version,
             {"date1": datetime_obj.date(), "backend": backend},
             date=date,
         )
-
-    @register_versions("return")
-    def _return_data(self, version, data, date, backend):
-        return dict(Date=date, Info=data)
+        
+        return jsonify(Date=date, Info=data)
 
 
 def make_loginfo_v4(loginfo, keylist, ind, version, date, backend):
@@ -327,7 +325,7 @@ def make_loginfo_v5(loginfo, keylist, ind, version, apriori=None):
     return datadict
 
 
-class FreqmodeInfoCached(BaseView):
+class FreqmodeInfoCached(MethodView):
     """loginfo for all scans from a given date and freqmode"""
 
     KEYS_V4 = [
@@ -347,8 +345,11 @@ class FreqmodeInfoCached(BaseView):
         "Quality",
     ]
 
-    @register_versions("fetch", ["v4"])
-    def _fetch_data_v4(self, version, date, backend, freqmode, scanno=None):
+    def get(self, version, date, backend, freqmode, scanno=None):
+        """Get frequency mode info from cache"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+        
         loginfo = {}
         keylist = self.KEYS_V4
 
@@ -369,39 +370,25 @@ class FreqmodeInfoCached(BaseView):
         except KeyError:
             loginfo["Info"] = []
 
-        return loginfo["Info"]
-
-    @register_versions("return", ["v4"])
-    def _return_data_v2(
-        self,
-        version,
-        data,
-        date,
-        backend,
-        freqmode,
-        scanno=None,
-    ):
+        data = loginfo["Info"]
+        
         if scanno is None:
-            return {"Info": data}
+            return jsonify(Info=data)
         else:
             for s in data:
                 if s["ScanID"] == scanno:
-                    return {"Info": s}
-        return None
+                    return jsonify(Info=s)
+        return jsonify(Info={})
 
 
-class FreqmodeInfoCachedNoBackend(BaseView):
-    SUPPORTED_VERSIONS = ["v5"]
+class FreqmodeInfoCachedNoBackend(MethodView):
+    """loginfo for all scans without backend specification"""
 
-    @register_versions("fetch")
-    def _fetch_data(
-        self,
-        version,
-        date,
-        freqmode,
-        scanno=None,
-        apriori=None,
-    ):
+    def get(self, version, date, freqmode, scanno=None, apriori=None):
+        """Get frequency mode info from cache without backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+        
         if apriori is None:
             apriori = SPECIES
         loginfo = {}
@@ -424,44 +411,22 @@ class FreqmodeInfoCachedNoBackend(BaseView):
         except KeyError:
             loginfo["Info"] = []
 
-        return loginfo["Info"]
-
-    @register_versions("return")
-    def _return_data(self, version, data, date, freqmode):
-        return {"Data": data, "Type": "Log", "Count": len(data)}
+        data = loginfo["Info"]
+        return jsonify(Data=data, Type="Log", Count=len(data))
 
 
-class ScanInfoCachedNoBackend(FreqmodeInfoCachedNoBackend):
-    @register_versions("fetch")
-    def _fetch_data(self, version, date, freqmode, scanno):
-        return super(ScanInfoCachedNoBackend, self)._fetch_data(
-            version, date, freqmode, scanno=scanno
-        )
+class ScanInfoCachedNoBackend(MethodView):
+    """Scan info for a single scan without backend"""
 
-    @register_versions("return")
-    def _return_data(self, version, data, date, freqmode, scanno):
-        for s in data:
-            if s["ScanID"] == scanno:
-                return {"Data": s, "Type": "Log", "Count": None}
-        abort(404)
-
-
-class L1LogCached(BaseView):
-    """L1 log for a freqmode and scanno"""
-
-    SUPPORTED_VERSIONS = ["v4", "v5"]
-
-    @register_versions("fetch", ["v4"])
-    def _fetch_data_v4(self, version, freqmode, scanno):
-        """GET method"""
-
-        try:
-            backend = FREQMODE_TO_BACKEND[freqmode]
-        except KeyError:
-            abort(404)
-
+    def get(self, version, date, freqmode, scanno):
+        """Get scan info from cache without backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+        
+        loginfo = {}
         keylist = FreqmodeInfoCached.KEYS_V4
-        loginfo = get_scan_log_data(freqmode, scanno)
+
+        loginfo = get_scan_logdata_cached(date, freqmode=int(freqmode), scanid=scanno)
 
         for key in loginfo:
             try:
@@ -472,25 +437,30 @@ class L1LogCached(BaseView):
         loginfo["Info"] = []
         try:
             for ind in range(len(loginfo["ScanID"])):
-                date = loginfo["DateTime"][ind].date().isoformat()
                 loginfo["Info"].append(
-                    make_loginfo_v4(loginfo, keylist, ind, version, date, backend)
+                    make_loginfo_v5(loginfo, keylist, ind, version, SPECIES)
                 )
         except KeyError:
             loginfo["Info"] = []
 
-        return loginfo["Info"]
-
-    @register_versions("return", ["v4"])
-    def _return_data_v4(self, version, data, freqmode, scanno):
+        data = loginfo["Info"]
         for s in data:
             if s["ScanID"] == scanno:
-                return {"Info": s}
+                return jsonify(Data=s, Type="Log", Count=None)
+        abort(404)
 
-    @register_versions("fetch", ["v5"])
-    def _fetch_data(self, version, freqmode, scanno):
+
+class L1LogCached(MethodView):
+    """L1 log for a freqmode and scanno"""
+
+    def get(self, version, freqmode, scanno):
+        """GET method"""
+        if version not in ["v4", "v5"]:
+            return jsonify({"Error": f"Version {version} not supported"}), 404
+        
         keylist = FreqmodeInfoCached.KEYS_V4
         loginfo = get_scan_log_data(freqmode, scanno)
+        
         for key in loginfo:
             try:
                 loginfo[key] = loginfo[key].tolist()
@@ -500,32 +470,50 @@ class L1LogCached(BaseView):
         loginfo["Info"] = []
         try:
             for ind in range(len(loginfo["ScanID"])):
-                loginfo["Info"].append(make_loginfo_v5(loginfo, keylist, ind, version))
+                if version == "v4":
+                    try:
+                        backend = FREQMODE_TO_BACKEND[freqmode]
+                    except KeyError:
+                        abort(404)
+                    date = loginfo["DateTime"][ind].date().isoformat()
+                    loginfo["Info"].append(
+                        make_loginfo_v4(loginfo, keylist, ind, version, date, backend)
+                    )
+                else:  # v5
+                    loginfo["Info"].append(make_loginfo_v5(loginfo, keylist, ind, version))
         except KeyError:
             loginfo["Info"] = []
 
-        return loginfo["Info"]
-
-    @register_versions("return", ["v5"])
-    def _return_data(self, version, data, freqmode, scanno):
+        data = loginfo["Info"]
+        
         for s in data:
             if s["ScanID"] == scanno:
-                return {"Data": s, "Type": "Log", "Count": None}
+                if version == "v4":
+                    return jsonify(Info=s)
+                else:  # v5
+                    return jsonify(Data=s, Type="Log", Count=None)
+        
+        return jsonify(Info={}) if version == "v4" else jsonify(Data={}, Type="Log", Count=None)
 
 
 class L1LogCached_v4(L1LogCached):
     """Support class for L1 log endpoint in v4"""
 
-    SUPPORTED_VERSIONS = ["v4"]
+    def get(self, version, freqmode, scanno):
+        """Enforce v4 only"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+        return super().get(version, freqmode, scanno)
 
 
-class L1LogCachedList(FreqmodeInfoCachedNoBackend):
+class L1LogCachedList(MethodView):
     """Get a list of L1 Logs for a certain period"""
 
-    SUPPORTED_VERSIONS = ["v5"]
-
-    @register_versions("fetch")
-    def _fetch_data(self, version, freqmode):
+    def get(self, version, freqmode):
+        """Get L1 log list for a time period"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+        
         start_time = get_args.get_datetime("start_time")
         end_time = get_args.get_datetime("end_time")
         if start_time and end_time and start_time > end_time:
@@ -541,16 +529,26 @@ class L1LogCachedList(FreqmodeInfoCachedNoBackend):
 
         log_list = []
         the_date = start_time
+        keylist = FreqmodeInfoCached.KEYS_V4
+        
         while the_date < end_time:
-            loginfo = super(L1LogCachedList, self)._fetch_data(
-                version, the_date, freqmode, scanno=None, apriori=apriori
+            loginfo = get_scan_logdata_cached(
+                the_date.strftime("%Y-%m-%d"), freqmode=int(freqmode), scanid=None
             )
-            if loginfo:
-                log_list.extend(loginfo)
+
+            for key in loginfo:
+                try:
+                    loginfo[key] = loginfo[key].tolist()
+                except AttributeError:
+                    pass
+
+            try:
+                for ind in range(len(loginfo["ScanID"])):
+                    log_entry = make_loginfo_v5(loginfo, keylist, ind, version, apriori)
+                    log_list.append(log_entry)
+            except KeyError:
+                pass
+            
             the_date += timedelta(days=1)
 
-        return log_list
-
-    @register_versions("return")
-    def _return_data(self, version, data, freqmode):
-        return {"Data": data, "Type": "Log", "Count": len(data)}
+        return jsonify(Data=log_list, Type="Log", Count=len(log_list))
