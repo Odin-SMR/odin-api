@@ -23,6 +23,28 @@ For detailed setup and development instructions, please refer to our [README](..
 - Write unit tests for all new features and bug fixes.
 - Run pytests before committing code.
 
+## Build, Test, and Lint Commands
+
+### Install Dependencies
+```bash
+uv sync
+```
+
+### Run Tests
+```bash
+uv run pytest
+```
+
+### Lint Code
+```bash
+uv run ruff check 
+uv run black --check .
+```
+### Type Check
+```bash 
+uv run mypy .
+```
+
 ## Runtime Environment
 - The Docker image runs on AWS ECS Fargate.
 - Ensure image is compliant with the task definition below.

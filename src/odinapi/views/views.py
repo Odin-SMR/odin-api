@@ -13,14 +13,12 @@ from odinapi.pg_database import squeeze_query
 
 # Activate Agg, must be done before imports below
 from odinapi.utils import (
-    time_util,
     use_agg,  # noqa: F401
 )
 from odinapi.utils.collocations import get_collocations
 from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
 
 from odinapi.utils.time_util import datetime2mjd, mjd2stw
-from odinapi.views.baseview import BaseView, register_versions
 from odinapi.views.urlgen import get_freqmode_raw_url
 from odinapi.views.views_cached import get_scan_log_data
 
@@ -46,7 +44,7 @@ class QueryParams(TypedDict, total=False):
     backend: str | None
 
 
-class DateInfo(BaseView):
+class DateInfo(MethodView):
     """Get scan counts for a day"""
 
     query_str = text(
@@ -57,28 +55,30 @@ class DateInfo(BaseView):
         "order by backend,freqmode "
     )
 
-    @register_versions("fetch")
-    def _get(self, version, date):
+    def get(self, version, date):
+        """Get scan counts for a specific date"""
+        if version not in ["v4", "v5"]:
+            return jsonify({"Error": f"Version {version} not supported"}), 404
+
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
+
         date2 = date1 + relativedelta(days=+1)
         mjd1 = int(datetime2mjd(date1))
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        return self.gen_data(date, version, QueryParams(stw1=stw1, stw2=stw2))
 
-    @register_versions("return", ["v4"])
-    def _return(self, version, data, date):
-        return dict(Date=date, Info=data)
+        data = self._gen_data(date, version, QueryParams(stw1=stw1, stw2=stw2))
 
-    @register_versions("return", ["v5"])
-    def _return_v5(self, version, data, date):
-        return dict(Date=date, Data=data, Type="freqmode_info", Count=len(data))
+        if version == "v4":
+            return jsonify(Date=date, Info=data)
+        else:  # v5
+            return jsonify(Date=date, Data=data, Type="freqmode_info", Count=len(data))
 
-    def gen_data(self, date, version, params: QueryParams):
+    def _gen_data(self, date, version, params: QueryParams):
         result = db.session.execute(self.query_str, params=params)
         info_list = []
         for row in result:
@@ -96,7 +96,6 @@ class DateInfo(BaseView):
 class DateBackendInfo(DateInfo):
     """Get scan counts for a day and backend"""
 
-    SUPPORTED_VERSIONS = ["v4"]
     query_str = text(
         squeeze_query(
             """\
@@ -109,30 +108,31 @@ class DateBackendInfo(DateInfo):
         )
     )
 
-    @register_versions("fetch")
-    def _get(self, version, date, backend):  # type: ignore
+    def get(self, version, date, backend):
+        """Get scan counts for a specific date and backend"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+
         try:
             date1 = datetime.strptime(date, "%Y-%m-%d")
         except ValueError:
             abort(404)
+
         date2 = date1 + relativedelta(days=+1)
         mjd1 = int(datetime2mjd(date1))
         mjd2 = int(datetime2mjd(date2))
         stw1 = mjd2stw(mjd1)
         stw2 = mjd2stw(mjd2)
-        return self.gen_data(
+
+        data = self._gen_data(
             date, version, QueryParams(stw1=stw1, stw2=stw2, backend=backend)
         )
 
-    @register_versions("return")
-    def _return(self, version, data, date, backend):  # type: ignore
-        return dict(Date=date, Info=data)
+        return jsonify(Date=date, Info=data)
 
 
-class FreqmodeInfo(BaseView):
+class FreqmodeInfo(MethodView):
     """loginfo for all scans from a given date and freqmode"""
-
-    SUPPORTED_VERSIONS = ["v4"]
 
     KEYS_V4 = [
         "Quality",
@@ -151,8 +151,11 @@ class FreqmodeInfo(BaseView):
         "ScanID",
     ]
 
-    @register_versions("fetch", ["v4"])
-    def _fetch_data_v4(self, version, date, backend, freqmode, scanno=None):
+    def get(self, version, date, backend, freqmode, scanno=None):
+        """Get frequency mode info"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+
         loginfo = {}
         keylist = self.KEYS_V4
 
@@ -168,7 +171,7 @@ class FreqmodeInfo(BaseView):
                 loginfo["DateTime"][index] = (loginfo["DateTime"][index]).isoformat("T")
         except KeyError:
             loginfo["Info"] = []
-            return jsonify({"Info": loginfo["Info"]})
+            return jsonify(Info=loginfo["Info"])
 
         for key in loginfo:
             try:
@@ -202,24 +205,27 @@ class FreqmodeInfo(BaseView):
                 )
             loginfo["Info"].append(datadict)
 
-        return loginfo
-
-    @register_versions("return", ["v4"])
-    def _return_data_v2(self, version, loginfo, date, backend, freqmode, scanno=None):
         if scanno is None:
             try:
-                return {"Info": loginfo["Info"]}
+                return jsonify(Info=loginfo["Info"])
             except TypeError:
-                return {"Info": []}
+                return jsonify(Info=[])
         else:
             for s in loginfo["Info"]:
                 if s["ScanID"] == scanno:
-                    return {"Info": s}
+                    return jsonify(Info=s)
+            return jsonify(Info={})
 
 
-class FreqmodeInfoNoBackend(BaseView):
-    SUPPORTED_VERSIONS = ["v5"]
+class FreqmodeInfoNoBackend(MethodView):
+    """loginfo for all scans from a given date and freqmode without backend"""
+
     LOCK = Lock()
+
+    def __init__(self):
+        import logging
+
+        self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
 
     @classmethod
     def _acquire_lock(cls, timeout: int = 1) -> bool:
@@ -229,8 +235,11 @@ class FreqmodeInfoNoBackend(BaseView):
     def _release_lock(cls) -> None:
         cls.LOCK.release()
 
-    @register_versions("fetch")
-    def _fetch_data(self, version, date, freqmode):
+    def get(self, version, date, freqmode):
+        """Get frequency mode info without backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
@@ -262,7 +271,7 @@ class FreqmodeInfoNoBackend(BaseView):
                 loginfo["DateTime"][index] = (loginfo["DateTime"][index]).isoformat("T")
         except KeyError:
             loginfo["Info"] = []
-            return jsonify({"Info": loginfo["Info"]})
+            return jsonify(Data=[], Type="Log", Count=0)
 
         for key in loginfo:
             try:
@@ -294,53 +303,127 @@ class FreqmodeInfoNoBackend(BaseView):
                 ).format(request.url_root, version, freq_mode, scanid, species)
             loginfo["Info"].append(datadict)
 
-        return loginfo["Info"]
-
-    @register_versions("return")
-    def _return_data_v5(self, version, data, date, freqmode):
+        data = loginfo["Info"]
         if not data:
             data = []
-        return {"Data": data, "Type": "Log", "Count": len(data)}
+        return jsonify(Data=data, Type="Log", Count=len(data))
 
 
-class ScanInfoNoBackend(FreqmodeInfoNoBackend):
-    @register_versions("fetch")
-    def _fetch_data(self, version, date, freqmode, scanno):  # type: ignore
-        return super(ScanInfoNoBackend, self)._fetch_data(version, date, freqmode)
+class ScanInfoNoBackend(MethodView):
+    """Get scan info without backend"""
 
-    @register_versions("return")
-    def _return_data_v5(self, version, data, date, freqmode, scanno):  # type: ignore
+    LOCK = Lock()
+
+    def __init__(self):
+        import logging
+
+        self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
+
+    @classmethod
+    def _acquire_lock(cls, timeout: int = 1) -> bool:
+        return cls.LOCK.acquire(timeout=timeout)
+
+    @classmethod
+    def _release_lock(cls) -> None:
+        cls.LOCK.release()
+
+    def get(self, version, date, freqmode, scanno):
+        """Get scan info without backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+
+        try:
+            backend = FREQMODE_TO_BACKEND[freqmode]
+        except KeyError:
+            abort(404)
+
+        if not self._acquire_lock():
+            self.logger.debug("could not acquire raw lock")
+            abort(429)
+        self.logger.debug("raw lock acquired")
+
+        try:
+            loginfo = {}
+            keylist = FreqmodeInfo.KEYS_V4
+
+            loginfo, _, _ = get_scan_logdata(
+                backend,
+                date + "T00:00:00",
+                freqmode=int(freqmode),
+                dmjd=1,
+            )
+        except Exception as err:
+            raise (err)
+        finally:
+            self._release_lock()
+            self.logger.debug("raw lock released")
+
+        try:
+            for index in range(len(loginfo["ScanID"])):
+                loginfo["DateTime"][index] = (loginfo["DateTime"][index]).isoformat("T")
+        except KeyError:
+            abort(404)
+
+        for key in loginfo:
+            try:
+                loginfo[key] = loginfo[key].tolist()
+            except AttributeError:
+                pass
+
+        loginfo["Info"] = []
+        for ind in range(len(loginfo["ScanID"])):
+            freq_mode = loginfo["FreqMode"][ind]
+            scanid = loginfo["ScanID"][ind]
+
+            datadict = dict()
+            for key in keylist:
+                datadict[key] = loginfo[key][ind]
+            datadict["URLS"] = dict()
+            datadict["URLS"]["URL-log"] = (
+                "{0}rest_api/{1}/level1/{2}/{3}/Log/"
+            ).format(request.url_root, version, freq_mode, scanid)
+            datadict["URLS"]["URL-spectra"] = (
+                "{0}rest_api/{1}/level1/{2}/{3}/L1b/"
+            ).format(request.url_root, version, freq_mode, scanid)
+            datadict["URLS"]["URL-ptz"] = (
+                "{0}rest_api/{1}/level1/{2}/{3}/ptz/"
+            ).format(request.url_root, version, freq_mode, scanid)
+            for species in SPECIES:
+                datadict["URLS"]["""URL-apriori-{0}""".format(species)] = (
+                    "{0}rest_api/{1}/level1/{2}/{3}/apriori/{4}/"
+                ).format(request.url_root, version, freq_mode, scanid, species)
+            loginfo["Info"].append(datadict)
+
+        data = loginfo["Info"]
         for s in data:
             if s["ScanID"] == scanno:
-                return {"Data": s, "Type": "Log", "Count": None}
+                return jsonify(Data=s, Type="Log", Count=None)
         abort(404)
 
 
-class ScanSpec(BaseView):
+class ScanSpec(MethodView):
     """Get L1b data"""
 
-    SUPPORTED_VERSIONS = ["v4"]
+    def get(self, version, backend, freqmode, scanno, debug=False):
+        """Get L1b data for a scan"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
 
-    @register_versions("fetch", ["v4"])
-    def _get_v4(self, version, backend, freqmode, scanno, debug=False):
         spectra = get_scan_data_v2(backend, freqmode, scanno, debug)
         if spectra == {}:
             abort(404)
         # spectra is a dictionary containing the relevant data
-        return scan2dictlist_v4(spectra)
-
-    @register_versions("return")
-    def _to_return_format(self, version, datadict, *args, **kwargs):
-        return datadict
+        return jsonify(scan2dictlist_v4(spectra))
 
 
-class ScanSpecNoBackend(ScanSpec):
+class ScanSpecNoBackend(MethodView):
     """Get L1b data"""
 
-    SUPPORTED_VERSIONS = ["v5"]
+    def get(self, version, freqmode, scanno):
+        """Get L1b data for a scan without specifying backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
 
-    @register_versions("fetch")
-    def _get_v5(self, version, freqmode, scanno):
         debug = None
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
@@ -350,62 +433,69 @@ class ScanSpecNoBackend(ScanSpec):
             debug = get_args.get_bool("debug")
         except ValueError:
             abort(400)
-        return self._get_v4(version, backend, freqmode, scanno, bool(debug))
 
-    @register_versions("return")
-    def _to_return_format(self, version, data, *args, **kwargs):
-        return {"Data": data, "Type": "L1b", "Count": None}
+        spectra = get_scan_data_v2(backend, freqmode, scanno, bool(debug))
+        if spectra == {}:
+            abort(404)
+
+        data = scan2dictlist_v4(spectra)
+        return jsonify(Data=data, Type="L1b", Count=None)
 
 
-class ScanPTZ(BaseView):
+class ScanPTZ(MethodView):
     """Get PTZ data"""
 
-    SUPPORTED_VERSIONS = ["v4"]
+    def get(self, version, date, backend, freqmode, scanno):
+        """Get PTZ data for a scan"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
 
-    @register_versions("fetch", ["v4"])
-    def _get_ptz_v4(self, version, date, backend, freqmode, scanno):
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             abort(404)
         mjd, _, midlat, midlon = get_geoloc_info(loginfo)
         ptz = get_ptz(backend, scanno, mjd, midlat, midlon)
         if not ptz:
-            return dict()
-        return ptz
-
-    @register_versions("return")
-    def _to_return_format(self, version, datadict, *args, **kwargs):
-        return datadict
+            return jsonify({})
+        return jsonify(ptz)
 
 
-class ScanPTZNoBackend(ScanPTZ):
+class ScanPTZNoBackend(MethodView):
     """Get PTZ data"""
 
-    SUPPORTED_VERSIONS = ["v5"]
+    def get(self, version, freqmode, scanno):
+        """Get PTZ data for a scan without specifying backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
 
-    @register_versions("fetch")
-    def _get_ptz_v5(self, version, freqmode, scanno):
         try:
             backend = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
             abort(404)
 
-        # TODO: Not always correct date?
-        date = time_util.stw2datetime(scanno).strftime("%Y-%m-%d")
-        return self._get_ptz_v4(version, date, backend, freqmode, scanno)
+        loginfo = get_scan_log_data(freqmode, scanno)
+        if loginfo == {}:
+            abort(404)
+        mjd, _, midlat, midlon = get_geoloc_info(loginfo)
+        ptz = get_ptz(backend, scanno, mjd, midlat, midlon)
+        if not ptz:
+            return jsonify(Data={}, Type="ptz", Count=None)
+        return jsonify(Data=ptz, Type="ptz", Count=None)
 
-    @register_versions("return")
-    def _to_return_format(self, version, datadict, *args, **kwargs):
-        return {"Data": datadict, "Type": "ptz", "Count": None}
 
-
-class ScanAPR(BaseView):
+class ScanAPR(MethodView):
     """Get apriori data for a certain species"""
 
-    SUPPORTED_VERSIONS = ["v4"]
+    def __init__(self):
+        import logging
 
-    @register_versions("fetch", ["v4"])
-    def _get_v4(self, version, species, date, backend, freqmode, scanno):
+        self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
+
+    def get(self, version, species, date, backend, freqmode, scanno):
+        """Get apriori data for a scan"""
+        if version != "v4":
+            return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
+
         loginfo = get_scan_log_data(freqmode, scanno)
         if loginfo == {}:
             self.logger.warning("could not get scandata")
@@ -422,52 +512,77 @@ class ScanAPR(BaseView):
             self.logger.warning("could not find apriori data")
             abort(404)
         # vmr can be very small, problematic to decreaese number of digits
-        return {
-            "Pressure": around(datadict["pressure"], decimals=8).tolist(),
-            "VMR": datadict["vmr"].tolist(),
-            "Species": datadict["species"],
-            "Altitude": datadict["altitude"].tolist(),
-        }
-
-    @register_versions("return")
-    def _return_format(self, version, data, *args, **kwargs):
-        return data
+        return jsonify(
+            Pressure=around(datadict["pressure"], decimals=8).tolist(),
+            VMR=datadict["vmr"].tolist(),
+            Species=datadict["species"],
+            Altitude=datadict["altitude"].tolist(),
+        )
 
 
-class ScanAPRNoBackend(ScanAPR):
+class ScanAPRNoBackend(MethodView):
     """Get apriori data for a certain species"""
 
-    SUPPORTED_VERSIONS = ["v5"]
+    def __init__(self):
+        import logging
 
-    @register_versions("fetch")
-    def _get_v5(self, version, freqmode, scanno, species):
+        self.logger = logging.getLogger("odinapi").getChild(self.__class__.__name__)
+
+    def get(self, version, freqmode, scanno, species):
+        """Get apriori data for a scan without specifying backend"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+
         try:
-            backend = FREQMODE_TO_BACKEND[freqmode]
+            # Validate freqmode by checking if it maps to a backend
+            _ = FREQMODE_TO_BACKEND[freqmode]
         except KeyError:
             abort(404)
 
-        # TODO: Not always correct date?
-        date = time_util.stw2datetime(scanno).strftime("%Y-%m-%d")
-        return self._get_v4(version, species, date, backend, freqmode, scanno)
-
-    @register_versions("return")
-    def _return_format(self, version, datadict, *args, **kwargs):
-        return {"Data": datadict, "Type": "apriori", "Count": None}
-
-
-class CollocationsView(BaseView):
-    SUPPORTED_VERSIONS = ["v5"]
-
-    @register_versions("fetch")
-    def _get(self, version, freqmode, scanno):
+        loginfo = get_scan_log_data(freqmode, scanno)
+        if loginfo == {}:
+            self.logger.warning("could not get scandata")
+            abort(404)
+        _, day_of_year, midlat, _ = get_geoloc_info(loginfo)
         try:
-            return get_L2_collocations(request.url_root, version, freqmode, scanno)
+            datadict = get_apriori(
+                species,
+                day_of_year,
+                midlat,
+                source=get_args.get_string("aprsource"),
+            )
+        except AprioriException:
+            self.logger.warning("could not find apriori data")
+            abort(404)
+
+        return jsonify(
+            Data={
+                "Pressure": around(datadict["pressure"], decimals=8).tolist(),
+                "VMR": datadict["vmr"].tolist(),
+                "Species": datadict["species"],
+                "Altitude": datadict["altitude"].tolist(),
+            },
+            Type="apriori",
+            Count=None,
+        )
+
+
+class CollocationsView(MethodView):
+    """Get collocations for a scan"""
+
+    def get(self, version, freqmode, scanno):
+        """Get L2 collocations"""
+        if version != "v5":
+            return jsonify({"Error": f"Version {version} not supported, only v5"}), 404
+
+        try:
+            collocations = get_L2_collocations(
+                request.url_root, version, freqmode, scanno
+            )
         except KeyError:
             abort(404)
 
-    @register_versions("return")
-    def _return(self, version, collocations, freqmode, scanno):
-        return {"Data": collocations, "Type": "collocation", "Count": len(collocations)}
+        return jsonify(Data=collocations, Type="collocation", Count=len(collocations))
 
 
 def get_L2_collocations(root_url, version, freqmode, scanno):
@@ -842,14 +957,10 @@ class VdsExtData(MethodView):
         return data
 
 
-class ConfigDataFiles(BaseView):
+class ConfigDataFiles(MethodView):
     """display example files available to the system"""
 
-    @register_versions("fetch")
-    def gen_data(self, version):
-        """get the data"""
-        return get_config_data_files()
-
-    @register_versions("return")
-    def return_data(self, version, data):
-        return data
+    def get(self, version):
+        """Get configuration data files"""
+        data = get_config_data_files()
+        return jsonify(data)
