@@ -1,0 +1,889 @@
+---
+# OpenAPI 3.0 documentation for Level 2 endpoints
+
+paths:
+  /rest_api/{version}/level2/:
+    get:
+      tags:
+        - level2
+      summary: Get list of existing projects
+      description: Returns a list of all available Level 2 data projects
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+      responses:
+        '200':
+          description: Successful response with project list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        development:
+                          type: boolean
+                  Type:
+                    type: string
+                    example: "level2_project"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/:
+    get:
+      tags:
+        - level2
+      summary: Get project information
+      description: Returns detailed information about a specific Level 2 project
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+      responses:
+        '200':
+          description: Successful response with project details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "level2_project"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/annotations/:
+    get:
+      tags:
+        - level2
+      summary: Get annotations for a project
+      description: Returns all annotations/metadata for a Level 2 project
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+      responses:
+        '200':
+          description: Successful response with project annotations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2ProjectAnnotation"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/scans/:
+    get:
+      tags:
+        - level2
+      summary: Get list of matching scans
+      description: Returns a list of scans that match the query criteria
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: comment
+          in: query
+          schema:
+            type: string
+          description: Filter scans by comment
+      responses:
+        '200':
+          description: Successful response with scan list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "level2_scan_comment"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/failed/:
+    get:
+      tags:
+        - level2
+      summary: Get list of failed scans
+      description: Returns information about scans that failed processing
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 1000
+          description: Maximum number of results to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Number of results to skip
+      responses:
+        '200':
+          description: Successful response with failed scan information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "level2_failed_scan_info"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/{freqmode}/{scanno}/:
+    get:
+      tags:
+        - level2
+      summary: Get scan information
+      description: Returns information about a specific scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with scan information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "level2_scan_info"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/{freqmode}/{scanno}/l2i/:
+    get:
+      tags:
+        - level2
+      summary: Get Level 2i inverted data for a scan
+      description: Returns Level 2i (inverted) data for a specific scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with L2i data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: object
+                  Type:
+                    type: string
+                    example: "L2i"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/{freqmode}/{scanno}/l2c/:
+    get:
+      tags:
+        - level2
+      summary: Get Level 2c characterisation data
+      description: Returns Level 2c (characterisation) data including averaging kernels and error estimates
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with L2c data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2c"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/{freqmode}/{scanno}/l2anc/:
+    get:
+      tags:
+        - level2
+      summary: Get Level 2 ancillary data
+      description: Returns ancillary data (PTZ, geolocation, etc.) for a scan
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+      responses:
+        '200':
+          description: Successful response with ancillary data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2anc"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/{freqmode}/{scanno}/{product}/:
+    get:
+      tags:
+        - level2
+      summary: Get level2 data for one scan and product
+      description: Returns Level 2 retrieved data for a specific scan, freqmode, and product
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+        - name: scanno
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Scan number
+        - name: product
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Product name
+      responses:
+        '200':
+          description: Successful response with L2 product data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/products/:
+    get:
+      tags:
+        - level2
+      summary: Get available products
+      description: Returns a list of all products available in the project
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+      responses:
+        '200':
+          description: Successful response with product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product:
+                          type: string
+                  Type:
+                    type: string
+                    example: "level2_product_name"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/products/{freqmode}/:
+    get:
+      tags:
+        - level2
+      summary: Get available products for a given project and freqmode
+      description: Returns a list of products available for a specific frequency mode
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: freqmode
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Frequency mode number
+      responses:
+        '200':
+          description: Successful response with product list for freqmode
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "level2_product_name"
+                  Count:
+                    type: integer
+
+  /rest_api/{version}/level2/{project}/location/:
+    get:
+      tags:
+        - level2
+      summary: Get data close to provided location
+      description: |
+        Provide one or more locations and a radius to get data within the resulting circles on the earth surface.
+        
+        Choose between min/max altitude and min/max pressure.
+        
+        Example query:
+        
+           product=p1&product=p2&min_pressure=100&max_pressure=1000&start_time=2015-10-11&end_time=2016-02-20&radius=100&location=-24.0,200.0&location=-30.0,210.0
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: product
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: Product names
+          style: form
+          explode: true
+        - name: location
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: Locations in format "lat,lon" (e.g., "-10.1,300.3")
+          style: form
+          explode: true
+        - name: radius
+          in: query
+          required: true
+          schema:
+            type: number
+          description: Radius in kilometers from each location
+        - name: min_pressure
+          in: query
+          schema:
+            type: number
+          description: Minimum pressure in Pa
+        - name: max_pressure
+          in: query
+          schema:
+            type: number
+          description: Maximum pressure in Pa
+        - name: min_altitude
+          in: query
+          schema:
+            type: number
+          description: Minimum altitude in meters
+        - name: max_altitude
+          in: query
+          schema:
+            type: number
+          description: Maximum altitude in meters
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date
+        - name: min_scanid
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Minimum scan ID
+        - name: document_limit
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of database documents to return (minimum 1000)
+      responses:
+        '200':
+          description: Successful response with L2 data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2"
+                  Count:
+                    type: integer
+        '400':
+          description: Bad query - unsupported query parameters
+
+  /rest_api/{version}/level2/{project}/{date}/:
+    get:
+      tags:
+        - level2
+      summary: Get data for provided day
+      description: |
+        Get data for a certain day.
+        
+        Choose between min/max altitude and min/max pressure.
+        
+        Example query:
+        
+            product=p1&product=p2&min_pressure=1000&max_pressure=1000
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date in YYYY-MM-DD format
+        - name: product
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: Product names
+          style: form
+          explode: true
+        - name: min_pressure
+          in: query
+          schema:
+            type: number
+          description: Minimum pressure in Pa
+        - name: max_pressure
+          in: query
+          schema:
+            type: number
+          description: Maximum pressure in Pa
+        - name: min_altitude
+          in: query
+          schema:
+            type: number
+          description: Minimum altitude in meters
+        - name: max_altitude
+          in: query
+          schema:
+            type: number
+          description: Maximum altitude in meters
+        - name: min_scanid
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Minimum scan ID
+        - name: document_limit
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of database documents to return
+      responses:
+        '200':
+          description: Successful response with L2 data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2"
+                  Count:
+                    type: integer
+        '400':
+          description: Bad query - unsupported query parameters
+
+  /rest_api/{version}/level2/{project}/area/:
+    get:
+      tags:
+        - level2
+      summary: Get data in provided area
+      description: |
+        Get data for a certain area.
+        
+        Provide latitude and/or longitude limits to get data for a certain area of the earth.
+        
+        If no latitude or longitude limits are provided, data for the whole earth is returned.
+        
+        Choose between min/max altitude and min/max pressure.
+        
+        Example url parameters:
+        
+            product=p1&product=p2&min_pressure=100&max_pressure=100&start_time=2015-10-11&end_time=2016-02-20&min_lat=-80&max_lat=-70&min_lon=150&max_lon=200
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [v4, v5]
+          description: API version
+        - name: project
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Project name
+        - name: product
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: Product names
+          style: form
+          explode: true
+        - name: min_lat
+          in: query
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+          description: Minimum latitude (-90 to 90)
+        - name: max_lat
+          in: query
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+          description: Maximum latitude (-90 to 90)
+        - name: min_lon
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 360
+          description: Minimum longitude (0 to 360)
+        - name: max_lon
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 360
+          description: Maximum longitude (0 to 360)
+        - name: min_pressure
+          in: query
+          schema:
+            type: number
+          description: Minimum pressure in Pa
+        - name: max_pressure
+          in: query
+          schema:
+            type: number
+          description: Maximum pressure in Pa
+        - name: min_altitude
+          in: query
+          schema:
+            type: number
+          description: Minimum altitude in meters
+        - name: max_altitude
+          in: query
+          schema:
+            type: number
+          description: Maximum altitude in meters
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date
+        - name: min_scanid
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Minimum scan ID
+        - name: document_limit
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of database documents to return
+      responses:
+        '200':
+          description: Successful response with L2 data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Data:
+                    type: array
+                    items:
+                      type: object
+                  Type:
+                    type: string
+                    example: "L2"
+                  Count:
+                    type: integer
+        '400':
+          description: Bad query - unsupported query parameters
