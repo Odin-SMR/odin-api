@@ -31,7 +31,12 @@ class Config:
 class ProdConfig(Config):
     SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg://{pg_user}:{pg_passwd}@{pg_host}/{pg_dbname}?sslmode={pg_sslmode}"
 
-    SQLALCHEMY_ENGINE_OPTIONS = dict(pool_size=2, max_overflow=2, pool_recycle=300)
+    SQLALCHEMY_ENGINE_OPTIONS = dict(
+        pool_size=8,
+        max_overflow=4,
+        pool_recycle=300,
+        pool_timeout=10,
+    )
 
 
 class LocalConfig(Config):
