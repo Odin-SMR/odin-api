@@ -2,7 +2,7 @@ from datetime import datetime
 from threading import Lock
 from typing import TypedDict
 
-from dateutil.relativedelta import relativedelta  # type: ignore
+from dateutil.relativedelta import relativedelta
 from flask import abort, jsonify, request
 from flask.views import MethodView
 from numpy import around
@@ -17,7 +17,6 @@ from odinapi.utils import (
 )
 from odinapi.utils.collocations import get_collocations
 from odinapi.utils.defs import FREQMODE_TO_BACKEND, SPECIES
-
 from odinapi.utils.time_util import datetime2mjd, mjd2stw
 from odinapi.views.urlgen import get_freqmode_raw_url
 from odinapi.views.views_cached import get_scan_log_data
@@ -108,7 +107,7 @@ class DateBackendInfo(DateInfo):
         )
     )
 
-    def get(self, version, date, backend):
+    def get(self, version, date, backend):  # ty:ignore[invalid-method-override]
         """Get scan counts for a specific date and backend"""
         if version != "v4":
             return jsonify({"Error": f"Version {version} not supported, only v4"}), 404
@@ -477,7 +476,7 @@ class ScanPTZNoBackend(MethodView):
         if loginfo == {}:
             abort(404)
         mjd, _, midlat, midlon = get_geoloc_info(loginfo)
-        ptz = get_ptz(backend, scanno, mjd, midlat, midlon)
+        ptz = get_ptz(backend, scanno, mjd, midlat, midlon)  # ty:ignore[invalid-argument-type]
         if not ptz:
             return jsonify(Data={}, Type="ptz", Count=None)
         return jsonify(Data=ptz, Type="ptz", Count=None)

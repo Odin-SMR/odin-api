@@ -3,11 +3,11 @@
 from datetime import datetime
 
 import numpy as np
-import s3fs  # type: ignore
+import s3fs
 from dateutil.relativedelta import relativedelta
-from h5py import File  # type: ignore
+from h5py import File
 
-from odinapi.odin_aws.s3 import s3_stat  # type:ignore
+from odinapi.odin_aws.s3 import s3_stat
 
 
 def read_osiris_file(osiris_file, date, species, file_index):
@@ -21,15 +21,11 @@ def read_osiris_file(osiris_file, date, species, file_index):
     if s3_stat(osiris_file):
         with s3.open(osiris_file) as f:
             with File(f) as fgr:
-                fdata = fgr["HDFEOS"]["SWATHS"][  # type: ignore
-                    r"OSIRIS\Odin {0}MART".format(species)
-                ]
-                for key in fdata["Data Fields"]:  # type: ignore
-                    data_fields[key] = np.array(fdata["Data Fields"][key])  # type: ignore
-                for key in fdata["Geolocation Fields"]:  # type: ignore
-                    geolocation_fields[key] = np.array(
-                        fdata["Geolocation Fields"][key]  # type: ignore
-                    )  # type: ignore
+                fdata = fgr["HDFEOS"]["SWATHS"][r"OSIRIS\Odin {0}MART".format(species)]
+                for key in fdata["Data Fields"]:
+                    data_fields[key] = np.array(fdata["Data Fields"][key])
+                for key in fdata["Geolocation Fields"]:
+                    geolocation_fields[key] = np.array(fdata["Geolocation Fields"][key])
     # transform the mls date to MJD and add to dict
     mjd = []
     for time_i in geolocation_fields["Time"]:

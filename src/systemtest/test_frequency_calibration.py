@@ -28,7 +28,7 @@ def scan_sample_data(db_context):
     scan_data_exporter = ScandataExporter(backend)
     scan_data_exporter.get_db_data(freqmode, scanid)
     scan_data_exporter.decode_specdata()
-    assert len(scan_data_exporter.spectra["stw"]) == 94
+    assert len(scan_data_exporter.spectra["stw"]) == 94  # ty:ignore[invalid-argument-type]
     scan_data_exporter = apply_calibration_step2(scan_data_exporter)
     scan_data_exporter = unsplit_normalmode(scan_data_exporter)
     assert len(scan_data_exporter.spectra["stw"]) == 47

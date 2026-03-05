@@ -3,7 +3,7 @@
 import tempfile
 
 import numpy as np
-from netCDF4 import Dataset  # type: ignore
+from netCDF4 import Dataset
 
 from odinapi.odin_aws.s3 import s3_fileobject
 

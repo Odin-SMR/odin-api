@@ -1,4 +1,4 @@
-import pyarrow as pa  # type: ignore
+import pyarrow as pa
 import pytest
 
 from odinapi.views.read_ptz import get_ptz, prefix_names

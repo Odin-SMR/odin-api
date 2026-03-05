@@ -18,18 +18,17 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.python",
+        "astral-sh.ty",
+        "charliermarsh.ruff",
+        "github.copilot-chat",
+        "GitHub.copilot",
+        "github.vscode-pull-request-github",
+        "mongodb.mongodb-vscode",
         "ms-azuretools.vscode-docker",
         "ms-ossdata.vscode-postgresql",
-        "mongodb.mongodb-vscode",
-        "GitHub.copilot",
-        "github.copilot-chat",
         "ms-python.debugpy",
-        "redhat.vscode-yaml",
-        "ms-python.black-formatter",
-        "ms-python.mypy-type-checker",
-        "github.vscode-pull-request-github",
-        "charliermarsh.ruff"
+        "ms-python.python",
+        "redhat.vscode-yaml"
       ]
     }
   },

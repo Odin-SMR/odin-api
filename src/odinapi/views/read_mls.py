@@ -3,9 +3,9 @@
 from datetime import datetime
 
 import numpy as np
-import s3fs  # type: ignore
+import s3fs
 from dateutil.relativedelta import relativedelta
-from h5py import File  # type: ignore
+from h5py import File
 
 
 def read_mls_file(mlsfile, date, species, file_index):
@@ -20,14 +20,14 @@ def read_mls_file(mlsfile, date, species, file_index):
     with s3.open(mls_datapath + mlsfile) as f:
         with File(f) as fgr:
             if species == "T":
-                fdata = fgr["HDFEOS"]["SWATHS"]["Temperature"]  # type: ignore
+                fdata = fgr["HDFEOS"]["SWATHS"]["Temperature"]
             else:
-                fdata = fgr["HDFEOS"]["SWATHS"][species]  # type: ignore
-            for item in fdata["Data Fields"]:  # type: ignore
-                data_fields[item] = np.array(fdata["Data Fields"][item])  # type: ignore
+                fdata = fgr["HDFEOS"]["SWATHS"][species]
+            for item in fdata["Data Fields"]:
+                data_fields[item] = np.array(fdata["Data Fields"][item])
 
-            for item in fdata["Geolocation Fields"]:  # type: ignore
-                geolocation_fields[item] = np.array(fdata["Geolocation Fields"][item])  # type: ignore
+            for item in fdata["Geolocation Fields"]:
+                geolocation_fields[item] = np.array(fdata["Geolocation Fields"][item])
 
     # transform the mls date to MJD and add to dict
     mjd = []

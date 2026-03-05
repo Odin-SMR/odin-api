@@ -19,7 +19,7 @@ uv sync
 To run all tests, this requires correct AWS credentials, and running mongodb and postgresql docker containers.
 
 ```bash
-uv run pytest
+AWS_PROFILE=odin uv run pytest
 ```
 
 There are some markers defined for tests:
@@ -36,15 +36,12 @@ uv run pytest -m "not (slow or system or aws)"
 ## Linting
 
 ```bash
-uv run black --check .
-```
-```bash
-uv run ruff check .
+uv run ruff check
 ```
 
 ## Type checking
 ```bash
-uv run mypy .
+uv run ty check
 ```
 
 ## Running the API

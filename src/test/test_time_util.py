@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import pytest  # type: ignore
+import pytest
 
 
 from odinapi.utils import time_util

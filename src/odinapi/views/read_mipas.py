@@ -2,9 +2,9 @@ import os
 import tempfile
 from datetime import datetime
 
-from netCDF4 import Dataset, chartostring, num2date  # type: ignore
+from netCDF4 import Dataset, chartostring, num2date
 
-from odinapi.odin_aws.s3 import s3_fileobject  # type: ignore
+from odinapi.odin_aws.s3 import s3_fileobject
 
 
 def read_mipas_file(
@@ -55,7 +55,7 @@ def read_mipas_file(
                     entry = fgr.variables[key]
 
                 try:
-                    data[key] = chartostring(entry).item()
+                    data[key] = chartostring(entry).item()  # ty:ignore[no-matching-overload]
                 except ValueError:
                     data[key] = entry.tolist()
                 except AttributeError:

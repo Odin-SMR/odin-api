@@ -1,9 +1,9 @@
 from datetime import datetime
 
 import numpy as np
-import s3fs  # type: ignore
+import s3fs
 from dateutil.relativedelta import relativedelta
-from h5py import File  # type: ignore
+from h5py import File
 
 from odinapi.odin_aws.s3 import s3_stat
 

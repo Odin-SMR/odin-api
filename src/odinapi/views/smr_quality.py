@@ -330,7 +330,7 @@ class QualityDisplay:
                     message = (
                         "The Quality of Level1B data " + "for this scan is limited: "
                     )
-                message = message + self.qualdict[item][1]
+                message = message + self.qualdict[item][1]  # ty:ignore[unsupported-operator]
         for ind in range(0, len(message) // 180):
             message = (
                 message[0 : 1 + 180 * (ind + 1) + 3 * ind]

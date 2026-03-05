@@ -1,10 +1,9 @@
 import os
 from datetime import datetime
 
-import h5py  # type: ignore
+import h5py
 import numpy as np
-import s3fs  # type: ignore
-
+import s3fs
 
 def read_sageIII_file(filename, date, species, event_type):
     """Convenience function for getting all data from a Sage III file"""
