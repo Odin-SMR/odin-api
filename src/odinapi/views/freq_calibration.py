@@ -1,7 +1,7 @@
 """frequency correction tools for odin-api"""
 
 import numpy as np
-from scipy.optimize import curve_fit  # type: ignore
+from scipy.optimize import curve_fit
 
 
 CO_TRUE = 576.268  # CO line center frequency [GHz]

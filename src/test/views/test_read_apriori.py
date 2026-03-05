@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import pytest
-import scipy.io as sio  # type: ignore
+import scipy.io as sio
 
 from odinapi.views import read_apriori
 

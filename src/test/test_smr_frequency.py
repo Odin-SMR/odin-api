@@ -144,7 +144,7 @@ class TestSmrl1bFreqsort:
         smr_freq_sort.ydata = scan_data_sample["spectra"][0]
         smr_freq_sort.ac_filter([])
         smr_freq_sort.sort_from_middle(frequency_grid.flatten())
-        assert smr_freq_sort.ssb_ind.shape[0] == 817
+        assert smr_freq_sort.ssb_ind.shape[0] == 817  # ty:ignore[unresolved-attribute]
         assert np.all(smr_freq_sort.ssb_ind[0:110] == 1)
         assert np.all(smr_freq_sort.ssb_ind[111 : 111 + 99] == 2)
         assert np.all(smr_freq_sort.ssb_ind[210 : 210 + 100] == 3)

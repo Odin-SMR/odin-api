@@ -215,7 +215,7 @@ class ScandataExporter:
             for item in refdata:
                 if item == "cc":
                     corrcoef = np.ndarray(
-                        shape=(8 * 96,), dtype="float64", buffer=row["cc"]
+                        shape=(8 * 96,), dtype="float64", buffer=row["cc"]  # ty:ignore[invalid-argument-type]
                     )
                     # store only zerolags
                     zerolag = []
@@ -223,7 +223,7 @@ class ScandataExporter:
                         zerolag.append(zerolagfunc(cci, 1.0))
                     refdata["cc"].append(zerolag)
                 else:
-                    refdata[item].append(row[item])
+                    refdata[item].append(row[item])  # ty:ignore[invalid-argument-type]
         for item in refdata:
             refdata[item] = np.array(refdata[item])
         self.refdata = refdata
@@ -508,9 +508,9 @@ class CalibrationStep2:
         # t_sky = planck(2.7, spec['skyfreq'][ind])
         eta = 1 - spec["tspill"][ind] / 300.0  # main beam efficeiency
         weight = 1 / eta * (1.0 - spec["spectrum"][ind] / t_load)
-        if not np.isscalar(self.spec["spectrum"]):
+        if not np.isscalar(self.spec["spectrum"]):  # ty:ignore[invalid-argument-type]
             f_ind = np.nonzero((spec["spectrum"][ind] != 0))[0]
-            reducespec = np.array(weight * self.spec["spectrum"])
+            reducespec = np.array(weight * self.spec["spectrum"])  # ty:ignore[invalid-argument-type]
             data = np.array(spec["spectrum"][ind])
             data[f_ind] = data[f_ind] - reducespec[f_ind]
             spec["spectrum"][ind] = data
@@ -863,7 +863,7 @@ def plot_spectrum(spectra):
         plt.plot(freqvec, spei, ".", label=int(np.around(ztan / 1e3)))
     ax1.grid(True)
     ax1.minorticks_on()
-    plt.legend(bbox_to_anchor=(1.02, 0.95), loc=2, borderaxespad=0.0)
+    plt.legend(bbox_to_anchor=(1.02, 0.95), loc=2, borderaxespad=0.0)  # ty:ignore[unknown-argument]
     ax1.yaxis.set_label_text("Tb. [K]")
     ax1.axes.xaxis.set_ticklabels([])
     plt.xlim([xmin, xmax])
@@ -896,7 +896,7 @@ def plot_highalt_spectrum(spectra):
     textstr = """high altitude ({0}-{1} Km) average""".format(*[zmin, zmax])
     plt.plot(freqvec, data, ".", label=textstr)
     plt.ylim([-10, 10])
-    plt.legend(bbox_to_anchor=(0.02, 0.95), loc=2, borderaxespad=0.0)
+    plt.legend(bbox_to_anchor=(0.02, 0.95), loc=2, borderaxespad=0.0)  # ty:ignore[unknown-argument]
     ax1.grid(True)
     ax1.minorticks_on()
     plt.xlim([xmin, xmax])
@@ -917,7 +917,7 @@ def plot_band_average(spectra):
             xaver[index, band] = np.mean(speci[ind1 - 1 : ind2 - 1])
         if ind1 != -1:
             plt.plot(xaver[:, band], spectra["altitude"][2::] / 1e3, ".-", label=band)
-    plt.legend(bbox_to_anchor=(1.02, 1.0), loc=2, borderaxespad=0.0)
+    plt.legend(bbox_to_anchor=(1.02, 1.0), loc=2, borderaxespad=0.0)  # ty:ignore[unknown-argument]
     ax1.grid(True)
     ax1.minorticks_on()
     plt.xlim([-10, 250])

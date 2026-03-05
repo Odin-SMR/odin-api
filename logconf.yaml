@@ -17,7 +17,11 @@ loggers:
   odinapi:
     level: DEBUG
   botocore:
-    level: INFO
+    level: WARNING
+  botocore.httpchecksum:
+    level: WARNING
+  aiobotocore.regions:
+    level: WARNING
   flask:
     level: INFO
   flask.app:

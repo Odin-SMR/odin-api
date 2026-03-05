@@ -1,7 +1,7 @@
 from odinapi.pg_database import squeeze_query
 import numpy as np
-import ephem  # type: ignore
-from sqlalchemy import text  # type: ignore
+import ephem
+from sqlalchemy import text
 from odinapi.views.geoloc_tools import sph2cart
 from odinapi.utils.time_util import mjd2datetime
 from odinapi.pg_database import db
@@ -22,7 +22,7 @@ def get_theta(pressure, temperature):
 
 def get_solartime(mjd, longitude):
     """calculate solar time"""
-    sun = ephem.Sun()
+    sun = ephem.Sun()  # ty:ignore[unresolved-attribute]
     observer = ephem.Observer()
     observer.date = mjd2datetime(mjd)
     observer.long = longitude * np.pi / 180.0
@@ -55,7 +55,7 @@ def get_sza_at_retrieval_position(
         for attitude_coordinates in attitude_coordinates_list:
             angle_between_positions.append(
                 np.arccos(
-                    np.linalg.linalg.dot(attitude_coordinates, retrieval_coordinates)
+                    np.linalg.linalg.dot(attitude_coordinates, retrieval_coordinates)  # ty:ignore[unresolved-attribute]
                 )
             )
         sza_ret.append(sza_att[np.argmin(angle_between_positions)])

@@ -1,9 +1,9 @@
 import logging
 from typing import List, Literal, TypedDict
 
-import pyarrow.compute as pc  # type: ignore
-import pyarrow.dataset as ds  # type: ignore
-import s3fs  # type: ignore
+import pyarrow.compute as pc
+import pyarrow.dataset as ds
+import s3fs
 
 logger = logging.getLogger("odin.ptz")
 

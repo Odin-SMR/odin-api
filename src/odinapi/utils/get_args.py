@@ -50,7 +50,7 @@ def get_bool(arg):
 
 def get_float(arg=None, val=None):
     if not val:
-        val = request.args.get(arg)
+        val = request.args.get(arg)  # ty:ignore[invalid-argument-type]
     if not val:
         return
     try:
@@ -65,7 +65,7 @@ def get_list(arg):
 
 def get_datetime(arg=None, val=None):
     if not val:
-        val = request.args.get(arg)
+        val = request.args.get(arg)  # ty:ignore[invalid-argument-type]
     if not val:
         return
     if isinstance(val, datetime):

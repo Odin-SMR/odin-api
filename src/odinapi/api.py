@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 from flask import Flask
 from flask_cors import CORS
-from flasgger import Swagger  # type: ignore
+from flasgger import Swagger
 
 from odinapi.custom_json import CustomJSONProvider
 

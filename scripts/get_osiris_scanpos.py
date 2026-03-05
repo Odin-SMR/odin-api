@@ -1,4 +1,3 @@
-# type: ignore
 import os
 from datetime import datetime
 

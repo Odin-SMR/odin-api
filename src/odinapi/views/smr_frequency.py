@@ -45,7 +45,7 @@ class Smrl1bFreqspec:
     def aos_freq(self):
         """aos frequency"""
         nchan = self.channels
-        xvec = np.arange(0, nchan) - np.floor(nchan / 2)
+        xvec = np.arange(0, nchan) - np.floor(nchan / 2)  # ty:ignore[unsupported-operator]
         freq0 = self.freqcal[-1:-1:1]
         freq = 3900.0e6 * np.ones(1, nchan) - (np.polyval(freq0, xvec) - 2100.0e6)
         return freq
@@ -106,7 +106,9 @@ class Smrl1bFreqspec:
         # and  ADC 8 uses 1 chip in upper-side band mode
         #
         ssbvec = [1, -1, 1, -1, -1, 1, -1, 1]
-        mode = self.intmode << 1 | 1  # bitshift described above
+        mode = (
+            self.intmode << 1 | 1  # ty:ignore[unsupported-operator]
+        )  # bitshift described above
         seqvec = np.zeros(16, dtype="int")
         mind = 0
         for bit_i in range(8):
@@ -125,9 +127,9 @@ class Smrl1bFreqspec:
         seqvec = self.get_seq_pattern()
         freq = np.zeros(shape=(8, 112))
         bands = [1, 2, 3, 4, 5, 6, 7, 8]  # default: use all bands
-        if self.intmode & 512:
+        if self.intmode & 512:  # ty:ignore[unsupported-operator]
             # test for split mode
-            if self.intmode & 1024:
+            if self.intmode & 1024:  # ty:ignore[unsupported-operator]
                 bands = [3, 4, 7, 8]  # upper band
             else:
                 bands = [1, 2, 5, 6]  # lower band
@@ -146,7 +148,7 @@ class Smrl1bFreqspec:
                         + np.arange(0, 112, 1) * dfreq
                         + (jind - 1) * 112 * dfreq
                     )
-        if self.intmode & 512:
+        if self.intmode & 512:  # ty:ignore[unsupported-operator]
             # for split mode keep used bands only
             freq = freq[bands, :]
         return freq
@@ -231,7 +233,7 @@ class Smrl1bFreqsort:
         freqs.shape = (8, 112)
         freqs = np.mean(freqs, 1)
         index = []
-        for indi in range(self.freq.shape[0]):
+        for indi in range(self.freq.shape[0]):  # ty:ignore[unresolved-attribute]
             multi_f = np.nonzero((np.abs(self.freq[indi] - self.freq) <= 0.51e6))[0]
             if multi_f.shape[0] == 1:
                 index.append(indi)
@@ -249,7 +251,7 @@ class Smrl1bFreqsort:
 
     def sort_from_start(self):
         """sort spectra from start channel"""
-        nlen = self.freq.shape[0]
+        nlen = self.freq.shape[0]  # ty:ignore[unresolved-attribute]
         [_, index] = np.unique(
             self.freq[np.arange(nlen - 1, -1, -1)], return_index=True
         )

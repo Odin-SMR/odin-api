@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
-from scipy.io import loadmat  # type: ignore
+from scipy.io import loadmat
 
 from ..odin_aws.s3 import s3_fileobject
 

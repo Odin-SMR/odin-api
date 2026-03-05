@@ -30,7 +30,7 @@ def get_collocations(freqmode, scanid, fields=None):
 
 def collocations_table_exist():
     """Return True if the collocations table exist"""
-    query = db.session.execute.query(
+    query = db.session.execute.query(  # ty:ignore[unresolved-attribute]
         text(
             squeeze_query(
                 """\
