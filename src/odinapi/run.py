@@ -38,7 +38,6 @@ def parse_arguments():
 
         Local databases:
             Prerequisite:
-                $ docker run -d -p 127.0.0.1:27017:27017 mongo
                 $ docker run -d -p 127.0.0.1:5432:5432 odinsmr/odin_db
 
                 a .env file containing AWS_PROFILE OR

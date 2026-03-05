@@ -5,7 +5,7 @@ import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import s3fs
 
-logger = logging.getLogger("odin.ptz")
+logger = logging.getLogger("odinapi.ptz")
 
 Backend = Literal["AC1", "AC2"]
 
