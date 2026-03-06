@@ -1,4 +1,5 @@
 import tempfile
+from functools import lru_cache
 from typing import Tuple
 
 import numpy as np
@@ -15,7 +16,7 @@ class AprioriException(RuntimeError):
     pass
 
 
-def get_datadict(data, source):
+def get_datadict(data, source) -> dict[str, np.ndarray]:
     def get_index(key):
         idxs = [i for i, v in enumerate(view) if v.size == 1 and v.item() == key]
         if idxs:
@@ -83,13 +84,8 @@ def get_vmr_interpolated_for_lat(vmr, latitudes, latitude):
     return vmr[:, ind1] * w1 + vmr[:, ind2] * w2
 
 
-def get_apriori(
-    species,
-    day_of_year,
-    latitude,
-    source=None,
-    datadir="",
-):
+@lru_cache(maxsize=None)
+def _load_apriori_datadict(species: str, source: str | None = None) -> tuple[dict[str, np.ndarray], str]:
     filename = (
         "apriori_{}_{}.mat".format(species, source)
         if source
@@ -105,19 +101,30 @@ def get_apriori(
             raise AprioriException(f"No such file: {uri}")
         data = loadmat(tmp.name)
 
-        datadict = get_datadict(data, "Bdx" if source is None else source.upper())
+    datadict = get_datadict(data, "Bdx" if source is None else source.upper())
+    return datadict, uri
 
-        doy = float(day_of_year)
-        vmr = get_vmr_interpolated_for_doy(datadict["vmr"], datadict["doy"], doy)
 
-        vmr = get_vmr_interpolated_for_lat(vmr, datadict["latitude"], latitude)
+def get_apriori(
+    species,
+    day_of_year,
+    latitude,
+    source=None,
+    datadir="",
+):
+    datadict, uri = _load_apriori_datadict(species, source)
 
-        return {
-            "altitude": datadict["altitude"].ravel(),
-            "pressure": datadict["pressure"].ravel(),
-            "species": species,
-            "vmr": vmr,
-            # Below only used in testing
-            "latitude": latitude,
-            "path": f"s3://{BUCKET}/{filename}",
-        }
+    doy = float(day_of_year)
+    vmr = get_vmr_interpolated_for_doy(datadict["vmr"], datadict["doy"], doy)
+
+    vmr = get_vmr_interpolated_for_lat(vmr, datadict["latitude"], latitude)
+
+    return {
+        "altitude": datadict["altitude"].ravel(),
+        "pressure": datadict["pressure"].ravel(),
+        "species": species,
+        "vmr": vmr,
+        # Below only used in testing
+        "latitude": latitude,
+        "path": uri,
+    }
