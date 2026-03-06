@@ -1,6 +1,6 @@
 import tempfile
 from functools import lru_cache
-from typing import Tuple
+from typing import Tuple, TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -105,13 +105,21 @@ def _load_apriori_datadict(species: str, source: str | None = None) -> tuple[dic
     return datadict, uri
 
 
+class Apriori(TypedDict):
+    altitude: npt.NDArray
+    pressure: npt.NDArray
+    species: str
+    vmr: npt.NDArray
+    latitude: float
+    path: str
+
 def get_apriori(
-    species,
-    day_of_year,
-    latitude,
-    source=None,
-    datadir="",
-):
+    species: str,
+    day_of_year: float,
+    latitude: float,
+    source: str | None = None,
+    datadir: str = "",
+) -> Apriori:
     datadict, uri = _load_apriori_datadict(species, source)
 
     doy = float(day_of_year)
