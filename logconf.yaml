@@ -3,9 +3,14 @@ disable_existing_loggers: False
 
 formatters:
   json:
-    format: >
-      {"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s",
-       "message":"%(message)s","pid":%(process)d,"thread":"%(threadName)s"}
+    (): odinapi.utils.logging_config.OdinJsonFormatter
+    fmt: '%(asctime)s %(levelname)s %(name)s %(message)s %(process)d %(threadName)s'
+    rename_fields:
+      asctime: time
+      levelname: level
+      name: logger
+      process: pid
+      threadName: thread
 
 handlers:
   default:

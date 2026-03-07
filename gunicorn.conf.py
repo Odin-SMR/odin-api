@@ -1,6 +1,6 @@
 from yaml import safe_load
 
-with open("/app/logconf.yaml") as f:
+with open("logconf.yaml") as f:
     logconf = safe_load(f)
 
 accesslog = "-"
