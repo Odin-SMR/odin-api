@@ -2,21 +2,38 @@ version: 1
 disable_existing_loggers: False
 
 formatters:
-  standard:
-    format: "[%(levelname)s] %(name)s: %(message)s"
+  json:
+    (): odinapi.utils.logging_config.OdinJsonFormatter
+    fmt: '%(asctime)s %(levelname)s %(name)s %(message)s %(process)d %(threadName)s'
+    rename_fields:
+      asctime: time
+      levelname: level
+      name: logger
+      process: pid
+      threadName: thread
 
 handlers:
   default:
-    level: DEBUG
-    formatter: standard
+    level: INFO
+    formatter: json
     class: logging.StreamHandler
     stream: ext://flask.logging.wsgi_errors_stream
 
 root:
-  level: WARNING
+  level: INFO
   handlers:
     - default
 
 loggers:
   odinapi:
     level: DEBUG
+
+  gunicorn.error:
+    level: INFO
+    handlers: [default]
+    propagate: 0
+
+  gunicorn.access:
+    level: INFO
+    handlers: [default]
+    propagate: 0

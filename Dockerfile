@@ -33,10 +33,6 @@ COPY logconf.yaml /app/
 # Pre-create certificate directory (will be populated by entrypoint)
 RUN mkdir -p /root/.postgresql
 
-# Add health check (matches ECS task definition)
-HEALTHCHECK --interval=120s --timeout=20s --start-period=40s --retries=5 \
-    CMD curl -f http://localhost:8000/rest_api/health_check || exit 1
-
 ENTRYPOINT [ "/entrypoint.sh" ]
 EXPOSE 8000
 CMD ["uv", "run", "--no-dev", "gunicorn", "--config", "gunicorn.conf.py"]
