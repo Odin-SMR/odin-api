@@ -30,6 +30,8 @@ def read_qsmr_file(filename, species, index2):
         buffer = s3_fileobject(f"s3://{BUCKET}/{PREFIX}/{l2p_path}/{filename}")
         if buffer:
             tmp.write(buffer.read())
+        else:
+            return {"Data": {}, "Geolocation": {}}
         hdf = HDF.HDF(tmp.name)
         vs = VS.VS(hdf)
 
