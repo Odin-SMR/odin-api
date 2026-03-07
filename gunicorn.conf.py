@@ -3,7 +3,13 @@ from yaml import safe_load
 with open("/app/logconf.yaml") as f:
     logconf = safe_load(f)
 
-access_log_format = '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
+accesslog = "-"
+errorlog = "-"
+access_log_format = (
+    '{"remote":"%(h)s","user":"%(u)s","method":"%(m)s","path":"%(U)s",'
+    '"query":"%(q)s","protocol":"%(H)s","status":%(s)s,"bytes":%(b)s,'
+    '"referer":"%(f)s","agent":"%(a)s","request_time":%(L)s}'
+)
 bind = "0.0.0.0"
 forwarded_allow_ips = "*"
 logconfig_dict = logconf
