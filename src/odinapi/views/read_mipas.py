@@ -27,8 +27,9 @@ def read_mipas_file(
     data = dict()
     with tempfile.NamedTemporaryFile(suffix=".nc") as tmp:
         buffer = s3_fileobject(f"s3://odin-vds-data/{ifile}")
-        if buffer:
-            tmp.write(buffer.read())
+        if not buffer:
+            raise FileNotFoundError(f"File {ifile} not found in S3 bucket.")
+        tmp.write(buffer.read())
 
         with Dataset(tmp.name) as fgr:
             time = fgr.variables["time"][file_index]
@@ -84,8 +85,9 @@ def read_esa_mipas_file(
     data = {"{}_retrieval_mds".format(species.lower()): {}, "scan_geolocation_ads": {}}
     with tempfile.NamedTemporaryFile(suffix=".nc") as tmp:
         buffer = s3_fileobject(f"s3://odin-vds-data/{mipas_file}")
-        if buffer:
-            tmp.write(buffer.read())
+        if not buffer:
+            raise FileNotFoundError(f"File {mipas_file} not found in S3 bucket.")
+        tmp.write(buffer.read())
         with Dataset(tmp.name) as dataset:
             for group_name in data:
                 group = dataset[group_name]

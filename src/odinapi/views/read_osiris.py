@@ -18,14 +18,15 @@ def read_osiris_file(osiris_file, date, species, file_index):
     data_fields = dict()
     geolocation_fields = dict()
     s3 = s3fs.S3FileSystem()
-    if s3_stat(osiris_file):
-        with s3.open(osiris_file) as f:
-            with File(f) as fgr:
-                fdata = fgr["HDFEOS"]["SWATHS"][r"OSIRIS\Odin {0}MART".format(species)]
-                for key in fdata["Data Fields"]:
-                    data_fields[key] = np.array(fdata["Data Fields"][key])
-                for key in fdata["Geolocation Fields"]:
-                    geolocation_fields[key] = np.array(fdata["Geolocation Fields"][key])
+    if not s3_stat(osiris_file):
+        raise FileNotFoundError(f"File {osiris_file} not found in S3 bucket.")
+    with s3.open(osiris_file) as f:
+        with File(f) as fgr:
+            fdata = fgr["HDFEOS"]["SWATHS"][r"OSIRIS\Odin {0}MART".format(species)]
+            for key in fdata["Data Fields"]:
+                data_fields[key] = np.array(fdata["Data Fields"][key])
+            for key in fdata["Geolocation Fields"]:
+                geolocation_fields[key] = np.array(fdata["Geolocation Fields"][key])
     # transform the mls date to MJD and add to dict
     mjd = []
     for time_i in geolocation_fields["Time"]:

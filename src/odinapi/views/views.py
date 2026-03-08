@@ -932,25 +932,28 @@ class VdsExtData(MethodView):
         return jsonify(datadict)
 
     def gen_data(self, instrument, species, date, file, file_index):
-        if instrument == "mls":
-            data = read_mls_file(file, date, species, file_index)
-        elif instrument == "mipas":
-            data = read_mipas_file(file, date, species, file_index)
-        elif instrument == "mipas_esa":
-            data = read_esa_mipas_file(file, date, species)
-        elif instrument == "smiles":
-            data = read_smiles_file(file, date, species, file_index)
-        elif instrument == "sageIII":
-            data = read_sageIII_file(file, date, species, "solar")
-        elif instrument == "sageIII_lunar":
-            data = read_sageIII_file(file, date, species, "lunar")
-        elif instrument == "osiris":
-            data = read_osiris_file(file, date, species, file_index)
-        elif instrument == "smr":
-            data = read_qsmr_file(file, species, file_index)
-        elif instrument == "ace":
-            data = read_ace_file(file, date, file_index)
-        else:
+        try:
+            if instrument == "mls":
+                data = read_mls_file(file, date, species, file_index)
+            elif instrument == "mipas":
+                data = read_mipas_file(file, date, species, file_index)
+            elif instrument == "mipas_esa":
+                data = read_esa_mipas_file(file, date, species)
+            elif instrument == "smiles":
+                data = read_smiles_file(file, date, species, file_index)
+            elif instrument == "sageIII":
+                data = read_sageIII_file(file, date, species, "solar")
+            elif instrument == "sageIII_lunar":
+                data = read_sageIII_file(file, date, species, "lunar")
+            elif instrument == "osiris":
+                data = read_osiris_file(file, date, species, file_index)
+            elif instrument == "smr":
+                data = read_qsmr_file(file, species, file_index)
+            elif instrument == "ace":
+                data = read_ace_file(file, date, file_index)
+            else:
+                abort(404)
+        except FileNotFoundError:
             abort(404)
 
         return data
