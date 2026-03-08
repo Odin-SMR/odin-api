@@ -15,8 +15,11 @@ def read_ace_file(acefile, date, file_index):
 
     with tempfile.NamedTemporaryFile(suffix=".nc") as tmp:
         buffer = s3_fileobject(f"s3://odin-vds-data/{ace_datapath}/{acefile}")
-        if buffer:
-            tmp.write(buffer.read())
+        if not buffer:
+            raise FileNotFoundError(
+                f"File s3://odin-vds-data/{ace_datapath}/{acefile} not found in S3 bucket."
+            )
+        tmp.write(buffer.read())
         with Dataset(tmp.name, "r") as fgr:
             data = dict()
             for group in fgr["ACE-FTS-v2.2"].groups:

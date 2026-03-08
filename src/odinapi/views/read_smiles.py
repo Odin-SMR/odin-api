@@ -27,17 +27,18 @@ def read_smiles_file(
     data_fields = dict()
     geolocation_fields = dict()
     s3 = s3fs.S3FileSystem()
-    if s3_stat(ifile):
-        with s3.open(ifile) as s3f:
-            with File(s3f) as f:
-                fdata = f["HDFEOS"]["SWATHS"][species]
-                for key in fdata["Data Fields"]:
-                    data_fields[key] = np.array(fdata["Data Fields"][key])
+    if not s3_stat(ifile):
+        raise FileNotFoundError(f"File {ifile} not found in S3 bucket.")
+    with s3.open(ifile) as s3f:
+        with File(s3f) as f:
+            fdata = f["HDFEOS"]["SWATHS"][species]
+            for key in fdata["Data Fields"]:
+                data_fields[key] = np.array(fdata["Data Fields"][key])
 
-                for key in fdata["Geolocation Fields"]:
-                    geolocation_fields[key] = np.array(
-                        fdata[f"Geolocation Fields/{key}"]
-                    )
+            for key in fdata["Geolocation Fields"]:
+                geolocation_fields[key] = np.array(
+                    fdata[f"Geolocation Fields/{key}"]
+                )
 
     # transform the mls date to MJD and add to dict
     mjd = []

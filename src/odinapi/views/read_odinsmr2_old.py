@@ -28,10 +28,11 @@ def read_qsmr_file(filename, species, index2):
     filename = str(os.path.join(*filename.split("-")))
     with tempfile.NamedTemporaryFile() as tmp:
         buffer = s3_fileobject(f"s3://{BUCKET}/{PREFIX}/{l2p_path}/{filename}")
-        if buffer:
-            tmp.write(buffer.read())
-        else:
-            return {"Data": {}, "Geolocation": {}}
+        if not buffer:
+            raise FileNotFoundError(
+                f"File s3://{BUCKET}/{PREFIX}/{l2p_path}/{filename} not found in S3 bucket."
+            )
+        tmp.write(buffer.read())
         hdf = HDF.HDF(tmp.name)
         vs = VS.VS(hdf)
 

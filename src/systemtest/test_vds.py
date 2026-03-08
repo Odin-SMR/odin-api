@@ -1,4 +1,4 @@
-from http.client import OK
+from http.client import OK, NOT_FOUND
 import pytest
 
 pytestmark = [pytest.mark.system, pytest.mark.aws]
@@ -135,6 +135,15 @@ def test_vds_file4mipas_esa_is_readable(test_client):
     assert data["o3_retrieval_mds"]["dsr_time"] == pytest.approx(
         81433778.551209, abs=0.001
     )
+
+
+def test_vds_file4mipas_esa_missing_returns_404(test_client):
+    url = (
+        "/rest_api/v4/vds_external/"
+        + "mipas_esa/O3/2002-07-31/THIS_FILE_DOES_NOT_EXIST.nc/0/"
+    )
+    r = test_client.get(url)
+    assert r.status_code == NOT_FOUND
 
 
 def test_vds_file4mls_is_readable(test_client):
